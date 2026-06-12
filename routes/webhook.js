@@ -41,7 +41,6 @@ async function processIncoming(body) {
   const phoneNumberId = value.metadata.phone_number_id;
   const messageType = message.type;
 
-  console.log(`[webhook] msg from=${senderPhone} type=${messageType} phoneNumberId=${phoneNumberId}`);
 
   // Only handle text and image messages
   if (messageType !== 'text' && messageType !== 'image') return;
@@ -50,7 +49,6 @@ async function processIncoming(body) {
 
   // 1. Identify tenant
   const tenant = await getTenantConfig(phoneNumberId);
-  console.log(`[webhook] tenant found:`, !!tenant, tenant ? `id=${tenant.id} active=${tenant.active}` : '');
   if (!tenant) {
     console.error(`[webhook] No tenant for phone_number_id=${phoneNumberId}`);
     return;

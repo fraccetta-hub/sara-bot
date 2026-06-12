@@ -26,16 +26,30 @@
 <!-- ════ LOGIN ════ -->
 <div id="loginPage" class="min-h-screen flex items-center justify-center px-4">
   <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm p-8">
-    <div class="text-center mb-6">
+    <div class="text-center mb-5">
       <div class="text-5xl mb-2">🌸</div>
       <h1 class="text-2xl font-bold text-gray-800">Sara Bot</h1>
-      <p class="text-gray-500 text-sm mt-1">Panel de administración</p>
     </div>
+
+    <!-- Toggle merchant / superadmin -->
+    <div class="flex rounded-xl bg-gray-100 p-1 mb-5 text-sm font-medium">
+      <button id="tabMerchant" onclick="switchLoginTab('merchant')"
+        class="flex-1 py-1.5 rounded-lg transition bg-white shadow text-gray-800">
+        🏪 Comerciante
+      </button>
+      <button id="tabSuperadmin" onclick="switchLoginTab('superadmin')"
+        class="flex-1 py-1.5 rounded-lg transition text-gray-500 hover:text-gray-700">
+        🛡️ Superadmin
+      </button>
+    </div>
+
     <div id="loginError" class="hidden bg-red-50 text-red-700 text-sm rounded-lg px-4 py-2 mb-4"></div>
-    <div class="space-y-4">
+
+    <!-- Merchant login form -->
+    <div id="formMerchant" class="space-y-4">
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">ID de tu número WhatsApp Business</label>
-        <input id="loginPhoneId" type="text" placeholder="Ej: 1172627905930070"
+        <input id="loginPhoneId" type="text" placeholder="Ej: 1153602094505408"
           class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
       </div>
       <div>
@@ -48,8 +62,24 @@
         class="btn-green w-full py-2 rounded-lg text-sm font-semibold transition">
         Ingresar
       </button>
+      <p class="text-center text-xs text-gray-400">Primera vez: contraseña <b>sara1234</b></p>
     </div>
-    <p class="text-center text-xs text-gray-400 mt-6">Primera vez: contraseña <b>sara1234</b></p>
+
+    <!-- Superadmin login form -->
+    <div id="formSuperadmin" class="hidden space-y-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Contraseña superadmin</label>
+        <input id="saPassword" type="password" placeholder="••••••••"
+          class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"
+          onkeydown="if(event.key==='Enter') loginSuperadmin()"/>
+      </div>
+      <button onclick="loginSuperadmin()"
+        class="w-full py-2 rounded-lg text-sm font-semibold transition text-white"
+        style="background:#7c3aed">
+        Ingresar como Superadmin
+      </button>
+    </div>
+
   </div>
 </div>
 
@@ -71,6 +101,7 @@
       <button class="py-2 tab-active" id="tabProducts" onclick="switchTab('products')">📦 Catálogo</button>
       <button class="py-2" id="tabOrders" onclick="switchTab('orders')">🛒 Pedidos</button>
       <button class="py-2" id="tabSettings" onclick="switchTab('settings')">⚙️ Ajustes</button>
+      <button class="py-2" id="tabHelp" onclick="switchTab('help')">❓ Ayuda</button>
     </div>
   </nav>
 
@@ -136,6 +167,93 @@
       </div>
       <div class="space-y-3" id="ordersList">
         <div class="text-center py-8 text-gray-400">Cargando...</div>
+      </div>
+    </div>
+
+    <!-- ── HELP TAB ── -->
+    <div id="sectionHelp" class="hidden max-w-2xl space-y-5">
+      <h2 class="text-lg font-semibold text-gray-800">❓ Ayuda — Comandos del propietario</h2>
+      <p class="text-sm text-gray-500">Enviá estos mensajes desde tu WhatsApp al número de Sara Bot para gestionar el negocio sin abrir el panel web.</p>
+
+      <!-- Catálogo -->
+      <div class="bg-white rounded-xl shadow-sm p-5">
+        <h3 class="font-semibold text-gray-800 mb-3">📦 Gestión del catálogo</h3>
+        <div class="space-y-2 text-sm">
+          <div class="flex gap-3 items-start p-2 rounded-lg bg-gray-50">
+            <code class="bg-green-100 text-green-800 px-2 py-0.5 rounded font-mono text-xs whitespace-nowrap">CATALOGO</code>
+            <span class="text-gray-600">Ver todos los productos con stock y precio actuales</span>
+          </div>
+          <div class="flex gap-3 items-start p-2 rounded-lg bg-gray-50">
+            <code class="bg-green-100 text-green-800 px-2 py-0.5 rounded font-mono text-xs whitespace-nowrap">STOCK nombre_producto CANTIDAD</code>
+            <span class="text-gray-600">Actualizar el stock de un producto. Ej: <i>STOCK Rosas Rojas 25</i></span>
+          </div>
+          <div class="flex gap-3 items-start p-2 rounded-lg bg-gray-50">
+            <code class="bg-green-100 text-green-800 px-2 py-0.5 rounded font-mono text-xs whitespace-nowrap">PRECIO nombre_producto MONTO</code>
+            <span class="text-gray-600">Cambiar precio en guaraníes. Ej: <i>PRECIO Rosas Rojas 160000</i></span>
+          </div>
+          <div class="flex gap-3 items-start p-2 rounded-lg bg-gray-50">
+            <code class="bg-green-100 text-green-800 px-2 py-0.5 rounded font-mono text-xs whitespace-nowrap">AGOTADO nombre_producto</code>
+            <span class="text-gray-600">Marcar un producto como agotado. Sara dejará de ofrecerlo</span>
+          </div>
+          <div class="flex gap-3 items-start p-2 rounded-lg bg-gray-50">
+            <code class="bg-green-100 text-green-800 px-2 py-0.5 rounded font-mono text-xs whitespace-nowrap">DISPONIBLE nombre_producto</code>
+            <span class="text-gray-600">Volver a activar un producto agotado</span>
+          </div>
+          <div class="flex gap-3 items-start p-2 rounded-lg bg-gray-50">
+            <code class="bg-green-100 text-green-800 px-2 py-0.5 rounded font-mono text-xs whitespace-nowrap">NUEVO nombre | categoría | precio | stock | descripción</code>
+            <span class="text-gray-600">Crear un producto nuevo. Ej: <i>NUEVO Girasoles|Ramos|80000|10|Girasoles frescos</i></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Fotos -->
+      <div class="bg-white rounded-xl shadow-sm p-5">
+        <h3 class="font-semibold text-gray-800 mb-3">📸 Fotos de productos</h3>
+        <div class="space-y-2 text-sm">
+          <div class="flex gap-3 items-start p-2 rounded-lg bg-gray-50">
+            <code class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded font-mono text-xs whitespace-nowrap">NOMBRE nombre_producto</code>
+            <span class="text-gray-600">Enviar esta frase + una foto en el mismo mensaje. La foto se guarda y Sara la mostrará a los clientes cuando pregunten por ese producto</span>
+          </div>
+        </div>
+        <p class="text-xs text-gray-400 mt-3">💡 También podés subir fotos desde el panel web → Catálogo → editar producto.</p>
+      </div>
+
+      <!-- Pedidos y takeover -->
+      <div class="bg-white rounded-xl shadow-sm p-5">
+        <h3 class="font-semibold text-gray-800 mb-3">🛒 Pedidos y control de chat</h3>
+        <div class="space-y-2 text-sm">
+          <div class="flex gap-3 items-start p-2 rounded-lg bg-gray-50">
+            <code class="bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded font-mono text-xs whitespace-nowrap">CONFIRMAR</code>
+            <span class="text-gray-600">Confirmar el último pedido pendiente. Sara notifica al cliente</span>
+          </div>
+          <div class="flex gap-3 items-start p-2 rounded-lg bg-gray-50">
+            <code class="bg-red-100 text-red-800 px-2 py-0.5 rounded font-mono text-xs whitespace-nowrap">CANCELAR</code>
+            <span class="text-gray-600">Cancelar el último pedido pendiente. Sara notifica al cliente</span>
+          </div>
+          <div class="flex gap-3 items-start p-2 rounded-lg bg-gray-50">
+            <code class="bg-purple-100 text-purple-800 px-2 py-0.5 rounded font-mono text-xs whitespace-nowrap">CHAT</code>
+            <span class="text-gray-600">Tomar control del chat con el cliente. Todo lo que escribas llega directamente al cliente (Sara no interviene)</span>
+          </div>
+          <div class="flex gap-3 items-start p-2 rounded-lg bg-gray-50">
+            <code class="bg-purple-100 text-purple-800 px-2 py-0.5 rounded font-mono text-xs whitespace-nowrap">FIN</code>
+            <span class="text-gray-600">Devolver el control a Sara. El bot retoma la conversación</span>
+          </div>
+        </div>
+        <div class="mt-3 p-3 bg-yellow-50 rounded-lg text-xs text-yellow-800">
+          <b>¿Cómo funciona el takeover?</b> Cuando llega un pedido, Sara te avisa por WhatsApp con los detalles. Respondé <b>CONFIRMAR</b> o <b>CANCELAR</b> para gestionar el pedido, o <b>CHAT</b> para hablar directamente con el cliente.
+        </div>
+      </div>
+
+      <!-- Otros comandos -->
+      <div class="bg-white rounded-xl shadow-sm p-5">
+        <h3 class="font-semibold text-gray-800 mb-3">ℹ️ Otros comandos</h3>
+        <div class="space-y-2 text-sm">
+          <div class="flex gap-3 items-start p-2 rounded-lg bg-gray-50">
+            <code class="bg-gray-100 text-gray-800 px-2 py-0.5 rounded font-mono text-xs whitespace-nowrap">AYUDA</code>
+            <span class="text-gray-600">Ver todos los comandos disponibles directamente en WhatsApp</span>
+          </div>
+        </div>
+        <p class="text-xs text-gray-400 mt-3">💡 Los comandos no distinguen mayúsculas/minúsculas. Podés escribir "catalogo", "CATALOGO" o "Catalogo".</p>
       </div>
     </div>
 
@@ -341,6 +459,36 @@ window.onload = () => {
   if (TOKEN) { showDashboard(); }
 };
 
+// ── Login tab toggle ──────────────────────────────────────────────────────────
+function switchLoginTab(tab) {
+  const isMerchant = tab === 'merchant';
+  document.getElementById('formMerchant').classList.toggle('hidden', !isMerchant);
+  document.getElementById('formSuperadmin').classList.toggle('hidden', isMerchant);
+  document.getElementById('tabMerchant').className = `flex-1 py-1.5 rounded-lg transition ${isMerchant ? 'bg-white shadow text-gray-800' : 'text-gray-500 hover:text-gray-700'}`;
+  document.getElementById('tabSuperadmin').className = `flex-1 py-1.5 rounded-lg transition ${!isMerchant ? 'bg-white shadow text-gray-800' : 'text-gray-500 hover:text-gray-700'}`;
+  document.getElementById('loginError').classList.add('hidden');
+}
+
+async function loginSuperadmin() {
+  const password = document.getElementById('saPassword').value;
+  const errEl    = document.getElementById('loginError');
+  errEl.classList.add('hidden');
+  try {
+    const res = await fetch('/superadmin/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Error');
+    localStorage.setItem('sara_sa_token', data.token);
+    window.location.href = '/superadmin/index.html';
+  } catch (e) {
+    errEl.textContent = e.message;
+    errEl.classList.remove('hidden');
+  }
+}
+
 // ── Auth ───────────────────────────────────────────────────────────────────────
 async function login() {
   const phone_number_id = document.getElementById('loginPhoneId').value.trim();
@@ -388,7 +536,7 @@ async function showDashboard() {
 
 // ── Tab switching ──────────────────────────────────────────────────────────────
 function switchTab(tab) {
-  ['products','orders','settings'].forEach(t => {
+  ['products','orders','settings','help'].forEach(t => {
     document.getElementById('section' + cap(t)).classList.toggle('hidden', t !== tab);
     document.getElementById('tab' + cap(t)).classList.toggle('tab-active', t === tab);
   });
