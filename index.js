@@ -20,6 +20,8 @@ app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'adm
 
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
 
+app.get('/', (req, res) => res.redirect('/admin/index.html'));
+
 app.listen(PORT, () => {
   console.log(`WhatsApp Bot server listening on port ${PORT}`);
 });
