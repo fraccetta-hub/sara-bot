@@ -46,6 +46,7 @@ router.post('/login', async (req, res) => {
     .maybeSingle();
 
   if (!tenant) return res.status(404).json({ error: 'Usuario no encontrado' });
+  if (!tenant.active) return res.status(403).json({ error: 'Cuenta suspendida. Contactá a soporte.' });
 
   // First-time setup: if no password set yet, accept "sara1234" and save hash
   if (!tenant.admin_password_hash) {

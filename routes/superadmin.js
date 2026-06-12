@@ -171,14 +171,27 @@ router.put('/tenants/:id', requireSuper, async (req, res) => {
 
 router.patch('/tenants/:id/toggle', requireSuper, async (req, res) => {
   const { data: tenant } = await supabase
-    .from('tenants').select('active').eq('id', req.params.id).single();
+    .from('tenants').select('active, name, merchant_phone, phone_number_id').eq('id', req.params.id).single();
   if (!tenant) return res.status(404).json({ error: 'Tenant no encontrado' });
 
+  const newActive = !tenant.active;
   const { data, error } = await supabase
-    .from('tenants').update({ active: !tenant.active })
+    .from('tenants').update({ active: newActive })
     .eq('id', req.params.id).select('id, name, active').single();
 
   if (error) return res.status(500).json({ error: error.message });
+
+  // Notify merchant via WhatsApp when deactivated or reactivated
+  if (tenant.merchant_phone) {
+    const { sendMessage } = require('../services/whatsapp');
+    const token = process.env.WHATSAPP_TOKEN;
+    const phoneNumberId = tenant.phone_number_id;
+    const msg = newActive
+      ? `✅ *${tenant.name}* — Tu cuenta ha sido *reactivada*. Ya podés recibir pedidos nuevamente.`
+      : `⚠️ *${tenant.name}* — Tu cuenta ha sido *suspendida temporalmente*. Contactá a soporte para más información.`;
+    sendMessage(tenant.merchant_phone, msg, phoneNumberId, token).catch(() => {});
+  }
+
   res.json(data);
 });
 
