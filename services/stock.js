@@ -7,7 +7,7 @@ async function getTenantConfig(phoneNumberId) {
     .from('tenants')
     .select('*')
     .eq('phone_number_id', phoneNumberId)
-    .single();
+    .maybeSingle();
 
   if (error) {
     console.error('getTenantConfig error:', error.message);
