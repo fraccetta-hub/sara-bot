@@ -5,6 +5,7 @@ const { getTenantConfig, getStock, decrementStock } = require('../services/stock
 const { sendMessage, sendImage, notifyMerchant } = require('../services/whatsapp');
 const { chat } = require('../services/claude');
 const { downloadAndStore } = require('../services/storage');
+const { haversineKm, geocode, calcDeliveryFee } = require('../services/geo');
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
 
@@ -42,8 +43,8 @@ async function processIncoming(body) {
   const messageType = message.type;
 
 
-  // Only handle text and image messages
-  if (messageType !== 'text' && messageType !== 'image') return;
+  // Handle text, image and location messages
+  if (messageType !== 'text' && messageType !== 'image' && messageType !== 'location') return;
 
   const messageText = messageType === 'text' ? message.text.body.trim() : null;
 
@@ -68,13 +69,15 @@ async function processIncoming(body) {
   if (isMerchant) {
     if (messageType === 'image') {
       await handleMerchantImage(tenant, message, phoneNumberId, token);
-    } else {
+    } else if (messageType === 'text') {
       await handleMerchantMessage(tenant, messageText, phoneNumberId, token);
     }
   } else {
-    // Customers can only send text for now
     if (messageType === 'text') {
-      await handleCustomerMessage(tenant, senderPhone, messageText, phoneNumberId, token);
+      await handleCustomerMessage(tenant, senderPhone, messageText, null, phoneNumberId, token);
+    } else if (messageType === 'location') {
+      const loc = message.location;
+      await handleCustomerMessage(tenant, senderPhone, null, { lat: loc.latitude, lng: loc.longitude }, phoneNumberId, token);
     }
   }
 }
@@ -432,7 +435,7 @@ async function findProduct(tenantId, nameQuery) {
 
 // ─── Customer message handler ─────────────────────────────────────────────────
 
-async function handleCustomerMessage(tenant, customerPhone, messageText, phoneNumberId, token) {
+async function handleCustomerMessage(tenant, customerPhone, messageText, locationMsg, phoneNumberId, token) {
   // Load conversation
   const { data: convRow } = await supabase
     .from('conversations')
@@ -444,25 +447,107 @@ async function handleCustomerMessage(tenant, customerPhone, messageText, phoneNu
   // If in takeover mode, forward to merchant
   if (convRow?.takeover_active && tenant.merchant_phone) {
     const prefix = `💬 *Mensaje de +${customerPhone}:*\n`;
-    await sendMessage(tenant.merchant_phone, prefix + messageText, phoneNumberId, token);
-    console.log(`[takeover] customer→merchant: ${customerPhone}`);
+    const fwdText = messageText || '📍 [ubicación compartida]';
+    await sendMessage(tenant.merchant_phone, prefix + fwdText, phoneNumberId, token);
     return;
   }
 
-  const history = convRow?.messages_json || [];
-  const stock = await getStock(tenant.id);
+  const history    = convRow?.messages_json || [];
+  const stock      = await getStock(tenant.id);
+  const convState  = {
+    delivery_choice:   convRow?.delivery_choice   || null,
+    delivery_fee_calc: convRow?.delivery_fee_calc  ?? null,
+  };
 
-  // Run Claude
-  const { reply, order, imageProductName, customerName, updatedHistory } = await chat({
-    tenant,
-    stock,
-    history,
-    userMessage: messageText
+  // ── Handle WhatsApp location message ───────────────────────────────────────
+  if (locationMsg && tenant.delivery_enabled && tenant.location_lat && tenant.location_lng) {
+    const distKm = haversineKm(
+      parseFloat(tenant.location_lat), parseFloat(tenant.location_lng),
+      locationMsg.lat, locationMsg.lng
+    );
+    const fee = calcDeliveryFee(tenant, distKm);
+
+    if (fee === null) {
+      // Outside delivery zone
+      await sendMessage(customerPhone,
+        `📍 Recibí tu ubicación. Lamentablemente estás fuera de nuestra zona de envíos (${distKm.toFixed(1)} km). ` +
+        `¿Querés pasar a retirar al local? 🏪`,
+        phoneNumberId, token);
+      return;
+    }
+
+    // Save delivery state and inject into history
+    const systemNote = `[SISTEMA] El cliente compartió su ubicación (${distKm.toFixed(1)} km del local). Costo de envío calculado: ${fee.toLocaleString('es-PY')} Gs. Confirmá el total incluyendo el envío.`;
+    const updatedHistory = [...history, { role: 'user', content: systemNote }];
+
+    await supabase.from('conversations').upsert({
+      tenant_id: tenant.id,
+      customer_phone: customerPhone,
+      messages_json: updatedHistory,
+      updated_at: new Date().toISOString(),
+      delivery_choice: 'envio',
+      delivery_lat: locationMsg.lat,
+      delivery_lng: locationMsg.lng,
+      delivery_fee_calc: fee,
+    }, { onConflict: 'tenant_id,customer_phone' });
+
+    await sendMessage(customerPhone,
+      `📍 ¡Ubicación recibida! Estás a ${distKm.toFixed(1)} km del local.\n` +
+      `🚚 Costo de envío: *${fee.toLocaleString('es-PY')} Gs*\n\nConfirmamos tu pedido con este costo de envío incluido.`,
+      phoneNumberId, token);
+    return;
+  }
+
+  // ── Normal text message → Claude ───────────────────────────────────────────
+  const { reply, order, imageProductName, customerName,
+          deliveryChoice, deliveryAddress, updatedHistory } = await chat({
+    tenant, stock, history,
+    userMessage: messageText,
+    convState
   });
 
-  // Handle order
+  // ── Handle delivery choice tag ──────────────────────────────────────────────
+  const convUpdates = {};
+  if (deliveryChoice) convUpdates.delivery_choice = deliveryChoice;
+
+  // ── Handle delivery address tag → geocode ──────────────────────────────────
+  if (deliveryAddress && tenant.delivery_enabled && tenant.location_lat && tenant.location_lng) {
+    const coords = await geocode(deliveryAddress);
+    if (coords) {
+      const distKm = haversineKm(
+        parseFloat(tenant.location_lat), parseFloat(tenant.location_lng),
+        coords.lat, coords.lng
+      );
+      const fee = calcDeliveryFee(tenant, distKm);
+
+      if (fee === null) {
+        // Out of zone — inject note for next turn
+        updatedHistory.push({
+          role: 'user',
+          content: `[SISTEMA] La dirección "${deliveryAddress}" está fuera de la zona de envíos (${distKm.toFixed(1)} km). Informá al cliente y ofrecé retiro en local.`
+        });
+      } else {
+        convUpdates.delivery_lat      = coords.lat;
+        convUpdates.delivery_lng      = coords.lng;
+        convUpdates.delivery_address_text = deliveryAddress;
+        convUpdates.delivery_fee_calc = fee;
+        updatedHistory.push({
+          role: 'user',
+          content: `[SISTEMA] Dirección geocodificada: ${distKm.toFixed(1)} km del local. Costo de envío: ${fee.toLocaleString('es-PY')} Gs. Confirmá el total con el cliente.`
+        });
+      }
+    } else {
+      updatedHistory.push({
+        role: 'user',
+        content: `[SISTEMA] No se pudo geocodificar la dirección. Pedile al cliente que sea más específico o que comparta su ubicación por WhatsApp.`
+      });
+    }
+  }
+
+  // ── Handle order ────────────────────────────────────────────────────────────
   let savedOrderId = null;
   if (order) {
+    const deliveryFee = convRow?.delivery_fee_calc ?? order.delivery_fee ?? 0;
     await decrementStock(tenant.id, order.items);
 
     const { data: savedOrder } = await supabase
@@ -472,59 +557,52 @@ async function handleCustomerMessage(tenant, customerPhone, messageText, phoneNu
         customer_phone: customerPhone,
         items_json: order.items,
         total_guarani: order.total_guarani,
-        delivery_fee: order.delivery_fee || 0,
-        status: 'pending'   // pending until merchant confirms
+        delivery_fee: deliveryFee,
+        status: 'pending'
       })
       .select('id')
       .single();
 
     savedOrderId = savedOrder?.id;
-    console.log(`[webhook] Order saved — tenant=${tenant.name} customer=${customerPhone} total=${order.total_guarani}`);
 
-    // Notify merchant if configured
     if (tenant.merchant_phone && savedOrderId) {
-      const orderWithId = { ...order, id: savedOrderId };
+      const orderWithId = { ...order, delivery_fee: deliveryFee, id: savedOrderId };
       await notifyMerchant(tenant.merchant_phone, orderWithId, customerPhone, phoneNumberId, token);
 
-      // Store pending order reference on conversation
-      await supabase.from('conversations').upsert(
-        {
-          tenant_id: tenant.id,
-          customer_phone: customerPhone,
-          messages_json: updatedHistory,
-          updated_at: new Date().toISOString(),
-          last_pending_order_id: savedOrderId,
-          last_pending_customer_phone: customerPhone
-        },
-        { onConflict: 'tenant_id,customer_phone' }
-      );
+      await supabase.from('conversations').upsert({
+        tenant_id: tenant.id,
+        customer_phone: customerPhone,
+        messages_json: updatedHistory,
+        updated_at: new Date().toISOString(),
+        last_pending_order_id: savedOrderId,
+        last_pending_customer_phone: customerPhone,
+        delivery_choice: null,
+        delivery_fee_calc: null,
+        delivery_lat: null,
+        delivery_lng: null,
+        ...convUpdates
+      }, { onConflict: 'tenant_id,customer_phone' });
     }
   }
 
-  // Persist conversation (if not already done above)
+  // ── Persist conversation ────────────────────────────────────────────────────
   if (!savedOrderId) {
     const upsertData = {
       tenant_id: tenant.id,
       customer_phone: customerPhone,
       messages_json: updatedHistory,
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
+      ...convUpdates
     };
-    // Save name only if newly detected (don't overwrite a name already set)
-    if (customerName && !convRow?.customer_name) {
-      upsertData.customer_name = customerName;
-      console.log(`[webhook] Customer name detected: ${customerName} (${customerPhone})`);
-    }
+    if (customerName && !convRow?.customer_name) upsertData.customer_name = customerName;
     await supabase.from('conversations').upsert(upsertData, { onConflict: 'tenant_id,customer_phone' });
   } else if (customerName && !convRow?.customer_name) {
-    // Order was saved above — still update the name
     await supabase.from('conversations')
       .update({ customer_name: customerName })
-      .eq('tenant_id', tenant.id)
-      .eq('customer_phone', customerPhone);
-    console.log(`[webhook] Customer name detected: ${customerName} (${customerPhone})`);
+      .eq('tenant_id', tenant.id).eq('customer_phone', customerPhone);
   }
 
-  // Send product image if Claude requested one
+  // ── Send product image ──────────────────────────────────────────────────────
   if (imageProductName) {
     const product = stock.find(p =>
       p.name.toLowerCase() === imageProductName.toLowerCase() && p.image_url
@@ -534,7 +612,6 @@ async function handleCustomerMessage(tenant, customerPhone, messageText, phoneNu
     }
   }
 
-  // Send text reply
   await sendMessage(customerPhone, reply, phoneNumberId, token);
 }
 

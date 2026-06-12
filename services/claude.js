@@ -1,10 +1,11 @@
 const Anthropic = require('@anthropic-ai/sdk');
+const { isDeliveryDisabledToday, describeDelivery } = require('./geo');
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 const MAX_HISTORY = 20;
 
-function buildSystemPrompt(tenant, stock) {
+function buildSystemPrompt(tenant, stock, convState = {}) {
   const botName = tenant.bot_name || 'Sara';
   const personality = tenant.bot_personality || 'cálida, profesional y entusiasta';
 
@@ -21,32 +22,57 @@ function buildSystemPrompt(tenant, stock) {
     ? `\nINFORMACIÓN DE PAGO:\n${tenant.payment_instructions}`
     : '';
 
+  // ── Delivery block ──────────────────────────────────────────────────────────
+  let deliveryBlock = '';
+  if (tenant.delivery_enabled) {
+    const info = describeDelivery(tenant);
+    const disabledToday = isDeliveryDisabledToday(tenant);
+    const min = tenant.delivery_min_order || 0;
+    const feeCalc = convState.delivery_fee_calc;
+    const choice = convState.delivery_choice;
+
+    deliveryBlock = `
+ENTREGAS:
+- El local ${disabledToday ? '⚠️ HOY NO HACE ENVÍOS (día deshabilitado)' : 'hace envíos a domicilio'}.
+- Tarifa: ${info.tarifa}.
+${min > 0 ? `- Monto mínimo para envío: ${min.toLocaleString('es-PY')} Gs.` : ''}
+${feeCalc != null ? `- Costo de envío YA CALCULADO: ${feeCalc.toLocaleString('es-PY')} Gs. Incluilo en el total al confirmar.` : ''}
+${choice === 'retiro' ? '- El cliente eligió RETIRO EN LOCAL. No cobrar envío.' : ''}
+${choice === 'envio' && feeCalc == null ? '- El cliente eligió ENVÍO. Pedile la dirección o que comparta su ubicación por WhatsApp.' : ''}
+
+REGLAS DE ENTREGA (solo cuando el cliente quiera confirmar un pedido):
+D1. Si hoy no hay envíos: informá amablemente y ofrecé solo retiro en local.
+D2. Si el total del pedido es menor al mínimo (${min.toLocaleString('es-PY')} Gs): decile cuánto le falta y preguntá si quiere agregar algo. NO procedas con el pedido todavía.
+D3. Si no hay restricciones y el cliente no eligió aún: preguntá "¿Retirás en el local o querés envío a domicilio?" y marcá con <DELIVERY_CHOICE:retiro> o <DELIVERY_CHOICE:envio>.
+D4. Si eligió envío y no hay dirección aún: pedile la dirección exacta o que comparta su ubicación de WhatsApp. Cuando el cliente escriba una dirección usá: <DELIVERY_ADDRESS:dirección completa>.
+D5. Una vez calculado el envío (el sistema te lo informa), confirmá el total incluyendo el costo de envío antes de generar el <ORDER>.`;
+  }
+
   return `Eres ${botName}, la asistente de ${tenant.name}. Tu personalidad: ${personality}.
 IMPORTANTE: Siempre respondés en el MISMO IDIOMA que usa el cliente. Si escribe en español, respondés en español rioplatense. Si escribe en inglés, respondés en inglés. Si escribe en portugués, respondés en portugués. Adaptate automáticamente. Nunca decís que sos un bot.
 
 CATÁLOGO ACTUAL:
 ${catalog}
 ${paymentBlock}
+${deliveryBlock}
 
 REGLAS:
 1. Solo ofrecés productos con stock disponible (>0 unidades).
-1b. NUNCA inventes restricciones o limitaciones que no están en el catálogo. Si un producto existe y tiene stock, se puede vender — punto. No digas "solo vendemos en pack", "no vendemos por unidad", ni ninguna limitación inventada. Si está en el catálogo con stock, se vende.
-1c. Si el cliente pide algo y no lo encontrás en el catálogo, buscá bien antes de decir que no lo tenés. Leé el catálogo completo.
-2. Cuando el cliente quiera pedir, confirmá productos, cantidades y dirección de entrega.
-3. Una vez que el cliente CONFIRME EXPLÍCITAMENTE el pedido (frases como "sí", "confirmado", "dale", "lo quiero", "perfecto", "ok", "listo"), respondé de forma natural Y agregá al final de tu respuesta, en una línea separada, exactamente este bloque JSON:
+1b. NUNCA inventes restricciones o limitaciones que no están en el catálogo. Si un producto existe y tiene stock, se puede vender. No digas "solo vendemos en pack", "no vendemos por unidad", ni ninguna limitación inventada.
+1c. Si el cliente pide algo y no lo encontrás en el catálogo, buscá bien antes de decir que no lo tenés.
+2. Cuando el cliente quiera pedir, confirmá productos y cantidades.
+3. Una vez que el cliente CONFIRME EXPLÍCITAMENTE el pedido y la entrega esté resuelta (retiro o envío con tarifa confirmada), respondé de forma natural Y agregá al final:
 <ORDER>{"items":[{"name":"NOMBRE_EXACTO_DEL_PRODUCTO","qty":1,"price_guarani":0}],"total_guarani":0,"delivery_fee":0}</ORDER>
-4. Completá el JSON con los datos reales del pedido.
+4. Completá el JSON con los datos reales. En delivery_fee poné el costo de envío (0 si retira en local).
 5. Después de confirmar un pedido, incluí las instrucciones de pago en tu respuesta (si están disponibles).
-6. Si el cliente pregunta por o menciona un producto específico que tiene foto, incluí al final de tu respuesta una línea exactamente así (sin modificar):
-<SHOW_IMAGE:NOMBRE_EXACTO_DEL_PRODUCTO>
-7. Si en cualquier mensaje el cliente menciona su nombre (frases como "soy María", "me llamo Juan", "hola, soy Francesco"), incluí al final de tu respuesta exactamente esta línea (solo la primera vez que lo detectes):
-<CUSTOMER_NAME:NOMBRE_DEL_CLIENTE>
+6. Si el cliente pregunta por un producto que tiene foto: <SHOW_IMAGE:NOMBRE_EXACTO_DEL_PRODUCTO>
+7. Si el cliente menciona su nombre por primera vez: <CUSTOMER_NAME:NOMBRE_DEL_CLIENTE>
 8. Si el cliente no confirma o solo pregunta, NO incluyas el bloque <ORDER>.
 9. Sé breve, cálido, y usá emojis con moderación.`;
 }
 
-async function chat({ tenant, stock, history, userMessage }) {
-  const systemPrompt = buildSystemPrompt(tenant, stock);
+async function chat({ tenant, stock, history, userMessage, convState }) {
+  const systemPrompt = buildSystemPrompt(tenant, stock, convState || {});
 
   const messages = [
     ...history,
@@ -92,13 +118,29 @@ async function chat({ tenant, stock, history, userMessage }) {
     cleanReply = cleanReply.replace(/<CUSTOMER_NAME:.+?>/, '').trim();
   }
 
+  // Extract DELIVERY_CHOICE tag
+  let deliveryChoice = null;
+  const choiceMatch = cleanReply.match(/<DELIVERY_CHOICE:(retiro|envio)>/i);
+  if (choiceMatch) {
+    deliveryChoice = choiceMatch[1].toLowerCase();
+    cleanReply = cleanReply.replace(/<DELIVERY_CHOICE:(retiro|envio)>/i, '').trim();
+  }
+
+  // Extract DELIVERY_ADDRESS tag
+  let deliveryAddress = null;
+  const addrMatch = cleanReply.match(/<DELIVERY_ADDRESS:(.+?)>/);
+  if (addrMatch) {
+    deliveryAddress = addrMatch[1].trim();
+    cleanReply = cleanReply.replace(/<DELIVERY_ADDRESS:.+?>/, '').trim();
+  }
+
   const updatedHistory = [
     ...history,
     { role: 'user', content: userMessage },
     { role: 'assistant', content: rawReply }
   ].slice(-MAX_HISTORY);
 
-  return { reply: cleanReply, order, imageProductName, customerName, updatedHistory };
+  return { reply: cleanReply, order, imageProductName, customerName, deliveryChoice, deliveryAddress, updatedHistory };
 }
 
 module.exports = { chat };

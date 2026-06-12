@@ -41,7 +41,7 @@ router.post('/login', async (req, res) => {
   // Accept login by slug OR by phone_number_id (backward compat)
   const { data: tenant } = await supabase
     .from('tenants')
-    .select('id, name, phone_number_id, admin_password_hash, bot_name, login_slug')
+    .select('id, name, phone_number_id, admin_password_hash, bot_name, login_slug, active')
     .or(`login_slug.eq.${username},phone_number_id.eq.${username}`)
     .maybeSingle();
 
@@ -73,7 +73,11 @@ router.post('/login', async (req, res) => {
 router.get('/settings', requireAuth, async (req, res) => {
   const { data, error } = await supabase
     .from('tenants')
-    .select('bot_name, bot_personality, merchant_phone, payment_instructions')
+    .select(`bot_name, bot_personality, merchant_phone, payment_instructions,
+             delivery_enabled, location_address, location_lat, location_lng,
+             delivery_type, delivery_base_fee, delivery_zone_km,
+             delivery_zone_outer_fee, delivery_per_km,
+             delivery_min_order, delivery_disabled_dates`)
     .eq('id', req.tenant.tenantId)
     .single();
   if (error) return res.status(500).json({ error: error.message });
@@ -83,12 +87,17 @@ router.get('/settings', requireAuth, async (req, res) => {
 // ─── PUT /admin/settings ──────────────────────────────────────────────────────
 
 router.put('/settings', requireAuth, async (req, res) => {
-  const { bot_name, bot_personality, merchant_phone, payment_instructions } = req.body;
+  const allowed = [
+    'bot_name','bot_personality','merchant_phone','payment_instructions',
+    'delivery_enabled','location_address','location_lat','location_lng',
+    'delivery_type','delivery_base_fee','delivery_zone_km',
+    'delivery_zone_outer_fee','delivery_per_km',
+    'delivery_min_order','delivery_disabled_dates'
+  ];
   const updates = {};
-  if (bot_name            !== undefined) updates.bot_name            = bot_name;
-  if (bot_personality     !== undefined) updates.bot_personality     = bot_personality;
-  if (merchant_phone      !== undefined) updates.merchant_phone      = merchant_phone;
-  if (payment_instructions !== undefined) updates.payment_instructions = payment_instructions;
+  for (const key of allowed) {
+    if (req.body[key] !== undefined) updates[key] = req.body[key];
+  }
 
   const { error } = await supabase
     .from('tenants').update(updates).eq('id', req.tenant.tenantId);

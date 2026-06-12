@@ -291,6 +291,90 @@
         </button>
       </div>
 
+      <!-- Delivery settings -->
+      <div class="bg-white rounded-xl shadow-sm p-6">
+        <h3 class="font-medium text-gray-800 mb-1">🚚 Envíos a domicilio</h3>
+        <p class="text-xs text-gray-400 mb-4">Configurá si ofrecés entregas, la dirección de tu local y el costo.</p>
+        <div id="deliveryMsg" class="hidden rounded-lg px-4 py-2 text-sm mb-4"></div>
+
+        <div class="flex items-center gap-3 mb-4">
+          <input id="sDeliveryEnabled" type="checkbox" class="w-4 h-4 accent-green-600"/>
+          <label for="sDeliveryEnabled" class="text-sm font-medium text-gray-700">Activar envíos</label>
+        </div>
+
+        <div id="deliveryFields">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Dirección del local</label>
+          <input id="sLocationAddress" type="text" placeholder="Ej: Av. Mariscal López 1234, Asunción"
+            class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-3"/>
+
+          <div class="grid grid-cols-2 gap-3 mb-3">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Latitud</label>
+              <input id="sLocationLat" type="number" step="any" placeholder="-25.2867"
+                class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Longitud</label>
+              <input id="sLocationLng" type="number" step="any" placeholder="-57.6470"
+                class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
+            </div>
+          </div>
+          <p class="text-xs text-gray-400 mb-4">Abrí Google Maps, buscá tu local, clic derecho → "¿Qué hay aquí?" y copiá las coordenadas.</p>
+
+          <label class="block text-sm font-medium text-gray-700 mb-1">Tipo de tarifa</label>
+          <select id="sDeliveryType" onchange="updateDeliveryFields()"
+            class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-4">
+            <option value="fixed">Tarifa fija</option>
+            <option value="zone">Por zona (km)</option>
+            <option value="per_km">Por kilómetro</option>
+          </select>
+
+          <!-- Fixed / base fee (always shown) -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1" id="baseFeeLabel">Costo de envío (Gs)</label>
+            <input id="sDeliveryBaseFee" type="number" min="0" placeholder="15000"
+              class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-3"/>
+          </div>
+
+          <!-- Zone fields -->
+          <div id="zoneFields" class="hidden space-y-3 mb-3">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Radio zona interior (km)</label>
+              <input id="sDeliveryZoneKm" type="number" min="0" placeholder="5"
+                class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Costo fuera de zona (Gs, 0 = sin envío)</label>
+              <input id="sDeliveryZoneOuterFee" type="number" min="0" placeholder="0"
+                class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
+            </div>
+          </div>
+
+          <!-- Per-km fee -->
+          <div id="perKmField" class="hidden mb-3">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Costo adicional por km (Gs)</label>
+            <input id="sDeliveryPerKm" type="number" min="0" placeholder="2000"
+              class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
+          </div>
+
+          <label class="block text-sm font-medium text-gray-700 mb-1">Monto mínimo para envío (Gs)</label>
+          <input id="sDeliveryMinOrder" type="number" min="0" placeholder="0"
+            class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-3"/>
+          <p class="text-xs text-gray-400 mb-4">Dejá en 0 para no tener mínimo.</p>
+
+          <label class="block text-sm font-medium text-gray-700 mb-1">Días/fechas sin envío</label>
+          <input id="sDeliveryDisabledDates" type="text"
+            placeholder="domingo, 2026-12-25, 2026-01-01"
+            class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-1"/>
+          <p class="text-xs text-gray-400 mb-4">Separados por coma. Podés poner nombres de días (domingo, sabado) o fechas exactas (AAAA-MM-DD).</p>
+        </div>
+
+        <button onclick="saveDelivery()"
+          class="btn-green w-full py-2 rounded-lg text-sm font-semibold">
+          Guardar configuración de envíos
+        </button>
+      </div>
+
       <!-- Change password -->
       <div class="bg-white rounded-xl shadow-sm p-6">
         <h3 class="font-medium text-gray-800 mb-3">🔒 Cambiar contraseña</h3>
@@ -888,7 +972,59 @@ async function loadSettings() {
     document.getElementById('sPayment').value        = s.payment_instructions || '';
     document.getElementById('sMerchantPhone').value  = s.merchant_phone || '';
     initPresets(s.bot_personality);
+
+    // Delivery
+    document.getElementById('sDeliveryEnabled').checked      = !!s.delivery_enabled;
+    document.getElementById('sLocationAddress').value        = s.location_address || '';
+    document.getElementById('sLocationLat').value            = s.location_lat || '';
+    document.getElementById('sLocationLng').value            = s.location_lng || '';
+    document.getElementById('sDeliveryType').value           = s.delivery_type || 'fixed';
+    document.getElementById('sDeliveryBaseFee').value        = s.delivery_base_fee ?? '';
+    document.getElementById('sDeliveryZoneKm').value         = s.delivery_zone_km ?? '';
+    document.getElementById('sDeliveryZoneOuterFee').value   = s.delivery_zone_outer_fee ?? '';
+    document.getElementById('sDeliveryPerKm').value          = s.delivery_per_km ?? '';
+    document.getElementById('sDeliveryMinOrder').value       = s.delivery_min_order ?? '';
+    document.getElementById('sDeliveryDisabledDates').value  =
+      Array.isArray(s.delivery_disabled_dates) ? s.delivery_disabled_dates.join(', ') : (s.delivery_disabled_dates || '');
+    updateDeliveryFields();
   } catch (e) { /* ignore */ }
+}
+
+function updateDeliveryFields() {
+  const type = document.getElementById('sDeliveryType').value;
+  document.getElementById('zoneFields').classList.toggle('hidden', type !== 'zone');
+  document.getElementById('perKmField').classList.toggle('hidden', type !== 'per_km');
+  document.getElementById('baseFeeLabel').textContent =
+    type === 'per_km' ? 'Tarifa base (Gs)' : 'Costo de envío (Gs)';
+}
+
+async function saveDelivery() {
+  const msgEl = document.getElementById('deliveryMsg');
+  msgEl.classList.add('hidden');
+  const disabledRaw = document.getElementById('sDeliveryDisabledDates').value;
+  const disabledArr = disabledRaw.split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+  try {
+    await api('/admin/settings', 'PUT', {
+      delivery_enabled:        document.getElementById('sDeliveryEnabled').checked,
+      location_address:        document.getElementById('sLocationAddress').value.trim() || null,
+      location_lat:            parseFloat(document.getElementById('sLocationLat').value) || null,
+      location_lng:            parseFloat(document.getElementById('sLocationLng').value) || null,
+      delivery_type:           document.getElementById('sDeliveryType').value,
+      delivery_base_fee:       parseInt(document.getElementById('sDeliveryBaseFee').value) || 0,
+      delivery_zone_km:        parseFloat(document.getElementById('sDeliveryZoneKm').value) || null,
+      delivery_zone_outer_fee: parseInt(document.getElementById('sDeliveryZoneOuterFee').value) || 0,
+      delivery_per_km:         parseInt(document.getElementById('sDeliveryPerKm').value) || 0,
+      delivery_min_order:      parseInt(document.getElementById('sDeliveryMinOrder').value) || 0,
+      delivery_disabled_dates: disabledArr,
+    });
+    msgEl.className = 'rounded-lg px-4 py-2 text-sm mb-4 bg-green-50 text-green-700';
+    msgEl.textContent = '✅ Configuración de envíos guardada.';
+    msgEl.classList.remove('hidden');
+  } catch (e) {
+    msgEl.className = 'rounded-lg px-4 py-2 text-sm mb-4 bg-red-50 text-red-700';
+    msgEl.textContent = '❌ Error al guardar.';
+    msgEl.classList.remove('hidden');
+  }
 }
 
 async function saveMerchantPhone() {

@@ -48,6 +48,30 @@ SET image_url = 'https://images.unsplash.com/photo-1566908829550-e6551b00979b?w=
 WHERE name = 'Orquídea en Maceta';
 
 -- ============================================================
+-- Migration 4: Delivery system
+-- ============================================================
+
+-- 4a. Tenants: full delivery config
+ALTER TABLE tenants
+  ADD COLUMN IF NOT EXISTS login_slug              TEXT UNIQUE,
+  ADD COLUMN IF NOT EXISTS delivery_enabled        BOOLEAN     NOT NULL DEFAULT false,
+  ADD COLUMN IF NOT EXISTS location_address        TEXT,
+  ADD COLUMN IF NOT EXISTS delivery_type           TEXT        NOT NULL DEFAULT 'fixed'
+                                                   CHECK (delivery_type IN ('fixed','zone','per_km')),
+  ADD COLUMN IF NOT EXISTS delivery_zone_km        NUMERIC(6,2),
+  ADD COLUMN IF NOT EXISTS delivery_zone_outer_fee INTEGER     NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS delivery_min_order      INTEGER     NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS delivery_disabled_dates TEXT[]      NOT NULL DEFAULT '{}';
+
+-- 4b. Conversations: delivery state per active conversation
+ALTER TABLE conversations
+  ADD COLUMN IF NOT EXISTS delivery_choice         TEXT        CHECK (delivery_choice IN ('retiro','envio')),
+  ADD COLUMN IF NOT EXISTS delivery_lat            NUMERIC(10,7),
+  ADD COLUMN IF NOT EXISTS delivery_lng            NUMERIC(10,7),
+  ADD COLUMN IF NOT EXISTS delivery_address_text   TEXT,
+  ADD COLUMN IF NOT EXISTS delivery_fee_calc       INTEGER;
+
+-- ============================================================
 -- Second sample tenant: Pastelería (for buyer demos)
 -- ============================================================
 INSERT INTO tenants (name, phone_number_id, bot_name, bot_personality, location_lat, location_lng, merchant_phone, payment_instructions)
