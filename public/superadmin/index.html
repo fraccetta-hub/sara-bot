@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sara Bot — Superadmin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .status-active   { background:#D1FAE5; color:#065F46; }
+    .status-inactive { background:#FEE2E2; color:#991B1B; }
+    .badge { font-size:.72rem; padding:2px 8px; border-radius:999px; font-weight:600; }
+    .tab-active { border-bottom:3px solid #7C3AED; color:#7C3AED; font-weight:600; }
+    input:focus,select:focus,textarea:focus { outline:2px solid #7C3AED; outline-offset:1px; }
+    .modal-bg { background:rgba(0,0,0,.5); }
+    .btn-purple { background:#7C3AED; color:#fff; }
+    .btn-purple:hover { background:#6D28D9; }
+  </style>
+</head>
+<body class="bg-gray-100 min-h-screen font-sans">
+
+<!-- ════ LOGIN ════ -->
+<div id="loginPage" class="min-h-screen flex items-center justify-center px-4">
+  <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm p-8">
+    <div class="text-center mb-6">
+      <div class="text-5xl mb-2">🛡️</div>
+      <h1 class="text-2xl font-bold text-gray-800">Superadmin</h1>
+      <p class="text-gray-500 text-sm mt-1">Sara Bot — Panel maestro</p>
+    </div>
+    <div id="loginError" class="hidden bg-red-50 text-red-700 text-sm rounded-lg px-4 py-2 mb-4"></div>
+    <input id="loginPwd" type="password" placeholder="Contraseña maestra"
+      class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-3"
+      onkeydown="if(event.key==='Enter') login()"/>
+    <button onclick="login()" class="btn-purple w-full py-2 rounded-lg text-sm font-semibold transition">
+      Ingresar
+    </button>
+  </div>
+</div>
+
+<!-- ════ DASHBOARD ════ -->
+<div id="dashPage" class="hidden">
+
+  <!-- Navbar -->
+  <nav class="bg-white border-b sticky top-0 z-10 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 flex items-center justify-between h-14">
+      <div class="flex items-center gap-2">
+        <span class="text-xl">🛡️</span>
+        <span class="font-bold text-gray-800">Sara Bot</span>
+        <span class="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full font-semibold">SUPERADMIN</span>
+      </div>
+      <button onclick="logout()" class="text-sm text-gray-500 hover:text-red-500">Salir</button>
+    </div>
+    <div class="max-w-7xl mx-auto px-4 flex gap-6 text-sm text-gray-500">
+      <button class="py-2 tab-active" id="tabTenants"  onclick="switchTab('tenants')">🏪 Clientes</button>
+      <button class="py-2"            id="tabNew"      onclick="switchTab('new')">➕ Nuevo cliente</button>
+    </div>
+  </nav>
+
+  <div class="max-w-7xl mx-auto px-4 py-6">
+
+    <!-- Stats -->
+    <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
+      <div class="bg-white rounded-xl p-4 shadow-sm text-center">
+        <div class="text-2xl font-bold text-purple-600" id="sTotalTenants">—</div>
+        <div class="text-xs text-gray-500 mt-1">Clientes totales</div>
+      </div>
+      <div class="bg-white rounded-xl p-4 shadow-sm text-center">
+        <div class="text-2xl font-bold text-green-500" id="sActiveTenants">—</div>
+        <div class="text-xs text-gray-500 mt-1">Activos</div>
+      </div>
+      <div class="bg-white rounded-xl p-4 shadow-sm text-center">
+        <div class="text-2xl font-bold text-blue-500" id="sTotalOrders">—</div>
+        <div class="text-xs text-gray-500 mt-1">Pedidos totales</div>
+      </div>
+      <div class="bg-white rounded-xl p-4 shadow-sm text-center">
+        <div class="text-2xl font-bold text-yellow-500" id="sTodayOrders">—</div>
+        <div class="text-xs text-gray-500 mt-1">Pedidos hoy</div>
+      </div>
+      <div class="bg-white rounded-xl p-4 shadow-sm text-center">
+        <div class="text-2xl font-bold text-red-400" id="sPendingOrders">—</div>
+        <div class="text-xs text-gray-500 mt-1">Pendientes</div>
+      </div>
+    </div>
+
+    <!-- ── TENANTS TAB ── -->
+    <div id="sectionTenants">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold text-gray-800">Clientes registrados</h2>
+        <input id="searchTenants" type="text" placeholder="🔍 Buscar..."
+          class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm w-48"
+          oninput="filterTenants(this.value)"/>
+      </div>
+      <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+        <table class="w-full text-sm">
+          <thead class="bg-gray-50 text-gray-500 uppercase text-xs">
+            <tr>
+              <th class="px-4 py-3 text-left">Local</th>
+              <th class="px-4 py-3 text-left hidden md:table-cell">Phone Number ID</th>
+              <th class="px-4 py-3 text-center hidden sm:table-cell">Pedidos</th>
+              <th class="px-4 py-3 text-center">Estado</th>
+              <th class="px-4 py-3 text-center">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tenantsTable">
+            <tr><td colspan="5" class="text-center py-8 text-gray-400">Cargando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── NEW TENANT TAB ── -->
+    <div id="sectionNew" class="hidden max-w-2xl">
+      <h2 class="text-lg font-semibold text-gray-800 mb-4">Registrar nuevo cliente</h2>
+      <div class="bg-white rounded-xl shadow-sm p-6">
+        <div id="newError" class="hidden bg-red-50 text-red-700 text-sm rounded-lg px-4 py-2 mb-4"></div>
+        <div id="newSuccess" class="hidden bg-green-50 text-green-700 text-sm rounded-lg px-4 py-3 mb-4"></div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="sm:col-span-2">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Nombre del local *</label>
+            <input id="nName" type="text" placeholder="Ej: Florería Las Orquídeas"
+              class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Phone Number ID (Meta) *</label>
+            <input id="nPhoneId" type="text" placeholder="Ej: 1172627905930070"
+              class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
+            <p class="text-xs text-gray-400 mt-1">Meta Developer Portal → WhatsApp → Phone Numbers</p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Nombre del bot</label>
+            <input id="nBotName" type="text" placeholder="Sara" value="Sara"
+              class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Número WhatsApp del merchant</label>
+            <input id="nMerchant" type="text" placeholder="595981000001"
+              class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Personalidad del bot</label>
+            <input id="nPersonality" type="text" placeholder="cálida, profesional y entusiasta"
+              class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Instrucciones de pago</label>
+            <textarea id="nPayment" rows="2"
+              placeholder="Ej: Pagá por Billetera Personal al 0981-000-001..."
+              class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm resize-none"></textarea>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Cargo base envío (Gs)</label>
+            <input id="nDeliveryBase" type="number" value="5000"
+              class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Cargo por km (Gs)</label>
+            <input id="nDeliveryKm" type="number" value="1000"
+              class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
+          </div>
+        </div>
+        <button onclick="createTenant()"
+          class="btn-purple w-full py-2 rounded-lg text-sm font-semibold mt-5 transition" id="createBtn">
+          Crear cliente
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════ EDIT TENANT MODAL ════ -->
+<div id="editModal" class="hidden fixed inset-0 modal-bg flex items-center justify-center z-50 px-4">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 max-h-screen overflow-y-auto">
+    <div class="flex items-center justify-between mb-5">
+      <h3 class="font-semibold text-gray-800 text-lg" id="editModalTitle">Editar cliente</h3>
+      <button onclick="closeEditModal()" class="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
+    </div>
+    <div id="editError" class="hidden bg-red-50 text-red-700 text-sm rounded-lg px-4 py-2 mb-4"></div>
+
+    <!-- Tabs dentro modal -->
+    <div class="flex gap-4 text-sm text-gray-500 border-b mb-4">
+      <button class="py-2 border-b-2 border-purple-600 text-purple-600 font-semibold" id="etabConfig" onclick="switchEditTab('config')">⚙️ Config</button>
+      <button class="py-2" id="etabProducts" onclick="switchEditTab('products')">📦 Catálogo</button>
+    </div>
+
+    <!-- Config tab -->
+    <div id="editConfig" class="space-y-3">
+      <div>
+        <label class="block text-xs font-medium text-gray-500 mb-1">Nombre del local</label>
+        <input id="eName" type="text" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Nombre del bot</label>
+          <input id="eBotName" type="text" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">WhatsApp merchant</label>
+          <input id="eMerchant" type="text" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
+        </div>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-500 mb-1">Personalidad</label>
+        <input id="ePersonality" type="text" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-500 mb-1">Instrucciones de pago</label>
+        <textarea id="ePayment" rows="2" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm resize-none"></textarea>
+      </div>
+      <div class="flex items-center gap-3 pt-1">
+        <label class="text-xs font-medium text-gray-500">Estado</label>
+        <select id="eActive" class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm">
+          <option value="true">✅ Activo</option>
+          <option value="false">🔴 Inactivo</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Products tab -->
+    <div id="editProducts" class="hidden">
+      <div class="text-xs text-gray-400 mb-3">Catálogo del cliente. Edición básica — para cambios avanzados usá Impersonar.</div>
+      <div id="editProductsList" class="space-y-2 max-h-64 overflow-y-auto">
+        <div class="text-center py-4 text-gray-400 text-sm">Cargando...</div>
+      </div>
+    </div>
+
+    <div class="flex gap-3 mt-5">
+      <button onclick="closeEditModal()"
+        class="flex-1 border border-gray-200 text-gray-600 py-2 rounded-lg text-sm hover:bg-gray-50">
+        Cancelar
+      </button>
+      <button onclick="saveTenant()"
+        class="btn-purple flex-1 py-2 rounded-lg text-sm font-semibold" id="editSaveBtn">
+        Guardar
+      </button>
+    </div>
+
+    <!-- Acciones extra -->
+    <div class="mt-4 pt-4 border-t border-gray-100 flex gap-2 flex-wrap">
+      <button onclick="impersonate()" title="Entrar al panel del comerciante"
+        class="flex-1 bg-blue-50 text-blue-600 hover:bg-blue-100 py-2 rounded-lg text-xs font-semibold transition">
+        🔑 Impersonar
+      </button>
+      <button onclick="resetPassword()" title="Resetear contraseña a sara1234"
+        class="flex-1 bg-yellow-50 text-yellow-700 hover:bg-yellow-100 py-2 rounded-lg text-xs font-semibold transition">
+        🔄 Reset contraseña
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+let TOKEN = localStorage.getItem('sara_super_token') || '';
+let allTenants = [];
+let editingTenantId = null;
+
+window.onload = () => { if (TOKEN) showDashboard(); };
+
+// ── Auth ───────────────────────────────────────────────────────────────────────
+async function login() {
+  const password = document.getElementById('loginPwd').value;
+  const errEl    = document.getElementById('loginError');
+  errEl.classList.add('hidden');
+  try {
+    const res = await api('/superadmin/login', 'POST', { password }, false);
+    TOKEN = res.token;
+    localStorage.setItem('sara_super_token', TOKEN);
+    showDashboard();
+  } catch (e) {
+    errEl.textContent = e.message;
+    errEl.classList.remove('hidden');
+  }
+}
+
+function logout() {
+  TOKEN = '';
+  localStorage.removeItem('sara_super_token');
+  document.getElementById('dashPage').classList.add('hidden');
+  document.getElementById('loginPage').classList.remove('hidden');
+}
+
+// ── Dashboard ──────────────────────────────────────────────────────────────────
+async function showDashboard() {
+  document.getElementById('loginPage').classList.add('hidden');
+  document.getElementById('dashPage').classList.remove('hidden');
+  try {
+    const [stats] = await Promise.all([api('/superadmin/stats'), loadTenants()]);
+    document.getElementById('sTotalTenants').textContent  = stats.totalTenants;
+    document.getElementById('sActiveTenants').textContent = stats.activeTenants;
+    document.getElementById('sTotalOrders').textContent   = stats.totalOrders;
+    document.getElementById('sTodayOrders').textContent   = stats.todayOrders;
+    document.getElementById('sPendingOrders').textContent = stats.pendingOrders;
+  } catch (e) {
+    if (e.status === 401) logout();
+  }
+}
+
+// ── Tabs ───────────────────────────────────────────────────────────────────────
+function switchTab(tab) {
+  ['tenants','new'].forEach(t => {
+    document.getElementById('section' + cap(t)).classList.toggle('hidden', t !== tab);
+    document.getElementById('tab'     + cap(t)).classList.toggle('tab-active', t === tab);
+  });
+}
+function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+// ── Load tenants ───────────────────────────────────────────────────────────────
+async function loadTenants() {
+  allTenants = await api('/superadmin/tenants');
+  renderTenants(allTenants);
+}
+
+function filterTenants(q) {
+  const filtered = q
+    ? allTenants.filter(t => t.name.toLowerCase().includes(q.toLowerCase()) || t.phone_number_id.includes(q))
+    : allTenants;
+  renderTenants(filtered);
+}
+
+function renderTenants(list) {
+  const tbody = document.getElementById('tenantsTable');
+  if (!list.length) {
+    tbody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-gray-400">No hay clientes.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = list.map(t => `
+    <tr class="hover:bg-gray-50 transition border-t border-gray-50">
+      <td class="px-4 py-3">
+        <div class="font-medium text-gray-800">${t.name}</div>
+        <div class="text-xs text-gray-400">${t.bot_name || 'Sara'} · desde ${new Date(t.created_at).toLocaleDateString('es-PY')}</div>
+      </td>
+      <td class="px-4 py-3 text-gray-400 text-xs hidden md:table-cell font-mono">${t.phone_number_id}</td>
+      <td class="px-4 py-3 text-center hidden sm:table-cell">
+        <span class="font-medium">${t.totalOrders}</span>
+        ${t.pendingOrders > 0 ? `<span class="ml-1 badge status-inactive">${t.pendingOrders} pend.</span>` : ''}
+      </td>
+      <td class="px-4 py-3 text-center">
+        <button onclick="toggleTenant('${t.id}')"
+          class="badge ${t.active ? 'status-active' : 'status-inactive'} cursor-pointer hover:opacity-75 transition">
+          ${t.active ? '✅ Activo' : '🔴 Inactivo'}
+        </button>
+      </td>
+      <td class="px-4 py-3 text-center">
+        <button onclick="openEditModal('${t.id}')"
+          class="text-purple-500 hover:text-purple-700 text-sm font-medium">✏️ Editar</button>
+      </td>
+    </tr>`).join('');
+}
+
+// ── Toggle active ──────────────────────────────────────────────────────────────
+async function toggleTenant(id) {
+  const t = allTenants.find(x => x.id === id);
+  const action = t?.active ? 'desactivar' : 'activar';
+  if (!confirm(`¿Seguro que querés ${action} "${t?.name}"?`)) return;
+  await api(`/superadmin/tenants/${id}/toggle`, 'PATCH');
+  await loadTenants();
+}
+
+// ── Edit modal ─────────────────────────────────────────────────────────────────
+async function openEditModal(id) {
+  editingTenantId = id;
+  const t = await api(`/superadmin/tenants/${id}`);
+  document.getElementById('editModalTitle').textContent = t.name;
+  document.getElementById('eName').value        = t.name        || '';
+  document.getElementById('eBotName').value     = t.bot_name    || '';
+  document.getElementById('eMerchant').value    = t.merchant_phone || '';
+  document.getElementById('ePersonality').value = t.bot_personality || '';
+  document.getElementById('ePayment').value     = t.payment_instructions || '';
+  document.getElementById('eActive').value      = String(t.active);
+  document.getElementById('editError').classList.add('hidden');
+  switchEditTab('config');
+  document.getElementById('editModal').classList.remove('hidden');
+}
+
+function closeEditModal() {
+  document.getElementById('editModal').classList.add('hidden');
+  editingTenantId = null;
+}
+
+function switchEditTab(tab) {
+  document.getElementById('editConfig').classList.toggle('hidden', tab !== 'config');
+  document.getElementById('editProducts').classList.toggle('hidden', tab !== 'products');
+  document.getElementById('etabConfig').className   = tab === 'config'   ? 'py-2 border-b-2 border-purple-600 text-purple-600 font-semibold' : 'py-2 text-gray-500';
+  document.getElementById('etabProducts').className = tab === 'products' ? 'py-2 border-b-2 border-purple-600 text-purple-600 font-semibold' : 'py-2 text-gray-500';
+  if (tab === 'products') loadEditProducts();
+}
+
+async function loadEditProducts() {
+  const el = document.getElementById('editProductsList');
+  const products = await api(`/superadmin/tenants/${editingTenantId}/products`);
+  if (!products.length) {
+    el.innerHTML = '<div class="text-center py-4 text-gray-400 text-sm">Sin productos.</div>';
+    return;
+  }
+  el.innerHTML = products.map(p => `
+    <div class="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2 text-sm">
+      <div>
+        <span class="font-medium text-gray-800">${p.name}</span>
+        <span class="text-gray-400 text-xs ml-2">${p.price_guarani.toLocaleString('es-PY')} Gs</span>
+      </div>
+      <span class="badge ${p.is_available ? 'status-active' : 'status-inactive'}">
+        ${p.is_available ? `Stock: ${p.stock_qty}` : 'Agotado'}
+      </span>
+    </div>`).join('');
+}
+
+async function saveTenant() {
+  const btn = document.getElementById('editSaveBtn');
+  btn.textContent = 'Guardando...'; btn.disabled = true;
+  const errEl = document.getElementById('editError');
+  errEl.classList.add('hidden');
+  try {
+    await api(`/superadmin/tenants/${editingTenantId}`, 'PUT', {
+      name:                 document.getElementById('eName').value.trim(),
+      bot_name:             document.getElementById('eBotName').value.trim(),
+      merchant_phone:       document.getElementById('eMerchant').value.trim() || null,
+      bot_personality:      document.getElementById('ePersonality').value.trim(),
+      payment_instructions: document.getElementById('ePayment').value.trim() || null,
+      active:               document.getElementById('eActive').value === 'true',
+    });
+    closeEditModal();
+    await loadTenants();
+  } catch (e) {
+    errEl.textContent = e.message;
+    errEl.classList.remove('hidden');
+  } finally {
+    btn.textContent = 'Guardar'; btn.disabled = false;
+  }
+}
+
+// ── Impersonate ────────────────────────────────────────────────────────────────
+async function impersonate() {
+  const res = await api(`/superadmin/tenants/${editingTenantId}/impersonate`, 'POST');
+  // Open admin panel in new tab with the merchant token pre-loaded
+  const url = `/admin/index.html?token=${encodeURIComponent(res.token)}&name=${encodeURIComponent(res.tenantName)}`;
+  window.open(url, '_blank');
+}
+
+// ── Reset password ─────────────────────────────────────────────────────────────
+async function resetPassword() {
+  if (!confirm('¿Resetear la contraseña del comerciante a "sara1234"?')) return;
+  await api(`/superadmin/tenants/${editingTenantId}/reset-password`, 'POST');
+  alert('✅ Contraseña reseteada a sara1234');
+}
+
+// ── Create tenant ──────────────────────────────────────────────────────────────
+async function createTenant() {
+  const btn     = document.getElementById('createBtn');
+  const errEl   = document.getElementById('newError');
+  const succEl  = document.getElementById('newSuccess');
+  errEl.classList.add('hidden');
+  succEl.classList.add('hidden');
+  btn.textContent = 'Creando...'; btn.disabled = true;
+
+  try {
+    const t = await api('/superadmin/tenants', 'POST', {
+      name:                 document.getElementById('nName').value.trim(),
+      phone_number_id:      document.getElementById('nPhoneId').value.trim(),
+      bot_name:             document.getElementById('nBotName').value.trim() || 'Sara',
+      bot_personality:      document.getElementById('nPersonality').value.trim() || null,
+      merchant_phone:       document.getElementById('nMerchant').value.trim() || null,
+      payment_instructions: document.getElementById('nPayment').value.trim() || null,
+      delivery_base_fee:    parseInt(document.getElementById('nDeliveryBase').value) || 5000,
+      delivery_per_km:      parseInt(document.getElementById('nDeliveryKm').value)   || 1000,
+    });
+
+    succEl.innerHTML = `
+      ✅ <b>${t.name}</b> creado correctamente.<br>
+      <span class="text-xs">Credenciales para el comerciante:<br>
+      🔑 Phone Number ID: <b>${t.phone_number_id}</b><br>
+      🔒 Contraseña inicial: <b>sara1234</b><br>
+      🌐 Panel: <b>sarapedidos.py/admin</b></span>`;
+    succEl.classList.remove('hidden');
+
+    // Clear form
+    ['nName','nPhoneId','nMerchant','nPersonality','nPayment'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('nBotName').value      = 'Sara';
+    document.getElementById('nDeliveryBase').value = '5000';
+    document.getElementById('nDeliveryKm').value   = '1000';
+
+    await loadTenants();
+    switchTab('tenants');
+  } catch (e) {
+    errEl.textContent = e.message;
+    errEl.classList.remove('hidden');
+  } finally {
+    btn.textContent = 'Crear cliente'; btn.disabled = false;
+  }
+}
+
+// ── API helper ─────────────────────────────────────────────────────────────────
+async function api(path, method = 'GET', body = null, auth = true) {
+  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  if (auth && TOKEN) opts.headers['Authorization'] = 'Bearer ' + TOKEN;
+  if (body) opts.body = JSON.stringify(body);
+  const res  = await fetch(path, opts);
+  const data = await res.json();
+  if (!res.ok) { const e = new Error(data.error || 'Error'); e.status = res.status; throw e; }
+  return data;
+}
+</script>
+</body>
+</html>

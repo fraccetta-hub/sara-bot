@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sara Bot — Panel de administración</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root { --green: #25D366; }
+    .btn-green { background:#25D366; color:#fff; }
+    .btn-green:hover { background:#1da851; }
+    .status-badge { font-size:.72rem; padding:2px 8px; border-radius:999px; font-weight:600; }
+    .status-pending    { background:#FEF3C7; color:#92400E; }
+    .status-confirmed  { background:#D1FAE5; color:#065F46; }
+    .status-preparing  { background:#DBEAFE; color:#1E40AF; }
+    .status-delivering { background:#EDE9FE; color:#5B21B6; }
+    .status-delivered  { background:#D1FAE5; color:#065F46; }
+    .status-cancelled  { background:#FEE2E2; color:#991B1B; }
+    .tab-active { border-bottom:3px solid #25D366; color:#25D366; font-weight:600; }
+    input:focus,select:focus,textarea:focus { outline:2px solid #25D366; outline-offset:1px; }
+    .modal-bg { background:rgba(0,0,0,.45); }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen font-sans">
+
+<!-- ════ LOGIN ════ -->
+<div id="loginPage" class="min-h-screen flex items-center justify-center px-4">
+  <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm p-8">
+    <div class="text-center mb-6">
+      <div class="text-5xl mb-2">🌸</div>
+      <h1 class="text-2xl font-bold text-gray-800">Sara Bot</h1>
+      <p class="text-gray-500 text-sm mt-1">Panel de administración</p>
+    </div>
+    <div id="loginError" class="hidden bg-red-50 text-red-700 text-sm rounded-lg px-4 py-2 mb-4"></div>
+    <div class="space-y-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">ID de tu número WhatsApp Business</label>
+        <input id="loginPhoneId" type="text" placeholder="Ej: 1172627905930070"
+          class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
+        <input id="loginPassword" type="password" placeholder="••••••••"
+          class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"
+          onkeydown="if(event.key==='Enter') login()"/>
+      </div>
+      <button onclick="login()"
+        class="btn-green w-full py-2 rounded-lg text-sm font-semibold transition">
+        Ingresar
+      </button>
+    </div>
+    <p class="text-center text-xs text-gray-400 mt-6">Primera vez: contraseña <b>sara1234</b></p>
+  </div>
+</div>
+
+<!-- ════ DASHBOARD ════ -->
+<div id="dashPage" class="hidden">
+
+  <!-- Navbar -->
+  <nav class="bg-white border-b border-gray-100 sticky top-0 z-10 shadow-sm">
+    <div class="max-w-6xl mx-auto px-4 flex items-center justify-between h-14">
+      <div class="flex items-center gap-2">
+        <span class="text-2xl">🌸</span>
+        <span class="font-bold text-gray-800" id="navTitle">Sara Bot</span>
+        <span class="text-gray-400 text-sm hidden sm:block" id="navTenant"></span>
+      </div>
+      <button onclick="logout()" class="text-sm text-gray-500 hover:text-red-500 transition">Salir</button>
+    </div>
+    <!-- Tabs -->
+    <div class="max-w-6xl mx-auto px-4 flex gap-6 text-sm text-gray-500">
+      <button class="py-2 tab-active" id="tabProducts" onclick="switchTab('products')">📦 Catálogo</button>
+      <button class="py-2" id="tabOrders" onclick="switchTab('orders')">🛒 Pedidos</button>
+      <button class="py-2" id="tabSettings" onclick="switchTab('settings')">⚙️ Ajustes</button>
+    </div>
+  </nav>
+
+  <div class="max-w-6xl mx-auto px-4 py-6">
+
+    <!-- Stats bar -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6" id="statsBar">
+      <div class="bg-white rounded-xl p-4 shadow-sm text-center">
+        <div class="text-2xl font-bold text-green-500" id="statToday">—</div>
+        <div class="text-xs text-gray-500 mt-1">Pedidos hoy</div>
+      </div>
+      <div class="bg-white rounded-xl p-4 shadow-sm text-center">
+        <div class="text-2xl font-bold text-yellow-500" id="statPending">—</div>
+        <div class="text-xs text-gray-500 mt-1">Pendientes</div>
+      </div>
+      <div class="bg-white rounded-xl p-4 shadow-sm text-center">
+        <div class="text-lg font-bold text-blue-500" id="statRevenue">—</div>
+        <div class="text-xs text-gray-500 mt-1">Ingresos hoy</div>
+      </div>
+      <div class="bg-white rounded-xl p-4 shadow-sm text-center">
+        <div class="text-2xl font-bold text-purple-500" id="statProducts">—</div>
+        <div class="text-xs text-gray-500 mt-1">Productos activos</div>
+      </div>
+    </div>
+
+    <!-- ── PRODUCTS TAB ── -->
+    <div id="sectionProducts">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold text-gray-800">Catálogo de productos</h2>
+        <button onclick="openProductModal(null)"
+          class="btn-green px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-1">
+          + Nuevo producto
+        </button>
+      </div>
+
+      <!-- Category filter -->
+      <div class="flex gap-2 mb-4 flex-wrap" id="categoryFilters"></div>
+
+      <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+        <table class="w-full text-sm">
+          <thead class="bg-gray-50 text-gray-500 uppercase text-xs">
+            <tr>
+              <th class="px-4 py-3 text-left">Producto</th>
+              <th class="px-4 py-3 text-left hidden sm:table-cell">Categoría</th>
+              <th class="px-4 py-3 text-right">Precio (Gs)</th>
+              <th class="px-4 py-3 text-center">Stock</th>
+              <th class="px-4 py-3 text-center">Estado</th>
+              <th class="px-4 py-3 text-center">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="productsTable" class="divide-y divide-gray-50">
+            <tr><td colspan="6" class="text-center py-8 text-gray-400">Cargando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── ORDERS TAB ── -->
+    <div id="sectionOrders" class="hidden">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold text-gray-800">Pedidos recientes</h2>
+        <button onclick="loadOrders()" class="text-sm text-green-500 hover:underline">↻ Actualizar</button>
+      </div>
+      <div class="space-y-3" id="ordersList">
+        <div class="text-center py-8 text-gray-400">Cargando...</div>
+      </div>
+    </div>
+
+    <!-- ── SETTINGS TAB ── -->
+    <div id="sectionSettings" class="hidden max-w-xl space-y-5">
+      <h2 class="text-lg font-semibold text-gray-800">Ajustes</h2>
+
+      <!-- Bot personality -->
+      <div class="bg-white rounded-xl shadow-sm p-6">
+        <h3 class="font-medium text-gray-800 mb-1">🤖 Personalidad de tu asistente</h3>
+        <p class="text-xs text-gray-400 mb-4">Esto define cómo habla Sara con tus clientes.</p>
+        <div id="settingsMsg" class="hidden rounded-lg px-4 py-2 text-sm mb-4"></div>
+
+        <!-- Bot name -->
+        <label class="block text-sm font-medium text-gray-700 mb-1">Nombre del bot</label>
+        <input id="sBotName" type="text" placeholder="Sara"
+          class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-4"/>
+
+        <!-- Presets -->
+        <label class="block text-sm font-medium text-gray-700 mb-2">Estilo de personalidad</label>
+        <div class="grid grid-cols-1 gap-2 mb-3" id="presetGrid"></div>
+
+        <!-- Custom textarea — shown when "Personalizada" is selected -->
+        <div id="customPersonalityWrap" class="hidden">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Descripción personalizada</label>
+          <textarea id="sPersonalityCustom" rows="3"
+            placeholder="Ej: Sos Luna, una chica apasionada por las flores que habla de forma poética..."
+            class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm resize-none"
+            oninput="onCustomPersonalityInput()"></textarea>
+          <p class="text-xs text-gray-400 mt-1">Describí la personalidad en detalle — cuanto más específico, mejor.</p>
+        </div>
+
+        <button onclick="saveSettings()"
+          class="btn-green w-full py-2 rounded-lg text-sm font-semibold mt-4">
+          Guardar personalidad
+        </button>
+      </div>
+
+      <!-- Payment instructions -->
+      <div class="bg-white rounded-xl shadow-sm p-6">
+        <h3 class="font-medium text-gray-800 mb-1">💳 Instrucciones de pago</h3>
+        <p class="text-xs text-gray-400 mb-3">Sara las envía automáticamente después de cada pedido confirmado.</p>
+        <div id="paymentMsg" class="hidden rounded-lg px-4 py-2 text-sm mb-3"></div>
+        <textarea id="sPayment" rows="3"
+          placeholder="Ej: Pagá por Billetera Personal al 0981-000-001 (Florería Las Orquídeas) o transferencia BNF 000-123456. Envianos el comprobante 🧾"
+          class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm resize-none mb-3"></textarea>
+        <button onclick="savePayment()"
+          class="btn-green w-full py-2 rounded-lg text-sm font-semibold">
+          Guardar instrucciones de pago
+        </button>
+      </div>
+
+      <!-- Change password -->
+      <div class="bg-white rounded-xl shadow-sm p-6">
+        <h3 class="font-medium text-gray-800 mb-3">🔒 Cambiar contraseña</h3>
+        <div id="pwdMsg" class="hidden rounded-lg px-4 py-2 text-sm mb-3"></div>
+        <input id="newPwd" type="password" placeholder="Nueva contraseña (mín. 6 caracteres)"
+          class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-3"/>
+        <button onclick="changePassword()"
+          class="btn-green w-full py-2 rounded-lg text-sm font-semibold">
+          Guardar contraseña
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════ PRODUCT MODAL ════ -->
+<div id="productModal" class="hidden fixed inset-0 modal-bg flex items-center justify-center z-50 px-4">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 max-h-screen overflow-y-auto">
+    <div class="flex items-center justify-between mb-5">
+      <h3 class="font-semibold text-gray-800 text-lg" id="modalTitle">Nuevo producto</h3>
+      <button onclick="closeProductModal()" class="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
+    </div>
+    <div id="modalError" class="hidden bg-red-50 text-red-700 text-sm rounded-lg px-4 py-2 mb-4"></div>
+    <div class="space-y-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
+        <input id="pName" type="text" placeholder="Ej: Ramo de Rosas Rojas (12 unidades)"
+          class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
+          <input id="pCategory" type="text" placeholder="Ej: Ramos"
+            class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Precio (Gs) *</label>
+          <input id="pPrice" type="number" placeholder="150000"
+            class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
+        </div>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Stock disponible</label>
+        <input id="pStock" type="number" placeholder="10" min="0"
+          class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+        <textarea id="pDesc" rows="2" placeholder="Descripción breve del producto..."
+          class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm resize-none"></textarea>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Foto del producto</label>
+        <!-- Preview -->
+        <div id="imagePreviewWrap" class="hidden mb-2 relative w-fit">
+          <img id="imagePreview" class="h-28 w-28 rounded-xl object-cover border border-gray-200"/>
+          <button onclick="clearImage()"
+            class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 text-xs leading-5 text-center hover:bg-red-600">✕</button>
+        </div>
+        <!-- Upload zone -->
+        <label id="uploadZone"
+          class="flex flex-col items-center justify-center border-2 border-dashed border-gray-200 rounded-xl py-4 px-3 cursor-pointer hover:border-green-400 transition text-center">
+          <span class="text-2xl mb-1">📸</span>
+          <span class="text-sm text-gray-500">Tocá para subir una foto</span>
+          <span class="text-xs text-gray-400 mt-0.5">JPG, PNG — máx. 10 MB</span>
+          <input id="pImageFile" type="file" accept="image/*" class="hidden" onchange="previewImage(this)"/>
+        </label>
+        <!-- Fallback URL -->
+        <div class="flex items-center gap-2 mt-2">
+          <div class="flex-1 h-px bg-gray-100"></div>
+          <span class="text-xs text-gray-400">o pegá una URL</span>
+          <div class="flex-1 h-px bg-gray-100"></div>
+        </div>
+        <input id="pImage" type="url" placeholder="https://..."
+          class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mt-2"
+          oninput="previewFromUrl(this.value)"/>
+      </div>
+    </div>
+    <div class="flex gap-3 mt-6">
+      <button onclick="closeProductModal()"
+        class="flex-1 border border-gray-200 text-gray-600 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition">
+        Cancelar
+      </button>
+      <button onclick="saveProduct()"
+        class="btn-green flex-1 py-2 rounded-lg text-sm font-semibold transition">
+        Guardar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ════ CONFIRM DELETE MODAL ════ -->
+<div id="deleteModal" class="hidden fixed inset-0 modal-bg flex items-center justify-center z-50 px-4">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center">
+    <div class="text-4xl mb-3">🗑️</div>
+    <h3 class="font-semibold text-gray-800 mb-2">¿Eliminar producto?</h3>
+    <p class="text-sm text-gray-500 mb-5" id="deleteProductName"></p>
+    <div class="flex gap-3">
+      <button onclick="closeDeleteModal()"
+        class="flex-1 border border-gray-200 text-gray-600 py-2 rounded-lg text-sm font-medium hover:bg-gray-50">
+        Cancelar
+      </button>
+      <button onclick="confirmDelete()"
+        class="flex-1 bg-red-500 text-white py-2 rounded-lg text-sm font-semibold hover:bg-red-600">
+        Eliminar
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────────────────
+let TOKEN = localStorage.getItem('sara_token') || '';
+let products = [];
+let editingProductId = null;
+let deletingProductId = null;
+let activeCategory = 'all';
+
+// ── Boot ───────────────────────────────────────────────────────────────────────
+window.onload = () => {
+  // Support impersonation: superadmin passes ?token=xxx&name=yyy
+  const params = new URLSearchParams(window.location.search);
+  const urlToken = params.get('token');
+  const urlName  = params.get('name');
+  if (urlToken) {
+    TOKEN = urlToken;
+    localStorage.setItem('sara_token', TOKEN);
+    if (urlName) {
+      document.getElementById('navTitle').textContent  = 'Sara';
+      document.getElementById('navTenant').textContent = '— ' + decodeURIComponent(urlName);
+    }
+    // Clean URL without reload
+    window.history.replaceState({}, '', '/admin/index.html');
+    showDashboard();
+    return;
+  }
+  if (TOKEN) { showDashboard(); }
+};
+
+// ── Auth ───────────────────────────────────────────────────────────────────────
+async function login() {
+  const phone_number_id = document.getElementById('loginPhoneId').value.trim();
+  const password        = document.getElementById('loginPassword').value;
+  const errEl           = document.getElementById('loginError');
+  errEl.classList.add('hidden');
+
+  try {
+    const res  = await api('/admin/login', 'POST', { phone_number_id, password }, false);
+    TOKEN = res.token;
+    localStorage.setItem('sara_token', TOKEN);
+    document.getElementById('navTitle').textContent  = res.botName || 'Sara Bot';
+    document.getElementById('navTenant').textContent = '— ' + res.tenantName;
+    showDashboard();
+  } catch (e) {
+    errEl.textContent = e.message;
+    errEl.classList.remove('hidden');
+  }
+}
+
+function logout() {
+  TOKEN = '';
+  localStorage.removeItem('sara_token');
+  document.getElementById('dashPage').classList.add('hidden');
+  document.getElementById('loginPage').classList.remove('hidden');
+}
+
+// ── Dashboard ──────────────────────────────────────────────────────────────────
+async function showDashboard() {
+  document.getElementById('loginPage').classList.add('hidden');
+  document.getElementById('dashPage').classList.remove('hidden');
+  try {
+    const [stats] = await Promise.all([
+      api('/admin/stats'),
+      loadProducts(),
+    ]);
+    document.getElementById('statToday').textContent    = stats.todayOrders;
+    document.getElementById('statPending').textContent  = stats.pendingOrders;
+    document.getElementById('statRevenue').textContent  = formatGs(stats.todayRevenue);
+    document.getElementById('statProducts').textContent = stats.activeProducts + '/' + stats.totalProducts;
+  } catch (e) {
+    if (e.status === 401) logout();
+  }
+}
+
+// ── Tab switching ──────────────────────────────────────────────────────────────
+function switchTab(tab) {
+  ['products','orders','settings'].forEach(t => {
+    document.getElementById('section' + cap(t)).classList.toggle('hidden', t !== tab);
+    document.getElementById('tab' + cap(t)).classList.toggle('tab-active', t === tab);
+  });
+  if (tab === 'orders')   loadOrders();
+  if (tab === 'settings') loadSettings();
+}
+function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+// ── Products ───────────────────────────────────────────────────────────────────
+async function loadProducts() {
+  products = await api('/admin/products');
+  renderCategoryFilters();
+  renderProducts();
+}
+
+function renderCategoryFilters() {
+  const cats = ['all', ...new Set(products.map(p => p.category).filter(Boolean))];
+  const el = document.getElementById('categoryFilters');
+  el.innerHTML = cats.map(c => `
+    <button onclick="filterCategory('${c}')"
+      class="px-3 py-1 rounded-full text-xs font-medium border transition ${activeCategory === c ? 'bg-green-500 text-white border-green-500' : 'bg-white text-gray-600 border-gray-200 hover:border-green-400'}">
+      ${c === 'all' ? 'Todos' : c}
+    </button>`).join('');
+}
+
+function filterCategory(cat) {
+  activeCategory = cat;
+  renderCategoryFilters();
+  renderProducts();
+}
+
+function renderProducts() {
+  const filtered = activeCategory === 'all' ? products : products.filter(p => p.category === activeCategory);
+  const tbody = document.getElementById('productsTable');
+  if (!filtered.length) {
+    tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-400">No hay productos en esta categoría.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = filtered.map(p => `
+    <tr class="hover:bg-gray-50 transition">
+      <td class="px-4 py-3">
+        <div class="flex items-center gap-3">
+          ${p.image_url ? `<img src="${p.image_url}" class="w-10 h-10 rounded-lg object-cover border border-gray-100" onerror="this.style.display='none'"/>` : '<div class="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400 text-lg">📦</div>'}
+          <span class="font-medium text-gray-800">${p.name}</span>
+        </div>
+      </td>
+      <td class="px-4 py-3 text-gray-500 hidden sm:table-cell">${p.category || '—'}</td>
+      <td class="px-4 py-3 text-right font-medium">${formatGs(p.price_guarani)}</td>
+      <td class="px-4 py-3 text-center">
+        <input type="number" value="${p.stock_qty}" min="0"
+          class="w-16 border border-gray-200 rounded-lg px-2 py-1 text-center text-sm"
+          onchange="quickUpdateStock('${p.id}', this.value)"/>
+      </td>
+      <td class="px-4 py-3 text-center">
+        <button onclick="toggleAvailable('${p.id}', ${!p.is_available})"
+          class="status-badge ${p.is_available ? 'status-confirmed' : 'status-cancelled'} cursor-pointer hover:opacity-80">
+          ${p.is_available ? '✅ Activo' : '🔴 Agotado'}
+        </button>
+      </td>
+      <td class="px-4 py-3 text-center">
+        <div class="flex items-center justify-center gap-2">
+          <button onclick="openProductModal('${p.id}')" class="text-blue-500 hover:text-blue-700 text-sm">✏️</button>
+          <button onclick="openDeleteModal('${p.id}', '${p.name.replace(/'/g,"\\'")}')}" class="text-red-400 hover:text-red-600 text-sm">🗑️</button>
+        </div>
+      </td>
+    </tr>`).join('');
+}
+
+async function quickUpdateStock(id, qty) {
+  await api(`/admin/products/${id}`, 'PUT', { stock_qty: parseInt(qty) });
+  await loadProducts();
+}
+
+async function toggleAvailable(id, val) {
+  await api(`/admin/products/${id}`, 'PUT', { is_available: val, stock_qty: val ? 1 : 0 });
+  await loadProducts();
+}
+
+// ── Product modal ──────────────────────────────────────────────────────────────
+function openProductModal(id) {
+  editingProductId = id;
+  const p = id ? products.find(x => x.id === id) : null;
+  document.getElementById('modalTitle').textContent = p ? 'Editar producto' : 'Nuevo producto';
+  document.getElementById('pName').value     = p?.name          || '';
+  document.getElementById('pCategory').value = p?.category      || '';
+  document.getElementById('pPrice').value    = p?.price_guarani || '';
+  document.getElementById('pStock').value    = p?.stock_qty     ?? '';
+  document.getElementById('pDesc').value     = p?.description   || '';
+  document.getElementById('pImage').value    = p?.image_url     || '';
+  document.getElementById('pImageFile').value = '';
+  document.getElementById('modalError').classList.add('hidden');
+  // Show existing image preview if available
+  if (p?.image_url) {
+    showImagePreview(p.image_url);
+  } else {
+    clearImage();
+  }
+  document.getElementById('productModal').classList.remove('hidden');
+}
+
+// ── Image preview helpers ──────────────────────────────────────────────────────
+function previewImage(input) {
+  if (!input.files?.[0]) return;
+  const url = URL.createObjectURL(input.files[0]);
+  showImagePreview(url);
+  document.getElementById('pImage').value = ''; // clear URL field
+}
+
+function previewFromUrl(url) {
+  if (url) showImagePreview(url);
+  else clearImage();
+}
+
+function showImagePreview(src) {
+  const img  = document.getElementById('imagePreview');
+  const wrap = document.getElementById('imagePreviewWrap');
+  const zone = document.getElementById('uploadZone');
+  img.src    = src;
+  wrap.classList.remove('hidden');
+  zone.classList.add('hidden');
+}
+
+function clearImage() {
+  document.getElementById('imagePreview').src = '';
+  document.getElementById('imagePreviewWrap').classList.add('hidden');
+  document.getElementById('uploadZone').classList.remove('hidden');
+  document.getElementById('pImage').value = '';
+  document.getElementById('pImageFile').value = '';
+}
+
+function closeProductModal() {
+  document.getElementById('productModal').classList.add('hidden');
+  editingProductId = null;
+}
+
+async function saveProduct() {
+  const name          = document.getElementById('pName').value.trim();
+  const category      = document.getElementById('pCategory').value.trim();
+  const price_guarani = parseInt(document.getElementById('pPrice').value);
+  const stock_qty     = parseInt(document.getElementById('pStock').value) || 0;
+  const description   = document.getElementById('pDesc').value.trim() || null;
+  const image_url     = document.getElementById('pImage').value.trim() || null;
+  const imageFile     = document.getElementById('pImageFile').files?.[0] || null;
+  const errEl         = document.getElementById('modalError');
+  errEl.classList.add('hidden');
+
+  if (!name || isNaN(price_guarani)) {
+    errEl.textContent = 'Nombre y precio son obligatorios.';
+    errEl.classList.remove('hidden');
+    return;
+  }
+
+  const saveBtn = document.querySelector('#productModal button[onclick="saveProduct()"]');
+  if (saveBtn) { saveBtn.textContent = 'Guardando...'; saveBtn.disabled = true; }
+
+  try {
+    let saved;
+    if (editingProductId) {
+      saved = await api(`/admin/products/${editingProductId}`, 'PUT', { name, category, price_guarani, stock_qty, description, image_url });
+    } else {
+      saved = await api('/admin/products', 'POST', { name, category, price_guarani, stock_qty, description, image_url });
+    }
+
+    // Upload image file if one was selected
+    if (imageFile && saved?.id) {
+      const formData = new FormData();
+      formData.append('image', imageFile);
+      const res = await fetch(`/admin/products/${saved.id}/image`, {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + TOKEN },
+        body: formData
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error('Producto guardado, pero error al subir la foto: ' + err.error);
+      }
+    }
+
+    closeProductModal();
+    await loadProducts();
+  } catch (e) {
+    errEl.textContent = e.message;
+    errEl.classList.remove('hidden');
+  } finally {
+    if (saveBtn) { saveBtn.textContent = 'Guardar'; saveBtn.disabled = false; }
+  }
+}
+
+// ── Delete modal ───────────────────────────────────────────────────────────────
+function openDeleteModal(id, name) {
+  deletingProductId = id;
+  document.getElementById('deleteProductName').textContent = name;
+  document.getElementById('deleteModal').classList.remove('hidden');
+}
+function closeDeleteModal() {
+  document.getElementById('deleteModal').classList.add('hidden');
+  deletingProductId = null;
+}
+async function confirmDelete() {
+  await api(`/admin/products/${deletingProductId}`, 'DELETE');
+  closeDeleteModal();
+  await loadProducts();
+}
+
+// ── Orders ─────────────────────────────────────────────────────────────────────
+async function loadOrders() {
+  const orders = await api('/admin/orders');
+  const el = document.getElementById('ordersList');
+  if (!orders.length) {
+    el.innerHTML = '<div class="text-center py-8 text-gray-400">Todavía no hay pedidos.</div>';
+    return;
+  }
+  const statusLabels = {
+    pending:'Pendiente', confirmed:'Confirmado', preparing:'Preparando',
+    delivering:'En camino', delivered:'Entregado', cancelled:'Cancelado'
+  };
+  el.innerHTML = orders.map(o => {
+    const items    = o.items_json.map(i => `${i.name} ×${i.qty}`).join(', ');
+    const date     = new Date(o.created_at).toLocaleString('es-PY', {day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+    const nameHtml = renderCustomerLabel(o.customer_phone, o.customer_name);
+    return `
+    <div class="bg-white rounded-xl shadow-sm p-4">
+      <div class="flex items-start justify-between gap-3 flex-wrap">
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2 mb-1 flex-wrap">
+            ${nameHtml}
+            <span class="status-badge status-${o.status}">${statusLabels[o.status]}</span>
+          </div>
+          <div class="text-sm text-gray-500 mt-1">📦 ${items}</div>
+          <div class="text-xs text-gray-400 mt-1">🕐 ${date}</div>
+        </div>
+        <div class="text-right flex-shrink-0">
+          <div class="font-bold text-green-600 text-lg">${formatGs(o.total_guarani + (o.delivery_fee||0))}</div>
+          <div class="text-xs text-gray-400 mb-1">+envío ${formatGs(o.delivery_fee||0)}</div>
+          <select onchange="updateOrderStatus('${o.id}', this.value)"
+            class="text-xs border border-gray-200 rounded-lg px-2 py-1 text-gray-600 cursor-pointer hover:border-green-400">
+            ${['pending','confirmed','preparing','delivering','delivered','cancelled'].map(s =>
+              `<option value="${s}" ${s===o.status?'selected':''}>${statusLabels[s]}</option>`
+            ).join('')}
+          </select>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── Customer name label with inline edit ──────────────────────────────────────
+function renderCustomerLabel(phone, name) {
+  const display = name
+    ? `<span class="font-semibold text-gray-800">${name}</span><span class="text-gray-400 text-xs ml-1">+${phone}</span>`
+    : `<span class="font-medium text-gray-600">+${phone}</span>`;
+  return `
+    <span class="flex items-center gap-1 group">
+      <span id="label-${phone}">${display}</span>
+      <button onclick="startEditName('${phone}', ${JSON.stringify(name||'')})"
+        title="Editar nombre"
+        class="opacity-0 group-hover:opacity-100 text-gray-300 hover:text-green-500 transition text-xs ml-1">✏️</button>
+    </span>`;
+}
+
+function startEditName(phone, currentName) {
+  const labelEl = document.getElementById('label-' + phone);
+  if (!labelEl) return;
+  labelEl.innerHTML = `
+    <input id="nameinput-${phone}" type="text" value="${currentName}"
+      placeholder="Nombre del cliente"
+      class="border border-green-400 rounded-lg px-2 py-0.5 text-sm w-36 mr-1"
+      onkeydown="if(event.key==='Enter') saveCustomerName('${phone}'); if(event.key==='Escape') loadOrders()"/>
+    <button onclick="saveCustomerName('${phone}')" class="text-green-500 text-xs font-semibold hover:underline">Guardar</button>
+    <button onclick="loadOrders()" class="text-gray-400 text-xs ml-1 hover:underline">✕</button>`;
+  document.getElementById('nameinput-' + phone)?.focus();
+}
+
+async function saveCustomerName(phone) {
+  const input = document.getElementById('nameinput-' + phone);
+  if (!input) return;
+  const name = input.value.trim();
+  if (!name) return;
+  await api(`/admin/customers/${phone}/name`, 'PUT', { name });
+  await loadOrders();
+}
+
+async function updateOrderStatus(id, status) {
+  await api(`/admin/orders/${id}/status`, 'PUT', { status });
+}
+
+// ── Settings ───────────────────────────────────────────────────────────────────
+
+const PERSONALITY_PRESETS = [
+  {
+    id: 'warm',
+    emoji: '🌸',
+    label: 'Cálida y cercana',
+    desc: 'Como una amiga que te ayuda a elegir',
+    value: 'Sos cálida, cercana y empática. Hablás como si conocieras al cliente de hace tiempo, con un tono amigable y personal. Nunca sos fría ni distante. Usás el voseo rioplatense y algunos emojis con moderación.'
+  },
+  {
+    id: 'pro',
+    emoji: '💼',
+    label: 'Profesional y eficiente',
+    desc: 'Directa, rápida, sin rodeos',
+    value: 'Sos profesional, precisa y eficiente. Respondés de forma directa y concisa, sin perder tiempo. Priorizás que el cliente llegue al pedido rápidamente. Tono cordial pero sobrio, pocos emojis.'
+  },
+  {
+    id: 'creative',
+    emoji: '🎨',
+    label: 'Creativa y poética',
+    desc: 'Describe los productos con pasión',
+    value: 'Sos creativa, apasionada y poética. Describís cada producto como si fuera especial, usando metáforas y lenguaje evocador. Transmitís emoción y hacés que el cliente se enamore antes de comprar. Usás emojis con gusto.'
+  },
+  {
+    id: 'fun',
+    emoji: '😄',
+    label: 'Divertida y juvenil',
+    desc: 'Usa humor suave y emojis',
+    value: 'Sos divertida, fresca y juvenil. Usás un tono descontracturado con humor suave y emojis. Hacés que la experiencia de comprar sea entretenida. Sin ser irrespetuosa, sos espontánea y simpática.'
+  },
+  {
+    id: 'custom',
+    emoji: '✏️',
+    label: 'Personalizada',
+    desc: 'Escribí tu propia descripción',
+    value: null
+  }
+];
+
+let selectedPresetId = null;
+
+function initPresets(currentPersonality) {
+  // Try to match current personality to a preset
+  const match = PERSONALITY_PRESETS.find(p => p.value && p.value === currentPersonality);
+  selectedPresetId = match ? match.id : (currentPersonality ? 'custom' : null);
+  if (selectedPresetId === 'custom') {
+    document.getElementById('sPersonalityCustom').value = currentPersonality || '';
+  }
+  renderPresets();
+}
+
+function renderPresets() {
+  document.getElementById('presetGrid').innerHTML = PERSONALITY_PRESETS.map(p => `
+    <button onclick="selectPreset('${p.id}')"
+      class="flex items-center gap-3 border-2 rounded-xl px-4 py-3 text-left transition w-full
+        ${selectedPresetId === p.id
+          ? 'border-green-500 bg-green-50'
+          : 'border-gray-100 bg-gray-50 hover:border-green-200'}">
+      <span class="text-2xl flex-shrink-0">${p.emoji}</span>
+      <div>
+        <div class="font-semibold text-sm text-gray-800">${p.label}</div>
+        <div class="text-xs text-gray-400">${p.desc}</div>
+      </div>
+      ${selectedPresetId === p.id ? '<span class="ml-auto text-green-500 text-lg">✓</span>' : ''}
+    </button>`).join('');
+
+  // Show/hide custom textarea
+  document.getElementById('customPersonalityWrap').classList.toggle('hidden', selectedPresetId !== 'custom');
+}
+
+function selectPreset(id) {
+  selectedPresetId = id;
+  renderPresets();
+}
+
+function onCustomPersonalityInput() {
+  selectedPresetId = 'custom';
+  renderPresets();
+}
+
+function getSelectedPersonality() {
+  if (!selectedPresetId) return null;
+  const preset = PERSONALITY_PRESETS.find(p => p.id === selectedPresetId);
+  if (preset?.id === 'custom') {
+    return document.getElementById('sPersonalityCustom').value.trim() || null;
+  }
+  return preset?.value || null;
+}
+
+async function loadSettings() {
+  try {
+    const s = await api('/admin/settings');
+    document.getElementById('sBotName').value = s.bot_name || 'Sara';
+    document.getElementById('sPayment').value = s.payment_instructions || '';
+    initPresets(s.bot_personality);
+  } catch (e) { /* ignore */ }
+}
+
+async function saveSettings() {
+  const msgEl = document.getElementById('settingsMsg');
+  msgEl.classList.add('hidden');
+  try {
+    await api('/admin/settings', 'PUT', {
+      bot_name:        document.getElementById('sBotName').value.trim() || 'Sara',
+      bot_personality: getSelectedPersonality(),
+    });
+    msgEl.className   = 'rounded-lg px-4 py-2 text-sm mb-4 bg-green-50 text-green-700';
+    msgEl.textContent = '✅ Personalidad guardada. Sara usará este estilo desde ahora.';
+    msgEl.classList.remove('hidden');
+  } catch (e) {
+    msgEl.className   = 'rounded-lg px-4 py-2 text-sm mb-4 bg-red-50 text-red-700';
+    msgEl.textContent = e.message;
+    msgEl.classList.remove('hidden');
+  }
+}
+
+async function savePayment() {
+  const msgEl = document.getElementById('paymentMsg');
+  msgEl.classList.add('hidden');
+  try {
+    await api('/admin/settings', 'PUT', {
+      payment_instructions: document.getElementById('sPayment').value.trim() || null,
+    });
+    msgEl.className   = 'rounded-lg px-4 py-2 text-sm mb-3 bg-green-50 text-green-700';
+    msgEl.textContent = '✅ Instrucciones de pago guardadas.';
+    msgEl.classList.remove('hidden');
+  } catch (e) {
+    msgEl.className   = 'rounded-lg px-4 py-2 text-sm mb-3 bg-red-50 text-red-700';
+    msgEl.textContent = e.message;
+    msgEl.classList.remove('hidden');
+  }
+}
+
+async function changePassword() {
+  const pwd   = document.getElementById('newPwd').value;
+  const msgEl = document.getElementById('pwdMsg');
+  try {
+    await api('/admin/change-password', 'POST', { newPassword: pwd });
+    msgEl.className = 'rounded-lg px-4 py-2 text-sm mb-3 bg-green-50 text-green-700';
+    msgEl.textContent = '✅ Contraseña actualizada.';
+    msgEl.classList.remove('hidden');
+    document.getElementById('newPwd').value = '';
+  } catch (e) {
+    msgEl.className = 'rounded-lg px-4 py-2 text-sm mb-3 bg-red-50 text-red-700';
+    msgEl.textContent = e.message;
+    msgEl.classList.remove('hidden');
+  }
+}
+
+// ── API helper ─────────────────────────────────────────────────────────────────
+async function api(path, method = 'GET', body = null, auth = true) {
+  const opts = {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+  };
+  if (auth && TOKEN) opts.headers['Authorization'] = 'Bearer ' + TOKEN;
+  if (body) opts.body = JSON.stringify(body);
+  const res  = await fetch(path, opts);
+  const data = await res.json();
+  if (!res.ok) {
+    const err = new Error(data.error || 'Error desconocido');
+    err.status = res.status;
+    throw err;
+  }
+  return data;
+}
+
+function formatGs(n) {
+  return (n || 0).toLocaleString('es-PY') + ' Gs';
+}
+</script>
+</body>
+</html>
