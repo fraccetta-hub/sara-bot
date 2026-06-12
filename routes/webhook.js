@@ -80,7 +80,9 @@ async function processIncoming(body) {
   const rlType = messageType === 'image' ? 'image' : messageType === 'audio' ? 'audio' : 'text';
   const rl = rateCheck(tenant.id, senderPhone, rlType);
   if (!rl.allowed) {
-    await sendMessage(senderPhone, blockMessage(rl.reason), phoneNumberId, token);
+    if (rl.notify) {
+      await sendMessage(senderPhone, blockMessage(rl.reason), phoneNumberId, token);
+    }
     return;
   }
 

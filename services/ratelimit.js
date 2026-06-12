@@ -39,28 +39,34 @@ function record(key) {
 /**
  * Check and increment counter for one message.
  * type: 'text' | 'image' | 'audio'
- * Returns { allowed: boolean, reason?: string }
+ * Returns { allowed: boolean, notify: boolean, reason?: string }
+ * notify: true only on the first blocked message — send the warning once, then go silent.
  */
 function check(tenantId, phone, type) {
   const key = `${tenantId}:${phone}`;
   const r   = record(key);
 
-  // Increment before checking (count-then-gate — simple and honest)
   r.hourCounts[type]    = (r.hourCounts[type]    || 0) + 1;
   r.hourCounts.total    = (r.hourCounts.total    || 0) + 1;
   r.dayCounts[type]     = (r.dayCounts[type]     || 0) + 1;
   r.dayCounts.total     = (r.dayCounts.total     || 0) + 1;
 
-  if (r.hourCounts.total > LIMITS.total.hour)
-    return { allowed: false, reason: 'hour_total' };
-  if (r.dayCounts.total  > LIMITS.total.day)
-    return { allowed: false, reason: 'day_total' };
-  if (type === 'image' && r.hourCounts.image > LIMITS.image.hour)
-    return { allowed: false, reason: 'hour_image' };
-  if (type === 'audio' && r.hourCounts.audio > LIMITS.audio.hour)
-    return { allowed: false, reason: 'hour_audio' };
+  let reason = null;
+  if      (r.hourCounts.total > LIMITS.total.hour)                  reason = 'hour_total';
+  else if (r.dayCounts.total  > LIMITS.total.day)                   reason = 'day_total';
+  else if (type === 'image' && r.hourCounts.image > LIMITS.image.hour) reason = 'hour_image';
+  else if (type === 'audio' && r.hourCounts.audio > LIMITS.audio.hour) reason = 'hour_audio';
 
-  return { allowed: true };
+  if (!reason) return { allowed: true };
+
+  // Send the warning only once per block window (first hit = notify, subsequent = silent drop)
+  const notifyKey = `${key}:notified:${reason}`;
+  const alreadyNotified = r.notified?.[reason];
+  if (!alreadyNotified) {
+    r.notified = r.notified || {};
+    r.notified[reason] = true;
+  }
+  return { allowed: false, notify: !alreadyNotified, reason };
 }
 
 const MESSAGES = {
