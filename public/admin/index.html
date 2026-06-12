@@ -36,7 +36,7 @@
     <div class="space-y-4">
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">Usuario</label>
-        <input id="loginPhoneId" type="text" placeholder="ID WhatsApp Business o superadmin"
+        <input id="loginPhoneId" type="text" placeholder="Usuario"
           class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
       </div>
       <div>
@@ -465,7 +465,7 @@ async function login() {
 
   // Merchant: userId = phone_number_id
   try {
-    const res = await api('/admin/login', 'POST', { phone_number_id: userId, password }, false);
+    const res = await api('/admin/login', 'POST', { username: userId, password }, false);
     TOKEN = res.token;
     localStorage.setItem('sara_token', TOKEN);
     document.getElementById('navTitle').textContent  = res.botName || 'Sara Bot';

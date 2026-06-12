@@ -109,7 +109,7 @@ router.get('/tenants/:id', requireSuper, async (req, res) => {
 
 router.post('/tenants', requireSuper, async (req, res) => {
   const {
-    name, phone_number_id, bot_name, bot_personality,
+    name, login_slug, phone_number_id, bot_name, bot_personality,
     merchant_phone, payment_instructions,
     location_lat, location_lng,
     delivery_base_fee, delivery_per_km
@@ -125,6 +125,7 @@ router.post('/tenants', requireSuper, async (req, res) => {
     .from('tenants')
     .insert({
       name, phone_number_id,
+      login_slug:           login_slug        || null,
       bot_name:             bot_name          || 'Sara',
       bot_personality:      bot_personality   || 'cálida, profesional y entusiasta',
       merchant_phone:       merchant_phone    || null,
@@ -147,7 +148,7 @@ router.post('/tenants', requireSuper, async (req, res) => {
 
 router.put('/tenants/:id', requireSuper, async (req, res) => {
   const allowed = [
-    'name','phone_number_id','bot_name','bot_personality',
+    'name','login_slug','phone_number_id','bot_name','bot_personality',
     'merchant_phone','payment_instructions','active',
     'plan_expires','delivery_base_fee','delivery_per_km',
     'location_lat','location_lng'

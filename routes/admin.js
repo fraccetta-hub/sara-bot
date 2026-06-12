@@ -34,17 +34,18 @@ function requireAuth(req, res, next) {
 // ─── POST /admin/login ────────────────────────────────────────────────────────
 
 router.post('/login', async (req, res) => {
-  const { phone_number_id, password } = req.body;
-  if (!phone_number_id || !password)
+  const { username, password } = req.body;
+  if (!username || !password)
     return res.status(400).json({ error: 'Faltan datos' });
 
+  // Accept login by slug OR by phone_number_id (backward compat)
   const { data: tenant } = await supabase
     .from('tenants')
-    .select('id, name, phone_number_id, admin_password_hash, bot_name')
-    .eq('phone_number_id', phone_number_id)
+    .select('id, name, phone_number_id, admin_password_hash, bot_name, login_slug')
+    .or(`login_slug.eq.${username},phone_number_id.eq.${username}`)
     .maybeSingle();
 
-  if (!tenant) return res.status(404).json({ error: 'Local no encontrado' });
+  if (!tenant) return res.status(404).json({ error: 'Usuario no encontrado' });
 
   // First-time setup: if no password set yet, accept "sara1234" and save hash
   if (!tenant.admin_password_hash) {

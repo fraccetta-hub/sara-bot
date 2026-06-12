@@ -6,6 +6,12 @@
       "runtimeExecutable": "node",
       "runtimeArgs": ["index.js"],
       "port": 3000
+    },
+    {
+      "name": "landingpage",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["serve", "landingpage", "-p", "4000", "--no-clipboard"],
+      "port": 4000
     }
   ]
 }
