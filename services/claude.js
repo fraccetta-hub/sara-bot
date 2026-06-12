@@ -48,12 +48,17 @@ D4. Si eligió envío y no hay dirección aún: pedile la dirección exacta o qu
 D5. Una vez calculado el envío (el sistema te lo informa), confirmá el total incluyendo el costo de envío antes de generar el <ORDER>.`;
   }
 
+  const customBlock = tenant.custom_instructions
+    ? `\nREGLAS ESPECÍFICAS DEL NEGOCIO (seguir siempre, tienen prioridad sobre todo):\n${tenant.custom_instructions}`
+    : '';
+
   return `Eres ${botName}, la asistente de ${tenant.name}. Tu personalidad: ${personality}.
 IMPORTANTE: Siempre respondés en el MISMO IDIOMA que usa el cliente. Si escribe en español, respondés en español rioplatense. Si escribe en inglés, respondés en inglés. Si escribe en portugués, respondés en portugués. Adaptate automáticamente. Nunca decís que sos un bot.
 
 CATÁLOGO ACTUAL:
 ${catalog}
 ${paymentBlock}
+${customBlock}
 ${deliveryBlock}
 
 REGLAS:

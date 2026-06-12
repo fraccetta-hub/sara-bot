@@ -291,6 +291,22 @@
         </button>
       </div>
 
+      <!-- Custom instructions -->
+      <div class="bg-white rounded-xl shadow-sm p-6">
+        <h3 class="font-medium text-gray-800 mb-1">📋 Reglas del negocio</h3>
+        <p class="text-xs text-gray-400 mb-3">Escribí en lenguaje natural cualquier regla, restricción o información especial de tu negocio. Sara las seguirá siempre.<br>
+          <span class="italic">Ej: "Las tortas personalizadas requieren 3 días de anticipación." / "Solo entregamos de lunes a sábado de 8 a 13 hs." / "Siempre preguntá si quieren tarjetita con mensaje."</span>
+        </p>
+        <div id="customInstrMsg" class="hidden rounded-lg px-4 py-2 text-sm mb-3"></div>
+        <textarea id="sCustomInstructions" rows="6"
+          placeholder="- Las composiciones personalizadas requieren 48 hs de anticipación.&#10;- Solo hacemos envíos de lunes a sábado entre 8:00 y 13:00.&#10;- Siempre preguntá si quieren tarjetita con mensaje (sin costo)."
+          class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm resize-none mb-3"></textarea>
+        <button onclick="saveCustomInstructions()"
+          class="btn-green w-full py-2 rounded-lg text-sm font-semibold">
+          Guardar reglas
+        </button>
+      </div>
+
       <!-- Delivery settings -->
       <div class="bg-white rounded-xl shadow-sm p-6">
         <h3 class="font-medium text-gray-800 mb-1">🚚 Envíos a domicilio</h3>
@@ -968,9 +984,10 @@ function getSelectedPersonality() {
 async function loadSettings() {
   try {
     const s = await api('/admin/settings');
-    document.getElementById('sBotName').value        = s.bot_name || 'Sara';
-    document.getElementById('sPayment').value        = s.payment_instructions || '';
-    document.getElementById('sMerchantPhone').value  = s.merchant_phone || '';
+    document.getElementById('sBotName').value             = s.bot_name || 'Sara';
+    document.getElementById('sPayment').value             = s.payment_instructions || '';
+    document.getElementById('sMerchantPhone').value       = s.merchant_phone || '';
+    document.getElementById('sCustomInstructions').value  = s.custom_instructions || '';
     initPresets(s.bot_personality);
 
     // Delivery
@@ -1063,6 +1080,23 @@ async function saveSettings() {
     msgEl.classList.remove('hidden');
   } catch (e) {
     msgEl.className   = 'rounded-lg px-4 py-2 text-sm mb-4 bg-red-50 text-red-700';
+    msgEl.textContent = e.message;
+    msgEl.classList.remove('hidden');
+  }
+}
+
+async function saveCustomInstructions() {
+  const msgEl = document.getElementById('customInstrMsg');
+  msgEl.classList.add('hidden');
+  try {
+    await api('/admin/settings', 'PUT', {
+      custom_instructions: document.getElementById('sCustomInstructions').value.trim() || null,
+    });
+    msgEl.className   = 'rounded-lg px-4 py-2 text-sm mb-3 bg-green-50 text-green-700';
+    msgEl.textContent = '✅ Reglas guardadas. Sara las seguirá en cada conversación.';
+    msgEl.classList.remove('hidden');
+  } catch (e) {
+    msgEl.className   = 'rounded-lg px-4 py-2 text-sm mb-3 bg-red-50 text-red-700';
     msgEl.textContent = e.message;
     msgEl.classList.remove('hidden');
   }

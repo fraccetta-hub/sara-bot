@@ -63,6 +63,10 @@ ALTER TABLE tenants
   ADD COLUMN IF NOT EXISTS delivery_min_order      INTEGER     NOT NULL DEFAULT 0,
   ADD COLUMN IF NOT EXISTS delivery_disabled_dates TEXT[]      NOT NULL DEFAULT '{}';
 
+-- 4c. Tenants: free-text custom business rules injected into Claude system prompt
+ALTER TABLE tenants
+  ADD COLUMN IF NOT EXISTS custom_instructions TEXT;
+
 -- 4b. Conversations: delivery state per active conversation
 ALTER TABLE conversations
   ADD COLUMN IF NOT EXISTS delivery_choice         TEXT        CHECK (delivery_choice IN ('retiro','envio')),
