@@ -2,9 +2,9 @@
 // Protects against runaway customers and bots burning tokens.
 
 const LIMITS = {
-  total: { hour: 20,  day: 60  },
-  image: { hour: 4,   day: 12  },
-  audio: { hour: 4,   day: 12  },
+  total: { hour: 50,  day: 150 },
+  image: { hour: 8,   day: 20  },
+  audio: { hour: 10,  day: 25  },
 };
 
 // key: `tenantId:phone`  →  { hourSlot, daySlot, hourCounts, dayCounts }
