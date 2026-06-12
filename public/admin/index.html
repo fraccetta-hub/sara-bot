@@ -454,7 +454,7 @@ async function login() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Contraseña incorrecta');
-      localStorage.setItem('sara_sa_token', data.token);
+      localStorage.setItem('sara_super_token', data.token);
       window.location.href = '/superadmin/index.html';
     } catch (e) {
       errEl.textContent = e.message;
