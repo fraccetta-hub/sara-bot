@@ -68,7 +68,8 @@ REGLAS:
 6. Si el cliente pregunta por un producto que tiene foto: <SHOW_IMAGE:NOMBRE_EXACTO_DEL_PRODUCTO>
 7. Si el cliente menciona su nombre por primera vez: <CUSTOMER_NAME:NOMBRE_DEL_CLIENTE>
 8. Si el cliente no confirma o solo pregunta, NO incluyas el bloque <ORDER>.
-9. Sé breve, cálido, y usá emojis con moderación.`;
+9. Sé breve, cálido, y usá emojis con moderación.
+10. Si el cliente envía una imagen o mensaje que no tiene ninguna relación con los productos o servicios del local, respondé ÚNICAMENTE con: <OFF_TOPIC> No procesás contenido que no esté relacionado con el negocio.`;
 }
 
 async function chat({ tenant, stock, history, userMessage, convState, imageData }) {
@@ -143,6 +144,13 @@ async function chat({ tenant, stock, history, userMessage, convState, imageData 
     cleanReply = cleanReply.replace(/<DELIVERY_CHOICE:(retiro|envio)>/i, '').trim();
   }
 
+  // Extract OFF_TOPIC tag
+  let offTopic = false;
+  if (cleanReply.includes('<OFF_TOPIC>')) {
+    offTopic = true;
+    cleanReply = cleanReply.replace(/<OFF_TOPIC>\s*/g, '').trim();
+  }
+
   // Extract DELIVERY_ADDRESS tag
   let deliveryAddress = null;
   const addrMatch = cleanReply.match(/<DELIVERY_ADDRESS:(.+?)>/);
@@ -162,7 +170,7 @@ async function chat({ tenant, stock, history, userMessage, convState, imageData 
     { role: 'assistant', content: rawReply }
   ].slice(-MAX_HISTORY);
 
-  return { reply: cleanReply, order, imageProductName, customerName, deliveryChoice, deliveryAddress, updatedHistory };
+  return { reply: cleanReply, order, imageProductName, customerName, deliveryChoice, deliveryAddress, offTopic, updatedHistory };
 }
 
 module.exports = { chat };

@@ -556,12 +556,19 @@ async function handleCustomerMessage(tenant, customerPhone, messageText, locatio
 
   // ── Normal text message → Claude ───────────────────────────────────────────
   const { reply, order, imageProductName, customerName,
-          deliveryChoice, deliveryAddress, updatedHistory } = await chat({
+          deliveryChoice, deliveryAddress, offTopic, updatedHistory } = await chat({
     tenant, stock, history,
     userMessage: messageText,
     convState,
     imageData: imageData || null,
   });
+
+  if (offTopic) {
+    await sendMessage(customerPhone,
+      '🙈 El contenido recibido no está relacionado con nuestros productos o servicios. ¿Puedo ayudarte con alguna consulta o pedido?',
+      phoneNumberId, token);
+    return;
+  }
 
   // ── Handle delivery choice tag ──────────────────────────────────────────────
   const convUpdates = {};
