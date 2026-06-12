@@ -71,12 +71,29 @@ REGLAS:
 9. Sé breve, cálido, y usá emojis con moderación.`;
 }
 
-async function chat({ tenant, stock, history, userMessage, convState }) {
+async function chat({ tenant, stock, history, userMessage, convState, imageData }) {
   const systemPrompt = buildSystemPrompt(tenant, stock, convState || {});
+
+  // Build user content — plain text or image+text for vision messages
+  let userContent;
+  if (imageData) {
+    userContent = [
+      {
+        type: 'image',
+        source: { type: 'base64', media_type: imageData.mimeType, data: imageData.base64 },
+      },
+      {
+        type: 'text',
+        text: userMessage || '[El cliente envió una foto. Analizá la imagen y relacionala con el catálogo disponible para sugerir el producto más parecido.]',
+      },
+    ];
+  } else {
+    userContent = userMessage;
+  }
 
   const messages = [
     ...history,
-    { role: 'user', content: userMessage }
+    { role: 'user', content: userContent }
   ];
 
   const response = await client.messages.create({
@@ -134,9 +151,14 @@ async function chat({ tenant, stock, history, userMessage, convState }) {
     cleanReply = cleanReply.replace(/<DELIVERY_ADDRESS:.+?>/, '').trim();
   }
 
+  // Store a text-only representation in history (avoids saving large base64 in Supabase)
+  const historyEntry = imageData
+    ? `[foto enviada por el cliente] ${userMessage || ''}`.trim()
+    : userMessage;
+
   const updatedHistory = [
     ...history,
-    { role: 'user', content: userMessage },
+    { role: 'user', content: historyEntry },
     { role: 'assistant', content: rawReply }
   ].slice(-MAX_HISTORY);
 

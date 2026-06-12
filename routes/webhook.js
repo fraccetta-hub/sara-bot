@@ -6,6 +6,9 @@ const { sendMessage, sendImage, notifyMerchant } = require('../services/whatsapp
 const { chat } = require('../services/claude');
 const { downloadAndStore } = require('../services/storage');
 const { haversineKm, geocode, calcDeliveryFee } = require('../services/geo');
+const { check: rateCheck, blockMessage } = require('../services/ratelimit');
+const { fetchMedia } = require('../services/media');
+const { transcribeAudio } = require('../services/transcribe');
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
 
@@ -43,9 +46,6 @@ async function processIncoming(body) {
   const messageType = message.type;
 
 
-  // Handle text, image and location messages
-  if (messageType !== 'text' && messageType !== 'image' && messageType !== 'location') return;
-
   const messageText = messageType === 'text' ? message.text.body.trim() : null;
 
   // 1. Identify tenant
@@ -72,13 +72,67 @@ async function processIncoming(body) {
     } else if (messageType === 'text') {
       await handleMerchantMessage(tenant, messageText, phoneNumberId, token);
     }
-  } else {
-    if (messageType === 'text') {
-      await handleCustomerMessage(tenant, senderPhone, messageText, null, phoneNumberId, token);
-    } else if (messageType === 'location') {
-      const loc = message.location;
-      await handleCustomerMessage(tenant, senderPhone, null, { lat: loc.latitude, lng: loc.longitude }, phoneNumberId, token);
+    // Ignore merchant audio/location/etc.
+    return;
+  }
+
+  // ── Customer rate limiting ───────────────────────────────────────────────────
+  const rlType = messageType === 'image' ? 'image' : messageType === 'audio' ? 'audio' : 'text';
+  const rl = rateCheck(tenant.id, senderPhone, rlType);
+  if (!rl.allowed) {
+    await sendMessage(senderPhone, blockMessage(rl.reason), phoneNumberId, token);
+    return;
+  }
+
+  // ── Route by message type ────────────────────────────────────────────────────
+  if (messageType === 'text') {
+    await handleCustomerMessage(tenant, senderPhone, messageText, null, null, phoneNumberId, token);
+
+  } else if (messageType === 'location') {
+    const loc = message.location;
+    await handleCustomerMessage(tenant, senderPhone, null, { lat: loc.latitude, lng: loc.longitude }, null, phoneNumberId, token);
+
+  } else if (messageType === 'image') {
+    const mediaId = message.image?.id;
+    const caption = message.image?.caption?.trim() || null;
+    if (!mediaId) return;
+    try {
+      const { buffer, mimeType } = await fetchMedia(mediaId, token);
+      const imageData = { base64: buffer.toString('base64'), mimeType };
+      await handleCustomerMessage(tenant, senderPhone, caption, null, imageData, phoneNumberId, token);
+    } catch (e) {
+      console.error('[webhook] Image download error:', e.message);
+      await sendMessage(senderPhone,
+        'No pude procesar la imagen 😕 ¿Podés describirme lo que buscás con palabras?',
+        phoneNumberId, token);
     }
+
+  } else if (messageType === 'audio') {
+    const mediaId = message.audio?.id;
+    if (!mediaId) return;
+    try {
+      const { buffer, mimeType } = await fetchMedia(mediaId, token);
+      const transcription = await transcribeAudio(buffer, mimeType);
+      if (!transcription) {
+        await sendMessage(senderPhone,
+          'No entendí bien el audio 😕 ¿Podés escribirme lo que necesitás?',
+          phoneNumberId, token);
+        return;
+      }
+      console.log(`[webhook] Audio transcribed (${senderPhone}): "${transcription}"`);
+      await handleCustomerMessage(tenant, senderPhone, transcription, null, null, phoneNumberId, token);
+    } catch (e) {
+      console.error('[webhook] Audio transcription error:', e.message);
+      await sendMessage(senderPhone,
+        'No pude procesar el audio 😕 ¿Podés escribirme tu consulta?',
+        phoneNumberId, token);
+    }
+
+  } else {
+    // Unsupported type (video, sticker, document, reaction, etc.)
+    await sendMessage(senderPhone,
+      'Por el momento solo puedo leer texto, fotos y audios 😊 ¿En qué te puedo ayudar?',
+      phoneNumberId, token);
   }
 }
 
@@ -435,7 +489,7 @@ async function findProduct(tenantId, nameQuery) {
 
 // ─── Customer message handler ─────────────────────────────────────────────────
 
-async function handleCustomerMessage(tenant, customerPhone, messageText, locationMsg, phoneNumberId, token) {
+async function handleCustomerMessage(tenant, customerPhone, messageText, locationMsg, imageData, phoneNumberId, token) {
   // Load conversation
   const { data: convRow } = await supabase
     .from('conversations')
@@ -503,7 +557,8 @@ async function handleCustomerMessage(tenant, customerPhone, messageText, locatio
           deliveryChoice, deliveryAddress, updatedHistory } = await chat({
     tenant, stock, history,
     userMessage: messageText,
-    convState
+    convState,
+    imageData: imageData || null,
   });
 
   // ── Handle delivery choice tag ──────────────────────────────────────────────
