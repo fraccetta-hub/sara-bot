@@ -18,24 +18,6 @@
 </head>
 <body class="bg-gray-100 min-h-screen font-sans">
 
-<!-- ════ LOGIN ════ -->
-<div id="loginPage" class="min-h-screen flex items-center justify-center px-4">
-  <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm p-8">
-    <div class="text-center mb-6">
-      <div class="text-5xl mb-2">🛡️</div>
-      <h1 class="text-2xl font-bold text-gray-800">Superadmin</h1>
-      <p class="text-gray-500 text-sm mt-1">Sara Bot — Panel maestro</p>
-    </div>
-    <div id="loginError" class="hidden bg-red-50 text-red-700 text-sm rounded-lg px-4 py-2 mb-4"></div>
-    <input id="loginPwd" type="password" placeholder="Contraseña maestra"
-      class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-3"
-      onkeydown="if(event.key==='Enter') login()"/>
-    <button onclick="login()" class="btn-purple w-full py-2 rounded-lg text-sm font-semibold transition">
-      Ingresar
-    </button>
-  </div>
-</div>
-
 <!-- ════ DASHBOARD ════ -->
 <div id="dashPage" class="hidden">
 
@@ -265,34 +247,19 @@ let TOKEN = localStorage.getItem('sara_super_token') || '';
 let allTenants = [];
 let editingTenantId = null;
 
-window.onload = () => { if (TOKEN) showDashboard(); };
-
-// ── Auth ───────────────────────────────────────────────────────────────────────
-async function login() {
-  const password = document.getElementById('loginPwd').value;
-  const errEl    = document.getElementById('loginError');
-  errEl.classList.add('hidden');
-  try {
-    const res = await api('/superadmin/login', 'POST', { password }, false);
-    TOKEN = res.token;
-    localStorage.setItem('sara_super_token', TOKEN);
-    showDashboard();
-  } catch (e) {
-    errEl.textContent = e.message;
-    errEl.classList.remove('hidden');
-  }
-}
+window.onload = () => {
+  if (TOKEN) showDashboard();
+  else window.location.replace('/admin/index.html');
+};
 
 function logout() {
   TOKEN = '';
   localStorage.removeItem('sara_super_token');
-  document.getElementById('dashPage').classList.add('hidden');
-  document.getElementById('loginPage').classList.remove('hidden');
+  window.location.replace('/admin/index.html');
 }
 
 // ── Dashboard ──────────────────────────────────────────────────────────────────
 async function showDashboard() {
-  document.getElementById('loginPage').classList.add('hidden');
   document.getElementById('dashPage').classList.remove('hidden');
   try {
     const [stats] = await Promise.all([api('/superadmin/stats'), loadTenants()]);
