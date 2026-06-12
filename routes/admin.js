@@ -35,18 +35,14 @@ function requireAuth(req, res, next) {
 
 router.post('/login', async (req, res) => {
   const { phone_number_id, password } = req.body;
-  console.log('[admin/login] attempt:', { phone_number_id, passwordLen: password?.length });
-
   if (!phone_number_id || !password)
     return res.status(400).json({ error: 'Faltan datos' });
 
-  const { data: tenant, error: dbErr } = await supabase
+  const { data: tenant } = await supabase
     .from('tenants')
     .select('id, name, phone_number_id, admin_password_hash, bot_name')
     .eq('phone_number_id', phone_number_id)
     .maybeSingle();
-
-  console.log('[admin/login] tenant found:', !!tenant, '| dbErr:', dbErr?.message || null, '| hash:', tenant?.admin_password_hash ? 'SET' : 'NULL');
 
   if (!tenant) return res.status(404).json({ error: 'Local no encontrado' });
 
