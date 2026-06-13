@@ -218,6 +218,10 @@
             <input type="checkbox" id="eServices" class="w-4 h-4 accent-purple-600"/>
             <span class="text-sm text-gray-700">🛠 Servicios</span>
           </label>
+          <label class="flex items-center gap-2 cursor-pointer select-none">
+            <input type="checkbox" id="eAppointments" class="w-4 h-4 accent-purple-600"/>
+            <span class="text-sm text-gray-700">📅 Turnos</span>
+          </label>
         </div>
       </div>
     </div>
@@ -359,8 +363,9 @@ async function openEditModal(id) {
   document.getElementById('ePersonality').value = t.bot_personality || '';
   document.getElementById('ePayment').value     = t.payment_instructions || '';
   document.getElementById('eActive').value      = String(t.active);
-  document.getElementById('eProducts').checked  = t.products_enabled !== false;
-  document.getElementById('eServices').checked  = !!t.services_enabled;
+  document.getElementById('eProducts').checked      = t.products_enabled !== false;
+  document.getElementById('eServices').checked      = !!t.services_enabled;
+  document.getElementById('eAppointments').checked  = !!t.appointments_enabled;
   document.getElementById('editError').classList.add('hidden');
   switchEditTab('config');
   document.getElementById('editModal').classList.remove('hidden');
@@ -412,8 +417,9 @@ async function saveTenant() {
       bot_personality:      document.getElementById('ePersonality').value.trim(),
       payment_instructions: document.getElementById('ePayment').value.trim() || null,
       active:             document.getElementById('eActive').value === 'true',
-      products_enabled:   document.getElementById('eProducts').checked,
-      services_enabled:   document.getElementById('eServices').checked,
+      products_enabled:      document.getElementById('eProducts').checked,
+      services_enabled:      document.getElementById('eServices').checked,
+      appointments_enabled:  document.getElementById('eAppointments').checked,
     });
     closeEditModal();
     await loadTenants();

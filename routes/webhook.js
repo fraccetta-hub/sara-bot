@@ -515,6 +515,49 @@ async function handleCustomerMessage(tenant, customerPhone, messageText, locatio
     getStock(tenant.id),
     getServices(tenant.id),
   ]);
+
+  // ── Load appointment slots for next 3 days (if feature enabled) ─────────────
+  let appointmentSlots = null;
+  if (tenant.appointments_enabled) {
+    try {
+      const apptServices = services.filter(s => s.is_available && s.duration_min);
+      const byDate = {};
+      const today = new Date();
+      for (let i = 0; i < 4; i++) {
+        const d = new Date(today);
+        d.setDate(d.getDate() + i);
+        const dateStr = d.toISOString().slice(0, 10);
+        const dayOfWeek = d.getUTCDay();
+        const { data: bh } = await supabase.from('business_hours').select('*')
+          .eq('tenant_id', tenant.id).eq('day_of_week', dayOfWeek).single();
+        if (!bh || bh.is_closed) { byDate[dateStr] = []; continue; }
+
+        const [oh, om] = bh.open_time.split(':').map(Number);
+        const [ch, cm] = bh.close_time.split(':').map(Number);
+        const openMin = oh * 60 + om, closeMin = ch * 60 + cm;
+        const slotDur = apptServices[0]?.duration_min || 30;
+        const allSlots = [];
+        for (let m = openMin; m + slotDur <= closeMin; m += slotDur) {
+          const hh = String(Math.floor(m / 60)).padStart(2, '0');
+          const mm = String(m % 60).padStart(2, '0');
+          allSlots.push(`${dateStr}T${hh}:${mm}:00`);
+        }
+        const dayStart = `${dateStr}T00:00:00`, dayEnd = `${dateStr}T23:59:59`;
+        const { data: existing } = await supabase.from('appointments').select('start_at,end_at')
+          .eq('tenant_id', tenant.id).gte('start_at', dayStart).lte('start_at', dayEnd).neq('status','cancelled');
+        const { data: blocks } = await supabase.from('appointment_blocks').select('start_at,end_at')
+          .eq('tenant_id', tenant.id).gte('start_at', dayStart).lte('start_at', dayEnd);
+        const busy = [...(existing || []), ...(blocks || [])];
+        byDate[dateStr] = allSlots.filter(slotStart => {
+          const sS = new Date(slotStart).getTime(), sE = sS + slotDur * 60000;
+          return !busy.some(b => new Date(b.start_at).getTime() < sE && new Date(b.end_at).getTime() > sS);
+        });
+      }
+      appointmentSlots = { byDate, servicesList: apptServices };
+    } catch (e) {
+      console.error('[webhook] Error loading appointment slots:', e.message);
+    }
+  }
   const convState  = {
     delivery_choice:   convRow?.delivery_choice   || null,
     delivery_fee_calc: convRow?.delivery_fee_calc  ?? null,
@@ -561,11 +604,13 @@ async function handleCustomerMessage(tenant, customerPhone, messageText, locatio
 
   // ── Normal text message → Claude ───────────────────────────────────────────
   const { reply, order, imageProductName, customerName,
-          deliveryChoice, deliveryAddress, offTopic, updatedHistory } = await chat({
+          deliveryChoice, deliveryAddress, offTopic, updatedHistory,
+          appointmentRequest } = await chat({
     tenant, stock, services, history,
     userMessage: messageText,
     convState,
     imageData: imageData || null,
+    appointmentSlots,
   });
 
   if (offTopic) {
@@ -651,6 +696,49 @@ async function handleCustomerMessage(tenant, customerPhone, messageText, locatio
         delivery_lng: null,
         ...convUpdates
       }, { onConflict: 'tenant_id,customer_phone' });
+    }
+  }
+
+  // ── Handle appointment booking ──────────────────────────────────────────────
+  if (appointmentRequest && tenant.appointments_enabled) {
+    try {
+      const { service_name, start_at, customer_name: apptCustomerName } = appointmentRequest;
+
+      // Find matching service
+      const svc = services.find(s =>
+        s.name.toLowerCase() === (service_name || '').toLowerCase() && s.is_available
+      );
+      const duration = svc?.duration_min || 30;
+      const end_at   = new Date(new Date(start_at).getTime() + duration * 60000).toISOString();
+
+      const { data: savedAppt } = await supabase.from('appointments').insert({
+        tenant_id:            tenant.id,
+        customer_phone:       customerPhone,
+        customer_name:        apptCustomerName || customerName || waProfileName || null,
+        service_id:           svc?.id || null,
+        service_name:         service_name || null,
+        service_duration_min: duration,
+        start_at,
+        end_at,
+        status: 'pending',
+      }).select('id').single();
+
+      // Notify merchant
+      if (tenant.merchant_phone && savedAppt) {
+        const startFmt = new Date(start_at).toLocaleString('es', {
+          weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit'
+        });
+        const msg = `📅 *Nuevo turno solicitado*\n` +
+          `👤 Cliente: ${apptCustomerName || customerPhone}\n` +
+          `📱 Teléfono: +${customerPhone}\n` +
+          `🛠 Servicio: ${service_name || '—'}\n` +
+          `🕐 Fecha/Hora: ${startFmt}\n` +
+          `⏱ Duración: ${duration} min\n\n` +
+          `Respondé CONFIRMAR o CANCELAR el turno desde el panel.`;
+        await sendMessage(tenant.merchant_phone, msg, phoneNumberId, token);
+      }
+    } catch (e) {
+      console.error('[webhook] Error saving appointment:', e.message);
     }
   }
 

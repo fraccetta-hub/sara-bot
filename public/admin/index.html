@@ -339,6 +339,15 @@
             <span id="sectionBadgeServicesIcon" class="text-lg"></span>
           </div>
         </div>
+          <div id="sectionBadgeAppointments" class="flex items-center gap-3 rounded-xl px-4 py-3 border-2 transition">
+            <span class="text-xl">📅</span>
+            <div class="flex-1">
+              <p class="text-sm font-semibold">📅 Turnos</p>
+              <p class="text-xs">Sistema de reservas y agenda de citas</p>
+            </div>
+            <span id="sectionBadgeAppointmentsIcon" class="text-lg"></span>
+          </div>
+        </div>
         <p data-i18n="settings.sections.contactAdmin" class="text-xs text-gray-400 mt-3 text-center">Para activar más secciones, contactá al administrador.</p>
       </div>
 
@@ -1520,8 +1529,7 @@ async function showDashboard() {
     document.getElementById('statPending').textContent  = stats.pendingOrders;
     document.getElementById('statRevenue').textContent  = formatGs(stats.todayRevenue);
     document.getElementById('statProducts').textContent = stats.activeProducts + '/' + stats.totalProducts;
-    applyTabVisibility(settings.products_enabled !== false, !!settings.services_enabled);
-    // Load products only if section is enabled
+    applyTabVisibility(settings.products_enabled !== false, !!settings.services_enabled, !!settings.appointments_enabled);
     if (settings.products_enabled !== false) loadProducts();
   } catch (e) {
     if (e.status === 401) logout();
@@ -1529,18 +1537,21 @@ async function showDashboard() {
 }
 
 // ── Tab visibility (based on enabled sections) ─────────────────────────────────
-function applyTabVisibility(productsEnabled, servicesEnabled) {
+function applyTabVisibility(productsEnabled, servicesEnabled, appointmentsEnabled) {
   const tabP = document.getElementById('tabProducts');
   const tabS = document.getElementById('tabServices');
-  if (tabP) tabP.style.display = productsEnabled ? '' : 'none';
-  if (tabS) tabS.style.display = servicesEnabled ? '' : 'none';
+  const tabA = document.getElementById('tabAppointments');
+  if (tabP) tabP.style.display = productsEnabled     ? '' : 'none';
+  if (tabS) tabS.style.display = servicesEnabled     ? '' : 'none';
+  if (tabA) tabA.style.display = appointmentsEnabled ? '' : 'none';
 
   // If current active tab is now hidden, redirect to chats
   const activeEl = document.querySelector('.tab-active');
   if (activeEl) {
     const id = activeEl.id;
-    if ((id === 'tabProducts' && !productsEnabled) ||
-        (id === 'tabServices' && !servicesEnabled)) {
+    if ((id === 'tabProducts'     && !productsEnabled)     ||
+        (id === 'tabServices'     && !servicesEnabled)     ||
+        (id === 'tabAppointments' && !appointmentsEnabled)) {
       switchTab('chats');
     }
   }
@@ -1562,8 +1573,9 @@ function applyTabVisibility(productsEnabled, servicesEnabled) {
       if (icon) icon.textContent = '🔒';
     }
   };
-  applyBadge('sectionBadgeProducts', 'sectionBadgeProductsIcon', productsEnabled);
-  applyBadge('sectionBadgeServices', 'sectionBadgeServicesIcon', servicesEnabled);
+  applyBadge('sectionBadgeProducts',     'sectionBadgeProductsIcon',     productsEnabled);
+  applyBadge('sectionBadgeServices',     'sectionBadgeServicesIcon',     servicesEnabled);
+  applyBadge('sectionBadgeAppointments', 'sectionBadgeAppointmentsIcon', appointmentsEnabled);
 }
 
 // ── Tab switching ──────────────────────────────────────────────────────────────

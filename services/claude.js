@@ -5,7 +5,7 @@ const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 const MAX_HISTORY = 20;
 
-function buildSystemPrompt(tenant, stock, convState = {}, services = []) {
+function buildSystemPrompt(tenant, stock, convState = {}, services = [], appointmentSlots = null) {
   const botName = tenant.bot_name || 'Sara';
   const personality = tenant.bot_personality || 'cálida, profesional y entusiasta';
 
@@ -60,6 +60,43 @@ D4. Si eligió envío y no hay dirección aún: pedile la dirección exacta o qu
 D5. Una vez calculado el envío (el sistema te lo informa), confirmá el total incluyendo el costo de envío antes de generar el <ORDER>.`;
   }
 
+  // ── Appointments block ──────────────────────────────────────────────────────
+  let appointmentsBlock = '';
+  if (tenant.appointments_enabled && appointmentSlots) {
+    const { byDate, servicesList } = appointmentSlots;
+    const svcNames = servicesList.length
+      ? servicesList.map(s => `• ${s.name} (${s.duration_min || 30} min) — ${s.price_guarani?.toLocaleString('es-PY')} Gs`).join('\n')
+      : '(consultar disponibilidad)';
+
+    const slotLines = Object.entries(byDate).map(([date, slots]) => {
+      if (!slots.length) return null;
+      const times = slots.slice(0, 8).map(iso => {
+        const d = new Date(iso);
+        return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+      }).join(', ');
+      const d = new Date(date + 'T12:00:00Z');
+      const label = d.toLocaleDateString('es', { weekday: 'long', day: 'numeric', month: 'long' });
+      return `  ${label}: ${times}${slots.length > 8 ? ' ...' : ''}`;
+    }).filter(Boolean).join('\n');
+
+    appointmentsBlock = `
+TURNOS / RESERVAS:
+El local acepta reservas para los siguientes servicios:
+${svcNames}
+
+Próximos horarios disponibles:
+${slotLines || '  (Sin disponibilidad en los próximos días)'}
+
+REGLAS DE RESERVA:
+A1. Cuando el cliente quiera reservar: preguntale qué servicio desea, qué día y hora prefiere (de los disponibles), y su nombre completo.
+A2. Confirmá con el cliente: servicio, fecha/hora y nombre antes de generar la reserva.
+A3. Una vez confirmado, respondé de forma natural Y emití al final:
+<APPOINTMENT:{"service_name":"NOMBRE_SERVICIO","start_at":"FECHA_ISO","customer_name":"NOMBRE_CLIENTE"}>
+A4. FECHA_ISO debe ser exactamente uno de los ISO strings disponibles (por ejemplo: 2026-06-14T10:00:00). NO inventes horarios.
+A5. Después de la reserva, informá que el local confirmará el turno.
+A6. Solo ofrecé los horarios que aparecen en la lista de disponibilidad.`;
+  }
+
   const customBlock = tenant.custom_instructions
     ? `\nREGLAS ESPECÍFICAS DEL NEGOCIO (seguir siempre, tienen prioridad sobre todo):\n${tenant.custom_instructions}`
     : '';
@@ -76,6 +113,7 @@ ${catalogBlock}
 ${paymentBlock}
 ${customBlock}
 ${deliveryBlock}
+${appointmentsBlock}
 
 REGLAS:
 1. Solo ofrecés productos con stock disponible (>0 unidades).
@@ -93,8 +131,8 @@ REGLAS:
 10. Si el cliente envía una imagen o mensaje que no tiene ninguna relación con los productos o servicios del local, respondé ÚNICAMENTE con: <OFF_TOPIC> No procesás contenido que no esté relacionado con el negocio.`;
 }
 
-async function chat({ tenant, stock, services, history, userMessage, convState, imageData }) {
-  const systemPrompt = buildSystemPrompt(tenant, stock, convState || {}, services || []);
+async function chat({ tenant, stock, services, history, userMessage, convState, imageData, appointmentSlots }) {
+  const systemPrompt = buildSystemPrompt(tenant, stock, convState || {}, services || [], appointmentSlots || null);
 
   // Build user content — plain text or image+text for vision messages
   let userContent;
@@ -180,6 +218,18 @@ async function chat({ tenant, stock, services, history, userMessage, convState, 
     cleanReply = cleanReply.replace(/<DELIVERY_ADDRESS:.+?>/, '').trim();
   }
 
+  // Extract APPOINTMENT tag
+  let appointmentRequest = null;
+  const apptMatch = cleanReply.match(/<APPOINTMENT:(\{[\s\S]*?\})>/);
+  if (apptMatch) {
+    try {
+      appointmentRequest = JSON.parse(apptMatch[1]);
+    } catch(e) {
+      console.error('Failed to parse APPOINTMENT JSON:', e.message);
+    }
+    cleanReply = cleanReply.replace(/<APPOINTMENT:\{[\s\S]*?\}>/, '').trim();
+  }
+
   // Store a text-only representation in history (avoids saving large base64 in Supabase)
   const historyEntry = imageData
     ? `[foto enviada por el cliente] ${userMessage || ''}`.trim()
@@ -191,7 +241,7 @@ async function chat({ tenant, stock, services, history, userMessage, convState, 
     { role: 'assistant', content: rawReply }
   ].slice(-MAX_HISTORY);
 
-  return { reply: cleanReply, order, imageProductName, customerName, deliveryChoice, deliveryAddress, offTopic, updatedHistory };
+  return { reply: cleanReply, order, imageProductName, customerName, deliveryChoice, deliveryAddress, offTopic, updatedHistory, appointmentRequest };
 }
 
 module.exports = { chat };
