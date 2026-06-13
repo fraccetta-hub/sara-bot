@@ -64,37 +64,60 @@ D5. Una vez calculado el envío (el sistema te lo informa), confirmá el total i
   let appointmentsBlock = '';
   if (tenant.appointments_enabled && appointmentSlots) {
     const { byDate, servicesList } = appointmentSlots;
-    const svcNames = servicesList.length
-      ? servicesList.map(s => `• ${s.name} (${s.duration_min || 30} min) — ${s.price_guarani?.toLocaleString('es-PY')} Gs`).join('\n')
-      : '(consultar disponibilidad)';
 
+    // Services with duration (only these can be booked)
+    const bookableServices = servicesList.filter(s => s.duration_min);
+    const svcNames = bookableServices.length
+      ? bookableServices.map(s =>
+          `• ${s.name} (${s.duration_min} min — ${s.price_guarani?.toLocaleString('es-PY')} Gs)`
+        ).join('\n')
+      : '(sin servicios configurados)';
+
+    // Find the very first available slot across all days
+    let firstSlot = null;
+    let firstSlotLabel = null;
+    for (const [date, slots] of Object.entries(byDate)) {
+      if (slots.length) {
+        firstSlot = slots[0];
+        const d = new Date(firstSlot);
+        firstSlotLabel = d.toLocaleDateString('es', { weekday: 'long', day: 'numeric', month: 'long' }) +
+          ' a las ' + d.toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' });
+        break;
+      }
+    }
+
+    // Full availability list (next 14 days, max 6 slots per day shown)
     const slotLines = Object.entries(byDate).map(([date, slots]) => {
       if (!slots.length) return null;
-      const times = slots.slice(0, 8).map(iso => {
+      const times = slots.slice(0, 6).map(iso => {
         const d = new Date(iso);
         return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
       }).join(', ');
       const d = new Date(date + 'T12:00:00Z');
       const label = d.toLocaleDateString('es', { weekday: 'long', day: 'numeric', month: 'long' });
-      return `  ${label}: ${times}${slots.length > 8 ? ' ...' : ''}`;
+      return `  ${label}: ${times}${slots.length > 6 ? ` (+${slots.length - 6} más)` : ''}`;
     }).filter(Boolean).join('\n');
 
     appointmentsBlock = `
 TURNOS / RESERVAS:
-El local acepta reservas para los siguientes servicios:
+Servicios que acepta el local (SOLO estos, no otros):
 ${svcNames}
 
-Próximos horarios disponibles:
-${slotLines || '  (Sin disponibilidad en los próximos días)'}
+Primer turno disponible: ${firstSlotLabel || 'sin disponibilidad próxima'}
+
+Disponibilidad completa (próximos 14 días):
+${slotLines || '  (Sin disponibilidad en los próximos 14 días)'}
 
 REGLAS DE RESERVA:
-A1. Cuando el cliente quiera reservar: preguntale qué servicio desea, qué día y hora prefiere (de los disponibles), y su nombre completo.
-A2. Confirmá con el cliente: servicio, fecha/hora y nombre antes de generar la reserva.
-A3. Una vez confirmado, respondé de forma natural Y emití al final:
-<APPOINTMENT:{"service_name":"NOMBRE_SERVICIO","start_at":"FECHA_ISO","customer_name":"NOMBRE_CLIENTE"}>
-A4. FECHA_ISO debe ser exactamente uno de los ISO strings disponibles (por ejemplo: 2026-06-14T10:00:00). NO inventes horarios.
-A5. Después de la reserva, informá que el local confirmará el turno.
-A6. Solo ofrecé los horarios que aparecen en la lista de disponibilidad.`;
+A1. COHERENCIA: Solo podés reservar servicios que están en la lista de arriba. Si el cliente pide algo que no existe en esa lista, explicale con amabilidad que no ofrecemos ese servicio y mostrá los disponibles.
+A2. PROPUESTA: Cuando el cliente quiera reservar, proponé primero el primer turno disponible (${firstSlotLabel || 'no disponible'}). Si no le viene bien, mostrá los demás horarios disponibles.
+A3. DATOS NECESARIOS: Para confirmar una reserva necesitás: servicio, fecha/hora exacta de la lista, y nombre completo del cliente.
+A4. FECHA LEJANA: Si el cliente pide una fecha más allá de los 14 días mostrados, decile que podés tomar nota de su preferencia y que el local confirmará disponibilidad. NO generes el tag <APPOINTMENT> para fechas fuera de la lista.
+A5. CONFIRMAR ANTES DE RESERVAR: Siempre confirmá con el cliente el resumen (servicio + fecha/hora + nombre) antes de emitir la reserva.
+A6. Una vez confirmado por el cliente, respondé de forma natural Y emití al final:
+<APPOINTMENT:{"service_name":"NOMBRE_EXACTO_DEL_SERVICIO","start_at":"FECHA_ISO_EXACTA","customer_name":"NOMBRE_CLIENTE"}>
+A7. FECHA_ISO debe ser exactamente uno de los ISO strings de la lista (ej: 2026-06-14T10:00:00). NO inventes ni redondees horarios.
+A8. Después de emitir la reserva, informá al cliente que el local confirmará el turno en breve.`;
   }
 
   const customBlock = tenant.custom_instructions

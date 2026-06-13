@@ -516,38 +516,49 @@ async function handleCustomerMessage(tenant, customerPhone, messageText, locatio
     getServices(tenant.id),
   ]);
 
-  // ── Load appointment slots for next 3 days (if feature enabled) ─────────────
+  // ── Load appointment slots for next 14 days (if feature enabled) ────────────
   let appointmentSlots = null;
   if (tenant.appointments_enabled) {
     try {
       const apptServices = services.filter(s => s.is_available && s.duration_min);
-      const byDate = {};
       const today = new Date();
-      for (let i = 0; i < 4; i++) {
-        const d = new Date(today);
-        d.setDate(d.getDate() + i);
+      const rangeEnd = new Date(today); rangeEnd.setDate(rangeEnd.getDate() + 14);
+
+      // 3 bulk queries instead of N-per-day
+      const [bhRes, existingRes, blocksRes] = await Promise.all([
+        supabase.from('business_hours').select('*').eq('tenant_id', tenant.id),
+        supabase.from('appointments').select('start_at,end_at')
+          .eq('tenant_id', tenant.id)
+          .gte('start_at', today.toISOString())
+          .lte('start_at', rangeEnd.toISOString())
+          .neq('status', 'cancelled'),
+        supabase.from('appointment_blocks').select('start_at,end_at')
+          .eq('tenant_id', tenant.id)
+          .gte('start_at', today.toISOString())
+          .lte('start_at', rangeEnd.toISOString()),
+      ]);
+
+      const bhMap = {};
+      for (const bh of bhRes.data || []) bhMap[bh.day_of_week] = bh;
+      const busy = [...(existingRes.data || []), ...(blocksRes.data || [])];
+      const slotDur = apptServices[0]?.duration_min || 30;
+
+      const byDate = {};
+      for (let i = 0; i < 14; i++) {
+        const d = new Date(today); d.setDate(d.getDate() + i);
         const dateStr = d.toISOString().slice(0, 10);
-        const dayOfWeek = d.getUTCDay();
-        const { data: bh } = await supabase.from('business_hours').select('*')
-          .eq('tenant_id', tenant.id).eq('day_of_week', dayOfWeek).single();
+        const bh = bhMap[d.getDay()];
         if (!bh || bh.is_closed) { byDate[dateStr] = []; continue; }
 
         const [oh, om] = bh.open_time.split(':').map(Number);
         const [ch, cm] = bh.close_time.split(':').map(Number);
         const openMin = oh * 60 + om, closeMin = ch * 60 + cm;
-        const slotDur = apptServices[0]?.duration_min || 30;
         const allSlots = [];
         for (let m = openMin; m + slotDur <= closeMin; m += slotDur) {
           const hh = String(Math.floor(m / 60)).padStart(2, '0');
           const mm = String(m % 60).padStart(2, '0');
           allSlots.push(`${dateStr}T${hh}:${mm}:00`);
         }
-        const dayStart = `${dateStr}T00:00:00`, dayEnd = `${dateStr}T23:59:59`;
-        const { data: existing } = await supabase.from('appointments').select('start_at,end_at')
-          .eq('tenant_id', tenant.id).gte('start_at', dayStart).lte('start_at', dayEnd).neq('status','cancelled');
-        const { data: blocks } = await supabase.from('appointment_blocks').select('start_at,end_at')
-          .eq('tenant_id', tenant.id).gte('start_at', dayStart).lte('start_at', dayEnd);
-        const busy = [...(existing || []), ...(blocks || [])];
         byDate[dateStr] = allSlots.filter(slotStart => {
           const sS = new Date(slotStart).getTime(), sE = sS + slotDur * 60000;
           return !busy.some(b => new Date(b.start_at).getTime() < sE && new Date(b.end_at).getTime() > sS);
