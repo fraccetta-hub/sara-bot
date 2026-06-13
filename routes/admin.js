@@ -563,4 +563,191 @@ router.post('/chats/:phone/send-image', requireAuth, upload.single('image'), asy
   res.json({ ok: true, url: imageUrl });
 });
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// APPOINTMENTS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// ─── GET /admin/business-hours ───────────────────────────────────────────────
+router.get('/business-hours', requireAuth, async (req, res) => {
+  const { data, error } = await supabase
+    .from('business_hours').select('*')
+    .eq('tenant_id', req.tenant.tenantId)
+    .order('day_of_week');
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
+// ─── PUT /admin/business-hours — upsert all 7 days at once ──────────────────
+router.put('/business-hours', requireAuth, async (req, res) => {
+  const days = req.body; // array of { day_of_week, open_time, close_time, is_closed }
+  if (!Array.isArray(days)) return res.status(400).json({ error: 'Se esperaba un array' });
+  const rows = days.map(d => ({
+    tenant_id:   req.tenant.tenantId,
+    day_of_week: d.day_of_week,
+    open_time:   d.is_closed ? null : (d.open_time  || '09:00'),
+    close_time:  d.is_closed ? null : (d.close_time || '18:00'),
+    is_closed:   !!d.is_closed,
+  }));
+  const { error } = await supabase.from('business_hours')
+    .upsert(rows, { onConflict: 'tenant_id,day_of_week' });
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ ok: true });
+});
+
+// ─── GET /admin/appointments?from=ISO&to=ISO ─────────────────────────────────
+router.get('/appointments', requireAuth, async (req, res) => {
+  const { from, to } = req.query;
+  let q = supabase.from('appointments').select('*')
+    .eq('tenant_id', req.tenant.tenantId)
+    .order('start_at');
+  if (from) q = q.gte('start_at', from);
+  if (to)   q = q.lte('start_at', to);
+  const { data, error } = await q;
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
+// ─── POST /admin/appointments ────────────────────────────────────────────────
+router.post('/appointments', requireAuth, async (req, res) => {
+  const { customer_phone, customer_name, service_id, start_at, notes } = req.body;
+  if (!start_at) return res.status(400).json({ error: 'start_at es obligatorio' });
+
+  // Resolve service duration
+  let service_name = null, service_duration_min = 30;
+  if (service_id) {
+    const { data: svc } = await supabase.from('services')
+      .select('name, duration_min').eq('id', service_id).eq('tenant_id', req.tenant.tenantId).single();
+    if (svc) { service_name = svc.name; service_duration_min = svc.duration_min || 30; }
+  }
+
+  const end_at = new Date(new Date(start_at).getTime() + service_duration_min * 60000).toISOString();
+
+  const { data, error } = await supabase.from('appointments').insert({
+    tenant_id: req.tenant.tenantId,
+    customer_phone: customer_phone || '',
+    customer_name: customer_name || null,
+    service_id: service_id || null,
+    service_name, service_duration_min,
+    start_at, end_at,
+    status: 'confirmed',
+    notes: notes || null,
+  }).select().single();
+
+  if (error) return res.status(500).json({ error: error.message });
+  res.status(201).json(data);
+});
+
+// ─── PUT /admin/appointments/:id ─────────────────────────────────────────────
+router.put('/appointments/:id', requireAuth, async (req, res) => {
+  const allowed = ['customer_name','customer_phone','status','notes','start_at','end_at'];
+  const updates = {};
+  for (const f of allowed) if (req.body[f] !== undefined) updates[f] = req.body[f];
+  const { data, error } = await supabase.from('appointments')
+    .update(updates).eq('id', req.params.id).eq('tenant_id', req.tenant.tenantId)
+    .select().single();
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
+// ─── DELETE /admin/appointments/:id ──────────────────────────────────────────
+router.delete('/appointments/:id', requireAuth, async (req, res) => {
+  await supabase.from('appointments')
+    .delete().eq('id', req.params.id).eq('tenant_id', req.tenant.tenantId);
+  res.json({ ok: true });
+});
+
+// ─── GET /admin/appointment-blocks?from=ISO&to=ISO ───────────────────────────
+router.get('/appointment-blocks', requireAuth, async (req, res) => {
+  const { from, to } = req.query;
+  let q = supabase.from('appointment_blocks').select('*')
+    .eq('tenant_id', req.tenant.tenantId).order('start_at');
+  if (from) q = q.gte('start_at', from);
+  if (to)   q = q.lte('start_at', to);
+  const { data, error } = await q;
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
+// ─── POST /admin/appointment-blocks ──────────────────────────────────────────
+router.post('/appointment-blocks', requireAuth, async (req, res) => {
+  const { start_at, end_at, reason } = req.body;
+  if (!start_at || !end_at) return res.status(400).json({ error: 'start_at y end_at son obligatorios' });
+  const { data, error } = await supabase.from('appointment_blocks').insert({
+    tenant_id: req.tenant.tenantId, start_at, end_at, reason: reason || null,
+  }).select().single();
+  if (error) return res.status(500).json({ error: error.message });
+  res.status(201).json(data);
+});
+
+// ─── DELETE /admin/appointment-blocks/:id ────────────────────────────────────
+router.delete('/appointment-blocks/:id', requireAuth, async (req, res) => {
+  await supabase.from('appointment_blocks')
+    .delete().eq('id', req.params.id).eq('tenant_id', req.tenant.tenantId);
+  res.json({ ok: true });
+});
+
+// ─── GET /admin/available-slots?date=YYYY-MM-DD&service_id=uuid ──────────────
+// Calcola gli slot liberi per una data, usato dal bot e dal pannello
+router.get('/available-slots', requireAuth, async (req, res) => {
+  const { date, service_id, duration_min } = req.query;
+  if (!date) return res.status(400).json({ error: 'date es obligatorio' });
+
+  const dayOfWeek = new Date(date + 'T12:00:00Z').getUTCDay(); // 0=dom..6=sab
+
+  // Orari del locale quel giorno
+  const { data: bh } = await supabase.from('business_hours').select('*')
+    .eq('tenant_id', req.tenant.tenantId).eq('day_of_week', dayOfWeek).single();
+
+  if (!bh || bh.is_closed) return res.json({ slots: [], closed: true });
+
+  // Durata servizio
+  let slotDuration = parseInt(duration_min) || 30;
+  if (service_id) {
+    const { data: svc } = await supabase.from('services')
+      .select('duration_min').eq('id', service_id).eq('tenant_id', req.tenant.tenantId).single();
+    if (svc?.duration_min) slotDuration = svc.duration_min;
+  }
+
+  // Costruisci tutti gli slot nella giornata
+  const [openH, openM]   = bh.open_time.split(':').map(Number);
+  const [closeH, closeM] = bh.close_time.split(':').map(Number);
+  const openMin  = openH * 60 + openM;
+  const closeMin = closeH * 60 + closeM;
+
+  const allSlots = [];
+  for (let m = openMin; m + slotDuration <= closeMin; m += slotDuration) {
+    const h = String(Math.floor(m / 60)).padStart(2, '0');
+    const min = String(m % 60).padStart(2, '0');
+    allSlots.push(`${date}T${h}:${min}:00`);
+  }
+
+  // Appuntamenti esistenti quel giorno
+  const dayStart = `${date}T00:00:00`;
+  const dayEnd   = `${date}T23:59:59`;
+  const { data: existing } = await supabase.from('appointments').select('start_at, end_at')
+    .eq('tenant_id', req.tenant.tenantId)
+    .gte('start_at', dayStart).lte('start_at', dayEnd)
+    .neq('status', 'cancelled');
+
+  // Blocchi manuali quel giorno
+  const { data: blocks } = await supabase.from('appointment_blocks').select('start_at, end_at')
+    .eq('tenant_id', req.tenant.tenantId)
+    .gte('start_at', dayStart).lte('start_at', dayEnd);
+
+  const busy = [...(existing || []), ...(blocks || [])];
+
+  // Filtra slot occupati
+  const freeSlots = allSlots.filter(slotStart => {
+    const sStart = new Date(slotStart).getTime();
+    const sEnd   = sStart + slotDuration * 60000;
+    return !busy.some(b => {
+      const bStart = new Date(b.start_at).getTime();
+      const bEnd   = new Date(b.end_at).getTime();
+      return sStart < bEnd && sEnd > bStart;
+    });
+  });
+
+  res.json({ slots: freeSlots, duration_min: slotDuration });
+});
+
 module.exports = router;

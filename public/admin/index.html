@@ -76,6 +76,7 @@
       <button class="py-2 px-1 sm:px-0 whitespace-nowrap flex-shrink-0 tab-active" id="tabProducts" onclick="switchTab('products')">📦 Productos</button>
       <button class="py-2 px-1 sm:px-0 whitespace-nowrap flex-shrink-0" id="tabServices" onclick="switchTab('services')">🛠 Servicios</button>
       <button class="py-2 px-1 sm:px-0 whitespace-nowrap flex-shrink-0" id="tabOrders" onclick="switchTab('orders')">🛒 Pedidos</button>
+      <button class="py-2 px-1 sm:px-0 whitespace-nowrap flex-shrink-0" id="tabAppointments" onclick="switchTab('appointments')">📅 Turnos</button>
       <button class="py-2 px-1 sm:px-0 whitespace-nowrap flex-shrink-0" id="tabSettings" onclick="switchTab('settings')">⚙️ Ajustes</button>
       <button class="py-2 px-1 sm:px-0 whitespace-nowrap flex-shrink-0" id="tabHelp" onclick="switchTab('help')">❓ Ayuda</button>
     </div>
@@ -259,6 +260,43 @@
       </div>
     </div>
 
+    <!-- ── APPOINTMENTS TAB ── -->
+    <div id="sectionAppointments" class="hidden">
+
+      <!-- Toolbar -->
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <div class="flex items-center gap-2">
+          <button onclick="calPrev()" class="px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 text-sm">‹</button>
+          <span id="calWeekLabel" class="text-sm font-semibold text-gray-800 min-w-[160px] text-center"></span>
+          <button onclick="calNext()" class="px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 text-sm">›</button>
+          <button onclick="calGoToday()" class="px-3 py-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 text-xs">Hoy</button>
+        </div>
+        <div class="flex gap-2">
+          <button onclick="openBlockModal()" class="px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 text-sm">🚫 Agregar bloqueo</button>
+          <button onclick="openApptModal(null)" class="btn-green px-4 py-1.5 rounded-lg text-sm font-semibold">+ Turno</button>
+        </div>
+      </div>
+
+      <!-- Calendar grid -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <!-- Day headers -->
+        <div id="calHeader" class="grid border-b border-gray-200 bg-gray-50"></div>
+        <!-- Time grid (scrollable) -->
+        <div class="overflow-y-auto" style="max-height:calc(100vh - 18rem)">
+          <div id="calGrid" class="grid relative"></div>
+        </div>
+      </div>
+
+      <!-- Legend -->
+      <div class="flex gap-4 mt-3 text-xs text-gray-500">
+        <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-green-100 inline-block border border-green-300"></span> Libre</span>
+        <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-blue-400 inline-block"></span> Confirmado</span>
+        <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-yellow-400 inline-block"></span> Pendiente</span>
+        <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-red-300 inline-block"></span> Bloqueado</span>
+        <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-gray-200 inline-block"></span> Fuera de horario</span>
+      </div>
+    </div>
+
     <!-- ── HELP TAB ── (rendered by renderHelp() JS function) -->
     <div id="sectionHelp" class="hidden max-w-2xl space-y-5"></div>
 
@@ -302,6 +340,17 @@
           </div>
         </div>
         <p data-i18n="settings.sections.contactAdmin" class="text-xs text-gray-400 mt-3 text-center">Para activar más secciones, contactá al administrador.</p>
+      </div>
+
+      <!-- Business hours -->
+      <div class="bg-white rounded-xl shadow-sm p-6">
+        <h3 class="font-medium text-gray-800 mb-1">🕐 Horarios del local</h3>
+        <p class="text-xs text-gray-400 mb-4">Definí los días y horarios de atención. Los turnos solo se pueden reservar en estos horarios.</p>
+        <div id="businessHoursForm" class="space-y-2">
+          <!-- rendered by JS -->
+        </div>
+        <div id="bhMsg" class="hidden rounded-lg px-4 py-2 text-sm mt-3"></div>
+        <button onclick="saveBusinessHours()" class="btn-green w-full py-2 rounded-lg text-sm font-semibold mt-4">Guardar horarios</button>
       </div>
 
       <!-- Bot personality -->
@@ -538,6 +587,103 @@
     <div class="flex gap-3 mt-6">
       <button onclick="closeServiceModal()" data-i18n="modal.service.cancel" class="flex-1 border border-gray-200 py-2 rounded-lg text-sm font-semibold text-gray-600 hover:bg-gray-50">Cancelar</button>
       <button onclick="saveService()" data-i18n="modal.service.save" class="flex-1 btn-green py-2 rounded-lg text-sm font-semibold">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════ APPOINTMENT MODAL ════ -->
+<div id="apptModal" class="hidden fixed inset-0 modal-bg flex items-center justify-center z-50 px-4">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+    <div class="flex items-center justify-between mb-4">
+      <h3 id="apptModalTitle" class="text-base font-semibold text-gray-800">Nuevo turno</h3>
+      <button onclick="closeApptModal()" class="text-gray-400 hover:text-gray-600 text-xl leading-none">✕</button>
+    </div>
+    <div id="apptError" class="hidden bg-red-50 text-red-700 text-sm rounded-lg px-4 py-2 mb-3"></div>
+    <div class="space-y-3">
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Fecha</label>
+          <input type="date" id="apptDate" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" onchange="loadApptSlots()"/>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Servicio</label>
+          <select id="apptService" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" onchange="loadApptSlots()">
+            <option value="">— Sin servicio —</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-500 mb-1">Hora disponible</label>
+        <select id="apptSlot" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
+          <option value="">Elegí fecha primero</option>
+        </select>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Cliente (nombre)</label>
+          <input type="text" id="apptName" placeholder="María García" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Teléfono</label>
+          <input type="text" id="apptPhone" placeholder="595981..." class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
+        </div>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-500 mb-1">Notas</label>
+        <textarea id="apptNotes" rows="2" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm resize-none" placeholder="Observaciones opcionales..."></textarea>
+      </div>
+    </div>
+    <div class="flex gap-3 mt-5">
+      <button onclick="closeApptModal()" class="flex-1 border border-gray-200 text-gray-600 py-2 rounded-lg text-sm hover:bg-gray-50">Cancelar</button>
+      <button onclick="saveAppt()" id="apptSaveBtn" class="btn-green flex-1 py-2 rounded-lg text-sm font-semibold">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════ BLOCK MODAL ════ -->
+<div id="blockModal" class="hidden fixed inset-0 modal-bg flex items-center justify-center z-50 px-4">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="text-base font-semibold text-gray-800">🚫 Agregar bloqueo</h3>
+      <button onclick="closeBlockModal()" class="text-gray-400 hover:text-gray-600 text-xl leading-none">✕</button>
+    </div>
+    <div id="blockError" class="hidden bg-red-50 text-red-700 text-sm rounded-lg px-4 py-2 mb-3"></div>
+    <div class="space-y-3">
+      <div>
+        <label class="block text-xs font-medium text-gray-500 mb-1">Motivo (opcional)</label>
+        <input type="text" id="blockReason" placeholder="Almuerzo, Feriado, Reunión..." class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Inicio</label>
+          <input type="datetime-local" id="blockStart" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Fin</label>
+          <input type="datetime-local" id="blockEnd" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
+        </div>
+      </div>
+    </div>
+    <div class="flex gap-3 mt-5">
+      <button onclick="closeBlockModal()" class="flex-1 border border-gray-200 text-gray-600 py-2 rounded-lg text-sm hover:bg-gray-50">Cancelar</button>
+      <button onclick="saveBlock()" id="blockSaveBtn" class="btn-green flex-1 py-2 rounded-lg text-sm font-semibold">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════ APPOINTMENT DETAIL MODAL ════ -->
+<div id="apptDetailModal" class="hidden fixed inset-0 modal-bg flex items-center justify-center z-50 px-4">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="text-base font-semibold text-gray-800">Detalle del turno</h3>
+      <button onclick="closeApptDetail()" class="text-gray-400 hover:text-gray-600 text-xl leading-none">✕</button>
+    </div>
+    <div id="apptDetailBody" class="space-y-2 text-sm text-gray-700"></div>
+    <div class="flex gap-2 mt-5 flex-wrap">
+      <button onclick="confirmAppt()" id="apptDetailConfirm" class="flex-1 bg-green-50 text-green-700 hover:bg-green-100 py-2 rounded-lg text-xs font-semibold transition">✅ Confirmar</button>
+      <button onclick="completeAppt()" id="apptDetailComplete" class="flex-1 bg-blue-50 text-blue-700 hover:bg-blue-100 py-2 rounded-lg text-xs font-semibold transition">✔ Completar</button>
+      <button onclick="cancelAppt()" id="apptDetailCancel" class="flex-1 bg-red-50 text-red-700 hover:bg-red-100 py-2 rounded-lg text-xs font-semibold transition">✕ Cancelar</button>
+      <button onclick="deleteAppt()" class="flex-1 bg-gray-50 text-gray-500 hover:bg-gray-100 py-2 rounded-lg text-xs font-semibold transition">🗑 Eliminar</button>
     </div>
   </div>
 </div>
@@ -1422,7 +1568,7 @@ function applyTabVisibility(productsEnabled, servicesEnabled) {
 
 // ── Tab switching ──────────────────────────────────────────────────────────────
 function switchTab(tab) {
-  ['chats','products','services','orders','settings','help'].forEach(t => {
+  ['chats','products','services','orders','appointments','settings','help'].forEach(t => {
     document.getElementById('section' + cap(t)).classList.toggle('hidden', t !== tab);
     document.getElementById('tab'     + cap(t)).classList.toggle('tab-active', t === tab);
   });
@@ -1439,11 +1585,12 @@ function switchTab(tab) {
       mainWrap.classList.remove('pt-0', 'pb-0');
     }
   }
-  if (tab === 'orders')   loadOrders();
-  if (tab === 'settings') loadSettings();
-  if (tab === 'services') loadServices();
-  if (tab === 'chats')    { loadChatList(); startChatListPoll(); }
-  else                    stopChatListPoll();
+  if (tab === 'orders')       loadOrders();
+  if (tab === 'settings')     loadSettings();
+  if (tab === 'services')     loadServices();
+  if (tab === 'appointments') initCalendar();
+  if (tab === 'chats')        { loadChatList(); startChatListPoll(); }
+  else                        stopChatListPoll();
 }
 function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
 
@@ -1843,6 +1990,10 @@ async function loadSettings() {
       Array.isArray(s.delivery_disabled_dates) ? s.delivery_disabled_dates.join(', ') : (s.delivery_disabled_dates || '');
     updateDeliveryFields();
     applyTabVisibility(s.products_enabled !== false, !!s.services_enabled);
+
+    // Load business hours
+    const bh = await api('/admin/business-hours').catch(() => []);
+    renderBusinessHoursForm(bh);
   } catch (e) { /* ignore */ }
 }
 
@@ -2505,6 +2656,425 @@ function fmtChatTime(iso) {
 
 function escHtml(s) {
   return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// APPOINTMENTS — Calendar
+// ══════════════════════════════════════════════════════════════════════════════
+
+const DAY_NAMES = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+const SLOT_MIN  = 30; // granularità griglia in minuti
+
+let calWeekStart  = null; // Monday of displayed week (Date)
+let calAppts      = [];
+let calBlocks     = [];
+let calBizHours   = [];
+let calServices   = [];
+let editingApptId = null;
+let editingBlockDetailId = null;
+
+// ── Init / navigation ────────────────────────────────────────────────────────
+
+function getMonday(d) {
+  const date = new Date(d);
+  const day  = date.getDay(); // 0=sun
+  const diff = (day === 0 ? -6 : 1 - day);
+  date.setDate(date.getDate() + diff);
+  date.setHours(0,0,0,0);
+  return date;
+}
+
+async function initCalendar() {
+  if (!calWeekStart) calWeekStart = getMonday(new Date());
+  // Load services for the appointment modal
+  calServices = await api('/admin/services').catch(() => []);
+  await loadCalendarData();
+}
+
+function calPrev()    { calWeekStart.setDate(calWeekStart.getDate() - 7); loadCalendarData(); }
+function calNext()    { calWeekStart.setDate(calWeekStart.getDate() + 7); loadCalendarData(); }
+function calGoToday() { calWeekStart = getMonday(new Date()); loadCalendarData(); }
+
+async function loadCalendarData() {
+  const from = calWeekStart.toISOString();
+  const toDate = new Date(calWeekStart); toDate.setDate(toDate.getDate() + 6); toDate.setHours(23,59,59);
+  const to = toDate.toISOString();
+
+  const [appts, blocks, bh] = await Promise.all([
+    api(`/admin/appointments?from=${from}&to=${to}`).catch(() => []),
+    api(`/admin/appointment-blocks?from=${from}&to=${to}`).catch(() => []),
+    api('/admin/business-hours').catch(() => []),
+  ]);
+
+  calAppts    = appts   || [];
+  calBlocks   = blocks  || [];
+  calBizHours = bh      || [];
+
+  renderCalendar();
+}
+
+// ── Render ───────────────────────────────────────────────────────────────────
+
+function renderCalendar() {
+  const days = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(calWeekStart);
+    d.setDate(d.getDate() + i);
+    days.push(d);
+  }
+
+  // Week label
+  const opts = { day:'numeric', month:'short' };
+  const label = `${days[0].toLocaleDateString('es',opts)} – ${days[6].toLocaleDateString('es',opts)} ${days[0].getFullYear()}`;
+  document.getElementById('calWeekLabel').textContent = label;
+
+  // Determine displayed hour range from biz hours (fallback 8-20)
+  let minHour = 8, maxHour = 20;
+  if (calBizHours.length) {
+    calBizHours.forEach(bh => {
+      if (!bh.is_closed && bh.open_time && bh.close_time) {
+        minHour = Math.min(minHour, parseInt(bh.open_time));
+        maxHour = Math.max(maxHour, Math.ceil(parseInt(bh.close_time.split(':')[0]) + (parseInt(bh.close_time.split(':')[1]||0)/60)));
+      }
+    });
+  }
+  maxHour = Math.min(maxHour, 24);
+
+  const totalSlots = Math.ceil((maxHour - minHour) * 60 / SLOT_MIN);
+
+  // Header
+  const header = document.getElementById('calHeader');
+  header.style.gridTemplateColumns = '3.5rem repeat(7, 1fr)';
+  header.innerHTML = `<div class="py-2 text-xs text-gray-400 text-center"></div>` +
+    days.map((d,i) => {
+      const isToday = d.toDateString() === new Date().toDateString();
+      return `<div class="py-2 text-center text-xs font-semibold ${isToday ? 'text-green-600' : 'text-gray-500'}">
+        ${DAY_NAMES[d.getDay()]}<br>
+        <span class="text-base ${isToday ? 'bg-green-500 text-white rounded-full w-7 h-7 flex items-center justify-center mx-auto' : ''}">${d.getDate()}</span>
+      </div>`;
+    }).join('');
+
+  // Grid
+  const grid = document.getElementById('calGrid');
+  grid.style.gridTemplateColumns = '3.5rem repeat(7, 1fr)';
+  let html = '';
+
+  for (let s = 0; s < totalSlots; s++) {
+    const slotMinFromMid = (minHour * 60) + (s * SLOT_MIN);
+    const hh = String(Math.floor(slotMinFromMid / 60)).padStart(2,'0');
+    const mm = String(slotMinFromMid % 60).padStart(2,'0');
+    const showLabel = mm === '00';
+
+    // Time label column
+    html += `<div class="text-right pr-2 text-xs text-gray-400 border-r border-gray-100 flex items-start pt-0.5" style="min-height:2.5rem">${showLabel ? hh+':00' : ''}</div>`;
+
+    // Day columns
+    for (let d = 0; d < 7; d++) {
+      const day = days[d];
+      const slotStart = new Date(day);
+      slotStart.setHours(Math.floor(slotMinFromMid/60), slotMinFromMid%60, 0, 0);
+      const slotEnd   = new Date(slotStart.getTime() + SLOT_MIN * 60000);
+
+      const dayOfWeek = day.getDay();
+      const bh = calBizHours.find(b => b.day_of_week === dayOfWeek);
+      const isClosed = !bh || bh.is_closed;
+      const isInHours = !isClosed && (() => {
+        const [oh,om] = bh.open_time.split(':').map(Number);
+        const [ch,cm] = bh.close_time.split(':').map(Number);
+        const openMinAbs  = oh*60+om;
+        const closeMinAbs = ch*60+cm;
+        return slotMinFromMid >= openMinAbs && (slotMinFromMid + SLOT_MIN) <= closeMinAbs;
+      })();
+
+      // Check for appointments in this slot
+      const apptInSlot = calAppts.find(a => {
+        const aStart = new Date(a.start_at).getTime();
+        const aEnd   = new Date(a.end_at).getTime();
+        return aStart < slotEnd.getTime() && aEnd > slotStart.getTime();
+      });
+
+      // Check for blocks in this slot
+      const blockInSlot = calBlocks.find(b => {
+        const bStart = new Date(b.start_at).getTime();
+        const bEnd   = new Date(b.end_at).getTime();
+        return bStart < slotEnd.getTime() && bEnd > slotStart.getTime();
+      });
+
+      let cellClass, cellContent = '', cellAction = '';
+      if (apptInSlot) {
+        const isStart = new Date(apptInSlot.start_at).getTime() === slotStart.getTime();
+        const color = apptInSlot.status === 'confirmed' ? 'bg-blue-400' :
+                      apptInSlot.status === 'completed' ? 'bg-green-500' :
+                      apptInSlot.status === 'cancelled' ? 'bg-gray-300' : 'bg-yellow-400';
+        cellClass  = `${color} text-white text-xs cursor-pointer hover:opacity-80 transition`;
+        if (isStart) cellContent = `<span class="font-semibold truncate block px-1 pt-0.5">${escHtml(apptInSlot.customer_name || apptInSlot.customer_phone)}</span><span class="opacity-80 px-1 text-[10px] truncate block">${escHtml(apptInSlot.service_name||'')}</span>`;
+        cellAction = `onclick="openApptDetail('${apptInSlot.id}')"`;
+      } else if (blockInSlot) {
+        const isStart = new Date(blockInSlot.start_at).getTime() === slotStart.getTime();
+        cellClass  = 'bg-red-100 text-red-600 text-xs cursor-pointer hover:bg-red-200 transition';
+        if (isStart) cellContent = `<span class="px-1 pt-0.5 block truncate">🚫 ${escHtml(blockInSlot.reason||'Bloqueado')}</span>`;
+        cellAction = `onclick="deleteBlockFromCell('${blockInSlot.id}')"`;
+      } else if (!isInHours) {
+        cellClass = 'bg-gray-50 text-gray-300';
+      } else {
+        // Free slot
+        const iso = slotStart.toISOString();
+        cellClass  = 'bg-green-50 hover:bg-green-100 cursor-pointer transition border border-transparent hover:border-green-200';
+        cellAction = `onclick="openApptModal('${iso}')"`;
+      }
+
+      const borderClass = s < totalSlots - 1 ? 'border-b border-gray-100' : '';
+      html += `<div class="${cellClass} ${borderClass}" style="min-height:2.5rem" ${cellAction}>${cellContent}</div>`;
+    }
+  }
+
+  grid.innerHTML = html;
+}
+
+// ── Appointment modal ────────────────────────────────────────────────────────
+
+function openApptModal(isoStart) {
+  editingApptId = null;
+  document.getElementById('apptModalTitle').textContent = 'Nuevo turno';
+  document.getElementById('apptError').classList.add('hidden');
+
+  // Prefill service selector
+  const svc = document.getElementById('apptService');
+  svc.innerHTML = '<option value="">— Sin servicio —</option>' +
+    calServices.filter(s => s.is_available).map(s =>
+      `<option value="${s.id}">${escHtml(s.name)} (${s.duration_min||30} min)</option>`
+    ).join('');
+
+  // Prefill date
+  if (isoStart) {
+    const d = new Date(isoStart);
+    document.getElementById('apptDate').value = d.toISOString().slice(0,10);
+    loadApptSlots(isoStart);
+  } else {
+    document.getElementById('apptDate').value = new Date().toISOString().slice(0,10);
+    document.getElementById('apptSlot').innerHTML = '<option value="">Elegí fecha primero</option>';
+    loadApptSlots();
+  }
+
+  document.getElementById('apptName').value  = '';
+  document.getElementById('apptPhone').value = '';
+  document.getElementById('apptNotes').value = '';
+  document.getElementById('apptModal').classList.remove('hidden');
+}
+
+function closeApptModal() { document.getElementById('apptModal').classList.add('hidden'); }
+
+async function loadApptSlots(preselectIso) {
+  const date    = document.getElementById('apptDate').value;
+  const svcId   = document.getElementById('apptService').value;
+  const slotEl  = document.getElementById('apptSlot');
+  if (!date) return;
+
+  slotEl.innerHTML = '<option>Cargando...</option>';
+  const params = `/admin/available-slots?date=${date}${svcId ? '&service_id='+svcId : ''}`;
+  const result = await api(params).catch(() => null);
+
+  if (!result || result.closed) {
+    slotEl.innerHTML = '<option value="">Día cerrado</option>';
+    return;
+  }
+  if (!result.slots.length) {
+    slotEl.innerHTML = '<option value="">Sin turnos disponibles</option>';
+    return;
+  }
+
+  slotEl.innerHTML = result.slots.map(iso => {
+    const d = new Date(iso);
+    const label = d.toLocaleTimeString('es', { hour:'2-digit', minute:'2-digit' });
+    const selected = preselectIso && new Date(preselectIso).getTime() === d.getTime() ? 'selected' : '';
+    return `<option value="${iso}" ${selected}>${label}</option>`;
+  }).join('');
+}
+
+async function saveAppt() {
+  const btn = document.getElementById('apptSaveBtn');
+  const errEl = document.getElementById('apptError');
+  btn.disabled = true; btn.textContent = 'Guardando...';
+  errEl.classList.add('hidden');
+
+  const slot    = document.getElementById('apptSlot').value;
+  const svcId   = document.getElementById('apptService').value;
+  const name    = document.getElementById('apptName').value.trim();
+  const phone   = document.getElementById('apptPhone').value.trim();
+  const notes   = document.getElementById('apptNotes').value.trim();
+
+  if (!slot) { errEl.textContent = 'Seleccioná una hora.'; errEl.classList.remove('hidden'); btn.disabled=false; btn.textContent='Guardar'; return; }
+
+  try {
+    await api('/admin/appointments', 'POST', {
+      start_at: slot, service_id: svcId || null,
+      customer_name: name || null, customer_phone: phone || '',
+      notes: notes || null,
+    });
+    closeApptModal();
+    await loadCalendarData();
+  } catch(e) {
+    errEl.textContent = e.message || 'Error al guardar.';
+    errEl.classList.remove('hidden');
+  } finally {
+    btn.disabled=false; btn.textContent='Guardar';
+  }
+}
+
+// ── Appointment detail ───────────────────────────────────────────────────────
+
+let apptDetailId = null;
+
+async function openApptDetail(id) {
+  apptDetailId = id;
+  const a = calAppts.find(x => x.id === id);
+  if (!a) return;
+
+  const start = new Date(a.start_at);
+  const end   = new Date(a.end_at);
+  const fmt   = d => d.toLocaleString('es', { weekday:'short', day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
+
+  document.getElementById('apptDetailBody').innerHTML = `
+    <div class="bg-gray-50 rounded-lg px-4 py-3 space-y-1">
+      <p><span class="font-medium">👤 Cliente:</span> ${escHtml(a.customer_name || '—')}</p>
+      <p><span class="font-medium">📱 Teléfono:</span> ${escHtml(a.customer_phone || '—')}</p>
+      <p><span class="font-medium">🛠 Servicio:</span> ${escHtml(a.service_name || '—')} ${a.service_duration_min ? '('+a.service_duration_min+' min)' : ''}</p>
+      <p><span class="font-medium">🕐 Inicio:</span> ${fmt(start)}</p>
+      <p><span class="font-medium">🕑 Fin:</span> ${fmt(end)}</p>
+      ${a.notes ? `<p><span class="font-medium">📝 Notas:</span> ${escHtml(a.notes)}</p>` : ''}
+      <p><span class="font-medium">Estado:</span> <span class="font-semibold ${
+        a.status==='confirmed'?'text-blue-600':a.status==='completed'?'text-green-600':a.status==='cancelled'?'text-red-500':'text-yellow-600'
+      }">${a.status}</span></p>
+    </div>`;
+  document.getElementById('apptDetailConfirm').classList.toggle('hidden', a.status === 'confirmed' || a.status === 'completed');
+  document.getElementById('apptDetailComplete').classList.toggle('hidden', a.status === 'completed');
+  document.getElementById('apptDetailCancel').classList.toggle('hidden', a.status === 'cancelled');
+  document.getElementById('apptDetailModal').classList.remove('hidden');
+}
+
+function closeApptDetail() { document.getElementById('apptDetailModal').classList.add('hidden'); }
+
+async function updateApptStatus(status) {
+  await api(`/admin/appointments/${apptDetailId}`, 'PUT', { status });
+  closeApptDetail();
+  await loadCalendarData();
+}
+const confirmAppt  = () => updateApptStatus('confirmed');
+const completeAppt = () => updateApptStatus('completed');
+const cancelAppt   = () => updateApptStatus('cancelled');
+
+async function deleteAppt() {
+  if (!confirm('¿Eliminar este turno?')) return;
+  await api(`/admin/appointments/${apptDetailId}`, 'DELETE');
+  closeApptDetail();
+  await loadCalendarData();
+}
+
+// ── Block modal ──────────────────────────────────────────────────────────────
+
+function openBlockModal() {
+  document.getElementById('blockError').classList.add('hidden');
+  document.getElementById('blockReason').value = '';
+  // Default: today 13:00-14:00
+  const now = new Date();
+  const pad = n => String(n).padStart(2,'0');
+  const base = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
+  document.getElementById('blockStart').value = `${base}T13:00`;
+  document.getElementById('blockEnd').value   = `${base}T14:00`;
+  document.getElementById('blockModal').classList.remove('hidden');
+}
+
+function closeBlockModal() { document.getElementById('blockModal').classList.add('hidden'); }
+
+async function saveBlock() {
+  const btn   = document.getElementById('blockSaveBtn');
+  const errEl = document.getElementById('blockError');
+  btn.disabled = true; btn.textContent = 'Guardando...';
+  errEl.classList.add('hidden');
+
+  const start  = document.getElementById('blockStart').value;
+  const end    = document.getElementById('blockEnd').value;
+  const reason = document.getElementById('blockReason').value.trim();
+
+  if (!start || !end || new Date(start) >= new Date(end)) {
+    errEl.textContent = 'Verificá las fechas.'; errEl.classList.remove('hidden');
+    btn.disabled=false; btn.textContent='Guardar'; return;
+  }
+  try {
+    await api('/admin/appointment-blocks', 'POST', { start_at: new Date(start).toISOString(), end_at: new Date(end).toISOString(), reason: reason || null });
+    closeBlockModal();
+    await loadCalendarData();
+  } catch(e) {
+    errEl.textContent = e.message || 'Error.'; errEl.classList.remove('hidden');
+  } finally {
+    btn.disabled=false; btn.textContent='Guardar';
+  }
+}
+
+async function deleteBlockFromCell(id) {
+  if (!confirm('¿Eliminar este bloqueo?')) return;
+  await api(`/admin/appointment-blocks/${id}`, 'DELETE');
+  await loadCalendarData();
+}
+
+// ── Business hours (Settings) ────────────────────────────────────────────────
+
+const BH_DAYS = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+
+function renderBusinessHoursForm(data) {
+  const container = document.getElementById('businessHoursForm');
+  if (!container) return;
+  // Build a map day_of_week → row
+  const map = {};
+  (data || []).forEach(r => { map[r.day_of_week] = r; });
+
+  container.innerHTML = BH_DAYS.map((name, i) => {
+    const row = map[i] || {};
+    const closed = row.is_closed !== false && !row.open_time;
+    return `
+    <div class="flex items-center gap-3 text-sm">
+      <span class="w-24 text-gray-600 font-medium flex-shrink-0">${name}</span>
+      <label class="flex items-center gap-1 text-xs text-gray-500 flex-shrink-0">
+        <input type="checkbox" id="bhClosed_${i}" ${closed ? 'checked' : ''} onchange="toggleBhDay(${i})" class="accent-red-400"/>
+        Cerrado
+      </label>
+      <div id="bhTimes_${i}" class="${closed ? 'hidden' : ''} flex items-center gap-2">
+        <input type="time" id="bhOpen_${i}" value="${row.open_time || '09:00'}" class="border border-gray-200 rounded px-2 py-1 text-xs"/>
+        <span class="text-gray-400">–</span>
+        <input type="time" id="bhClose_${i}" value="${row.close_time || '18:00'}" class="border border-gray-200 rounded px-2 py-1 text-xs"/>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleBhDay(i) {
+  const closed = document.getElementById(`bhClosed_${i}`).checked;
+  document.getElementById(`bhTimes_${i}`).classList.toggle('hidden', closed);
+}
+
+async function saveBusinessHours() {
+  const bhMsg = document.getElementById('bhMsg');
+  const rows = [];
+  for (let i = 0; i < 7; i++) {
+    const is_closed = document.getElementById(`bhClosed_${i}`)?.checked ?? true;
+    rows.push({
+      day_of_week: i,
+      is_closed,
+      open_time:  is_closed ? null : (document.getElementById(`bhOpen_${i}`)?.value  || '09:00'),
+      close_time: is_closed ? null : (document.getElementById(`bhClose_${i}`)?.value || '18:00'),
+    });
+  }
+  try {
+    await api('/admin/business-hours', 'PUT', rows);
+    bhMsg.textContent = '✅ Horarios guardados.';
+    bhMsg.className = 'rounded-lg px-4 py-2 text-sm mt-3 bg-green-50 text-green-700';
+    bhMsg.classList.remove('hidden');
+    setTimeout(() => bhMsg.classList.add('hidden'), 3000);
+  } catch(e) {
+    bhMsg.textContent = '❌ Error al guardar.';
+    bhMsg.className = 'rounded-lg px-4 py-2 text-sm mt-3 bg-red-50 text-red-700';
+    bhMsg.classList.remove('hidden');
+  }
 }
 </script>
 </body>
