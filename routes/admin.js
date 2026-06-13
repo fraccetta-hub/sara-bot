@@ -954,4 +954,125 @@ router.get('/available-slots', requireAuth, async (req, res) => {
   res.json({ slots: freeSlots, duration_min: slotDuration });
 });
 
+// ─── POST /admin/whatsapp-profile ─────────────────────────────────────────────
+// Updates WhatsApp Business profile: photo and/or about text
+
+router.post('/whatsapp-profile', requireAuth, upload.single('photo'), async (req, res) => {
+  // Get tenant credentials
+  const { data: tenant, error: tErr } = await supabase
+    .from('tenants')
+    .select('phone_number_id, whatsapp_token')
+    .eq('id', req.tenant.tenantId)
+    .single();
+
+  if (tErr || !tenant) return res.status(500).json({ error: 'No se pudo obtener los datos del tenant' });
+
+  const phoneNumberId = tenant.phone_number_id;
+  const token = tenant.whatsapp_token || process.env.WHATSAPP_TOKEN;
+
+  if (!phoneNumberId || !token) {
+    return res.status(400).json({ error: 'El bot no tiene un número de WhatsApp conectado todavía.' });
+  }
+
+  const errors = [];
+
+  // 1. Update "about" text if provided
+  const about = req.body?.about?.trim();
+  if (about) {
+    try {
+      const profileRes = await fetch(
+        `https://graph.facebook.com/v19.0/${phoneNumberId}/whatsapp_business_profile`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            messaging_product: 'whatsapp',
+            about,
+          }),
+        }
+      );
+      const profileData = await profileRes.json();
+      if (!profileRes.ok) {
+        errors.push(`About: ${profileData.error?.message || profileRes.statusText}`);
+      }
+    } catch (e) {
+      errors.push('About: ' + e.message);
+    }
+  }
+
+  // 2. Upload profile photo if provided
+  if (req.file) {
+    try {
+      // Step 2a: Create an upload session
+      const sessionRes = await fetch(
+        `https://graph.facebook.com/v19.0/${phoneNumberId}/whatsapp_business_profile`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            messaging_product: 'whatsapp',
+            profile_picture_url: null, // will be replaced by handle upload below
+          }),
+        }
+      );
+
+      // Use the Media Upload API instead
+      // Step 2a: Upload media to get a handle
+      const formData = new FormData();
+      const blob = new Blob([req.file.buffer], { type: req.file.mimetype });
+      formData.append('file', blob, req.file.originalname || 'profile.jpg');
+      formData.append('type', req.file.mimetype);
+      formData.append('messaging_product', 'whatsapp');
+
+      const mediaRes = await fetch(
+        `https://graph.facebook.com/v19.0/${phoneNumberId}/media`,
+        {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` },
+          body: formData,
+        }
+      );
+      const mediaData = await mediaRes.json();
+
+      if (!mediaRes.ok || !mediaData.id) {
+        errors.push(`Foto (subida): ${mediaData.error?.message || 'No se pudo subir la imagen'}`);
+      } else {
+        // Step 2b: Set the profile picture using the media handle
+        const picRes = await fetch(
+          `https://graph.facebook.com/v19.0/${phoneNumberId}/whatsapp_business_profile`,
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              messaging_product: 'whatsapp',
+              profile_picture_handle: mediaData.id,
+            }),
+          }
+        );
+        const picData = await picRes.json();
+        if (!picRes.ok) {
+          errors.push(`Foto (perfil): ${picData.error?.message || picRes.statusText}`);
+        }
+      }
+    } catch (e) {
+      errors.push('Foto: ' + e.message);
+    }
+  }
+
+  if (errors.length) {
+    return res.status(500).json({ error: errors.join(' | ') });
+  }
+
+  res.json({ ok: true });
+});
+
 module.exports = router;

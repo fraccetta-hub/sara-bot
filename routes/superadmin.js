@@ -2,8 +2,13 @@ const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+const multer = require('multer');
+const Anthropic = require('@anthropic-ai/sdk');
 const { createClient } = require('@supabase/supabase-js');
 const { getTenantStorageUsage } = require('../services/storage');
+
+const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024, files: 6 } });
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
 const JWT_SECRET       = process.env.ADMIN_JWT_SECRET    || 'sara-bot-secret-change-me';
@@ -239,6 +244,98 @@ router.post('/tenants/:id/reset-password', requireSuper, async (req, res) => {
   const hash = await bcrypt.hash('sara1234', 10);
   await supabase.from('tenants').update({ admin_password_hash: hash }).eq('id', req.params.id);
   res.json({ ok: true, message: 'Contraseña reseteada a sara1234' });
+});
+
+// ─── POST /superadmin/tenants/:id/import-from-images ─────────────────────────
+// Accepts up to 6 images, sends them to Claude Vision, returns extracted products
+
+router.post('/tenants/:id/import-from-images', requireSuper, upload.array('images', 6), async (req, res) => {
+  if (!req.files || req.files.length === 0) {
+    return res.status(400).json({ error: 'No se enviaron imágenes' });
+  }
+
+  // Build vision message content
+  const content = [];
+
+  content.push({
+    type: 'text',
+    text: `Analizá estas ${req.files.length} imágenes de un catálogo de negocios (menú, lista de precios, catálogo de WhatsApp Business, etc.).
+
+Extraé TODOS los productos o servicios que puedas ver, con:
+- name: nombre del producto/servicio (obligatorio)
+- category: categoría (si hay, sino inferí una razonable)
+- price_guarani: precio en guaraníes como número entero (si hay moneda diferente, convertí aproximadamente; si no hay precio pon 0)
+- description: descripción breve si hay (sino dejar vacío)
+
+Respondé ÚNICAMENTE con un JSON válido, sin texto adicional, en este formato:
+{"products":[{"name":"...","category":"...","price_guarani":0,"description":"..."}]}`
+  });
+
+  for (const file of req.files) {
+    const b64 = file.buffer.toString('base64');
+    const mime = file.mimetype || 'image/jpeg';
+    content.push({
+      type: 'image',
+      source: { type: 'base64', media_type: mime, data: b64 }
+    });
+  }
+
+  try {
+    const response = await anthropic.messages.create({
+      model: 'claude-opus-4-5',
+      max_tokens: 2048,
+      messages: [{ role: 'user', content }]
+    });
+
+    const text = response.content[0].text.trim();
+
+    // Extract JSON even if Claude adds extra text
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error('Respuesta inesperada de la IA');
+
+    const parsed = JSON.parse(jsonMatch[0]);
+    res.json({ products: parsed.products || [] });
+  } catch (e) {
+    console.error('AI import error:', e.message);
+    res.status(500).json({ error: 'Error al procesar las imágenes: ' + e.message });
+  }
+});
+
+// ─── POST /superadmin/tenants/:id/import-confirm ─────────────────────────────
+// Saves AI-extracted products to the tenant's catalog
+
+router.post('/tenants/:id/import-confirm', requireSuper, async (req, res) => {
+  const { rows, mode } = req.body;
+  const tenantId = req.params.id;
+
+  if (!Array.isArray(rows) || rows.length === 0) {
+    return res.status(400).json({ error: 'No hay filas para importar' });
+  }
+
+  // Validate tenant exists
+  const { data: tenant } = await supabase.from('tenants').select('id').eq('id', tenantId).single();
+  if (!tenant) return res.status(404).json({ error: 'Tenant no encontrado' });
+
+  if (mode === 'replace') {
+    await supabase.from('products').delete().eq('tenant_id', tenantId);
+  }
+
+  const toInsert = rows
+    .filter(r => r.name && String(r.name).trim())
+    .map(r => ({
+      tenant_id: tenantId,
+      name: String(r.name).trim(),
+      category: String(r.category || 'General').trim(),
+      price_guarani: parseInt(r.price_guarani) || 0,
+      description: String(r.description || '').trim() || null,
+      stock_qty: 99,
+      is_available: true,
+    }));
+
+  const { error } = await supabase.from('products').insert(toInsert);
+  if (error) return res.status(500).json({ error: error.message });
+
+  res.json({ ok: true, count: toInsert.length });
 });
 
 module.exports = router;

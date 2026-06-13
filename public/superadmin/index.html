@@ -168,6 +168,7 @@
     <div class="flex gap-4 text-sm text-gray-500 border-b mb-4">
       <button class="py-2 border-b-2 border-purple-600 text-purple-600 font-semibold" id="etabConfig" onclick="switchEditTab('config')">⚙️ Config</button>
       <button class="py-2" id="etabProducts" onclick="switchEditTab('products')">📦 Catálogo</button>
+      <button class="py-2" id="etabImport" onclick="switchEditTab('import')">📸 Importar</button>
     </div>
 
     <!-- Config tab -->
@@ -231,6 +232,68 @@
       <div class="text-xs text-gray-400 mb-3">Catálogo del cliente. Edición básica — para cambios avanzados usá Impersonar.</div>
       <div id="editProductsList" class="space-y-2 max-h-64 overflow-y-auto">
         <div class="text-center py-4 text-gray-400 text-sm">Cargando...</div>
+      </div>
+    </div>
+
+    <!-- Import tab -->
+    <div id="editImport" class="hidden">
+      <p class="text-xs text-gray-500 mb-3">Subí fotos del catálogo WhatsApp, listino prezzi, menú o cualquier imagen con productos y precios. Claude extrae todo automáticamente.</p>
+
+      <!-- Upload zone -->
+      <div id="importDropZone"
+        class="border-2 border-dashed border-gray-200 rounded-xl p-6 text-center cursor-pointer hover:border-purple-300 hover:bg-purple-50 transition mb-3"
+        onclick="document.getElementById('importImgInput').click()"
+        ondragover="event.preventDefault();this.classList.add('border-purple-400','bg-purple-50')"
+        ondragleave="this.classList.remove('border-purple-400','bg-purple-50')"
+        ondrop="handleImportDrop(event)">
+        <div class="text-3xl mb-2">📸</div>
+        <p class="text-sm font-medium text-gray-600">Clic o arrastrá las fotos aquí</p>
+        <p class="text-xs text-gray-400 mt-1">JPG, PNG — hasta 6 imágenes</p>
+        <input type="file" id="importImgInput" accept="image/*" multiple class="hidden" onchange="handleImportFiles(this.files)"/>
+      </div>
+
+      <!-- Image previews -->
+      <div id="importImgPreviews" class="flex gap-2 flex-wrap mb-3"></div>
+
+      <div id="importAiError" class="hidden bg-red-50 text-red-700 text-sm rounded-lg px-3 py-2 mb-3"></div>
+
+      <button id="importAiBtn" onclick="runAiImport()" disabled
+        class="btn-purple w-full py-2 rounded-lg text-sm font-semibold disabled:opacity-40 disabled:cursor-not-allowed mb-3">
+        🤖 Extraer productos con IA
+      </button>
+
+      <!-- AI Results preview -->
+      <div id="importAiResults" class="hidden">
+        <div class="flex items-center justify-between mb-2">
+          <p class="text-xs font-semibold text-gray-700">Productos encontrados — revisá y ajustá antes de guardar:</p>
+          <button onclick="addAiRow()" class="text-xs text-purple-600 hover:underline">+ Agregar fila</button>
+        </div>
+        <div class="border border-gray-200 rounded-xl overflow-hidden mb-3">
+          <div class="overflow-y-auto max-h-52">
+            <table class="w-full text-xs">
+              <thead class="bg-gray-50 text-gray-500">
+                <tr>
+                  <th class="px-2 py-1.5 text-left">Nombre</th>
+                  <th class="px-2 py-1.5 text-left">Categoría</th>
+                  <th class="px-2 py-1.5 text-right">Precio Gs</th>
+                  <th class="px-2 py-1.5 text-center w-8"></th>
+                </tr>
+              </thead>
+              <tbody id="importAiBody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="flex items-center gap-3 mb-3">
+          <label class="flex items-center gap-1.5 text-xs text-gray-600 cursor-pointer">
+            <input type="checkbox" id="importReplaceCheck" class="accent-red-500"/>
+            Reemplazar catálogo existente
+          </label>
+        </div>
+        <div id="importAiSuccess" class="hidden bg-green-50 text-green-700 text-sm rounded-lg px-3 py-2 mb-2"></div>
+        <button onclick="confirmAiImport()" id="importAiConfirmBtn"
+          class="btn-purple w-full py-2 rounded-lg text-sm font-semibold">
+          ✅ Guardar en catálogo del cliente
+        </button>
       </div>
     </div>
 
@@ -376,12 +439,140 @@ function closeEditModal() {
   editingTenantId = null;
 }
 
+// AI import state
+let importFiles = [];
+let importAiRows = [];
+
 function switchEditTab(tab) {
   document.getElementById('editConfig').classList.toggle('hidden', tab !== 'config');
   document.getElementById('editProducts').classList.toggle('hidden', tab !== 'products');
+  document.getElementById('editImport').classList.toggle('hidden', tab !== 'import');
   document.getElementById('etabConfig').className   = tab === 'config'   ? 'py-2 border-b-2 border-purple-600 text-purple-600 font-semibold' : 'py-2 text-gray-500';
   document.getElementById('etabProducts').className = tab === 'products' ? 'py-2 border-b-2 border-purple-600 text-purple-600 font-semibold' : 'py-2 text-gray-500';
+  document.getElementById('etabImport').className   = tab === 'import'   ? 'py-2 border-b-2 border-purple-600 text-purple-600 font-semibold' : 'py-2 text-gray-500';
   if (tab === 'products') loadEditProducts();
+  if (tab === 'import') resetImportTab();
+}
+
+function resetImportTab() {
+  importFiles = [];
+  importAiRows = [];
+  document.getElementById('importImgPreviews').innerHTML = '';
+  document.getElementById('importAiResults').classList.add('hidden');
+  document.getElementById('importAiError').classList.add('hidden');
+  document.getElementById('importAiSuccess').classList.add('hidden');
+  document.getElementById('importAiBtn').disabled = true;
+}
+
+function handleImportDrop(e) {
+  e.preventDefault();
+  document.getElementById('importDropZone').classList.remove('border-purple-400','bg-purple-50');
+  handleImportFiles(e.dataTransfer.files);
+}
+
+function handleImportFiles(files) {
+  const allowed = [...files].filter(f => f.type.startsWith('image/')).slice(0, 6);
+  importFiles = allowed;
+  const previews = document.getElementById('importImgPreviews');
+  previews.innerHTML = '';
+  allowed.forEach((f, i) => {
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const img = document.createElement('div');
+      img.className = 'relative w-16 h-16 rounded-lg overflow-hidden border border-gray-200 flex-shrink-0';
+      img.innerHTML = `<img src="${ev.target.result}" class="w-full h-full object-cover"/>
+        <button onclick="removeImportFile(${i})" class="absolute top-0 right-0 bg-red-500 text-white text-xs w-4 h-4 flex items-center justify-center rounded-bl">×</button>`;
+      previews.appendChild(img);
+    };
+    reader.readAsDataURL(f);
+  });
+  document.getElementById('importAiBtn').disabled = allowed.length === 0;
+}
+
+function removeImportFile(idx) {
+  importFiles.splice(idx, 1);
+  handleImportFiles(importFiles);
+}
+
+async function runAiImport() {
+  if (!importFiles.length) return;
+  const btn = document.getElementById('importAiBtn');
+  const errEl = document.getElementById('importAiError');
+  errEl.classList.add('hidden');
+  btn.textContent = '🤖 Analizando...'; btn.disabled = true;
+
+  try {
+    const formData = new FormData();
+    importFiles.forEach(f => formData.append('images', f));
+
+    const res = await fetch(`/superadmin/tenants/${editingTenantId}/import-from-images`, {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + TOKEN },
+      body: formData
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Error del servidor');
+
+    importAiRows = data.products || [];
+    renderAiRows();
+    document.getElementById('importAiResults').classList.remove('hidden');
+  } catch(e) {
+    errEl.textContent = '❌ ' + e.message;
+    errEl.classList.remove('hidden');
+  } finally {
+    btn.textContent = '🤖 Extraer productos con IA'; btn.disabled = false;
+  }
+}
+
+function renderAiRows() {
+  const tbody = document.getElementById('importAiBody');
+  tbody.innerHTML = importAiRows.map((r, i) => `
+    <tr class="border-t border-gray-100">
+      <td class="px-2 py-1"><input class="w-full border-0 bg-transparent text-xs focus:outline-none" value="${escHtml(r.name||'')}" oninput="importAiRows[${i}].name=this.value"/></td>
+      <td class="px-2 py-1"><input class="w-full border-0 bg-transparent text-xs focus:outline-none" value="${escHtml(r.category||'')}" oninput="importAiRows[${i}].category=this.value"/></td>
+      <td class="px-2 py-1 text-right"><input class="w-20 border-0 bg-transparent text-xs focus:outline-none text-right" type="number" value="${r.price_guarani||0}" oninput="importAiRows[${i}].price_guarani=+this.value"/></td>
+      <td class="px-2 py-1 text-center"><button onclick="removeAiRow(${i})" class="text-red-400 hover:text-red-600">✕</button></td>
+    </tr>`).join('');
+}
+
+function addAiRow() {
+  importAiRows.push({ name: '', category: '', price_guarani: 0, description: '' });
+  renderAiRows();
+}
+
+function removeAiRow(i) {
+  importAiRows.splice(i, 1);
+  renderAiRows();
+}
+
+function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+async function confirmAiImport() {
+  if (!importAiRows.length) return;
+  const btn = document.getElementById('importAiConfirmBtn');
+  const successEl = document.getElementById('importAiSuccess');
+  const errEl = document.getElementById('importAiError');
+  errEl.classList.add('hidden');
+  successEl.classList.add('hidden');
+  btn.textContent = 'Guardando...'; btn.disabled = true;
+
+  try {
+    const replace = document.getElementById('importReplaceCheck').checked;
+    const res = await fetch(`/superadmin/tenants/${editingTenantId}/import-confirm`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + TOKEN },
+      body: JSON.stringify({ rows: importAiRows, mode: replace ? 'replace' : 'append' })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Error al guardar');
+    successEl.textContent = `✅ ${data.count} producto(s) guardados correctamente.`;
+    successEl.classList.remove('hidden');
+  } catch(e) {
+    errEl.textContent = '❌ ' + e.message;
+    errEl.classList.remove('hidden');
+  } finally {
+    btn.textContent = '✅ Guardar en catálogo del cliente'; btn.disabled = false;
+  }
 }
 
 async function loadEditProducts() {

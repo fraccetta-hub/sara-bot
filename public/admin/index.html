@@ -465,7 +465,6 @@
             </div>
             <span id="sectionBadgeServicesIcon" class="text-lg"></span>
           </div>
-        </div>
           <div id="sectionBadgeAppointments" class="flex items-center gap-3 rounded-xl px-4 py-3 border-2 transition">
             <span class="text-xl">📅</span>
             <div class="flex-1">
@@ -514,6 +513,44 @@
         <button onclick="saveSettings()" data-i18n="settings.bot.save"
           class="btn-green w-full py-2 rounded-lg text-sm font-semibold mt-4">
           Guardar personalidad
+        </button>
+      </div>
+
+      <!-- WhatsApp Profile -->
+      <div class="bg-white rounded-xl shadow-sm p-6">
+        <h3 class="font-medium text-gray-800 mb-1">👤 Perfil de WhatsApp del bot</h3>
+        <p class="text-xs text-gray-400 mb-4">Foto de perfil y descripción que ven tus clientes al chatear. Se actualiza directamente en WhatsApp.</p>
+        <div id="wpProfileMsg" class="hidden rounded-lg px-4 py-2 text-sm mb-4"></div>
+
+        <!-- Photo upload -->
+        <div class="flex items-center gap-4 mb-4">
+          <div class="relative w-20 h-20 flex-shrink-0">
+            <div id="wpAvatarPreview"
+              class="w-20 h-20 rounded-full bg-gray-100 border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden cursor-pointer hover:border-purple-400 transition"
+              onclick="document.getElementById('wpPhotoInput').click()">
+              <span id="wpAvatarIcon" class="text-3xl text-gray-300">📷</span>
+              <img id="wpAvatarImg" class="hidden w-full h-full object-cover" src=""/>
+            </div>
+            <button id="wpRemoveBtn" onclick="removeWpPhoto()" class="hidden absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center shadow">×</button>
+          </div>
+          <div class="flex-1">
+            <p class="text-sm font-medium text-gray-700 mb-1">Foto de perfil</p>
+            <p class="text-xs text-gray-400 mb-2">JPG o PNG, mínimo 192×192 px. Recomendado: cuadrada.</p>
+            <button onclick="document.getElementById('wpPhotoInput').click()" class="text-xs text-purple-600 hover:underline font-medium">Elegir foto</button>
+            <input type="file" id="wpPhotoInput" accept="image/jpeg,image/png" class="hidden" onchange="previewWpPhoto(this)"/>
+          </div>
+        </div>
+
+        <!-- About text -->
+        <label class="block text-sm font-medium text-gray-700 mb-1">Descripción (About)</label>
+        <textarea id="sWpAbout" rows="2" maxlength="139"
+          placeholder="Ej: 🍕 Pizzería Don Carlos | Pedidos por WhatsApp 🕐 12:00–23:00"
+          class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm resize-none mb-1"
+          oninput="document.getElementById('wpAboutCount').textContent=this.value.length"></textarea>
+        <p class="text-xs text-gray-400 text-right mb-4"><span id="wpAboutCount">0</span>/139</p>
+
+        <button onclick="saveWpProfile()" class="btn-green w-full py-2 rounded-lg text-sm font-semibold">
+          Actualizar perfil en WhatsApp
         </button>
       </div>
 
@@ -2368,7 +2405,7 @@ async function loadSettings() {
     document.getElementById('sDeliveryDisabledDates').value  =
       Array.isArray(s.delivery_disabled_dates) ? s.delivery_disabled_dates.join(', ') : (s.delivery_disabled_dates || '');
     updateDeliveryFields();
-    applyTabVisibility(s.products_enabled !== false, !!s.services_enabled);
+    applyTabVisibility(s.products_enabled !== false, !!s.services_enabled, !!s.appointments_enabled);
 
     // Load business hours
     const bh = await api('/admin/business-hours').catch(() => []);
@@ -2452,6 +2489,67 @@ async function saveSettings() {
     msgEl.textContent = e.message;
     msgEl.classList.remove('hidden');
   }
+}
+
+// ── WhatsApp Profile ─────────────────────────────────────────────────────────
+
+let wpPhotoFile = null;
+
+function previewWpPhoto(input) {
+  const file = input.files[0];
+  if (!file) return;
+  wpPhotoFile = file;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const img = document.getElementById('wpAvatarImg');
+    img.src = ev.target.result;
+    img.classList.remove('hidden');
+    document.getElementById('wpAvatarIcon').classList.add('hidden');
+    document.getElementById('wpRemoveBtn').classList.remove('hidden');
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeWpPhoto() {
+  wpPhotoFile = null;
+  document.getElementById('wpAvatarImg').classList.add('hidden');
+  document.getElementById('wpAvatarImg').src = '';
+  document.getElementById('wpAvatarIcon').classList.remove('hidden');
+  document.getElementById('wpRemoveBtn').classList.add('hidden');
+  document.getElementById('wpPhotoInput').value = '';
+}
+
+async function saveWpProfile() {
+  const msgEl = document.getElementById('wpProfileMsg');
+  msgEl.classList.add('hidden');
+  const about = document.getElementById('sWpAbout').value.trim();
+
+  if (!wpPhotoFile && !about) {
+    msgEl.className = 'rounded-lg px-4 py-2 text-sm mb-4 bg-red-50 text-red-700';
+    msgEl.textContent = 'Agregá una foto o una descripción antes de guardar.';
+    msgEl.classList.remove('hidden');
+    return;
+  }
+
+  const formData = new FormData();
+  if (wpPhotoFile) formData.append('photo', wpPhotoFile);
+  if (about)       formData.append('about', about);
+
+  try {
+    const res = await fetch('/admin/whatsapp-profile', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + TOKEN },
+      body: formData
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Error al actualizar');
+    msgEl.className = 'rounded-lg px-4 py-2 text-sm mb-4 bg-green-50 text-green-700';
+    msgEl.textContent = '✅ Perfil actualizado en WhatsApp correctamente.';
+  } catch(e) {
+    msgEl.className = 'rounded-lg px-4 py-2 text-sm mb-4 bg-red-50 text-red-700';
+    msgEl.textContent = '❌ ' + e.message;
+  }
+  msgEl.classList.remove('hidden');
 }
 
 async function saveCustomInstructions() {
