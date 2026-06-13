@@ -124,7 +124,8 @@ router.post('/login', async (req, res) => {
     { expiresIn: '12h' }
   );
 
-  res.json({ token, tenantName: tenant.name, botName: tenant.bot_name });
+  const needsSetup = !tenant.phone_number_id;
+  res.json({ token, tenantName: tenant.name, botName: tenant.bot_name, needsSetup });
 });
 
 // ─── GET /admin/settings ─────────────────────────────────────────────────────
@@ -561,6 +562,79 @@ router.post('/chats/:phone/send-image', requireAuth, upload.single('image'), asy
     .eq('tenant_id', req.tenant.tenantId).eq('customer_phone', req.params.phone);
 
   res.json({ ok: true, url: imageUrl });
+});
+
+// ─── POST /admin/whatsapp-connect — exchange Meta Embedded Signup code ────────
+router.post('/whatsapp-connect', requireAuth, async (req, res) => {
+  const { code, phone_number_id, waba_id } = req.body;
+  if (!code) return res.status(400).json({ error: 'Missing code' });
+
+  const APP_ID     = process.env.META_APP_ID;
+  const APP_SECRET = process.env.META_APP_SECRET;
+  if (!APP_ID || !APP_SECRET)
+    return res.status(500).json({ error: 'META_APP_ID / META_APP_SECRET not configured on server' });
+
+  try {
+    // 1. Exchange code for short-lived user token
+    const tokenUrl = `https://graph.facebook.com/v19.0/oauth/access_token` +
+      `?client_id=${APP_ID}&client_secret=${APP_SECRET}&code=${encodeURIComponent(code)}`;
+    const tokenRes  = await fetch(tokenUrl);
+    const tokenData = await tokenRes.json();
+    if (tokenData.error) return res.status(400).json({ error: tokenData.error.message });
+
+    // 2. Exchange for long-lived token (60 days)
+    const longUrl = `https://graph.facebook.com/v19.0/oauth/access_token` +
+      `?grant_type=fb_exchange_token&client_id=${APP_ID}&client_secret=${APP_SECRET}` +
+      `&fb_exchange_token=${tokenData.access_token}`;
+    const longRes  = await fetch(longUrl);
+    const longData = await longRes.json();
+    const accessToken = longData.access_token || tokenData.access_token;
+
+    // 3. If phone_number_id not passed by client (from session_info), fetch it
+    let phoneNumberId = phone_number_id;
+    if (!phoneNumberId && waba_id) {
+      const pnRes  = await fetch(
+        `https://graph.facebook.com/v19.0/${waba_id}/phone_numbers?access_token=${accessToken}`
+      );
+      const pnData = await pnRes.json();
+      phoneNumberId = pnData.data?.[0]?.id || null;
+    }
+
+    if (!phoneNumberId)
+      return res.status(400).json({ error: 'No se pudo obtener el phone_number_id. Intentá de nuevo.' });
+
+    // 4. Register webhook for this phone number
+    try {
+      await fetch(
+        `https://graph.facebook.com/v19.0/${phoneNumberId}/subscribed_apps`,
+        { method: 'POST', headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+    } catch (_) { /* non-fatal */ }
+
+    // 5. Save to tenant
+    const { error: dbErr } = await supabase.from('tenants')
+      .update({ phone_number_id: phoneNumberId, whatsapp_token: accessToken })
+      .eq('id', req.tenant.tenantId);
+    if (dbErr) return res.status(500).json({ error: dbErr.message });
+
+    res.json({ ok: true, phone_number_id: phoneNumberId });
+  } catch (e) {
+    console.error('[whatsapp-connect]', e);
+    res.status(500).json({ error: 'Error al conectar con Meta: ' + e.message });
+  }
+});
+
+// ─── POST /admin/whatsapp-connect-manual — save credentials manually ──────────
+router.post('/whatsapp-connect-manual', requireAuth, async (req, res) => {
+  const { phone_number_id, access_token } = req.body;
+  if (!phone_number_id || !access_token)
+    return res.status(400).json({ error: 'phone_number_id y access_token son obligatorios' });
+
+  const { error } = await supabase.from('tenants')
+    .update({ phone_number_id, whatsapp_token: access_token })
+    .eq('id', req.tenant.tenantId);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ ok: true });
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════

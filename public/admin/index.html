@@ -55,6 +55,127 @@
   </div>
 </div>
 
+<!-- ════ ONBOARDING WIZARD ════ -->
+<div id="onboardingPage" class="hidden min-h-screen flex items-center justify-center px-4 bg-gray-50">
+  <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg p-8">
+
+    <!-- Step indicator -->
+    <div class="flex items-center gap-2 mb-6">
+      <div id="step1dot" class="w-3 h-3 rounded-full bg-green-500"></div>
+      <div class="flex-1 h-0.5 bg-gray-200"><div id="step1line" class="h-full bg-green-500 w-0 transition-all duration-500"></div></div>
+      <div id="step2dot" class="w-3 h-3 rounded-full bg-gray-200"></div>
+      <div class="flex-1 h-0.5 bg-gray-200"><div id="step2line" class="h-full bg-green-500 w-0 transition-all duration-500"></div></div>
+      <div id="step3dot" class="w-3 h-3 rounded-full bg-gray-200"></div>
+    </div>
+
+    <!-- Step 1: Welcome -->
+    <div id="wizStep1">
+      <div class="text-center mb-6">
+        <div class="text-5xl mb-3">🌸</div>
+        <h2 class="text-xl font-bold text-gray-800 mb-2">¡Bienvenido a Sara Bot!</h2>
+        <p class="text-gray-500 text-sm">En 3 pasos vas a tener tu asistente de WhatsApp funcionando. Empecemos.</p>
+      </div>
+      <div class="space-y-3 mb-6">
+        <div class="flex items-start gap-3 bg-green-50 rounded-xl p-3">
+          <span class="text-lg mt-0.5">1️⃣</span>
+          <div>
+            <p class="text-sm font-semibold text-gray-800">Conectá tu número de WhatsApp Business</p>
+            <p class="text-xs text-gray-500">Usamos la API oficial de Meta — tus clientes escriben a tu número de siempre.</p>
+          </div>
+        </div>
+        <div class="flex items-start gap-3 bg-blue-50 rounded-xl p-3">
+          <span class="text-lg mt-0.5">2️⃣</span>
+          <div>
+            <p class="text-sm font-semibold text-gray-800">Configurá tu catálogo</p>
+            <p class="text-xs text-gray-500">Cargá productos, servicios y horarios desde el panel.</p>
+          </div>
+        </div>
+        <div class="flex items-start gap-3 bg-purple-50 rounded-xl p-3">
+          <span class="text-lg mt-0.5">3️⃣</span>
+          <div>
+            <p class="text-sm font-semibold text-gray-800">Sara empieza a atender</p>
+            <p class="text-xs text-gray-500">Tu bot responde pedidos y reservas 24/7 automáticamente.</p>
+          </div>
+        </div>
+      </div>
+      <button onclick="wizNext(1)" class="btn-green w-full py-3 rounded-xl text-sm font-semibold">
+        Empezar configuración →
+      </button>
+      <button onclick="skipOnboarding()" class="w-full text-xs text-gray-400 hover:text-gray-600 mt-3 py-1">
+        Configurar más tarde (acceder al panel sin WhatsApp)
+      </button>
+    </div>
+
+    <!-- Step 2: Connect WhatsApp -->
+    <div id="wizStep2" class="hidden">
+      <div class="text-center mb-5">
+        <div class="text-4xl mb-2">📱</div>
+        <h2 class="text-lg font-bold text-gray-800">Conectá tu WhatsApp Business</h2>
+        <p class="text-sm text-gray-500 mt-1">Autorizá a Sara Bot a usar tu número oficial de WhatsApp Business.</p>
+      </div>
+
+      <div id="wizConnectError" class="hidden bg-red-50 text-red-700 text-sm rounded-lg px-4 py-2 mb-4"></div>
+      <div id="wizConnectSuccess" class="hidden bg-green-50 text-green-700 text-sm rounded-lg px-4 py-3 mb-4">
+        ✅ <span id="wizSuccessMsg">WhatsApp conectado correctamente.</span>
+      </div>
+
+      <!-- Embedded Signup button -->
+      <button id="wizFbBtn" onclick="launchEmbeddedSignup()"
+        class="w-full flex items-center justify-center gap-3 bg-[#1877F2] hover:bg-[#166FE5] text-white py-3 rounded-xl text-sm font-semibold transition mb-3">
+        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+        Conectar con Facebook / Meta
+      </button>
+
+      <!-- Manual fallback -->
+      <button onclick="toggleManual()" class="w-full text-xs text-gray-400 hover:text-gray-600 py-1 underline">
+        ¿Preferís ingresar los datos manualmente?
+      </button>
+
+      <div id="wizManual" class="hidden mt-4 space-y-3 border-t pt-4">
+        <p class="text-xs text-gray-500">Ingresá los datos de tu Meta App manualmente:</p>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Phone Number ID</label>
+          <input type="text" id="wizPhoneId" placeholder="1234567890123456"
+            class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Access Token (permanente)</label>
+          <textarea id="wizToken" rows="2" placeholder="EAAxxxxx..."
+            class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm resize-none font-mono text-xs"></textarea>
+        </div>
+        <button onclick="saveManual()" class="btn-green w-full py-2 rounded-lg text-sm font-semibold">
+          Guardar credenciales
+        </button>
+      </div>
+
+      <div class="flex gap-3 mt-4">
+        <button onclick="wizBack(2)" class="flex-1 border border-gray-200 text-gray-500 py-2 rounded-xl text-sm hover:bg-gray-50">← Atrás</button>
+        <button id="wizNextBtn2" onclick="wizNext(2)" disabled
+          class="flex-1 btn-green py-2 rounded-xl text-sm font-semibold disabled:opacity-40 disabled:cursor-not-allowed">
+          Continuar →
+        </button>
+      </div>
+    </div>
+
+    <!-- Step 3: Done -->
+    <div id="wizStep3" class="hidden text-center">
+      <div class="text-6xl mb-4">🎉</div>
+      <h2 class="text-xl font-bold text-gray-800 mb-2">¡Todo listo!</h2>
+      <p class="text-gray-500 text-sm mb-2">Tu WhatsApp Business está conectado. Sara ya puede atender a tus clientes.</p>
+      <p class="text-xs text-gray-400 mb-6">Ahora configurá tu catálogo de productos o servicios para que Sara sepa qué ofrecer.</p>
+      <div class="bg-green-50 rounded-xl p-4 text-left mb-6 space-y-1">
+        <p class="text-sm text-green-800">✅ Número conectado: <span id="wizDonePhone" class="font-mono font-semibold"></span></p>
+        <p class="text-sm text-green-700">✅ Bot activo y listo para responder</p>
+        <p class="text-sm text-green-700">✅ Webhook configurado automáticamente</p>
+      </div>
+      <button onclick="finishOnboarding()" class="btn-green w-full py-3 rounded-xl text-sm font-semibold">
+        Ir al panel de control →
+      </button>
+    </div>
+
+  </div>
+</div>
+
 <!-- ════ DASHBOARD ════ -->
 <div id="dashPage" class="hidden">
 
@@ -1418,6 +1539,156 @@ function renderHelp() {
     </div>`;
 }
 
+// ══════════════════════════════════════════════════════════════════════════════
+// ONBOARDING WIZARD
+// ══════════════════════════════════════════════════════════════════════════════
+
+const META_APP_ID    = '%%META_APP_ID%%';   // injected at deploy or set via env
+const META_CONFIG_ID = '%%META_CONFIG_ID%%'; // Embedded Signup config ID
+
+let wizConnectedPhoneId = null;
+
+function showOnboarding() {
+  document.getElementById('loginPage').classList.add('hidden');
+  document.getElementById('dashPage').classList.add('hidden');
+  document.getElementById('onboardingPage').classList.remove('hidden');
+  // Load Facebook SDK
+  if (!document.getElementById('fb-sdk')) {
+    const s = document.createElement('script');
+    s.id  = 'fb-sdk';
+    s.src = 'https://connect.facebook.net/en_US/sdk.js';
+    s.onload = () => {
+      FB.init({ appId: META_APP_ID, cookie: true, xfbml: false, version: 'v19.0' });
+    };
+    document.head.appendChild(s);
+  }
+  // Listen for session_info from Meta (gives phone_number_id + waba_id)
+  window.addEventListener('message', handleMetaMessage);
+}
+
+function handleMetaMessage(event) {
+  if (event.origin !== 'https://www.facebook.com' &&
+      event.origin !== 'https://web.facebook.com') return;
+  try {
+    const data = JSON.parse(event.data);
+    if (data.type === 'WA_EMBEDDED_SIGNUP') {
+      if (data.event === 'FINISH') {
+        wizConnectedPhoneId = data.data?.phone_number_id || null;
+      }
+    }
+  } catch (_) {}
+}
+
+function wizNext(from) {
+  document.getElementById(`wizStep${from}`).classList.add('hidden');
+  document.getElementById(`wizStep${from+1}`).classList.remove('hidden');
+  // Animate dots
+  document.getElementById(`step${from}line`).style.width = '100%';
+  document.getElementById(`step${from+1}dot`).classList.replace('bg-gray-200', 'bg-green-500');
+}
+
+function wizBack(from) {
+  document.getElementById(`wizStep${from}`).classList.add('hidden');
+  document.getElementById(`wizStep${from-1}`).classList.remove('hidden');
+  document.getElementById(`step${from-1}line`).style.width = '0%';
+  document.getElementById(`step${from}dot`).classList.replace('bg-green-500', 'bg-gray-200');
+}
+
+function toggleManual() {
+  document.getElementById('wizManual').classList.toggle('hidden');
+}
+
+async function launchEmbeddedSignup() {
+  const errEl = document.getElementById('wizConnectError');
+  errEl.classList.add('hidden');
+
+  if (typeof FB === 'undefined') {
+    errEl.textContent = 'El SDK de Facebook aún está cargando. Intentá en un segundo.';
+    errEl.classList.remove('hidden');
+    return;
+  }
+
+  FB.login(async function(response) {
+    if (response.authResponse?.code) {
+      await exchangeMetaCode(response.authResponse.code);
+    } else {
+      errEl.textContent = 'Conexión cancelada o no autorizada.';
+      errEl.classList.remove('hidden');
+    }
+  }, {
+    config_id:                        META_CONFIG_ID,
+    response_type:                     'code',
+    override_default_response_type:    true,
+    extras: { sessionInfoVersion: 2 },
+  });
+}
+
+async function exchangeMetaCode(code) {
+  const errEl = document.getElementById('wizConnectError');
+  const btn   = document.getElementById('wizFbBtn');
+  btn.textContent = '⏳ Conectando...'; btn.disabled = true;
+
+  try {
+    const res = await api('/admin/whatsapp-connect', 'POST', {
+      code,
+      phone_number_id: wizConnectedPhoneId || null,
+      waba_id: null,
+    });
+    wizConnectedPhoneId = res.phone_number_id;
+    onWhatsAppConnected(res.phone_number_id);
+  } catch(e) {
+    errEl.textContent = e.message || 'Error al conectar. Intentá de nuevo.';
+    errEl.classList.remove('hidden');
+    btn.textContent = 'Conectar con Facebook / Meta'; btn.disabled = false;
+  }
+}
+
+function onWhatsAppConnected(phoneId) {
+  document.getElementById('wizConnectSuccess').classList.remove('hidden');
+  document.getElementById('wizSuccessMsg').textContent =
+    `WhatsApp conectado. ID: ${phoneId}`;
+  document.getElementById('wizFbBtn').classList.add('hidden');
+  document.getElementById('wizManual')?.classList.add('hidden');
+  document.querySelector('[onclick="toggleManual()"]')?.classList.add('hidden');
+  document.getElementById('wizNextBtn2').disabled = false;
+  // Pre-fill step 3
+  document.getElementById('wizDonePhone').textContent = phoneId;
+}
+
+async function saveManual() {
+  const phoneId = document.getElementById('wizPhoneId').value.trim();
+  const token   = document.getElementById('wizToken').value.trim();
+  const errEl   = document.getElementById('wizConnectError');
+  errEl.classList.add('hidden');
+
+  if (!phoneId || !token) {
+    errEl.textContent = 'Completá ambos campos.';
+    errEl.classList.remove('hidden'); return;
+  }
+  try {
+    await api('/admin/whatsapp-connect-manual', 'POST', {
+      phone_number_id: phoneId, access_token: token,
+    });
+    wizConnectedPhoneId = phoneId;
+    onWhatsAppConnected(phoneId);
+  } catch(e) {
+    errEl.textContent = e.message || 'Error al guardar.';
+    errEl.classList.remove('hidden');
+  }
+}
+
+function skipOnboarding() {
+  window.removeEventListener('message', handleMetaMessage);
+  document.getElementById('onboardingPage').classList.add('hidden');
+  showDashboard();
+}
+
+function finishOnboarding() {
+  window.removeEventListener('message', handleMetaMessage);
+  document.getElementById('onboardingPage').classList.add('hidden');
+  showDashboard();
+}
+
 // ── State ──────────────────────────────────────────────────────────────────────
 let TOKEN = localStorage.getItem('sara_token') || '';
 let products = [];
@@ -1488,7 +1759,12 @@ async function login() {
     localStorage.setItem('sara_token', TOKEN);
     document.getElementById('navTenant').textContent = res.tenantName || 'Mi negocio';
     document.getElementById('navTitle').textContent  = res.botName  || 'Sara Bot';
-    showDashboard();
+    if (res.needsSetup) {
+      document.getElementById('loginPage').classList.add('hidden');
+      showOnboarding();
+    } else {
+      showDashboard();
+    }
   } catch (e) {
     // If rate-limited, show countdown and auto-retry after wait
     if (e.retryAfter) {
