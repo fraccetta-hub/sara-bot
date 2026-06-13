@@ -132,10 +132,15 @@
             <div class="bg-green-700 text-white px-4 py-2.5 flex items-center gap-3 flex-shrink-0">
               <button onclick="closeChatMobile()" class="md:hidden text-white text-xl leading-none mr-1">←</button>
               <div id="chatAvatarEl" class="w-9 h-9 rounded-full bg-green-500 flex items-center justify-center font-bold text-sm flex-shrink-0"></div>
-              <div class="min-w-0">
+              <div class="min-w-0 flex-1">
                 <div id="chatHeaderName" class="font-semibold text-sm leading-tight truncate"></div>
                 <div id="chatHeaderPhone" class="text-xs text-green-200 leading-tight"></div>
               </div>
+              <button id="resumeBtn" onclick="resumeBot()" class="hidden flex-shrink-0 bg-white text-green-700 text-xs font-semibold px-3 py-1.5 rounded-full hover:bg-green-50 transition">🤖 Reactivar Sara</button>
+            </div>
+            <!-- Takeover banner -->
+            <div id="takeoverBanner" class="hidden bg-blue-50 border-b border-blue-200 px-4 py-2 flex items-center gap-2 flex-shrink-0">
+              <span class="text-blue-700 text-xs font-semibold">👤 Modo manual activo — Sara está en pausa en este chat.</span>
             </div>
             <!-- Pending order banner -->
             <div id="orderBanner" class="hidden bg-amber-50 border-b border-amber-200 px-4 py-2.5 flex-shrink-0">
@@ -1350,6 +1355,11 @@ async function refreshChat() {
     document.getElementById('chatHeaderName').textContent  = name;
     document.getElementById('chatHeaderPhone').textContent = conv.customer_phone;
 
+    // Takeover banner
+    const takeover = !!conv.takeover_active;
+    document.getElementById('takeoverBanner').classList.toggle('hidden', !takeover);
+    document.getElementById('resumeBtn').classList.toggle('hidden', !takeover);
+
     // Order banner
     const banner = document.getElementById('orderBanner');
     if (conv.pending_order) {
@@ -1498,6 +1508,16 @@ async function sendUploadedImg(input) {
     if (!res.ok) throw new Error((await res.json()).error);
     await refreshChat();
   } catch(e) { alert('Error al enviar imagen: ' + e.message); }
+}
+
+// ── Takeover / resume ─────────────────────────────────────────────────────────
+
+async function resumeBot() {
+  if (!currentChatPhone) return;
+  try {
+    await api(`/admin/chats/${currentChatPhone}/resume`, 'POST');
+    await refreshChat();
+  } catch(e) { alert('Error: ' + e.message); }
 }
 
 // ── Mobile back ────────────────────────────────────────────────────────────────

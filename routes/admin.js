@@ -389,9 +389,24 @@ router.post('/chats/:phone/send', requireAuth, async (req, res) => {
   const msgs = [...(conv?.messages_json || []),
     { role: 'assistant', content: text.trim(), source: 'merchant' }];
   await supabase.from('conversations')
-    .update({ messages_json: msgs, updated_at: new Date().toISOString() })
+    .update({
+      messages_json: msgs,
+      updated_at: new Date().toISOString(),
+      takeover_active: true,
+      takeover_started_at: new Date().toISOString(),
+      last_pending_customer_phone: req.params.phone,
+    })
     .eq('tenant_id', req.tenant.tenantId).eq('customer_phone', req.params.phone);
 
+  res.json({ ok: true });
+});
+
+// ─── POST /admin/chats/:phone/resume — hand back to bot ───────────────────────
+
+router.post('/chats/:phone/resume', requireAuth, async (req, res) => {
+  await supabase.from('conversations')
+    .update({ takeover_active: false, takeover_started_at: null })
+    .eq('tenant_id', req.tenant.tenantId).eq('customer_phone', req.params.phone);
   res.json({ ok: true });
 });
 
