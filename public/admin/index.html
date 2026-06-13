@@ -331,12 +331,18 @@
 
     <!-- ── PRODUCTS TAB ── -->
     <div id="sectionProducts">
-      <div class="flex items-center justify-between mb-4">
+      <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
         <h2 data-i18n="products.title" class="text-lg font-semibold text-gray-800">Catálogo de productos</h2>
-        <button onclick="openProductModal(null)"
-          class="btn-green px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-1" data-i18n="products.new">
-          + Nuevo producto
-        </button>
+        <div class="flex gap-2">
+          <button onclick="openImportModal()"
+            class="px-4 py-2 rounded-lg text-sm font-semibold border border-gray-200 text-gray-600 hover:bg-gray-50 flex items-center gap-1">
+            📋 Importar desde Google Sheets
+          </button>
+          <button onclick="openProductModal(null)"
+            class="btn-green px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-1" data-i18n="products.new">
+            + Nuevo producto
+          </button>
+        </div>
       </div>
 
       <!-- Category filter -->
@@ -815,6 +821,91 @@
       <button onclick="cancelAppt()" id="apptDetailCancel" class="flex-1 bg-red-50 text-red-700 hover:bg-red-100 py-2 rounded-lg text-xs font-semibold transition">✕ Cancelar</button>
       <button onclick="deleteAppt()" class="flex-1 bg-gray-50 text-gray-500 hover:bg-gray-100 py-2 rounded-lg text-xs font-semibold transition">🗑 Eliminar</button>
     </div>
+  </div>
+</div>
+
+<!-- ════ IMPORT MODAL ════ -->
+<div id="importModal" class="hidden fixed inset-0 modal-bg flex items-center justify-center z-50 px-4">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl p-6 max-h-screen overflow-y-auto">
+
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="text-base font-semibold text-gray-800">📋 Importar catálogo desde Google Sheets</h3>
+      <button onclick="closeImportModal()" class="text-gray-400 hover:text-gray-600 text-xl leading-none">✕</button>
+    </div>
+
+    <!-- Step 1: URL input -->
+    <div id="importStep1">
+      <div class="bg-blue-50 rounded-xl p-4 mb-4">
+        <p class="text-sm font-semibold text-blue-800 mb-1">📌 Cómo usar:</p>
+        <ol class="text-xs text-blue-700 space-y-1 list-decimal list-inside">
+          <li>Abrí el <a id="templateLink" href="#" target="_blank" class="underline font-medium">template de Google Sheets →</a></li>
+          <li>Hacé una copia: <b>Archivo → Hacer una copia</b></li>
+          <li>Completá tu catálogo en la copia</li>
+          <li>Compartí como público: <b>Compartir → Cualquiera con el enlace → Lector</b></li>
+          <li>Pegá el enlace abajo</li>
+        </ol>
+      </div>
+
+      <div id="importError" class="hidden bg-red-50 text-red-700 text-sm rounded-lg px-4 py-2 mb-3"></div>
+
+      <label class="block text-sm font-medium text-gray-700 mb-1">URL de tu Google Sheet</label>
+      <input type="url" id="importUrl" placeholder="https://docs.google.com/spreadsheets/d/..."
+        class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-4"/>
+
+      <button onclick="previewImport()" id="importPreviewBtn"
+        class="btn-green w-full py-2 rounded-lg text-sm font-semibold">
+        Previsualizar importación →
+      </button>
+    </div>
+
+    <!-- Step 2: Preview -->
+    <div id="importStep2" class="hidden">
+      <div class="flex items-center justify-between mb-3">
+        <p class="text-sm text-gray-600">Se encontraron <span id="importCount" class="font-bold text-green-600"></span> productos. Revisá antes de importar:</p>
+        <button onclick="importBack()" class="text-xs text-gray-400 hover:text-gray-600 underline">← Cambiar URL</button>
+      </div>
+
+      <div id="importPreviewTable" class="border border-gray-200 rounded-xl overflow-hidden mb-4">
+        <div class="overflow-x-auto max-h-64">
+          <table class="w-full text-xs">
+            <thead class="bg-gray-50 text-gray-500 uppercase">
+              <tr>
+                <th class="px-3 py-2 text-left">Nombre</th>
+                <th class="px-3 py-2 text-left">Categoría</th>
+                <th class="px-3 py-2 text-right">Precio (Gs)</th>
+                <th class="px-3 py-2 text-center">Stock</th>
+                <th class="px-3 py-2 text-center">Imagen</th>
+                <th class="px-3 py-2 text-center">Estado</th>
+              </tr>
+            </thead>
+            <tbody id="importPreviewBody" class="divide-y divide-gray-100"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-4">
+        <p class="text-xs font-semibold text-amber-800 mb-2">¿Qué hacer con los productos existentes?</p>
+        <div class="flex gap-4">
+          <label class="flex items-center gap-2 text-xs text-gray-700 cursor-pointer">
+            <input type="radio" name="importMode" value="add" checked class="accent-green-500"/>
+            <span><b>Agregar</b> — mantener lo que hay y agregar los nuevos</span>
+          </label>
+          <label class="flex items-center gap-2 text-xs text-gray-700 cursor-pointer">
+            <input type="radio" name="importMode" value="replace" class="accent-red-500"/>
+            <span><b>Reemplazar</b> — borrar todo y cargar solo estos</span>
+          </label>
+        </div>
+      </div>
+
+      <div id="importConfirmError" class="hidden bg-red-50 text-red-700 text-sm rounded-lg px-4 py-2 mb-3"></div>
+      <div id="importSuccess" class="hidden bg-green-50 text-green-700 text-sm rounded-lg px-4 py-3 mb-3"></div>
+
+      <button onclick="confirmImport()" id="importConfirmBtn"
+        class="btn-green w-full py-2 rounded-lg text-sm font-semibold">
+        ✅ Confirmar importación
+      </button>
+    </div>
+
   </div>
 </div>
 
@@ -2944,6 +3035,103 @@ function fmtChatTime(iso) {
 
 function escHtml(s) {
   return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// IMPORT FROM GOOGLE SHEETS
+// ══════════════════════════════════════════════════════════════════════════════
+
+// Link al template pubblico (da aggiornare con il tuo Sheet)
+const TEMPLATE_SHEET_URL = 'https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms/edit';
+
+let importPreviewRows = [];
+
+function openImportModal() {
+  document.getElementById('importModal').classList.remove('hidden');
+  document.getElementById('importStep1').classList.remove('hidden');
+  document.getElementById('importStep2').classList.add('hidden');
+  document.getElementById('importUrl').value = '';
+  document.getElementById('importError').classList.add('hidden');
+  document.getElementById('templateLink').href = TEMPLATE_SHEET_URL;
+  importPreviewRows = [];
+}
+
+function closeImportModal() {
+  document.getElementById('importModal').classList.add('hidden');
+}
+
+function importBack() {
+  document.getElementById('importStep2').classList.add('hidden');
+  document.getElementById('importStep1').classList.remove('hidden');
+}
+
+async function previewImport() {
+  const url   = document.getElementById('importUrl').value.trim();
+  const errEl = document.getElementById('importError');
+  const btn   = document.getElementById('importPreviewBtn');
+  errEl.classList.add('hidden');
+
+  if (!url) {
+    errEl.textContent = 'Pegá la URL de tu Google Sheet.';
+    errEl.classList.remove('hidden'); return;
+  }
+
+  btn.textContent = '⏳ Cargando...'; btn.disabled = true;
+  try {
+    const data = await api('/admin/import-preview', 'POST', { url });
+    importPreviewRows = data.rows;
+
+    // Render preview table
+    document.getElementById('importCount').textContent = data.total;
+    document.getElementById('importPreviewBody').innerHTML = data.rows.map(r => `
+      <tr class="hover:bg-gray-50">
+        <td class="px-3 py-1.5 font-medium text-gray-800 max-w-[140px] truncate">${escHtml(r.name)}</td>
+        <td class="px-3 py-1.5 text-gray-500">${escHtml(r.category||'—')}</td>
+        <td class="px-3 py-1.5 text-right text-gray-700">${(r.price_guarani||0).toLocaleString('es-PY')}</td>
+        <td class="px-3 py-1.5 text-center text-gray-500">${r.stock_qty ?? '—'}</td>
+        <td class="px-3 py-1.5 text-center">${r.image_url ? '<span class="text-green-500">✓</span>' : '<span class="text-gray-300">—</span>'}</td>
+        <td class="px-3 py-1.5 text-center">${r.is_available ? '<span class="text-green-600 text-[10px] font-bold bg-green-50 px-1.5 py-0.5 rounded-full">Activo</span>' : '<span class="text-gray-400 text-[10px] font-bold bg-gray-100 px-1.5 py-0.5 rounded-full">Inactivo</span>'}</td>
+      </tr>`).join('');
+
+    document.getElementById('importStep1').classList.add('hidden');
+    document.getElementById('importStep2').classList.remove('hidden');
+    document.getElementById('importConfirmError').classList.add('hidden');
+    document.getElementById('importSuccess').classList.add('hidden');
+    document.getElementById('importConfirmBtn').disabled = false;
+    document.getElementById('importConfirmBtn').textContent = '✅ Confirmar importación';
+  } catch(e) {
+    errEl.textContent = e.message || 'Error al leer el Sheet.';
+    errEl.classList.remove('hidden');
+  } finally {
+    btn.textContent = 'Previsualizar importación →'; btn.disabled = false;
+  }
+}
+
+async function confirmImport() {
+  const btn   = document.getElementById('importConfirmBtn');
+  const errEl = document.getElementById('importConfirmError');
+  const okEl  = document.getElementById('importSuccess');
+  errEl.classList.add('hidden');
+  okEl.classList.add('hidden');
+
+  const mode = document.querySelector('input[name="importMode"]:checked')?.value || 'add';
+  btn.textContent = '⏳ Importando...'; btn.disabled = true;
+
+  try {
+    const res = await api('/admin/import-confirm', 'POST', { rows: importPreviewRows, mode });
+    okEl.textContent = `✅ ${res.imported} productos importados correctamente.`;
+    okEl.classList.remove('hidden');
+    btn.textContent = '✅ Importación completada';
+    // Reload products after 1.5s and close
+    setTimeout(async () => {
+      await loadProducts();
+      closeImportModal();
+    }, 1500);
+  } catch(e) {
+    errEl.textContent = e.message || 'Error al importar.';
+    errEl.classList.remove('hidden');
+    btn.textContent = '✅ Confirmar importación'; btn.disabled = false;
+  }
 }
 
 // ══════════════════════════════════════════════════════════════════════════════

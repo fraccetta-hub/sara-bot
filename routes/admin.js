@@ -637,6 +637,136 @@ router.post('/whatsapp-connect-manual', requireAuth, async (req, res) => {
   res.json({ ok: true });
 });
 
+// ─── POST /admin/import-preview — fetch & parse Google Sheet ─────────────────
+router.post('/import-preview', requireAuth, async (req, res) => {
+  const { url } = req.body;
+  if (!url) return res.status(400).json({ error: 'URL requerida' });
+
+  // Extract sheet ID and gid from various Google Sheets URL formats
+  const idMatch  = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9_-]+)/);
+  const gidMatch = url.match(/[?&]gid=(\d+)/);
+  if (!idMatch) return res.status(400).json({ error: 'URL de Google Sheets inválida' });
+
+  const sheetId = idMatch[1];
+  const gid     = gidMatch?.[1] || '0';
+  const csvUrl  = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${gid}`;
+
+  try {
+    const response = await fetch(csvUrl);
+    if (!response.ok) {
+      if (response.status === 403) return res.status(400).json({ error: 'El Sheet no es público. Compartilo como "Cualquiera con el enlace puede ver".' });
+      return res.status(400).json({ error: `No se pudo acceder al Sheet (${response.status})` });
+    }
+    const csv = await response.text();
+
+    // Parse CSV
+    const lines = csv.split('\n').map(l => l.trim()).filter(Boolean);
+    if (lines.length < 2) return res.status(400).json({ error: 'El Sheet está vacío o tiene solo encabezados' });
+
+    // Normalize header names
+    const normalize = s => s.toLowerCase().trim()
+      .replace(/[áà]/g,'a').replace(/[éè]/g,'e').replace(/[íì]/g,'i')
+      .replace(/[óò]/g,'o').replace(/[úù]/g,'u').replace(/\s+/g,'_');
+
+    const headers = parseCSVLine(lines[0]).map(normalize);
+
+    const COL = {
+      name:        headers.findIndex(h => ['nombre','name','producto','servicio'].includes(h)),
+      category:    headers.findIndex(h => ['categoria','category'].includes(h)),
+      description: headers.findIndex(h => ['descripcion','description','descripción'].includes(h)),
+      price:       headers.findIndex(h => ['precio_gs','precio','price','price_gs','precio_guarani','precio_guaraní'].includes(h)),
+      price_type:  headers.findIndex(h => ['tipo','type','price_type','tipo_precio'].includes(h)),
+      duration:    headers.findIndex(h => ['duracion_min','duration_min','duracion','duracion_minutos'].includes(h)),
+      stock:       headers.findIndex(h => ['stock','stock_qty','cantidad'].includes(h)),
+      image_url:   headers.findIndex(h => ['imagen_url','image_url','imagen','image','foto','foto_url'].includes(h)),
+      available:   headers.findIndex(h => ['disponible','available','activo','active'].includes(h)),
+    };
+
+    if (COL.name === -1)  return res.status(400).json({ error: 'No se encontró columna "nombre". Verificá el template.' });
+    if (COL.price === -1) return res.status(400).json({ error: 'No se encontró columna "precio_gs". Verificá el template.' });
+
+    const rows = [];
+    for (let i = 1; i < lines.length; i++) {
+      const cells = parseCSVLine(lines[i]);
+      const name  = cells[COL.name]?.trim();
+      if (!name) continue; // skip empty rows
+
+      const priceRaw = cells[COL.price]?.replace(/[^\d]/g, '') || '0';
+      const price    = parseInt(priceRaw) || 0;
+      const typeRaw  = cells[COL.price_type]?.toLowerCase().trim() || 'fixed';
+      const type     = typeRaw === 'hourly' || typeRaw === 'hora' || typeRaw === 'por_hora' ? 'hourly' : 'fixed';
+      const avail    = cells[COL.available]?.toLowerCase().trim();
+      const isAvail  = !avail || ['si','sí','yes','true','1','disponible'].includes(avail);
+
+      rows.push({
+        name,
+        category:    cells[COL.category]?.trim()    || '',
+        description: cells[COL.description]?.trim() || '',
+        price_guarani: price,
+        price_type:  type,
+        duration_min: COL.duration >= 0 ? (parseInt(cells[COL.duration]) || null) : null,
+        stock_qty:   COL.stock    >= 0 ? (parseInt(cells[COL.stock])    || 0)    : 0,
+        image_url:   COL.image_url >= 0 ? (cells[COL.image_url]?.trim() || null) : null,
+        is_available: isAvail,
+      });
+    }
+
+    if (!rows.length) return res.status(400).json({ error: 'No se encontraron filas con datos válidos' });
+    res.json({ rows, total: rows.length });
+  } catch (e) {
+    console.error('[import-preview]', e);
+    res.status(500).json({ error: 'Error al leer el Sheet: ' + e.message });
+  }
+});
+
+// ─── POST /admin/import-confirm — bulk insert products ────────────────────────
+router.post('/import-confirm', requireAuth, async (req, res) => {
+  const { rows, mode } = req.body; // mode: 'add' | 'replace'
+  if (!Array.isArray(rows) || !rows.length)
+    return res.status(400).json({ error: 'Sin datos para importar' });
+
+  try {
+    if (mode === 'replace') {
+      // Delete existing products for this tenant
+      await supabase.from('products').delete().eq('tenant_id', req.tenant.tenantId);
+    }
+
+    const toInsert = rows.map(r => ({
+      tenant_id:    req.tenant.tenantId,
+      name:         r.name,
+      category:     r.category     || null,
+      description:  r.description  || null,
+      price_guarani: r.price_guarani,
+      price_type:   r.price_type   || 'fixed',
+      duration_min: r.duration_min  || null,
+      stock_qty:    r.stock_qty    ?? 0,
+      image_url:    r.image_url    || null,
+      is_available: r.is_available ?? true,
+    }));
+
+    const { error } = await supabase.from('products').insert(toInsert);
+    if (error) return res.status(500).json({ error: error.message });
+
+    res.json({ ok: true, imported: toInsert.length });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Helper: parse a single CSV line respecting quoted fields
+function parseCSVLine(line) {
+  const result = [];
+  let cur = '', inQ = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (c === '"') { inQ = !inQ; continue; }
+    if (c === ',' && !inQ) { result.push(cur); cur = ''; continue; }
+    cur += c;
+  }
+  result.push(cur);
+  return result;
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // APPOINTMENTS
 // ═══════════════════════════════════════════════════════════════════════════════
