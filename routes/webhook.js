@@ -44,6 +44,8 @@ async function processIncoming(body) {
   const senderPhone = message.from;
   const phoneNumberId = value.metadata.phone_number_id;
   const messageType = message.type;
+  // WhatsApp sends the contact's display name in the payload — use it as fallback
+  const waProfileName = value.contacts?.[0]?.profile?.name || null;
 
 
   const messageText = messageType === 'text' ? message.text.body.trim() : null;
@@ -88,11 +90,11 @@ async function processIncoming(body) {
 
   // ── Route by message type ────────────────────────────────────────────────────
   if (messageType === 'text') {
-    await handleCustomerMessage(tenant, senderPhone, messageText, null, null, phoneNumberId, token);
+    await handleCustomerMessage(tenant, senderPhone, messageText, null, null, waProfileName, phoneNumberId, token);
 
   } else if (messageType === 'location') {
     const loc = message.location;
-    await handleCustomerMessage(tenant, senderPhone, null, { lat: loc.latitude, lng: loc.longitude }, null, phoneNumberId, token);
+    await handleCustomerMessage(tenant, senderPhone, null, { lat: loc.latitude, lng: loc.longitude }, null, waProfileName, phoneNumberId, token);
 
   } else if (messageType === 'image') {
     const mediaId = message.image?.id;
@@ -101,7 +103,7 @@ async function processIncoming(body) {
     try {
       const { buffer, mimeType } = await fetchMedia(mediaId, token);
       const imageData = { base64: buffer.toString('base64'), mimeType };
-      await handleCustomerMessage(tenant, senderPhone, caption, null, imageData, phoneNumberId, token);
+      await handleCustomerMessage(tenant, senderPhone, caption, null, imageData, waProfileName, phoneNumberId, token);
     } catch (e) {
       console.error('[webhook] Image download error:', e.message);
       await sendMessage(senderPhone,
@@ -122,7 +124,7 @@ async function processIncoming(body) {
         return;
       }
       console.log(`[webhook] Audio transcribed (${senderPhone}): "${transcription}"`);
-      await handleCustomerMessage(tenant, senderPhone, transcription, null, null, phoneNumberId, token);
+      await handleCustomerMessage(tenant, senderPhone, transcription, null, null, waProfileName, phoneNumberId, token);
     } catch (e) {
       console.error('[webhook] Audio transcription error:', e.message);
       await sendMessage(senderPhone,
@@ -491,7 +493,7 @@ async function findProduct(tenantId, nameQuery) {
 
 // ─── Customer message handler ─────────────────────────────────────────────────
 
-async function handleCustomerMessage(tenant, customerPhone, messageText, locationMsg, imageData, phoneNumberId, token) {
+async function handleCustomerMessage(tenant, customerPhone, messageText, locationMsg, imageData, waProfileName, phoneNumberId, token) {
   // Load conversation
   const { data: convRow } = await supabase
     .from('conversations')
@@ -661,12 +663,17 @@ async function handleCustomerMessage(tenant, customerPhone, messageText, locatio
       updated_at: new Date().toISOString(),
       ...convUpdates
     };
-    if (customerName && !convRow?.customer_name) upsertData.customer_name = customerName;
+    // Priority: Claude-detected name > WhatsApp profile name > existing name
+    const nameToSave = customerName || waProfileName || null;
+    if (nameToSave && !convRow?.customer_name) upsertData.customer_name = nameToSave;
     await supabase.from('conversations').upsert(upsertData, { onConflict: 'tenant_id,customer_phone' });
-  } else if (customerName && !convRow?.customer_name) {
-    await supabase.from('conversations')
-      .update({ customer_name: customerName })
-      .eq('tenant_id', tenant.id).eq('customer_phone', customerPhone);
+  } else if (!convRow?.customer_name) {
+    const nameToSave = customerName || waProfileName || null;
+    if (nameToSave) {
+      await supabase.from('conversations')
+        .update({ customer_name: nameToSave })
+        .eq('tenant_id', tenant.id).eq('customer_phone', customerPhone);
+    }
   }
 
   // ── Send product image ──────────────────────────────────────────────────────

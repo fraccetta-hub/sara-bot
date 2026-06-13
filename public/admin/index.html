@@ -134,8 +134,19 @@
               <button id="chatBackBtn" onclick="closeChatMobile()" class="text-white text-xl leading-none mr-1" style="display:none">←</button>
               <div id="chatAvatarEl" class="w-9 h-9 rounded-full bg-green-500 flex items-center justify-center font-bold text-sm flex-shrink-0"></div>
               <div class="min-w-0 flex-1">
-                <div id="chatHeaderName" class="font-semibold text-sm leading-tight truncate"></div>
+                <div class="flex items-center gap-1">
+                  <span id="chatHeaderName" class="font-semibold text-sm leading-tight truncate"></span>
+                  <button onclick="startEditName()" title="Editar nombre" class="text-green-300 hover:text-white text-xs leading-none flex-shrink-0">✏️</button>
+                </div>
                 <div id="chatHeaderPhone" class="text-xs text-green-200 leading-tight"></div>
+              </div>
+              <!-- Inline name editor (hidden by default) -->
+              <div id="nameEditorWrap" class="hidden flex-1 flex items-center gap-2">
+                <input id="nameEditorInput" type="text" placeholder="Nombre del contacto"
+                  onkeydown="if(event.key==='Enter') saveName(); if(event.key==='Escape') cancelEditName();"
+                  class="flex-1 bg-green-800 border border-green-500 text-white placeholder-green-400 rounded-lg px-3 py-1 text-sm focus:outline-none min-w-0"/>
+                <button onclick="saveName()" class="text-white bg-green-500 hover:bg-green-400 rounded-lg px-2 py-1 text-xs font-semibold flex-shrink-0">✓</button>
+                <button onclick="cancelEditName()" class="text-green-300 hover:text-white text-xs flex-shrink-0">✕</button>
               </div>
               <button id="resumeBtn" onclick="resumeBot()" class="hidden flex-shrink-0 bg-white text-green-700 text-xs font-semibold px-3 py-1.5 rounded-full hover:bg-green-50 transition">🤖 Reactivar Sara</button>
             </div>
@@ -1857,6 +1868,36 @@ async function sendUploadedImg(input) {
     if (!res.ok) throw new Error((await res.json()).error);
     await refreshChat();
   } catch(e) { alert('Error al enviar imagen: ' + e.message); }
+}
+
+// ── Contact name editing ───────────────────────────────────────────────────────
+
+function startEditName() {
+  const currentName = document.getElementById('chatHeaderName').textContent;
+  document.getElementById('nameEditorInput').value = currentName === currentChatPhone ? '' : currentName;
+  document.getElementById('chatHeaderName').closest('.flex').classList.add('hidden');
+  document.getElementById('nameEditorWrap').classList.remove('hidden');
+  document.getElementById('nameEditorInput').focus();
+}
+
+function cancelEditName() {
+  document.getElementById('nameEditorWrap').classList.add('hidden');
+  document.getElementById('chatHeaderName').closest('.flex').classList.remove('hidden');
+}
+
+async function saveName() {
+  const name = document.getElementById('nameEditorInput').value.trim();
+  if (!name || !currentChatPhone) { cancelEditName(); return; }
+  try {
+    await api(`/admin/customers/${currentChatPhone}/name`, 'PUT', { name });
+    // Update UI immediately
+    document.getElementById('chatHeaderName').textContent = name;
+    // Update list data
+    const conv = chatListData.find(c => c.customer_phone === currentChatPhone);
+    if (conv) conv.customer_name = name;
+    renderChatList(chatListData);
+  } catch(e) { alert('Error al guardar: ' + e.message); }
+  cancelEditName();
 }
 
 // ── Takeover / resume ─────────────────────────────────────────────────────────
