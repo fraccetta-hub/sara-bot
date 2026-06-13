@@ -4,5 +4,4 @@ node_modules/
 .DS_Store
 *.pdf
 *.txt
-landingpage/
 .claude/

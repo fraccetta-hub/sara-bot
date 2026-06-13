@@ -32,9 +32,47 @@ function requireAuth(req, res, next) {
   }
 }
 
+// ─── Smart rate limiting (progressive delays, no hard lockout) ────────────────
+// Tracks failed attempts per IP: { ip -> { count, nextAllowedAt } }
+const loginAttempts = new Map();
+
+// Clean up old entries every 10 minutes to avoid memory leaks
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, data] of loginAttempts) {
+    if (now - data.lastAttempt > 30 * 60 * 1000) loginAttempts.delete(ip);
+  }
+}, 10 * 60 * 1000);
+
+function getLoginDelay(failCount) {
+  // Progressive delays: never hard-locks, just slows down attackers
+  if (failCount <= 2) return 0;
+  if (failCount === 3) return 5_000;   // 5 s
+  if (failCount === 4) return 15_000;  // 15 s
+  if (failCount === 5) return 30_000;  // 30 s
+  return 60_000;                       // 60 s max — never permanent
+}
+
+function getClientIp(req) {
+  return (req.headers['x-forwarded-for'] || req.socket.remoteAddress || '').split(',')[0].trim();
+}
+
 // ─── POST /admin/login ────────────────────────────────────────────────────────
 
 router.post('/login', async (req, res) => {
+  const ip = getClientIp(req);
+  const now = Date.now();
+  const attempt = loginAttempts.get(ip) || { count: 0, nextAllowedAt: 0, lastAttempt: 0 };
+
+  // Check if this IP must wait before next attempt
+  if (now < attempt.nextAllowedAt) {
+    const waitSec = Math.ceil((attempt.nextAllowedAt - now) / 1000);
+    return res.status(429).json({
+      error: `Demasiados intentos. Esperá ${waitSec} segundos.`,
+      retryAfter: waitSec
+    });
+  }
+
   const { username, password } = req.body;
   if (!username || !password)
     return res.status(400).json({ error: 'Faltan datos' });
@@ -46,19 +84,39 @@ router.post('/login', async (req, res) => {
     .or(`login_slug.eq.${username},phone_number_id.eq.${username}`)
     .maybeSingle();
 
-  if (!tenant) return res.status(404).json({ error: 'Usuario no encontrado' });
+  if (!tenant) {
+    // Track failure even for unknown users (prevents user enumeration + brute force)
+    attempt.count++;
+    attempt.lastAttempt = now;
+    attempt.nextAllowedAt = now + getLoginDelay(attempt.count);
+    loginAttempts.set(ip, attempt);
+    return res.status(401).json({ error: 'Usuario o contraseña incorrectos' });
+  }
+
   if (!tenant.active) return res.status(403).json({ error: 'Cuenta suspendida. Contactá a soporte.' });
 
-  // First-time setup: if no password set yet, accept "sara1234" and save hash
+  // Verify password
+  let ok = false;
   if (!tenant.admin_password_hash) {
-    if (password !== 'sara1234')
-      return res.status(401).json({ error: 'Contraseña incorrecta' });
-    const hash = await bcrypt.hash(password, 10);
-    await supabase.from('tenants').update({ admin_password_hash: hash }).eq('id', tenant.id);
+    ok = (password === 'sara1234');
+    if (ok) {
+      const hash = await bcrypt.hash(password, 10);
+      await supabase.from('tenants').update({ admin_password_hash: hash }).eq('id', tenant.id);
+    }
   } else {
-    const ok = await bcrypt.compare(password, tenant.admin_password_hash);
-    if (!ok) return res.status(401).json({ error: 'Contraseña incorrecta' });
+    ok = await bcrypt.compare(password, tenant.admin_password_hash);
   }
+
+  if (!ok) {
+    attempt.count++;
+    attempt.lastAttempt = now;
+    attempt.nextAllowedAt = now + getLoginDelay(attempt.count);
+    loginAttempts.set(ip, attempt);
+    return res.status(401).json({ error: 'Usuario o contraseña incorrectos' });
+  }
+
+  // Success — clear failed attempts for this IP
+  loginAttempts.delete(ip);
 
   const token = jwt.sign(
     { tenantId: tenant.id, tenantName: tenant.name, botName: tenant.bot_name },
@@ -89,9 +147,9 @@ router.get('/settings', requireAuth, async (req, res) => {
 // ─── PUT /admin/settings ──────────────────────────────────────────────────────
 
 router.put('/settings', requireAuth, async (req, res) => {
+  // products_enabled / services_enabled are admin-only (managed by superadmin)
   const allowed = [
     'bot_name','bot_personality','merchant_phone','payment_instructions','custom_instructions',
-    'products_enabled','services_enabled',
     'delivery_enabled','location_address','location_lat','location_lng',
     'delivery_type','delivery_base_fee','delivery_zone_km',
     'delivery_zone_outer_fee','delivery_per_km',

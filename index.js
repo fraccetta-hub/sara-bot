@@ -8,7 +8,18 @@ const superadminRoutes   = require('./routes/superadmin');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(express.json());
+// ── Security headers ──────────────────────────────────────────────────────────
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
+  next();
+});
+
+// ── Limit JSON body size to prevent payload attacks ───────────────────────────
+app.use(express.json({ limit: '512kb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/webhook',    webhookRoutes);
@@ -20,7 +31,7 @@ app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'adm
 
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
 
-app.get('/', (req, res) => res.redirect('/admin/index.html'));
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'landingpage', 'index.html')));
 
 app.listen(PORT, () => {
   console.log(`WhatsApp Bot server listening on port ${PORT}`);

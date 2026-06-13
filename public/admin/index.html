@@ -35,21 +35,21 @@
 
     <div class="space-y-4">
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Usuario</label>
-        <input id="loginPhoneId" type="text" placeholder="Usuario"
+        <label data-i18n="login.user" class="block text-sm font-medium text-gray-700 mb-1">Usuario</label>
+        <input id="loginPhoneId" type="text" data-i18n-ph="login.user" placeholder="Usuario"
           class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
       </div>
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
+        <label data-i18n="login.password" class="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
         <input id="loginPassword" type="password" placeholder="••••••••"
           class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"
           onkeydown="if(event.key==='Enter') login()"/>
       </div>
-      <button onclick="login()"
+      <button onclick="login()" data-i18n="login.submit"
         class="btn-green w-full py-2 rounded-lg text-sm font-semibold transition">
         Ingresar
       </button>
-      <p class="text-center text-xs text-gray-400">Primera vez: contraseña <b>sara1234</b></p>
+      <p data-i18n="login.hint" class="text-center text-xs text-gray-400">Primera vez: contraseña <b>sara1234</b></p>
     </div>
 
   </div>
@@ -61,58 +61,60 @@
   <!-- Navbar -->
   <nav class="bg-white border-b border-gray-100 sticky top-0 z-10 shadow-sm">
     <div class="max-w-6xl mx-auto px-4 flex items-center justify-between h-14">
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-2.5">
         <span class="text-2xl">🌸</span>
-        <span class="font-bold text-gray-800" id="navTitle">Sara Bot</span>
-        <span class="text-gray-400 text-sm hidden sm:block" id="navTenant"></span>
+        <div class="flex flex-col leading-tight">
+          <span class="font-bold text-gray-900 text-base leading-tight" id="navTenant">Sara Bot</span>
+          <span class="text-xs text-gray-400 leading-tight" id="navTitle"></span>
+        </div>
       </div>
-      <button onclick="logout()" class="text-sm text-gray-500 hover:text-red-500 transition">Salir</button>
+      <button onclick="logout()" data-i18n="nav.logout" class="text-sm text-gray-500 hover:text-red-500 transition">Salir</button>
     </div>
     <!-- Tabs -->
-    <div class="max-w-6xl mx-auto px-4 flex gap-6 text-sm text-gray-500">
-      <button class="py-2" id="tabChats" onclick="switchTab('chats')">💬 Chats</button>
-      <button class="py-2 tab-active" id="tabProducts" onclick="switchTab('products')">📦 Productos</button>
-      <button class="py-2" id="tabServices" onclick="switchTab('services')">🛠 Servicios</button>
-      <button class="py-2" id="tabOrders" onclick="switchTab('orders')">🛒 Pedidos</button>
-      <button class="py-2" id="tabSettings" onclick="switchTab('settings')">⚙️ Ajustes</button>
-      <button class="py-2" id="tabHelp" onclick="switchTab('help')">❓ Ayuda</button>
+    <div class="max-w-6xl mx-auto px-4 flex gap-1 sm:gap-4 text-sm text-gray-500 overflow-x-auto scrollbar-hide">
+      <button class="py-2 px-1 sm:px-0 whitespace-nowrap flex-shrink-0" id="tabChats" onclick="switchTab('chats')">💬 Chats</button>
+      <button class="py-2 px-1 sm:px-0 whitespace-nowrap flex-shrink-0 tab-active" id="tabProducts" onclick="switchTab('products')">📦 Productos</button>
+      <button class="py-2 px-1 sm:px-0 whitespace-nowrap flex-shrink-0" id="tabServices" onclick="switchTab('services')">🛠 Servicios</button>
+      <button class="py-2 px-1 sm:px-0 whitespace-nowrap flex-shrink-0" id="tabOrders" onclick="switchTab('orders')">🛒 Pedidos</button>
+      <button class="py-2 px-1 sm:px-0 whitespace-nowrap flex-shrink-0" id="tabSettings" onclick="switchTab('settings')">⚙️ Ajustes</button>
+      <button class="py-2 px-1 sm:px-0 whitespace-nowrap flex-shrink-0" id="tabHelp" onclick="switchTab('help')">❓ Ayuda</button>
     </div>
   </nav>
 
-  <div class="max-w-6xl mx-auto px-4 py-6">
+  <div id="mainWrap" class="max-w-6xl mx-auto px-4 py-6">
 
     <!-- Stats bar -->
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6" id="statsBar">
       <div class="bg-white rounded-xl p-4 shadow-sm text-center">
         <div class="text-2xl font-bold text-green-500" id="statToday">—</div>
-        <div class="text-xs text-gray-500 mt-1">Pedidos hoy</div>
+        <div data-i18n="stat.today" class="text-xs text-gray-500 mt-1">Pedidos hoy</div>
       </div>
       <div class="bg-white rounded-xl p-4 shadow-sm text-center">
         <div class="text-2xl font-bold text-yellow-500" id="statPending">—</div>
-        <div class="text-xs text-gray-500 mt-1">Pendientes</div>
+        <div data-i18n="stat.pending" class="text-xs text-gray-500 mt-1">Pendientes</div>
       </div>
       <div class="bg-white rounded-xl p-4 shadow-sm text-center">
         <div class="text-lg font-bold text-blue-500" id="statRevenue">—</div>
-        <div class="text-xs text-gray-500 mt-1">Ingresos hoy</div>
+        <div data-i18n="stat.revenue" class="text-xs text-gray-500 mt-1">Ingresos hoy</div>
       </div>
       <div class="bg-white rounded-xl p-4 shadow-sm text-center">
         <div class="text-2xl font-bold text-purple-500" id="statProducts">—</div>
-        <div class="text-xs text-gray-500 mt-1">Productos activos</div>
+        <div data-i18n="stat.products" class="text-xs text-gray-500 mt-1">Productos activos</div>
       </div>
     </div>
 
     <!-- ── CHATS TAB ── -->
-    <div id="sectionChats" class="hidden" style="height:calc(100vh - 8.5rem)">
+    <div id="sectionChats" class="hidden" style="height:calc(100vh - 6rem)">
       <div class="flex h-full rounded-xl overflow-hidden shadow-sm border border-gray-200 bg-white">
 
         <!-- Conversation list -->
         <div id="chatListPanel" class="w-full md:w-72 flex-shrink-0 flex flex-col border-r border-gray-200">
           <div class="bg-green-700 text-white px-4 py-3 flex items-center justify-between">
-            <span class="font-semibold text-base">Conversaciones</span>
+            <span data-i18n="chat.title" class="font-semibold text-base">Conversaciones</span>
             <button onclick="loadChatList()" class="opacity-80 hover:opacity-100 text-lg leading-none">↻</button>
           </div>
           <div class="px-3 py-2 bg-gray-50 border-b border-gray-200">
-            <input id="chatSearch" type="text" placeholder="Buscar cliente..."
+            <input id="chatSearch" type="text" data-i18n-ph="chat.search" placeholder="Buscar cliente..."
               oninput="filterChatList(this.value)"
               class="w-full bg-white border border-gray-200 rounded-full px-4 py-1.5 text-sm focus:outline-none focus:border-green-400"/>
           </div>
@@ -124,8 +126,8 @@
           <!-- Empty state -->
           <div id="chatEmpty" class="flex-1 flex flex-col items-center justify-center text-gray-400 bg-gray-50">
             <div class="text-5xl mb-3">💬</div>
-            <p class="font-medium">Seleccioná una conversación</p>
-            <p class="text-sm mt-1">Las respuestas llegan al cliente por WhatsApp</p>
+            <p data-i18n="chat.empty.title" class="font-medium">Seleccioná una conversación</p>
+            <p data-i18n="chat.empty.hint" class="text-sm mt-1">Las respuestas llegan al cliente por WhatsApp</p>
           </div>
           <!-- Active conversation -->
           <div id="chatActive" class="hidden flex-col h-full">
@@ -148,18 +150,18 @@
                 <button onclick="saveName()" class="text-white bg-green-500 hover:bg-green-400 rounded-lg px-2 py-1 text-xs font-semibold flex-shrink-0">✓</button>
                 <button onclick="cancelEditName()" class="text-green-300 hover:text-white text-xs flex-shrink-0">✕</button>
               </div>
-              <button id="resumeBtn" onclick="resumeBot()" class="hidden flex-shrink-0 bg-white text-green-700 text-xs font-semibold px-3 py-1.5 rounded-full hover:bg-green-50 transition">🤖 Reactivar Sara</button>
+              <button id="resumeBtn" onclick="resumeBot()" data-i18n="chat.resume" class="hidden flex-shrink-0 bg-white text-green-700 text-xs font-semibold px-3 py-1.5 rounded-full hover:bg-green-50 transition">🤖 Reactivar Sara</button>
             </div>
             <!-- Takeover banner -->
             <div id="takeoverBanner" class="hidden bg-blue-50 border-b border-blue-200 px-4 py-2 flex items-center gap-2 flex-shrink-0">
-              <span class="text-blue-700 text-xs font-semibold">👤 Modo manual activo — Sara está en pausa en este chat.</span>
+              <span data-i18n="chat.takeover" class="text-blue-700 text-xs font-semibold">👤 Modo manual activo — Sara está en pausa en este chat.</span>
             </div>
             <!-- Pending order banner -->
             <div id="orderBanner" class="hidden bg-amber-50 border-b border-amber-200 px-4 py-2.5 flex-shrink-0">
               <div id="orderBannerText" class="text-sm text-amber-900 mb-2 font-medium"></div>
               <div class="flex gap-2">
-                <button onclick="confirmOrderChat()" class="bg-green-600 hover:bg-green-700 text-white text-xs px-4 py-1.5 rounded-full font-semibold transition">✅ Confirmar pedido</button>
-                <button onclick="cancelOrderChat()" class="bg-red-500 hover:bg-red-600 text-white text-xs px-4 py-1.5 rounded-full font-semibold transition">❌ Cancelar</button>
+                <button onclick="confirmOrderChat()" data-i18n="chat.confirm" class="bg-green-600 hover:bg-green-700 text-white text-xs px-4 py-1.5 rounded-full font-semibold transition">✅ Confirmar pedido</button>
+                <button onclick="cancelOrderChat()" data-i18n="chat.cancel" class="bg-red-500 hover:bg-red-600 text-white text-xs px-4 py-1.5 rounded-full font-semibold transition">❌ Cancelar</button>
               </div>
             </div>
             <!-- Messages -->
@@ -168,7 +170,7 @@
             <div class="bg-gray-100 border-t border-gray-200 px-3 py-2 flex items-center gap-2 flex-shrink-0">
               <button onclick="openImgPicker()" title="Enviar imagen"
                 class="text-gray-500 hover:text-green-700 text-xl p-1 flex-shrink-0 transition">🖼</button>
-              <input id="chatInput" type="text" placeholder="Escribí un mensaje..."
+              <input id="chatInput" type="text" data-i18n-ph="chat.placeholder" placeholder="Escribí un mensaje..."
                 onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChatMsg();}"
                 class="flex-1 bg-white border border-gray-200 rounded-full px-4 py-2 text-sm focus:outline-none focus:border-green-400 min-w-0"/>
               <button onclick="sendChatMsg()"
@@ -184,21 +186,21 @@
     <div id="imgPickerModal" class="hidden fixed inset-0 modal-bg flex items-end md:items-center justify-center z-50 px-0 md:px-4">
       <div class="bg-white rounded-t-2xl md:rounded-2xl shadow-2xl w-full md:max-w-md max-h-[80vh] flex flex-col">
         <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-          <h3 class="font-semibold text-gray-800">Enviar imagen</h3>
+          <h3 data-i18n="img.title" class="font-semibold text-gray-800">Enviar imagen</h3>
           <button onclick="closeImgPicker()" class="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
         </div>
         <!-- Upload -->
         <div class="px-5 pt-4 pb-3 border-b border-gray-100">
-          <p class="text-xs text-gray-500 mb-2 font-medium uppercase tracking-wide">Subir foto</p>
+          <p data-i18n="img.upload" class="text-xs text-gray-500 mb-2 font-medium uppercase tracking-wide">Subir foto</p>
           <label class="flex items-center gap-3 cursor-pointer bg-gray-50 hover:bg-gray-100 border border-dashed border-gray-300 rounded-xl px-4 py-3 transition">
             <span class="text-2xl">📤</span>
-            <span class="text-sm text-gray-600">Elegir imagen del dispositivo</span>
+            <span data-i18n="img.choose" class="text-sm text-gray-600">Elegir imagen del dispositivo</span>
             <input type="file" accept="image/*" class="hidden" onchange="sendUploadedImg(this)"/>
           </label>
         </div>
         <!-- Catalog -->
         <div class="px-5 pt-3 pb-4 flex-1 overflow-y-auto">
-          <p class="text-xs text-gray-500 mb-2 font-medium uppercase tracking-wide">Fotos del catálogo</p>
+          <p data-i18n="img.catalog" class="text-xs text-gray-500 mb-2 font-medium uppercase tracking-wide">Fotos del catálogo</p>
           <div id="imgPickerGrid" class="grid grid-cols-3 gap-2"></div>
           <p id="imgPickerEmpty" class="hidden text-sm text-gray-400 text-center py-4">No hay fotos en el catálogo</p>
         </div>
@@ -208,9 +210,9 @@
     <!-- ── PRODUCTS TAB ── -->
     <div id="sectionProducts">
       <div class="flex items-center justify-between mb-4">
-        <h2 class="text-lg font-semibold text-gray-800">Catálogo de productos</h2>
+        <h2 data-i18n="products.title" class="text-lg font-semibold text-gray-800">Catálogo de productos</h2>
         <button onclick="openProductModal(null)"
-          class="btn-green px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-1">
+          class="btn-green px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-1" data-i18n="products.new">
           + Nuevo producto
         </button>
       </div>
@@ -222,12 +224,12 @@
         <table class="w-full text-sm">
           <thead class="bg-gray-50 text-gray-500 uppercase text-xs">
             <tr>
-              <th class="px-4 py-3 text-left">Producto</th>
-              <th class="px-4 py-3 text-left hidden sm:table-cell">Categoría</th>
-              <th class="px-4 py-3 text-right">Precio (Gs)</th>
-              <th class="px-4 py-3 text-center">Stock</th>
-              <th class="px-4 py-3 text-center">Estado</th>
-              <th class="px-4 py-3 text-center">Acciones</th>
+              <th data-i18n="products.col.product" class="px-4 py-3 text-left">Producto</th>
+              <th data-i18n="products.col.category" class="px-4 py-3 text-left hidden sm:table-cell">Categoría</th>
+              <th data-i18n="products.col.price" class="px-4 py-3 text-right">Precio (Gs)</th>
+              <th data-i18n="products.col.stock" class="px-4 py-3 text-center">Stock</th>
+              <th data-i18n="products.col.status" class="px-4 py-3 text-center">Estado</th>
+              <th data-i18n="products.col.actions" class="px-4 py-3 text-center">Acciones</th>
             </tr>
           </thead>
           <tbody id="productsTable" class="divide-y divide-gray-50">
@@ -240,8 +242,8 @@
     <!-- ── SERVICES TAB ── -->
     <div id="sectionServices" class="hidden">
       <div class="flex items-center justify-between mb-4">
-        <h2 class="text-lg font-semibold text-gray-800">Catálogo de servicios</h2>
-        <button onclick="openServiceModal()" class="btn-green px-4 py-2 rounded-lg text-sm font-semibold">+ Nuevo servicio</button>
+        <h2 data-i18n="services.title" class="text-lg font-semibold text-gray-800">Catálogo de servicios</h2>
+        <button onclick="openServiceModal()" data-i18n="services.new" class="btn-green px-4 py-2 rounded-lg text-sm font-semibold">+ Nuevo servicio</button>
       </div>
       <div id="serviceList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
     </div>
@@ -249,196 +251,82 @@
     <!-- ── ORDERS TAB ── -->
     <div id="sectionOrders" class="hidden">
       <div class="flex items-center justify-between mb-4">
-        <h2 class="text-lg font-semibold text-gray-800">Pedidos recientes</h2>
-        <button onclick="loadOrders()" class="text-sm text-green-500 hover:underline">↻ Actualizar</button>
+        <h2 data-i18n="orders.title" class="text-lg font-semibold text-gray-800">Pedidos recientes</h2>
+        <button onclick="loadOrders()" data-i18n="orders.refresh" class="text-sm text-green-500 hover:underline">↻ Actualizar</button>
       </div>
       <div class="space-y-3" id="ordersList">
         <div class="text-center py-8 text-gray-400">Cargando...</div>
       </div>
     </div>
 
-    <!-- ── HELP TAB ── -->
-    <div id="sectionHelp" class="hidden max-w-2xl space-y-5">
-      <h2 class="text-lg font-semibold text-gray-800">❓ Ayuda — Comandos del propietario</h2>
-      <p class="text-sm text-gray-500">Enviá estos mensajes desde tu WhatsApp al número de Sara Bot para gestionar el negocio sin abrir el panel web.</p>
-
-      <!-- Catálogo -->
-      <div class="bg-white rounded-xl shadow-sm p-5">
-        <h3 class="font-semibold text-gray-800 mb-3">📦 Gestión del catálogo</h3>
-        <div class="space-y-2 text-sm">
-          <div class="flex gap-3 items-start p-2 rounded-lg bg-gray-50">
-            <code class="bg-green-100 text-green-800 px-2 py-0.5 rounded font-mono text-xs whitespace-nowrap">CATALOGO</code>
-            <span class="text-gray-600">Ver todos los productos con stock y precio actuales</span>
-          </div>
-          <div class="flex gap-3 items-start p-2 rounded-lg bg-gray-50">
-            <code class="bg-green-100 text-green-800 px-2 py-0.5 rounded font-mono text-xs whitespace-nowrap">STOCK nombre_producto CANTIDAD</code>
-            <span class="text-gray-600">Actualizar el stock de un producto. Ej: <i>STOCK Rosas Rojas 25</i></span>
-          </div>
-          <div class="flex gap-3 items-start p-2 rounded-lg bg-gray-50">
-            <code class="bg-green-100 text-green-800 px-2 py-0.5 rounded font-mono text-xs whitespace-nowrap">PRECIO nombre_producto MONTO</code>
-            <span class="text-gray-600">Cambiar precio en guaraníes. Ej: <i>PRECIO Rosas Rojas 160000</i></span>
-          </div>
-          <div class="flex gap-3 items-start p-2 rounded-lg bg-gray-50">
-            <code class="bg-green-100 text-green-800 px-2 py-0.5 rounded font-mono text-xs whitespace-nowrap">AGOTADO nombre_producto</code>
-            <span class="text-gray-600">Marcar un producto como agotado. Sara dejará de ofrecerlo</span>
-          </div>
-          <div class="flex gap-3 items-start p-2 rounded-lg bg-gray-50">
-            <code class="bg-green-100 text-green-800 px-2 py-0.5 rounded font-mono text-xs whitespace-nowrap">DISPONIBLE nombre_producto</code>
-            <span class="text-gray-600">Volver a activar un producto agotado</span>
-          </div>
-          <div class="flex gap-3 items-start p-2 rounded-lg bg-gray-50">
-            <code class="bg-green-100 text-green-800 px-2 py-0.5 rounded font-mono text-xs whitespace-nowrap">NUEVO nombre | categoría | precio | stock | descripción</code>
-            <span class="text-gray-600">Crear un producto nuevo. Ej: <i>NUEVO Girasoles|Ramos|80000|10|Girasoles frescos</i></span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Fotos -->
-      <div class="bg-white rounded-xl shadow-sm p-5">
-        <h3 class="font-semibold text-gray-800 mb-3">📸 Fotos de productos</h3>
-        <div class="space-y-2 text-sm">
-          <div class="flex gap-3 items-start p-2 rounded-lg bg-gray-50">
-            <code class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded font-mono text-xs whitespace-nowrap">NOMBRE nombre_producto</code>
-            <span class="text-gray-600">Enviar esta frase + una foto en el mismo mensaje. La foto se guarda y Sara la mostrará a los clientes cuando pregunten por ese producto</span>
-          </div>
-        </div>
-        <p class="text-xs text-gray-400 mt-3">💡 También podés subir fotos desde el panel web → Catálogo → editar producto.</p>
-      </div>
-
-      <!-- Pedidos y takeover -->
-      <div class="bg-white rounded-xl shadow-sm p-5">
-        <h3 class="font-semibold text-gray-800 mb-3">🛒 Pedidos y control de chat</h3>
-        <div class="space-y-2 text-sm">
-          <div class="flex gap-3 items-start p-2 rounded-lg bg-gray-50">
-            <code class="bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded font-mono text-xs whitespace-nowrap">CONFIRMAR</code>
-            <span class="text-gray-600">Confirmar el último pedido pendiente. Sara notifica al cliente</span>
-          </div>
-          <div class="flex gap-3 items-start p-2 rounded-lg bg-gray-50">
-            <code class="bg-red-100 text-red-800 px-2 py-0.5 rounded font-mono text-xs whitespace-nowrap">CANCELAR</code>
-            <span class="text-gray-600">Cancelar el último pedido pendiente. Sara notifica al cliente</span>
-          </div>
-          <div class="flex gap-3 items-start p-2 rounded-lg bg-gray-50">
-            <code class="bg-purple-100 text-purple-800 px-2 py-0.5 rounded font-mono text-xs whitespace-nowrap">CHAT</code>
-            <span class="text-gray-600">Tomar control del chat con el cliente. Todo lo que escribas llega directamente al cliente (Sara no interviene)</span>
-          </div>
-          <div class="flex gap-3 items-start p-2 rounded-lg bg-gray-50">
-            <code class="bg-purple-100 text-purple-800 px-2 py-0.5 rounded font-mono text-xs whitespace-nowrap">FIN</code>
-            <span class="text-gray-600">Devolver el control a Sara. El bot retoma la conversación</span>
-          </div>
-        </div>
-        <div class="mt-3 p-3 bg-yellow-50 rounded-lg text-xs text-yellow-800">
-          <b>¿Cómo funciona el takeover?</b> Cuando llega un pedido, Sara te avisa por WhatsApp con los detalles. Respondé <b>CONFIRMAR</b> o <b>CANCELAR</b> para gestionar el pedido, o <b>CHAT</b> para hablar directamente con el cliente.
-        </div>
-      </div>
-
-      <!-- Chat panel -->
-      <div class="bg-white rounded-xl shadow-sm p-5">
-        <h3 class="font-semibold text-gray-800 mb-1">💬 Panel de chats — gestión desde el panel web</h3>
-        <p class="text-sm text-gray-500 mb-4">La tab <b>Chats</b> te permite ver y gestionar todas las conversaciones con tus clientes en tiempo real, sin salir del panel.</p>
-        <div class="space-y-3 text-sm">
-
-          <div class="p-3 rounded-lg bg-gray-50">
-            <p class="font-medium text-gray-700 mb-1">📋 Ver conversaciones</p>
-            <p class="text-gray-500">La lista muestra todos los clientes con el último mensaje, la hora y un badge naranja si tienen un pedido pendiente. Se actualiza automáticamente cada 8 segundos.</p>
-          </div>
-
-          <div class="p-3 rounded-lg bg-gray-50">
-            <p class="font-medium text-gray-700 mb-1">🛒 Confirmar o cancelar pedidos</p>
-            <p class="text-gray-500">Cuando un cliente confirma un pedido, aparece un banner amarillo en la parte superior del chat con los detalles y dos botones: <b>✅ Confirmar</b> y <b>❌ Cancelar</b>. Al confirmar, Sara notifica automáticamente al cliente.</p>
-          </div>
-
-          <div class="p-3 rounded-lg bg-blue-50 border border-blue-100">
-            <p class="font-medium text-blue-800 mb-1">👤 Intervenir manualmente en una chat</p>
-            <p class="text-blue-700">Podés escribir directamente al cliente en cualquier momento desde el panel. Al enviar tu primer mensaje, <b>Sara se pausa automáticamente</b> en ese chat — el banner azul "Modo manual activo" confirma que el bot está en pausa.</p>
-            <p class="text-blue-700 mt-1">Tus mensajes aparecen en <span class="font-semibold">azul</span> para que se distingan de los mensajes automáticos de Sara (en verde).</p>
-          </div>
-
-          <div class="p-3 rounded-lg bg-green-50 border border-green-100">
-            <p class="font-medium text-green-800 mb-1">🤖 Reactivar Sara</p>
-            <p class="text-green-700">Cuando terminás de hablar con el cliente, presioná el botón <b>"🤖 Reactivar Sara"</b> en la parte superior del chat. Sara retoma la conversación con todo el contexto, incluyendo lo que vos escribiste.</p>
-          </div>
-
-          <div class="p-3 rounded-lg bg-gray-50">
-            <p class="font-medium text-gray-700 mb-1">🖼 Enviar fotos al cliente</p>
-            <p class="text-gray-500">Con el botón 🖼 podés enviar una foto del catálogo existente o subir una imagen nueva directamente desde tu dispositivo. La foto llega al cliente por WhatsApp.</p>
-          </div>
-
-        </div>
-        <div class="mt-4 p-3 bg-yellow-50 rounded-lg text-xs text-yellow-800">
-          <b>Colores de los mensajes en el panel:</b><br>
-          ⬜ Blanco (izquierda) = mensajes del cliente<br>
-          🟩 Verde (derecha) = respuestas automáticas de Sara<br>
-          🟦 Azul (derecha) = mensajes enviados por vos manualmente
-        </div>
-      </div>
-
-      <!-- Otros comandos -->
-      <div class="bg-white rounded-xl shadow-sm p-5">
-        <h3 class="font-semibold text-gray-800 mb-3">ℹ️ Otros comandos WhatsApp</h3>
-        <div class="space-y-2 text-sm">
-          <div class="flex gap-3 items-start p-2 rounded-lg bg-gray-50">
-            <code class="bg-gray-100 text-gray-800 px-2 py-0.5 rounded font-mono text-xs whitespace-nowrap">AYUDA</code>
-            <span class="text-gray-600">Ver todos los comandos disponibles directamente en WhatsApp</span>
-          </div>
-        </div>
-        <p class="text-xs text-gray-400 mt-3">💡 Los comandos no distinguen mayúsculas/minúsculas. Podés escribir "catalogo", "CATALOGO" o "Catalogo".</p>
-      </div>
-    </div>
+    <!-- ── HELP TAB ── (rendered by renderHelp() JS function) -->
+    <div id="sectionHelp" class="hidden max-w-2xl space-y-5"></div>
 
     <!-- ── SETTINGS TAB ── -->
     <div id="sectionSettings" class="hidden max-w-xl space-y-5">
-      <h2 class="text-lg font-semibold text-gray-800">Ajustes</h2>
+      <h2 data-i18n="settings.title" class="text-lg font-semibold text-gray-800">Ajustes</h2>
 
-      <!-- Sections toggle -->
+      <!-- Language selector -->
       <div class="bg-white rounded-xl shadow-sm p-6">
-        <h3 class="font-medium text-gray-800 mb-1">🗂 Secciones activas</h3>
-        <p class="text-xs text-gray-400 mb-4">Activá solo las secciones que usa tu negocio. Sara solo ofrecerá lo que esté habilitado.</p>
-        <div id="sectionsMsg" class="hidden rounded-lg px-4 py-2 text-sm mb-4"></div>
-        <div class="space-y-3 mb-4">
-          <label class="flex items-center gap-3 cursor-pointer">
-            <input id="sProductsEnabled" type="checkbox" class="w-4 h-4 accent-green-600"/>
-            <div>
-              <p class="text-sm font-medium text-gray-700">📦 Productos</p>
-              <p class="text-xs text-gray-400">Venta de artículos físicos con stock (flores, tortas, repuestos...)</p>
-            </div>
-          </label>
-          <label class="flex items-center gap-3 cursor-pointer">
-            <input id="sServicesEnabled" type="checkbox" class="w-4 h-4 accent-green-600"/>
-            <div>
-              <p class="text-sm font-medium text-gray-700">🛠 Servicios</p>
-              <p class="text-xs text-gray-400">Servicios con precio fijo o por hora (catering, cortes, consultas...)</p>
-            </div>
-          </label>
+        <h3 data-i18n="settings.language.title" class="font-medium text-gray-800 mb-1">🌐 Idioma del panel</h3>
+        <p data-i18n="settings.language.desc" class="text-xs text-gray-400 mb-4">Elegí el idioma de la interfaz de administración.</p>
+        <div class="flex gap-2 flex-wrap">
+          <button id="lang_es" onclick="setLang('es')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border-2 transition">🇪🇸 Español</button>
+          <button id="lang_en" onclick="setLang('en')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border-2 transition">🇬🇧 English</button>
+          <button id="lang_de" onclick="setLang('de')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border-2 transition">🇩🇪 Deutsch</button>
+          <button id="lang_it" onclick="setLang('it')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border-2 transition">🇮🇹 Italiano</button>
+          <button id="lang_fr" onclick="setLang('fr')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border-2 transition">🇫🇷 Français</button>
         </div>
-        <button onclick="saveSections()" class="btn-green w-full py-2 rounded-lg text-sm font-semibold">Guardar secciones</button>
+      </div>
+
+      <!-- Active sections (read-only, populated by loadSettings) -->
+      <div class="bg-white rounded-xl shadow-sm p-6">
+        <h3 data-i18n="settings.sections.title" class="font-medium text-gray-800 mb-1">🗂 Secciones activas</h3>
+        <p data-i18n="settings.sections.desc" class="text-xs text-gray-400 mb-4">Estas son las secciones habilitadas en tu plan.</p>
+        <div class="space-y-3">
+          <div id="sectionBadgeProducts" class="flex items-center gap-3 rounded-xl px-4 py-3 border-2 transition">
+            <span class="text-xl">📦</span>
+            <div class="flex-1">
+              <p data-i18n="settings.sections.products" class="text-sm font-semibold">📦 Productos</p>
+              <p data-i18n="settings.sections.products.desc" class="text-xs">Venta de artículos físicos con stock</p>
+            </div>
+            <span id="sectionBadgeProductsIcon" class="text-lg"></span>
+          </div>
+          <div id="sectionBadgeServices" class="flex items-center gap-3 rounded-xl px-4 py-3 border-2 transition">
+            <span class="text-xl">🛠</span>
+            <div class="flex-1">
+              <p data-i18n="settings.sections.services" class="text-sm font-semibold">🛠 Servicios</p>
+              <p data-i18n="settings.sections.services.desc" class="text-xs">Servicios con precio fijo o por hora</p>
+            </div>
+            <span id="sectionBadgeServicesIcon" class="text-lg"></span>
+          </div>
+        </div>
+        <p data-i18n="settings.sections.contactAdmin" class="text-xs text-gray-400 mt-3 text-center">Para activar más secciones, contactá al administrador.</p>
       </div>
 
       <!-- Bot personality -->
       <div class="bg-white rounded-xl shadow-sm p-6">
-        <h3 class="font-medium text-gray-800 mb-1">🤖 Personalidad de tu asistente</h3>
-        <p class="text-xs text-gray-400 mb-4">Esto define cómo habla Sara con tus clientes.</p>
+        <h3 data-i18n="settings.bot.title" class="font-medium text-gray-800 mb-1">🤖 Personalidad de tu asistente</h3>
+        <p data-i18n="settings.bot.desc" class="text-xs text-gray-400 mb-4">Esto define cómo habla Sara con tus clientes.</p>
         <div id="settingsMsg" class="hidden rounded-lg px-4 py-2 text-sm mb-4"></div>
 
-        <!-- Bot name -->
-        <label class="block text-sm font-medium text-gray-700 mb-1">Nombre del bot</label>
+        <label data-i18n="settings.bot.name" class="block text-sm font-medium text-gray-700 mb-1">Nombre del bot</label>
         <input id="sBotName" type="text" placeholder="Sara"
           class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-4"/>
 
-        <!-- Presets -->
-        <label class="block text-sm font-medium text-gray-700 mb-2">Estilo de personalidad</label>
+        <label data-i18n="settings.bot.style" class="block text-sm font-medium text-gray-700 mb-2">Estilo de personalidad</label>
         <div class="grid grid-cols-1 gap-2 mb-3" id="presetGrid"></div>
 
-        <!-- Custom textarea — shown when "Personalizada" is selected -->
         <div id="customPersonalityWrap" class="hidden">
-          <label class="block text-sm font-medium text-gray-700 mb-1">Descripción personalizada</label>
+          <label data-i18n="settings.bot.customLabel" class="block text-sm font-medium text-gray-700 mb-1">Descripción personalizada</label>
           <textarea id="sPersonalityCustom" rows="3"
             placeholder="Ej: Sos Luna, una chica apasionada por las flores que habla de forma poética..."
             class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm resize-none"
             oninput="onCustomPersonalityInput()"></textarea>
-          <p class="text-xs text-gray-400 mt-1">Describí la personalidad en detalle — cuanto más específico, mejor.</p>
+          <p data-i18n="settings.bot.customHint" class="text-xs text-gray-400 mt-1">Describí la personalidad en detalle — cuanto más específico, mejor.</p>
         </div>
 
-        <button onclick="saveSettings()"
+        <button onclick="saveSettings()" data-i18n="settings.bot.save"
           class="btn-green w-full py-2 rounded-lg text-sm font-semibold mt-4">
           Guardar personalidad
         </button>
@@ -446,12 +334,12 @@
 
       <!-- Merchant phone -->
       <div class="bg-white rounded-xl shadow-sm p-6">
-        <h3 class="font-medium text-gray-800 mb-1">📲 Tu número de WhatsApp</h3>
-        <p class="text-xs text-gray-400 mb-3">Sara te avisa aquí cuando llega un pedido nuevo. Formato internacional sin + ni espacios (ej: 595981123456).</p>
+        <h3 data-i18n="settings.phone.title" class="font-medium text-gray-800 mb-1">📲 Tu número de WhatsApp</h3>
+        <p data-i18n="settings.phone.desc" class="text-xs text-gray-400 mb-3">Sara te avisa aquí cuando llega un pedido nuevo. Formato internacional sin + ni espacios (ej: 595981123456).</p>
         <div id="merchantPhoneMsg" class="hidden rounded-lg px-4 py-2 text-sm mb-3"></div>
         <input id="sMerchantPhone" type="tel" placeholder="595981123456"
           class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-3"/>
-        <button onclick="saveMerchantPhone()"
+        <button onclick="saveMerchantPhone()" data-i18n="settings.phone.save"
           class="btn-green w-full py-2 rounded-lg text-sm font-semibold">
           Guardar número
         </button>
@@ -459,13 +347,13 @@
 
       <!-- Payment instructions -->
       <div class="bg-white rounded-xl shadow-sm p-6">
-        <h3 class="font-medium text-gray-800 mb-1">💳 Instrucciones de pago</h3>
-        <p class="text-xs text-gray-400 mb-3">Sara las envía automáticamente después de cada pedido confirmado.</p>
+        <h3 data-i18n="settings.payment.title" class="font-medium text-gray-800 mb-1">💳 Instrucciones de pago</h3>
+        <p data-i18n="settings.payment.desc" class="text-xs text-gray-400 mb-3">Sara las envía automáticamente después de cada pedido confirmado.</p>
         <div id="paymentMsg" class="hidden rounded-lg px-4 py-2 text-sm mb-3"></div>
-        <textarea id="sPayment" rows="3"
-          placeholder="Ej: Pagá por Billetera Personal al 0981-000-001 (Florería Las Orquídeas) o transferencia BNF 000-123456. Envianos el comprobante 🧾"
+        <textarea id="sPayment" rows="3" data-i18n-ph="settings.payment.placeholder"
+          placeholder="Ej: Pagá por Billetera Personal al 0981-000-001 o transferencia BNF 000-123456. Envianos el comprobante 🧾"
           class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm resize-none mb-3"></textarea>
-        <button onclick="savePayment()"
+        <button onclick="savePayment()" data-i18n="settings.payment.save"
           class="btn-green w-full py-2 rounded-lg text-sm font-semibold">
           Guardar instrucciones de pago
         </button>
@@ -473,15 +361,16 @@
 
       <!-- Custom instructions -->
       <div class="bg-white rounded-xl shadow-sm p-6">
-        <h3 class="font-medium text-gray-800 mb-1">📋 Reglas del negocio</h3>
-        <p class="text-xs text-gray-400 mb-3">Escribí en lenguaje natural cualquier regla, restricción o información especial de tu negocio. Sara las seguirá siempre.<br>
-          <span class="italic">Ej: "Las tortas personalizadas requieren 3 días de anticipación." / "Solo entregamos de lunes a sábado de 8 a 13 hs." / "Siempre preguntá si quieren tarjetita con mensaje."</span>
+        <h3 data-i18n="settings.rules.title" class="font-medium text-gray-800 mb-1">📋 Reglas del negocio</h3>
+        <p class="text-xs text-gray-400 mb-3">
+          <span data-i18n="settings.rules.desc">Escribí en lenguaje natural cualquier regla, restricción o información especial de tu negocio. Sara las seguirá siempre.</span><br>
+          <span data-i18n="settings.rules.example" class="italic">Ej: "Las tortas personalizadas requieren 3 días de anticipación."</span>
         </p>
         <div id="customInstrMsg" class="hidden rounded-lg px-4 py-2 text-sm mb-3"></div>
-        <textarea id="sCustomInstructions" rows="6"
-          placeholder="- Las composiciones personalizadas requieren 48 hs de anticipación.&#10;- Solo hacemos envíos de lunes a sábado entre 8:00 y 13:00.&#10;- Siempre preguntá si quieren tarjetita con mensaje (sin costo)."
+        <textarea id="sCustomInstructions" rows="6" data-i18n-ph="settings.rules.placeholder"
+          placeholder="- Las composiciones personalizadas requieren 48 hs de anticipación."
           class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm resize-none mb-3"></textarea>
-        <button onclick="saveCustomInstructions()"
+        <button onclick="saveCustomInstructions()" data-i18n="settings.rules.save"
           class="btn-green w-full py-2 rounded-lg text-sm font-semibold">
           Guardar reglas
         </button>
@@ -489,83 +378,80 @@
 
       <!-- Delivery settings -->
       <div class="bg-white rounded-xl shadow-sm p-6">
-        <h3 class="font-medium text-gray-800 mb-1">🚚 Envíos a domicilio</h3>
-        <p class="text-xs text-gray-400 mb-4">Configurá si ofrecés entregas, la dirección de tu local y el costo.</p>
+        <h3 data-i18n="settings.delivery.title" class="font-medium text-gray-800 mb-1">🚚 Envíos a domicilio</h3>
+        <p data-i18n="settings.delivery.desc" class="text-xs text-gray-400 mb-4">Configurá si ofrecés entregas, la dirección de tu local y el costo.</p>
         <div id="deliveryMsg" class="hidden rounded-lg px-4 py-2 text-sm mb-4"></div>
 
         <div class="flex items-center gap-3 mb-4">
           <input id="sDeliveryEnabled" type="checkbox" class="w-4 h-4 accent-green-600"/>
-          <label for="sDeliveryEnabled" class="text-sm font-medium text-gray-700">Activar envíos</label>
+          <label for="sDeliveryEnabled" data-i18n="settings.delivery.enable" class="text-sm font-medium text-gray-700">Activar envíos</label>
         </div>
 
         <div id="deliveryFields">
-          <label class="block text-sm font-medium text-gray-700 mb-1">Dirección del local</label>
+          <label data-i18n="settings.delivery.address" class="block text-sm font-medium text-gray-700 mb-1">Dirección del local</label>
           <input id="sLocationAddress" type="text" placeholder="Ej: Av. Mariscal López 1234, Asunción"
             class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-3"/>
 
           <div class="grid grid-cols-2 gap-3 mb-3">
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Latitud</label>
+              <label data-i18n="settings.delivery.lat" class="block text-sm font-medium text-gray-700 mb-1">Latitud</label>
               <input id="sLocationLat" type="number" step="any" placeholder="-25.2867"
                 class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Longitud</label>
+              <label data-i18n="settings.delivery.lng" class="block text-sm font-medium text-gray-700 mb-1">Longitud</label>
               <input id="sLocationLng" type="number" step="any" placeholder="-57.6470"
                 class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
             </div>
           </div>
-          <p class="text-xs text-gray-400 mb-4">Abrí Google Maps, buscá tu local, clic derecho → "¿Qué hay aquí?" y copiá las coordenadas.</p>
+          <p data-i18n="settings.delivery.mapsHint" class="text-xs text-gray-400 mb-4">Abrí Google Maps, buscá tu local, clic derecho → "¿Qué hay aquí?" y copiá las coordenadas.</p>
 
-          <label class="block text-sm font-medium text-gray-700 mb-1">Tipo de tarifa</label>
+          <label data-i18n="settings.delivery.type" class="block text-sm font-medium text-gray-700 mb-1">Tipo de tarifa</label>
           <select id="sDeliveryType" onchange="updateDeliveryFields()"
             class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-4">
-            <option value="fixed">Tarifa fija</option>
-            <option value="zone">Por zona (km)</option>
-            <option value="per_km">Por kilómetro</option>
+            <option value="fixed" data-i18n="settings.delivery.fixed">Tarifa fija</option>
+            <option value="zone" data-i18n="settings.delivery.zone">Por zona (km)</option>
+            <option value="per_km" data-i18n="settings.delivery.perkm">Por kilómetro</option>
           </select>
 
-          <!-- Fixed / base fee (always shown) -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1" id="baseFeeLabel">Costo de envío (Gs)</label>
+            <label data-i18n="settings.delivery.baseFee" class="block text-sm font-medium text-gray-700 mb-1" id="baseFeeLabel">Costo de envío (Gs)</label>
             <input id="sDeliveryBaseFee" type="number" min="0" placeholder="15000"
               class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-3"/>
           </div>
 
-          <!-- Zone fields -->
           <div id="zoneFields" class="hidden space-y-3 mb-3">
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Radio zona interior (km)</label>
+              <label data-i18n="settings.delivery.zoneRadius" class="block text-sm font-medium text-gray-700 mb-1">Radio zona interior (km)</label>
               <input id="sDeliveryZoneKm" type="number" min="0" placeholder="5"
                 class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Costo fuera de zona (Gs, 0 = sin envío)</label>
+              <label data-i18n="settings.delivery.zoneOuter" class="block text-sm font-medium text-gray-700 mb-1">Costo fuera de zona (Gs, 0 = sin envío)</label>
               <input id="sDeliveryZoneOuterFee" type="number" min="0" placeholder="0"
                 class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
             </div>
           </div>
 
-          <!-- Per-km fee -->
           <div id="perKmField" class="hidden mb-3">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Costo adicional por km (Gs)</label>
+            <label data-i18n="settings.delivery.perKm" class="block text-sm font-medium text-gray-700 mb-1">Costo adicional por km (Gs)</label>
             <input id="sDeliveryPerKm" type="number" min="0" placeholder="2000"
               class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
           </div>
 
-          <label class="block text-sm font-medium text-gray-700 mb-1">Monto mínimo para envío (Gs)</label>
+          <label data-i18n="settings.delivery.minOrder" class="block text-sm font-medium text-gray-700 mb-1">Monto mínimo para envío (Gs)</label>
           <input id="sDeliveryMinOrder" type="number" min="0" placeholder="0"
             class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-3"/>
-          <p class="text-xs text-gray-400 mb-4">Dejá en 0 para no tener mínimo.</p>
+          <p data-i18n="settings.delivery.minHint" class="text-xs text-gray-400 mb-4">Dejá en 0 para no tener mínimo.</p>
 
-          <label class="block text-sm font-medium text-gray-700 mb-1">Días/fechas sin envío</label>
+          <label data-i18n="settings.delivery.disabled" class="block text-sm font-medium text-gray-700 mb-1">Días/fechas sin envío</label>
           <input id="sDeliveryDisabledDates" type="text"
             placeholder="domingo, 2026-12-25, 2026-01-01"
             class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-1"/>
-          <p class="text-xs text-gray-400 mb-4">Separados por coma. Podés poner nombres de días (domingo, sabado) o fechas exactas (AAAA-MM-DD).</p>
+          <p data-i18n="settings.delivery.disabledHint" class="text-xs text-gray-400 mb-4">Separados por coma. Podés poner nombres de días (domingo, sabado) o fechas exactas (AAAA-MM-DD).</p>
         </div>
 
-        <button onclick="saveDelivery()"
+        <button onclick="saveDelivery()" data-i18n="settings.delivery.save"
           class="btn-green w-full py-2 rounded-lg text-sm font-semibold">
           Guardar configuración de envíos
         </button>
@@ -573,11 +459,11 @@
 
       <!-- Change password -->
       <div class="bg-white rounded-xl shadow-sm p-6">
-        <h3 class="font-medium text-gray-800 mb-3">🔒 Cambiar contraseña</h3>
+        <h3 data-i18n="settings.password.title" class="font-medium text-gray-800 mb-3">🔒 Cambiar contraseña</h3>
         <div id="pwdMsg" class="hidden rounded-lg px-4 py-2 text-sm mb-3"></div>
-        <input id="newPwd" type="password" placeholder="Nueva contraseña (mín. 6 caracteres)"
+        <input id="newPwd" type="password" data-i18n-ph="settings.password.placeholder" placeholder="Nueva contraseña (mín. 6 caracteres)"
           class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-3"/>
-        <button onclick="changePassword()"
+        <button onclick="changePassword()" data-i18n="settings.password.save"
           class="btn-green w-full py-2 rounded-lg text-sm font-semibold">
           Guardar contraseña
         </button>
@@ -591,7 +477,7 @@
 <div id="serviceModal" class="hidden fixed inset-0 modal-bg flex items-center justify-center z-50 px-4">
   <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 max-h-screen overflow-y-auto">
     <div class="flex items-center justify-between mb-5">
-      <h3 class="font-semibold text-gray-800 text-lg" id="serviceModalTitle">Nuevo servicio</h3>
+      <h3 class="font-semibold text-gray-800 text-lg" id="serviceModalTitle" data-i18n="modal.service.new">Nuevo servicio</h3>
       <button onclick="closeServiceModal()" class="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
     </div>
     <div id="serviceModalError" class="hidden bg-red-50 text-red-700 text-sm rounded-lg px-4 py-2 mb-4"></div>
@@ -618,40 +504,40 @@
       </div>
       <div class="grid grid-cols-2 gap-3">
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1" id="svPriceLabel">Precio (Gs) *</label>
+          <label data-i18n="modal.service.price" class="block text-sm font-medium text-gray-700 mb-1" id="svPriceLabel">Precio (Gs) *</label>
           <input id="svPrice" type="number" min="0" placeholder="50000"
             class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
         </div>
         <div id="svDurationWrap">
-          <label class="block text-sm font-medium text-gray-700 mb-1">Duración (minutos)</label>
+          <label data-i18n="modal.service.duration" class="block text-sm font-medium text-gray-700 mb-1">Duración (minutos)</label>
           <input id="svDuration" type="number" min="0" placeholder="60"
             class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
         </div>
       </div>
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
-        <textarea id="svDescription" rows="2" placeholder="Describí el servicio brevemente..."
+        <label data-i18n="modal.service.desc" class="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+        <textarea id="svDescription" rows="2" data-i18n-ph="modal.service.descPh" placeholder="Describí el servicio brevemente..."
           class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm resize-none"></textarea>
       </div>
       <!-- Image -->
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Foto del servicio</label>
+        <label data-i18n="modal.service.photo" class="block text-sm font-medium text-gray-700 mb-1">Foto del servicio</label>
         <div id="svImgPreview" class="hidden mb-2">
           <img id="svImgPreviewImg" src="" class="h-24 rounded-lg object-cover"/>
         </div>
         <label class="flex items-center gap-2 cursor-pointer text-sm text-green-700 hover:text-green-900">
-          <span>📷 Subir foto</span>
+          <span data-i18n="modal.service.photoBtn">📷 Subir foto</span>
           <input type="file" accept="image/*" class="hidden" onchange="uploadServiceImg(this)"/>
         </label>
       </div>
       <div class="flex items-center gap-2">
         <input id="svAvailable" type="checkbox" checked class="w-4 h-4 accent-green-600"/>
-        <label for="svAvailable" class="text-sm text-gray-700">Servicio disponible</label>
+        <label for="svAvailable" data-i18n="modal.service.available" class="text-sm text-gray-700">Servicio disponible</label>
       </div>
     </div>
     <div class="flex gap-3 mt-6">
-      <button onclick="closeServiceModal()" class="flex-1 border border-gray-200 py-2 rounded-lg text-sm font-semibold text-gray-600 hover:bg-gray-50">Cancelar</button>
-      <button onclick="saveService()" class="flex-1 btn-green py-2 rounded-lg text-sm font-semibold">Guardar</button>
+      <button onclick="closeServiceModal()" data-i18n="modal.service.cancel" class="flex-1 border border-gray-200 py-2 rounded-lg text-sm font-semibold text-gray-600 hover:bg-gray-50">Cancelar</button>
+      <button onclick="saveService()" data-i18n="modal.service.save" class="flex-1 btn-green py-2 rounded-lg text-sm font-semibold">Guardar</button>
     </div>
   </div>
 </div>
@@ -660,40 +546,40 @@
 <div id="productModal" class="hidden fixed inset-0 modal-bg flex items-center justify-center z-50 px-4">
   <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 max-h-screen overflow-y-auto">
     <div class="flex items-center justify-between mb-5">
-      <h3 class="font-semibold text-gray-800 text-lg" id="modalTitle">Nuevo producto</h3>
+      <h3 class="font-semibold text-gray-800 text-lg" id="modalTitle" data-i18n="modal.product.new">Nuevo producto</h3>
       <button onclick="closeProductModal()" class="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
     </div>
     <div id="modalError" class="hidden bg-red-50 text-red-700 text-sm rounded-lg px-4 py-2 mb-4"></div>
     <div class="space-y-4">
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
-        <input id="pName" type="text" placeholder="Ej: Ramo de Rosas Rojas (12 unidades)"
+        <label data-i18n="modal.product.name" class="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
+        <input id="pName" type="text" data-i18n-ph="modal.product.namePh" placeholder="Ej: Ramo de Rosas Rojas (12 unidades)"
           class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
       </div>
       <div class="grid grid-cols-2 gap-3">
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
-          <input id="pCategory" type="text" placeholder="Ej: Ramos"
+          <label data-i18n="modal.product.category" class="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
+          <input id="pCategory" type="text" data-i18n-ph="modal.product.categoryPh" placeholder="Ej: Ramos"
             class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Precio (Gs) *</label>
+          <label data-i18n="modal.product.price" class="block text-sm font-medium text-gray-700 mb-1">Precio (Gs) *</label>
           <input id="pPrice" type="number" placeholder="150000"
             class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
         </div>
       </div>
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Stock disponible</label>
+        <label data-i18n="modal.product.stock" class="block text-sm font-medium text-gray-700 mb-1">Stock disponible</label>
         <input id="pStock" type="number" placeholder="10" min="0"
           class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
       </div>
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
-        <textarea id="pDesc" rows="2" placeholder="Descripción breve del producto..."
+        <label data-i18n="modal.product.desc" class="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+        <textarea id="pDesc" rows="2" data-i18n-ph="modal.product.descPh" placeholder="Descripción breve del producto..."
           class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm resize-none"></textarea>
       </div>
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Foto del producto</label>
+        <label data-i18n="modal.product.photo" class="block text-sm font-medium text-gray-700 mb-1">Foto del producto</label>
         <!-- Preview -->
         <div id="imagePreviewWrap" class="hidden mb-2 relative w-fit">
           <img id="imagePreview" class="h-28 w-28 rounded-xl object-cover border border-gray-200"/>
@@ -704,14 +590,14 @@
         <label id="uploadZone"
           class="flex flex-col items-center justify-center border-2 border-dashed border-gray-200 rounded-xl py-4 px-3 cursor-pointer hover:border-green-400 transition text-center">
           <span class="text-2xl mb-1">📸</span>
-          <span class="text-sm text-gray-500">Tocá para subir una foto</span>
-          <span class="text-xs text-gray-400 mt-0.5">JPG, PNG — máx. 10 MB</span>
+          <span data-i18n="modal.product.uploadTap" class="text-sm text-gray-500">Tocá para subir una foto</span>
+          <span data-i18n="modal.product.uploadHint" class="text-xs text-gray-400 mt-0.5">JPG, PNG — máx. 10 MB</span>
           <input id="pImageFile" type="file" accept="image/*" class="hidden" onchange="previewImage(this)"/>
         </label>
         <!-- Fallback URL -->
         <div class="flex items-center gap-2 mt-2">
           <div class="flex-1 h-px bg-gray-100"></div>
-          <span class="text-xs text-gray-400">o pegá una URL</span>
+          <span data-i18n="modal.product.orUrl" class="text-xs text-gray-400">o pegá una URL</span>
           <div class="flex-1 h-px bg-gray-100"></div>
         </div>
         <input id="pImage" type="url" placeholder="https://..."
@@ -720,11 +606,11 @@
       </div>
     </div>
     <div class="flex gap-3 mt-6">
-      <button onclick="closeProductModal()"
+      <button onclick="closeProductModal()" data-i18n="modal.product.cancel"
         class="flex-1 border border-gray-200 text-gray-600 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition">
         Cancelar
       </button>
-      <button onclick="saveProduct()"
+      <button onclick="saveProduct()" data-i18n="modal.product.save"
         class="btn-green flex-1 py-2 rounded-lg text-sm font-semibold transition">
         Guardar
       </button>
@@ -736,14 +622,14 @@
 <div id="deleteModal" class="hidden fixed inset-0 modal-bg flex items-center justify-center z-50 px-4">
   <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center">
     <div class="text-4xl mb-3">🗑️</div>
-    <h3 class="font-semibold text-gray-800 mb-2">¿Eliminar producto?</h3>
+    <h3 data-i18n="modal.delete.title" class="font-semibold text-gray-800 mb-2">¿Eliminar producto?</h3>
     <p class="text-sm text-gray-500 mb-5" id="deleteProductName"></p>
     <div class="flex gap-3">
-      <button onclick="closeDeleteModal()"
+      <button onclick="closeDeleteModal()" data-i18n="modal.delete.cancel"
         class="flex-1 border border-gray-200 text-gray-600 py-2 rounded-lg text-sm font-medium hover:bg-gray-50">
         Cancelar
       </button>
-      <button onclick="confirmDelete()"
+      <button onclick="confirmDelete()" data-i18n="modal.delete.confirm"
         class="flex-1 bg-red-500 text-white py-2 rounded-lg text-sm font-semibold hover:bg-red-600">
         Eliminar
       </button>
@@ -752,6 +638,631 @@
 </div>
 
 <script>
+// ══ i18n ══════════════════════════════════════════════════════════════════════
+const TR = {
+es:{
+'login.user':'Usuario','login.password':'Contraseña','login.submit':'Ingresar','login.hint':'Primera vez: contraseña <b>sara1234</b>',
+'nav.logout':'Salir',
+'tab.chats':'💬 Chats','tab.products':'📦 Productos','tab.services':'🛠 Servicios','tab.orders':'🛒 Pedidos','tab.settings':'⚙️ Ajustes','tab.help':'❓ Ayuda',
+'stat.today':'Pedidos hoy','stat.pending':'Pendientes','stat.revenue':'Ingresos hoy','stat.products':'Productos activos',
+'products.title':'Catálogo de productos','products.new':'+ Nuevo producto',
+'products.col.product':'Producto','products.col.category':'Categoría','products.col.price':'Precio (Gs)','products.col.stock':'Stock','products.col.status':'Estado','products.col.actions':'Acciones',
+'products.loading':'Cargando...','products.empty':'No hay productos en esta categoría.','products.filter.all':'Todos','products.active':'✅ Activo','products.sold':'🔴 Agotado',
+'services.title':'Catálogo de servicios','services.new':'+ Nuevo servicio','services.loading':'Cargando...','services.error':'Error al cargar servicios.',
+'services.empty.title':'Sin servicios todavía','services.empty.hint':'Creá tu primer servicio con el botón de arriba',
+'services.active':'Activo','services.inactive':'Inactivo','services.edit':'✏️ Editar','services.delete':'🗑 Eliminar','services.perHour':'/hora','services.confirm':'¿Eliminar este servicio?',
+'orders.title':'Pedidos recientes','orders.refresh':'↻ Actualizar','orders.loading':'Cargando...','orders.empty':'Todavía no hay pedidos.','orders.delivery':'+envío',
+'orders.status.pending':'Pendiente','orders.status.confirmed':'Confirmado','orders.status.preparing':'Preparando','orders.status.delivering':'En camino','orders.status.delivered':'Entregado','orders.status.cancelled':'Cancelado',
+'orders.name.placeholder':'Nombre del cliente','orders.name.save':'Guardar',
+'chat.title':'Conversaciones','chat.search':'Buscar cliente...','chat.empty.title':'Seleccioná una conversación','chat.empty.hint':'Las respuestas llegan al cliente por WhatsApp',
+'chat.takeover':'👤 Modo manual activo — Sara está en pausa en este chat.','chat.resume':'🤖 Reactivar Sara',
+'chat.placeholder':'Escribí un mensaje...','chat.noConvs':'Sin conversaciones aún',
+'chat.confirm':'✅ Confirmar pedido','chat.cancel':'❌ Cancelar','chat.pendingOrder':'🛒 Pedido pendiente:',
+'chat.you':'👤 Vos','chat.bot':'🤖 Sara','chat.pending':'Pedido',
+'chat.errSend':'Error al enviar: ','chat.errSendImg':'Error al enviar imagen: ','chat.cancelOrder':'¿Cancelar este pedido?',
+'img.title':'Enviar imagen','img.upload':'Subir foto','img.choose':'Elegir imagen del dispositivo','img.catalog':'Fotos del catálogo','img.empty':'No hay fotos en el catálogo','img.loading':'Cargando...','img.errLoad':'Error al cargar',
+'settings.title':'Ajustes',
+'settings.language.title':'🌐 Idioma del panel','settings.language.desc':'Elegí el idioma de la interfaz de administración.',
+'settings.sections.title':'🗂 Secciones activas','settings.sections.desc':'Activá solo las secciones que usa tu negocio. Sara solo ofrecerá lo que esté habilitado.',
+'settings.sections.products':'📦 Productos','settings.sections.products.desc':'Venta de artículos físicos con stock (flores, tortas, repuestos...)',
+'settings.sections.services':'🛠 Servicios','settings.sections.services.desc':'Servicios con precio fijo o por hora (catering, cortes, consultas...)',
+'settings.sections.save':'Guardar secciones','settings.sections.saved':'✅ Secciones guardadas.','settings.sections.error':'❌ Error al guardar.','settings.sections.contactAdmin':'Para activar más secciones, contactá al administrador.',
+'settings.bot.title':'🤖 Personalidad de tu asistente','settings.bot.desc':'Esto define cómo habla Sara con tus clientes.',
+'settings.bot.name':'Nombre del bot','settings.bot.style':'Estilo de personalidad',
+'settings.bot.customLabel':'Descripción personalizada','settings.bot.customHint':'Describí la personalidad en detalle — cuanto más específico, mejor.',
+'settings.bot.save':'Guardar personalidad','settings.bot.saved':'✅ Personalidad guardada. Sara usará este estilo desde ahora.',
+'settings.phone.title':'📲 Tu número de WhatsApp','settings.phone.desc':'Sara te avisa aquí cuando llega un pedido nuevo. Formato internacional sin + ni espacios (ej: 595981123456).',
+'settings.phone.save':'Guardar número','settings.phone.saved':'✅ Número guardado. Sara te avisará al recibir pedidos.','settings.phone.invalid':'Ingresá un número válido.',
+'settings.payment.title':'💳 Instrucciones de pago','settings.payment.desc':'Sara las envía automáticamente después de cada pedido confirmado.',
+'settings.payment.placeholder':'Ej: Pagá por Billetera Personal al 0981-000-001 o transferencia BNF 000-123456. Envianos el comprobante 🧾',
+'settings.payment.save':'Guardar instrucciones de pago','settings.payment.saved':'✅ Instrucciones de pago guardadas.',
+'settings.rules.title':'📋 Reglas del negocio','settings.rules.desc':'Escribí en lenguaje natural cualquier regla, restricción o información especial de tu negocio. Sara las seguirá siempre.',
+'settings.rules.example':'Ej: "Las tortas personalizadas requieren 3 días de anticipación." / "Solo entregamos de lunes a sábado de 8 a 13 hs." / "Siempre preguntá si quieren tarjetita con mensaje."',
+'settings.rules.placeholder':'- Las composiciones personalizadas requieren 48 hs de anticipación.\n- Solo hacemos envíos de lunes a sábado entre 8:00 y 13:00.\n- Siempre preguntá si quieren tarjetita con mensaje (sin costo).',
+'settings.rules.save':'Guardar reglas','settings.rules.saved':'✅ Reglas guardadas. Sara las seguirá en cada conversación.',
+'settings.delivery.title':'🚚 Envíos a domicilio','settings.delivery.desc':'Configurá si ofrecés entregas, la dirección de tu local y el costo.',
+'settings.delivery.enable':'Activar envíos','settings.delivery.address':'Dirección del local','settings.delivery.lat':'Latitud','settings.delivery.lng':'Longitud',
+'settings.delivery.mapsHint':'Abrí Google Maps, buscá tu local, clic derecho → "¿Qué hay aquí?" y copiá las coordenadas.',
+'settings.delivery.type':'Tipo de tarifa','settings.delivery.fixed':'Tarifa fija','settings.delivery.zone':'Por zona (km)','settings.delivery.perkm':'Por kilómetro',
+'settings.delivery.baseFee':'Costo de envío (Gs)','settings.delivery.baseFeeKm':'Tarifa base (Gs)',
+'settings.delivery.zoneRadius':'Radio zona interior (km)','settings.delivery.zoneOuter':'Costo fuera de zona (Gs, 0 = sin envío)',
+'settings.delivery.perKm':'Costo adicional por km (Gs)','settings.delivery.minOrder':'Monto mínimo para envío (Gs)','settings.delivery.minHint':'Dejá en 0 para no tener mínimo.',
+'settings.delivery.disabled':'Días/fechas sin envío','settings.delivery.disabledHint':'Separados por coma. Podés poner nombres de días (domingo, sabado) o fechas exactas (AAAA-MM-DD).',
+'settings.delivery.save':'Guardar configuración de envíos','settings.delivery.saved':'✅ Configuración de envíos guardada.',
+'settings.password.title':'🔒 Cambiar contraseña','settings.password.placeholder':'Nueva contraseña (mín. 6 caracteres)','settings.password.save':'Guardar contraseña','settings.password.saved':'✅ Contraseña actualizada.',
+'modal.product.new':'Nuevo producto','modal.product.edit':'Editar producto',
+'modal.product.name':'Nombre *','modal.product.namePh':'Ej: Ramo de Rosas Rojas (12 unidades)',
+'modal.product.category':'Categoría','modal.product.categoryPh':'Ej: Ramos',
+'modal.product.price':'Precio (Gs) *','modal.product.stock':'Stock disponible',
+'modal.product.desc':'Descripción','modal.product.descPh':'Descripción breve del producto...',
+'modal.product.photo':'Foto del producto','modal.product.uploadTap':'Tocá para subir una foto','modal.product.uploadHint':'JPG, PNG — máx. 10 MB','modal.product.orUrl':'o pegá una URL',
+'modal.product.cancel':'Cancelar','modal.product.save':'Guardar','modal.product.saving':'Guardando...','modal.product.error':'Nombre y precio son obligatorios.','modal.product.photoError':'Producto guardado, pero error al subir la foto: ',
+'modal.service.new':'Nuevo servicio','modal.service.edit':'Editar servicio',
+'modal.service.name':'Nombre *','modal.service.namePh':'Ej: Corte de cabello, Catering para eventos',
+'modal.service.category':'Categoría','modal.service.categoryPh':'Ej: Cortes, Catering',
+'modal.service.priceType':'Tipo de precio *','modal.service.fixed':'Precio fijo','modal.service.hourly':'Por hora',
+'modal.service.price':'Precio (Gs) *','modal.service.priceHourly':'Tarifa por hora (Gs) *','modal.service.duration':'Duración (minutos)',
+'modal.service.desc':'Descripción','modal.service.descPh':'Describí el servicio brevemente...',
+'modal.service.photo':'Foto del servicio','modal.service.photoBtn':'📷 Subir foto','modal.service.available':'Servicio disponible',
+'modal.service.cancel':'Cancelar','modal.service.save':'Guardar','modal.service.error':'Nombre y precio son obligatorios.',
+'modal.delete.title':'¿Eliminar producto?','modal.delete.cancel':'Cancelar','modal.delete.confirm':'Eliminar',
+'preset.warm.label':'Cálida y cercana','preset.warm.desc':'Como una amiga que te ayuda a elegir',
+'preset.pro.label':'Profesional y eficiente','preset.pro.desc':'Directa, rápida, sin rodeos',
+'preset.creative.label':'Creativa y poética','preset.creative.desc':'Describe los productos con pasión',
+'preset.fun.label':'Divertida y juvenil','preset.fun.desc':'Usa humor suave y emojis',
+'preset.custom.label':'Personalizada','preset.custom.desc':'Escribí tu propia descripción',
+'help.title':'❓ Ayuda — Comandos del propietario',
+'help.desc':'Enviá estos mensajes desde tu WhatsApp al número de Sara Bot para gestionar el negocio sin abrir el panel web.',
+'help.catalog.title':'📦 Gestión del catálogo',
+'help.catalog.catalogo':'Ver todos los productos con stock y precio actuales',
+'help.catalog.stock':'Actualizar el stock de un producto. Ej: <i>STOCK Rosas Rojas 25</i>',
+'help.catalog.precio':'Cambiar precio en guaraníes. Ej: <i>PRECIO Rosas Rojas 160000</i>',
+'help.catalog.agotado':'Marcar un producto como agotado. Sara dejará de ofrecerlo',
+'help.catalog.disponible':'Volver a activar un producto agotado',
+'help.catalog.nuevo':'Crear un producto nuevo. Ej: <i>NUEVO Girasoles|Ramos|80000|10|Girasoles frescos</i>',
+'help.photos.title':'📸 Fotos de productos',
+'help.photos.nombre':'Enviar esta frase + una foto en el mismo mensaje. La foto se guarda y Sara la mostrará a los clientes cuando pregunten por ese producto',
+'help.photos.hint':'💡 También podés subir fotos desde el panel web → Catálogo → editar producto.',
+'help.orders.title':'🛒 Pedidos y control de chat',
+'help.orders.confirmar':'Confirmar el último pedido pendiente. Sara notifica al cliente',
+'help.orders.cancelar':'Cancelar el último pedido pendiente. Sara notifica al cliente',
+'help.orders.chat':'Tomar control del chat con el cliente. Todo lo que escribas llega directamente al cliente (Sara no interviene)',
+'help.orders.fin':'Devolver el control a Sara. El bot retoma la conversación',
+'help.orders.takeover':'<b>¿Cómo funciona el takeover?</b> Cuando llega un pedido, Sara te avisa por WhatsApp con los detalles. Respondé <b>CONFIRMAR</b> o <b>CANCELAR</b> para gestionar el pedido, o <b>CHAT</b> para hablar directamente con el cliente.',
+'help.chatpanel.title':'💬 Panel de chats — gestión desde el panel web',
+'help.chatpanel.desc':'La tab <b>Chats</b> te permite ver y gestionar todas las conversaciones con tus clientes en tiempo real, sin salir del panel.',
+'help.chatpanel.view.title':'📋 Ver conversaciones','help.chatpanel.view.desc':'La lista muestra todos los clientes con el último mensaje, la hora y un badge naranja si tienen un pedido pendiente. Se actualiza automáticamente cada 8 segundos.',
+'help.chatpanel.order.title':'🛒 Confirmar o cancelar pedidos','help.chatpanel.order.desc':'Cuando un cliente confirma un pedido, aparece un banner amarillo en la parte superior del chat con los detalles y dos botones: <b>✅ Confirmar</b> y <b>❌ Cancelar</b>. Al confirmar, Sara notifica automáticamente al cliente.',
+'help.chatpanel.takeover.title':'👤 Intervenir manualmente en una chat','help.chatpanel.takeover.desc':'Podés escribir directamente al cliente en cualquier momento desde el panel. Al enviar tu primer mensaje, <b>Sara se pausa automáticamente</b> en ese chat — el banner azul "Modo manual activo" confirma que el bot está en pausa.',
+'help.chatpanel.takeover.colors':'Tus mensajes aparecen en <span class="font-semibold">azul</span> para que se distingan de los mensajes automáticos de Sara (en verde).',
+'help.chatpanel.resume.title':'🤖 Reactivar Sara','help.chatpanel.resume.desc':'Cuando terminás de hablar con el cliente, presioná el botón <b>"🤖 Reactivar Sara"</b> en la parte superior del chat. Sara retoma la conversación con todo el contexto, incluyendo lo que vos escribiste.',
+'help.chatpanel.img.title':'🖼 Enviar fotos al cliente','help.chatpanel.img.desc':'Con el botón 🖼 podés enviar una foto del catálogo existente o subir una imagen nueva directamente desde tu dispositivo. La foto llega al cliente por WhatsApp.',
+'help.chatpanel.colors':'<b>Colores de los mensajes en el panel:</b><br>⬜ Blanco (izquierda) = mensajes del cliente<br>🟩 Verde (derecha) = respuestas automáticas de Sara<br>🟦 Azul (derecha) = mensajes enviados por vos manualmente',
+'help.other.title':'ℹ️ Otros comandos WhatsApp','help.other.ayuda':'Ver todos los comandos disponibles directamente en WhatsApp',
+'help.other.hint':'💡 Los comandos no distinguen mayúsculas/minúsculas. Podés escribir "catalogo", "CATALOGO" o "Catalogo".',
+},
+en:{
+'login.user':'Username','login.password':'Password','login.submit':'Sign in','login.hint':'First time: password <b>sara1234</b>',
+'nav.logout':'Sign out',
+'tab.chats':'💬 Chats','tab.products':'📦 Products','tab.services':'🛠 Services','tab.orders':'🛒 Orders','tab.settings':'⚙️ Settings','tab.help':'❓ Help',
+'stat.today':'Orders today','stat.pending':'Pending','stat.revenue':'Revenue today','stat.products':'Active products',
+'products.title':'Product catalog','products.new':'+ New product',
+'products.col.product':'Product','products.col.category':'Category','products.col.price':'Price (Gs)','products.col.stock':'Stock','products.col.status':'Status','products.col.actions':'Actions',
+'products.loading':'Loading...','products.empty':'No products in this category.','products.filter.all':'All','products.active':'✅ Active','products.sold':'🔴 Out of stock',
+'services.title':'Services catalog','services.new':'+ New service','services.loading':'Loading...','services.error':'Error loading services.',
+'services.empty.title':'No services yet','services.empty.hint':'Create your first service with the button above',
+'services.active':'Active','services.inactive':'Inactive','services.edit':'✏️ Edit','services.delete':'🗑 Delete','services.perHour':'/hr','services.confirm':'Delete this service?',
+'orders.title':'Recent orders','orders.refresh':'↻ Refresh','orders.loading':'Loading...','orders.empty':'No orders yet.','orders.delivery':'+delivery',
+'orders.status.pending':'Pending','orders.status.confirmed':'Confirmed','orders.status.preparing':'Preparing','orders.status.delivering':'On the way','orders.status.delivered':'Delivered','orders.status.cancelled':'Cancelled',
+'orders.name.placeholder':'Customer name','orders.name.save':'Save',
+'chat.title':'Conversations','chat.search':'Search customer...','chat.empty.title':'Select a conversation','chat.empty.hint':'Replies reach the customer via WhatsApp',
+'chat.takeover':'👤 Manual mode active — Sara is paused in this chat.','chat.resume':'🤖 Reactivate Sara',
+'chat.placeholder':'Write a message...','chat.noConvs':'No conversations yet',
+'chat.confirm':'✅ Confirm order','chat.cancel':'❌ Cancel','chat.pendingOrder':'🛒 Pending order:',
+'chat.you':'👤 You','chat.bot':'🤖 Sara','chat.pending':'Order',
+'chat.errSend':'Error sending: ','chat.errSendImg':'Error sending image: ','chat.cancelOrder':'Cancel this order?',
+'img.title':'Send image','img.upload':'Upload photo','img.choose':'Choose image from device','img.catalog':'Catalog photos','img.empty':'No photos in catalog','img.loading':'Loading...','img.errLoad':'Error loading',
+'settings.title':'Settings',
+'settings.language.title':'🌐 Panel language','settings.language.desc':'Choose the language for the admin interface.',
+'settings.sections.title':'🗂 Active sections','settings.sections.desc':'Enable only the sections your business uses. Sara will only offer what is enabled.',
+'settings.sections.products':'📦 Products','settings.sections.products.desc':'Sale of physical items with stock (flowers, cakes, parts...)',
+'settings.sections.services':'🛠 Services','settings.sections.services.desc':'Services with fixed or hourly pricing (catering, haircuts, consultations...)',
+'settings.sections.save':'Save sections','settings.sections.saved':'✅ Sections saved.','settings.sections.error':'❌ Error saving.','settings.sections.contactAdmin':'To activate more sections, contact the administrator.',
+'settings.bot.title':'🤖 Your assistant\'s personality','settings.bot.desc':'This defines how Sara talks with your customers.',
+'settings.bot.name':'Bot name','settings.bot.style':'Personality style',
+'settings.bot.customLabel':'Custom description','settings.bot.customHint':'Describe the personality in detail — the more specific, the better.',
+'settings.bot.save':'Save personality','settings.bot.saved':'✅ Personality saved. Sara will use this style from now on.',
+'settings.phone.title':'📲 Your WhatsApp number','settings.phone.desc':'Sara notifies you here when a new order arrives. International format without + or spaces (e.g. 595981123456).',
+'settings.phone.save':'Save number','settings.phone.saved':'✅ Number saved. Sara will notify you when orders arrive.','settings.phone.invalid':'Please enter a valid number.',
+'settings.payment.title':'💳 Payment instructions','settings.payment.desc':'Sara sends these automatically after each confirmed order.',
+'settings.payment.placeholder':'E.g.: Pay via bank transfer to account 000-123456. Send us the receipt 🧾',
+'settings.payment.save':'Save payment instructions','settings.payment.saved':'✅ Payment instructions saved.',
+'settings.rules.title':'📋 Business rules','settings.rules.desc':'Write in plain language any rule, restriction or special info about your business. Sara will always follow them.',
+'settings.rules.example':'E.g.: "Custom cakes require 3 days notice." / "We only deliver Mon–Sat 8–13h." / "Always ask if they want a gift card."',
+'settings.rules.placeholder':'- Custom compositions require 48h advance notice.\n- Delivery only Mon–Sat between 8:00 and 13:00.\n- Always ask if they want a gift card (no extra cost).',
+'settings.rules.save':'Save rules','settings.rules.saved':'✅ Rules saved. Sara will follow them in every conversation.',
+'settings.delivery.title':'🚚 Home delivery','settings.delivery.desc':'Configure whether you offer deliveries, your store address and cost.',
+'settings.delivery.enable':'Enable delivery','settings.delivery.address':'Store address','settings.delivery.lat':'Latitude','settings.delivery.lng':'Longitude',
+'settings.delivery.mapsHint':'Open Google Maps, find your store, right-click → "What\'s here?" and copy the coordinates.',
+'settings.delivery.type':'Fee type','settings.delivery.fixed':'Fixed fee','settings.delivery.zone':'By zone (km)','settings.delivery.perkm':'Per kilometer',
+'settings.delivery.baseFee':'Delivery cost (Gs)','settings.delivery.baseFeeKm':'Base fee (Gs)',
+'settings.delivery.zoneRadius':'Inner zone radius (km)','settings.delivery.zoneOuter':'Cost outside zone (Gs, 0 = no delivery)',
+'settings.delivery.perKm':'Additional cost per km (Gs)','settings.delivery.minOrder':'Minimum order for delivery (Gs)','settings.delivery.minHint':'Leave 0 for no minimum.',
+'settings.delivery.disabled':'Days/dates without delivery','settings.delivery.disabledHint':'Comma separated. Day names (sunday, saturday) or exact dates (YYYY-MM-DD).',
+'settings.delivery.save':'Save delivery settings','settings.delivery.saved':'✅ Delivery settings saved.',
+'settings.password.title':'🔒 Change password','settings.password.placeholder':'New password (min. 6 characters)','settings.password.save':'Save password','settings.password.saved':'✅ Password updated.',
+'modal.product.new':'New product','modal.product.edit':'Edit product',
+'modal.product.name':'Name *','modal.product.namePh':'E.g.: Red Rose Bouquet (12 units)',
+'modal.product.category':'Category','modal.product.categoryPh':'E.g.: Bouquets',
+'modal.product.price':'Price (Gs) *','modal.product.stock':'Available stock',
+'modal.product.desc':'Description','modal.product.descPh':'Brief product description...',
+'modal.product.photo':'Product photo','modal.product.uploadTap':'Tap to upload a photo','modal.product.uploadHint':'JPG, PNG — max 10 MB','modal.product.orUrl':'or paste a URL',
+'modal.product.cancel':'Cancel','modal.product.save':'Save','modal.product.saving':'Saving...','modal.product.error':'Name and price are required.','modal.product.photoError':'Product saved, but error uploading photo: ',
+'modal.service.new':'New service','modal.service.edit':'Edit service',
+'modal.service.name':'Name *','modal.service.namePh':'E.g.: Haircut, Event catering',
+'modal.service.category':'Category','modal.service.categoryPh':'E.g.: Haircuts, Catering',
+'modal.service.priceType':'Price type *','modal.service.fixed':'Fixed price','modal.service.hourly':'Per hour',
+'modal.service.price':'Price (Gs) *','modal.service.priceHourly':'Hourly rate (Gs) *','modal.service.duration':'Duration (minutes)',
+'modal.service.desc':'Description','modal.service.descPh':'Briefly describe the service...',
+'modal.service.photo':'Service photo','modal.service.photoBtn':'📷 Upload photo','modal.service.available':'Service available',
+'modal.service.cancel':'Cancel','modal.service.save':'Save','modal.service.error':'Name and price are required.',
+'modal.delete.title':'Delete product?','modal.delete.cancel':'Cancel','modal.delete.confirm':'Delete',
+'preset.warm.label':'Warm & friendly','preset.warm.desc':'Like a friend helping you choose',
+'preset.pro.label':'Professional & efficient','preset.pro.desc':'Direct, fast, no fuss',
+'preset.creative.label':'Creative & poetic','preset.creative.desc':'Describes products with passion',
+'preset.fun.label':'Fun & youthful','preset.fun.desc':'Uses gentle humour and emojis',
+'preset.custom.label':'Custom','preset.custom.desc':'Write your own description',
+'help.title':'❓ Help — Owner commands',
+'help.desc':'Send these messages from your WhatsApp to Sara Bot\'s number to manage the business without opening the web panel.',
+'help.catalog.title':'📦 Catalog management',
+'help.catalog.catalogo':'View all products with current stock and price',
+'help.catalog.stock':'Update a product\'s stock. E.g.: <i>STOCK Red Roses 25</i>',
+'help.catalog.precio':'Change price. E.g.: <i>PRICE Red Roses 160000</i>',
+'help.catalog.agotado':'Mark a product as out of stock. Sara will stop offering it',
+'help.catalog.disponible':'Re-activate an out-of-stock product',
+'help.catalog.nuevo':'Create a new product. E.g.: <i>NEW Sunflowers|Bouquets|80000|10|Fresh sunflowers</i>',
+'help.photos.title':'📸 Product photos',
+'help.photos.nombre':'Send this phrase + a photo in the same message. The photo is saved and Sara will show it to customers when they ask about that product',
+'help.photos.hint':'💡 You can also upload photos from the web panel → Catalog → edit product.',
+'help.orders.title':'🛒 Orders and chat control',
+'help.orders.confirmar':'Confirm the last pending order. Sara notifies the customer',
+'help.orders.cancelar':'Cancel the last pending order. Sara notifies the customer',
+'help.orders.chat':'Take control of the chat. Everything you write goes directly to the customer (Sara does not intervene)',
+'help.orders.fin':'Return control to Sara. The bot resumes the conversation',
+'help.orders.takeover':'<b>How does takeover work?</b> When an order arrives, Sara alerts you via WhatsApp. Reply <b>CONFIRMAR</b> or <b>CANCELAR</b> to manage the order, or <b>CHAT</b> to talk directly with the customer.',
+'help.chatpanel.title':'💬 Chat panel — management from the web panel',
+'help.chatpanel.desc':'The <b>Chats</b> tab lets you view and manage all conversations with your customers in real time, without leaving the panel.',
+'help.chatpanel.view.title':'📋 View conversations','help.chatpanel.view.desc':'The list shows all customers with the latest message, time and an orange badge if they have a pending order. Updates automatically every 8 seconds.',
+'help.chatpanel.order.title':'🛒 Confirm or cancel orders','help.chatpanel.order.desc':'When a customer confirms an order, a yellow banner appears at the top of the chat with two buttons: <b>✅ Confirm</b> and <b>❌ Cancel</b>. On confirmation, Sara automatically notifies the customer.',
+'help.chatpanel.takeover.title':'👤 Manually intervene in a chat','help.chatpanel.takeover.desc':'You can write directly to the customer at any time from the panel. When you send your first message, <b>Sara pauses automatically</b> — the blue banner "Manual mode active" confirms the bot is paused.',
+'help.chatpanel.takeover.colors':'Your messages appear in <span class="font-semibold">blue</span> to distinguish them from Sara\'s automatic messages (in green).',
+'help.chatpanel.resume.title':'🤖 Reactivate Sara','help.chatpanel.resume.desc':'When you\'re done talking with the customer, press the <b>"🤖 Reactivate Sara"</b> button at the top of the chat. Sara resumes the conversation with full context.',
+'help.chatpanel.img.title':'🖼 Send photos to the customer','help.chatpanel.img.desc':'With the 🖼 button you can send a catalog photo or upload a new image directly from your device. The photo reaches the customer via WhatsApp.',
+'help.chatpanel.colors':'<b>Message colours in the panel:</b><br>⬜ White (left) = customer messages<br>🟩 Green (right) = Sara\'s automatic replies<br>🟦 Blue (right) = messages sent by you manually',
+'help.other.title':'ℹ️ Other WhatsApp commands','help.other.ayuda':'View all available commands directly in WhatsApp',
+'help.other.hint':'💡 Commands are case-insensitive.',
+},
+it:{
+'login.user':'Utente','login.password':'Password','login.submit':'Accedi','login.hint':'Prima volta: password <b>sara1234</b>',
+'nav.logout':'Esci',
+'tab.chats':'💬 Chat','tab.products':'📦 Prodotti','tab.services':'🛠 Servizi','tab.orders':'🛒 Ordini','tab.settings':'⚙️ Impostazioni','tab.help':'❓ Aiuto',
+'stat.today':'Ordini oggi','stat.pending':'In attesa','stat.revenue':'Incasso oggi','stat.products':'Prodotti attivi',
+'products.title':'Catalogo prodotti','products.new':'+ Nuovo prodotto',
+'products.col.product':'Prodotto','products.col.category':'Categoria','products.col.price':'Prezzo (Gs)','products.col.stock':'Stock','products.col.status':'Stato','products.col.actions':'Azioni',
+'products.loading':'Caricamento...','products.empty':'Nessun prodotto in questa categoria.','products.filter.all':'Tutti','products.active':'✅ Attivo','products.sold':'🔴 Esaurito',
+'services.title':'Catalogo servizi','services.new':'+ Nuovo servizio','services.loading':'Caricamento...','services.error':'Errore nel caricamento dei servizi.',
+'services.empty.title':'Nessun servizio ancora','services.empty.hint':'Crea il tuo primo servizio con il pulsante in alto',
+'services.active':'Attivo','services.inactive':'Non attivo','services.edit':'✏️ Modifica','services.delete':'🗑 Elimina','services.perHour':'/ora','services.confirm':'Eliminare questo servizio?',
+'orders.title':'Ordini recenti','orders.refresh':'↻ Aggiorna','orders.loading':'Caricamento...','orders.empty':'Ancora nessun ordine.','orders.delivery':'+consegna',
+'orders.status.pending':'In attesa','orders.status.confirmed':'Confermato','orders.status.preparing':'In preparazione','orders.status.delivering':'In consegna','orders.status.delivered':'Consegnato','orders.status.cancelled':'Annullato',
+'orders.name.placeholder':'Nome cliente','orders.name.save':'Salva',
+'chat.title':'Conversazioni','chat.search':'Cerca cliente...','chat.empty.title':'Seleziona una conversazione','chat.empty.hint':'Le risposte arrivano al cliente tramite WhatsApp',
+'chat.takeover':'👤 Modalità manuale attiva — Sara è in pausa in questa chat.','chat.resume':'🤖 Riattiva Sara',
+'chat.placeholder':'Scrivi un messaggio...','chat.noConvs':'Nessuna conversazione ancora',
+'chat.confirm':'✅ Conferma ordine','chat.cancel':'❌ Annulla','chat.pendingOrder':'🛒 Ordine in attesa:',
+'chat.you':'👤 Tu','chat.bot':'🤖 Sara','chat.pending':'Ordine',
+'chat.errSend':'Errore invio: ','chat.errSendImg':'Errore invio immagine: ','chat.cancelOrder':'Annullare questo ordine?',
+'img.title':'Invia immagine','img.upload':'Carica foto','img.choose':'Scegli immagine dal dispositivo','img.catalog':'Foto del catalogo','img.empty':'Nessuna foto nel catalogo','img.loading':'Caricamento...','img.errLoad':'Errore nel caricamento',
+'settings.title':'Impostazioni',
+'settings.language.title':'🌐 Lingua del pannello','settings.language.desc':'Scegli la lingua dell\'interfaccia di amministrazione.',
+'settings.sections.title':'🗂 Sezioni attive','settings.sections.desc':'Attiva solo le sezioni che usa la tua attività. Sara offrirà solo ciò che è abilitato.',
+'settings.sections.products':'📦 Prodotti','settings.sections.products.desc':'Vendita di articoli fisici con stock (fiori, torte, ricambi...)',
+'settings.sections.services':'🛠 Servizi','settings.sections.services.desc':'Servizi a prezzo fisso o orario (catering, tagli, consulenze...)',
+'settings.sections.save':'Salva sezioni','settings.sections.saved':'✅ Sezioni salvate.','settings.sections.error':'❌ Errore nel salvataggio.','settings.sections.contactAdmin':'Per attivare altre sezioni, contatta l\'amministratore.',
+'settings.bot.title':'🤖 Personalità del tuo assistente','settings.bot.desc':'Questo definisce come Sara parla con i tuoi clienti.',
+'settings.bot.name':'Nome del bot','settings.bot.style':'Stile di personalità',
+'settings.bot.customLabel':'Descrizione personalizzata','settings.bot.customHint':'Descrivi la personalità in dettaglio — più è specifico, meglio è.',
+'settings.bot.save':'Salva personalità','settings.bot.saved':'✅ Personalità salvata. Sara userà questo stile d\'ora in poi.',
+'settings.phone.title':'📲 Il tuo numero WhatsApp','settings.phone.desc':'Sara ti avvisa qui quando arriva un nuovo ordine. Formato internazionale senza + o spazi (es: 595981123456).',
+'settings.phone.save':'Salva numero','settings.phone.saved':'✅ Numero salvato. Sara ti avviserà alla ricezione degli ordini.','settings.phone.invalid':'Inserisci un numero valido.',
+'settings.payment.title':'💳 Istruzioni di pagamento','settings.payment.desc':'Sara le invia automaticamente dopo ogni ordine confermato.',
+'settings.payment.placeholder':'Es: Paga tramite bonifico al conto 000-123456. Inviaci la ricevuta 🧾',
+'settings.payment.save':'Salva istruzioni di pagamento','settings.payment.saved':'✅ Istruzioni di pagamento salvate.',
+'settings.rules.title':'📋 Regole del negozio','settings.rules.desc':'Scrivi in linguaggio naturale qualsiasi regola, restrizione o informazione speciale. Sara le seguirà sempre.',
+'settings.rules.example':'Es: "Le torte personalizzate richiedono 3 giorni di anticipo." / "Consegniamo solo lun–sab 8–13." / "Chiedi sempre se vogliono un bigliettino."',
+'settings.rules.placeholder':'- Le composizioni personalizzate richiedono 48h di anticipo.\n- Consegniamo solo lun–sab tra le 8:00 e le 13:00.\n- Chiedi sempre se vogliono un bigliettino (gratuito).',
+'settings.rules.save':'Salva regole','settings.rules.saved':'✅ Regole salvate. Sara le seguirà in ogni conversazione.',
+'settings.delivery.title':'🚚 Consegna a domicilio','settings.delivery.desc':'Configura se offri consegne, l\'indirizzo del locale e il costo.',
+'settings.delivery.enable':'Attiva consegne','settings.delivery.address':'Indirizzo del locale','settings.delivery.lat':'Latitudine','settings.delivery.lng':'Longitudine',
+'settings.delivery.mapsHint':'Apri Google Maps, cerca il tuo locale, clic destro → "Cosa c\'è qui?" e copia le coordinate.',
+'settings.delivery.type':'Tipo di tariffa','settings.delivery.fixed':'Tariffa fissa','settings.delivery.zone':'Per zona (km)','settings.delivery.perkm':'Per chilometro',
+'settings.delivery.baseFee':'Costo di consegna (Gs)','settings.delivery.baseFeeKm':'Tariffa base (Gs)',
+'settings.delivery.zoneRadius':'Raggio zona interna (km)','settings.delivery.zoneOuter':'Costo fuori zona (Gs, 0 = no consegna)',
+'settings.delivery.perKm':'Costo aggiuntivo per km (Gs)','settings.delivery.minOrder':'Ordine minimo per la consegna (Gs)','settings.delivery.minHint':'Lascia 0 per nessun minimo.',
+'settings.delivery.disabled':'Giorni/date senza consegna','settings.delivery.disabledHint':'Separati da virgola. Nomi di giorni (domenica, sabato) o date esatte (AAAA-MM-GG).',
+'settings.delivery.save':'Salva configurazione consegne','settings.delivery.saved':'✅ Configurazione consegne salvata.',
+'settings.password.title':'🔒 Cambia password','settings.password.placeholder':'Nuova password (min. 6 caratteri)','settings.password.save':'Salva password','settings.password.saved':'✅ Password aggiornata.',
+'modal.product.new':'Nuovo prodotto','modal.product.edit':'Modifica prodotto',
+'modal.product.name':'Nome *','modal.product.namePh':'Es: Mazzo di Rose Rosse (12 unità)',
+'modal.product.category':'Categoria','modal.product.categoryPh':'Es: Mazzi',
+'modal.product.price':'Prezzo (Gs) *','modal.product.stock':'Stock disponibile',
+'modal.product.desc':'Descrizione','modal.product.descPh':'Breve descrizione del prodotto...',
+'modal.product.photo':'Foto del prodotto','modal.product.uploadTap':'Tocca per caricare una foto','modal.product.uploadHint':'JPG, PNG — max 10 MB','modal.product.orUrl':'o incolla un URL',
+'modal.product.cancel':'Annulla','modal.product.save':'Salva','modal.product.saving':'Salvataggio...','modal.product.error':'Nome e prezzo sono obbligatori.','modal.product.photoError':'Prodotto salvato, ma errore nel caricamento della foto: ',
+'modal.service.new':'Nuovo servizio','modal.service.edit':'Modifica servizio',
+'modal.service.name':'Nome *','modal.service.namePh':'Es: Taglio capelli, Catering eventi',
+'modal.service.category':'Categoria','modal.service.categoryPh':'Es: Tagli, Catering',
+'modal.service.priceType':'Tipo di prezzo *','modal.service.fixed':'Prezzo fisso','modal.service.hourly':'A ora',
+'modal.service.price':'Prezzo (Gs) *','modal.service.priceHourly':'Tariffa oraria (Gs) *','modal.service.duration':'Durata (minuti)',
+'modal.service.desc':'Descrizione','modal.service.descPh':'Descrivi brevemente il servizio...',
+'modal.service.photo':'Foto del servizio','modal.service.photoBtn':'📷 Carica foto','modal.service.available':'Servizio disponibile',
+'modal.service.cancel':'Annulla','modal.service.save':'Salva','modal.service.error':'Nome e prezzo sono obbligatori.',
+'modal.delete.title':'Eliminare il prodotto?','modal.delete.cancel':'Annulla','modal.delete.confirm':'Elimina',
+'preset.warm.label':'Calda e vicina','preset.warm.desc':'Come un\'amica che ti aiuta a scegliere',
+'preset.pro.label':'Professionale ed efficiente','preset.pro.desc':'Diretta, veloce, senza giri di parole',
+'preset.creative.label':'Creativa e poetica','preset.creative.desc':'Descrive i prodotti con passione',
+'preset.fun.label':'Divertente e giovanile','preset.fun.desc':'Usa umorismo leggero ed emoji',
+'preset.custom.label':'Personalizzata','preset.custom.desc':'Scrivi la tua descrizione',
+'help.title':'❓ Aiuto — Comandi del proprietario',
+'help.desc':'Invia questi messaggi dal tuo WhatsApp al numero di Sara Bot per gestire l\'attività senza aprire il pannello web.',
+'help.catalog.title':'📦 Gestione catalogo','help.catalog.catalogo':'Visualizza tutti i prodotti con stock e prezzo attuali',
+'help.catalog.stock':'Aggiorna lo stock di un prodotto. Es: <i>STOCK Rose Rosse 25</i>',
+'help.catalog.precio':'Cambia prezzo. Es: <i>PREZZO Rose Rosse 160000</i>',
+'help.catalog.agotado':'Segna un prodotto come esaurito. Sara smetterà di offrirlo',
+'help.catalog.disponible':'Riattiva un prodotto esaurito',
+'help.catalog.nuevo':'Crea un nuovo prodotto. Es: <i>NUOVO Girasoli|Mazzi|80000|10|Girasoli freschi</i>',
+'help.photos.title':'📸 Foto dei prodotti',
+'help.photos.nombre':'Invia questa frase + una foto nello stesso messaggio. La foto viene salvata e Sara la mostrerà ai clienti quando chiedono di quel prodotto',
+'help.photos.hint':'💡 Puoi anche caricare foto dal pannello web → Catalogo → modifica prodotto.',
+'help.orders.title':'🛒 Ordini e controllo chat',
+'help.orders.confirmar':'Conferma l\'ultimo ordine in attesa. Sara notifica il cliente',
+'help.orders.cancelar':'Annulla l\'ultimo ordine in attesa. Sara notifica il cliente',
+'help.orders.chat':'Prendi il controllo della chat. Tutto ciò che scrivi arriva direttamente al cliente (Sara non interviene)',
+'help.orders.fin':'Restituisci il controllo a Sara. Il bot riprende la conversazione',
+'help.orders.takeover':'<b>Come funziona il takeover?</b> Quando arriva un ordine, Sara ti avvisa via WhatsApp. Rispondi <b>CONFERMA</b> o <b>ANNULLA</b>, oppure <b>CHAT</b> per parlare direttamente con il cliente.',
+'help.chatpanel.title':'💬 Pannello chat — gestione dal pannello web',
+'help.chatpanel.desc':'La tab <b>Chat</b> ti permette di vedere e gestire tutte le conversazioni in tempo reale.',
+'help.chatpanel.view.title':'📋 Visualizza conversazioni','help.chatpanel.view.desc':'L\'elenco mostra tutti i clienti con l\'ultimo messaggio e un badge arancione se hanno un ordine in attesa. Si aggiorna ogni 8 secondi.',
+'help.chatpanel.order.title':'🛒 Conferma o annulla ordini','help.chatpanel.order.desc':'Quando un cliente conferma un ordine, appare un banner giallo con i dettagli e due pulsanti: <b>✅ Conferma</b> e <b>❌ Annulla</b>.',
+'help.chatpanel.takeover.title':'👤 Intervieni manualmente','help.chatpanel.takeover.desc':'Puoi scrivere direttamente al cliente dal pannello. Al primo messaggio <b>Sara si mette in pausa</b> — il banner blu "Modalità manuale attiva" lo conferma.',
+'help.chatpanel.takeover.colors':'I tuoi messaggi appaiono in <span class="font-semibold">blu</span> per distinguerli dai messaggi automatici di Sara (in verde).',
+'help.chatpanel.resume.title':'🤖 Riattiva Sara','help.chatpanel.resume.desc':'Quando hai finito, premi <b>"🤖 Riattiva Sara"</b>. Sara riprende la conversazione con tutto il contesto.',
+'help.chatpanel.img.title':'🖼 Invia foto al cliente','help.chatpanel.img.desc':'Con il pulsante 🖼 puoi inviare una foto del catalogo o caricarne una nuova dal dispositivo.',
+'help.chatpanel.colors':'<b>Colori dei messaggi:</b><br>⬜ Bianco (sinistra) = messaggi del cliente<br>🟩 Verde (destra) = risposte automatiche di Sara<br>🟦 Blu (destra) = messaggi inviati da te',
+'help.other.title':'ℹ️ Altri comandi WhatsApp','help.other.ayuda':'Visualizza tutti i comandi disponibili direttamente in WhatsApp',
+'help.other.hint':'💡 I comandi non distinguono maiuscole/minuscole.',
+},
+de:{
+'login.user':'Benutzername','login.password':'Passwort','login.submit':'Anmelden','login.hint':'Erstmalig: Passwort <b>sara1234</b>',
+'nav.logout':'Abmelden',
+'tab.chats':'💬 Chats','tab.products':'📦 Produkte','tab.services':'🛠 Services','tab.orders':'🛒 Bestellungen','tab.settings':'⚙️ Einstellungen','tab.help':'❓ Hilfe',
+'stat.today':'Bestellungen heute','stat.pending':'Ausstehend','stat.revenue':'Einnahmen heute','stat.products':'Aktive Produkte',
+'products.title':'Produktkatalog','products.new':'+ Neues Produkt',
+'products.col.product':'Produkt','products.col.category':'Kategorie','products.col.price':'Preis (Gs)','products.col.stock':'Lager','products.col.status':'Status','products.col.actions':'Aktionen',
+'products.loading':'Wird geladen...','products.empty':'Keine Produkte in dieser Kategorie.','products.filter.all':'Alle','products.active':'✅ Aktiv','products.sold':'🔴 Ausverkauft',
+'services.title':'Dienstleistungskatalog','services.new':'+ Neuer Service','services.loading':'Wird geladen...','services.error':'Fehler beim Laden der Services.',
+'services.empty.title':'Noch keine Services','services.empty.hint':'Erstelle deinen ersten Service mit dem Button oben',
+'services.active':'Aktiv','services.inactive':'Inaktiv','services.edit':'✏️ Bearbeiten','services.delete':'🗑 Löschen','services.perHour':'/Std.','services.confirm':'Diesen Service löschen?',
+'orders.title':'Letzte Bestellungen','orders.refresh':'↻ Aktualisieren','orders.loading':'Wird geladen...','orders.empty':'Noch keine Bestellungen.','orders.delivery':'+Lieferung',
+'orders.status.pending':'Ausstehend','orders.status.confirmed':'Bestätigt','orders.status.preparing':'In Vorbereitung','orders.status.delivering':'Unterwegs','orders.status.delivered':'Geliefert','orders.status.cancelled':'Storniert',
+'orders.name.placeholder':'Kundenname','orders.name.save':'Speichern',
+'chat.title':'Gespräche','chat.search':'Kunde suchen...','chat.empty.title':'Gespräch auswählen','chat.empty.hint':'Antworten erreichen den Kunden über WhatsApp',
+'chat.takeover':'👤 Manueller Modus aktiv — Sara ist in diesem Chat pausiert.','chat.resume':'🤖 Sara reaktivieren',
+'chat.placeholder':'Nachricht schreiben...','chat.noConvs':'Noch keine Gespräche',
+'chat.confirm':'✅ Bestellung bestätigen','chat.cancel':'❌ Abbrechen','chat.pendingOrder':'🛒 Ausstehende Bestellung:',
+'chat.you':'👤 Du','chat.bot':'🤖 Sara','chat.pending':'Bestellung',
+'chat.errSend':'Fehler beim Senden: ','chat.errSendImg':'Fehler beim Senden des Bildes: ','chat.cancelOrder':'Diese Bestellung stornieren?',
+'img.title':'Bild senden','img.upload':'Foto hochladen','img.choose':'Bild vom Gerät auswählen','img.catalog':'Katalogfotos','img.empty':'Keine Fotos im Katalog','img.loading':'Wird geladen...','img.errLoad':'Ladefehler',
+'settings.title':'Einstellungen',
+'settings.language.title':'🌐 Panelsprache','settings.language.desc':'Wähle die Sprache der Verwaltungsoberfläche.',
+'settings.sections.title':'🗂 Aktive Bereiche','settings.sections.desc':'Aktiviere nur die Bereiche, die dein Unternehmen nutzt. Sara bietet nur an, was aktiviert ist.',
+'settings.sections.products':'📦 Produkte','settings.sections.products.desc':'Verkauf physischer Artikel mit Lagerbestand (Blumen, Torten, Ersatzteile...)',
+'settings.sections.services':'🛠 Services','settings.sections.services.desc':'Services mit Festpreis oder Stundenpreis (Catering, Haarschnitte, Beratungen...)',
+'settings.sections.save':'Bereiche speichern','settings.sections.saved':'✅ Bereiche gespeichert.','settings.sections.error':'❌ Fehler beim Speichern.','settings.sections.contactAdmin':'Um weitere Bereiche zu aktivieren, wende dich an den Administrator.',
+'settings.bot.title':'🤖 Persönlichkeit deines Assistenten','settings.bot.desc':'Dies definiert, wie Sara mit deinen Kunden spricht.',
+'settings.bot.name':'Bot-Name','settings.bot.style':'Persönlichkeitsstil',
+'settings.bot.customLabel':'Benutzerdefinierte Beschreibung','settings.bot.customHint':'Beschreibe die Persönlichkeit detailliert — je spezifischer, desto besser.',
+'settings.bot.save':'Persönlichkeit speichern','settings.bot.saved':'✅ Persönlichkeit gespeichert. Sara wird diesen Stil ab sofort verwenden.',
+'settings.phone.title':'📲 Deine WhatsApp-Nummer','settings.phone.desc':'Sara benachrichtigt dich hier bei neuen Bestellungen. Internationales Format ohne + oder Leerzeichen (z.B. 595981123456).',
+'settings.phone.save':'Nummer speichern','settings.phone.saved':'✅ Nummer gespeichert. Sara benachrichtigt dich bei Bestellungen.','settings.phone.invalid':'Bitte eine gültige Nummer eingeben.',
+'settings.payment.title':'💳 Zahlungshinweise','settings.payment.desc':'Sara sendet diese automatisch nach jeder bestätigten Bestellung.',
+'settings.payment.placeholder':'Z.B.: Zahle per Überweisung auf Konto 000-123456. Sende uns den Beleg 🧾',
+'settings.payment.save':'Zahlungshinweise speichern','settings.payment.saved':'✅ Zahlungshinweise gespeichert.',
+'settings.rules.title':'📋 Geschäftsregeln','settings.rules.desc':'Schreibe in natürlicher Sprache alle Regeln deines Unternehmens. Sara befolgt sie immer.',
+'settings.rules.example':'Z.B.: "Individuelle Torten benötigen 3 Tage Vorlaufzeit." / "Lieferung nur Mo–Sa 8–13 Uhr."',
+'settings.rules.placeholder':'- Individuelle Kompositionen benötigen 48 Std. Vorlaufzeit.\n- Lieferung nur Mo–Sa zwischen 8:00 und 13:00.\n- Immer fragen, ob sie eine Grußkarte wünschen (kostenlos).',
+'settings.rules.save':'Regeln speichern','settings.rules.saved':'✅ Regeln gespeichert. Sara befolgt sie in jedem Gespräch.',
+'settings.delivery.title':'🚚 Heimlieferung','settings.delivery.desc':'Konfiguriere, ob du Lieferungen anbietest, die Geschäftsadresse und die Kosten.',
+'settings.delivery.enable':'Lieferung aktivieren','settings.delivery.address':'Geschäftsadresse','settings.delivery.lat':'Breitengrad','settings.delivery.lng':'Längengrad',
+'settings.delivery.mapsHint':'Google Maps öffnen, Geschäft suchen, Rechtsklick → "Was ist hier?" und Koordinaten kopieren.',
+'settings.delivery.type':'Tarifart','settings.delivery.fixed':'Festpreis','settings.delivery.zone':'Nach Zone (km)','settings.delivery.perkm':'Pro Kilometer',
+'settings.delivery.baseFee':'Lieferkosten (Gs)','settings.delivery.baseFeeKm':'Grundgebühr (Gs)',
+'settings.delivery.zoneRadius':'Innenzonen-Radius (km)','settings.delivery.zoneOuter':'Kosten außerhalb der Zone (Gs, 0 = keine Lieferung)',
+'settings.delivery.perKm':'Zusatzkosten pro km (Gs)','settings.delivery.minOrder':'Mindestbestellwert (Gs)','settings.delivery.minHint':'0 für kein Minimum.',
+'settings.delivery.disabled':'Tage/Daten ohne Lieferung','settings.delivery.disabledHint':'Kommagetrennt. Tagesnamen (sonntag, samstag) oder Daten (JJJJ-MM-TT).',
+'settings.delivery.save':'Liefereinstellungen speichern','settings.delivery.saved':'✅ Liefereinstellungen gespeichert.',
+'settings.password.title':'🔒 Passwort ändern','settings.password.placeholder':'Neues Passwort (min. 6 Zeichen)','settings.password.save':'Passwort speichern','settings.password.saved':'✅ Passwort aktualisiert.',
+'modal.product.new':'Neues Produkt','modal.product.edit':'Produkt bearbeiten',
+'modal.product.name':'Name *','modal.product.namePh':'Z.B.: Rosenstrauß Rot (12 Stück)',
+'modal.product.category':'Kategorie','modal.product.categoryPh':'Z.B.: Sträuße',
+'modal.product.price':'Preis (Gs) *','modal.product.stock':'Verfügbarer Bestand',
+'modal.product.desc':'Beschreibung','modal.product.descPh':'Kurze Produktbeschreibung...',
+'modal.product.photo':'Produktfoto','modal.product.uploadTap':'Tippe, um ein Foto hochzuladen','modal.product.uploadHint':'JPG, PNG — max. 10 MB','modal.product.orUrl':'oder URL einfügen',
+'modal.product.cancel':'Abbrechen','modal.product.save':'Speichern','modal.product.saving':'Speichern...','modal.product.error':'Name und Preis sind erforderlich.','modal.product.photoError':'Produkt gespeichert, aber Fehler beim Hochladen des Fotos: ',
+'modal.service.new':'Neuer Service','modal.service.edit':'Service bearbeiten',
+'modal.service.name':'Name *','modal.service.namePh':'Z.B.: Haarschnitt, Eventcatering',
+'modal.service.category':'Kategorie','modal.service.categoryPh':'Z.B.: Haarschnitte, Catering',
+'modal.service.priceType':'Preistyp *','modal.service.fixed':'Festpreis','modal.service.hourly':'Pro Stunde',
+'modal.service.price':'Preis (Gs) *','modal.service.priceHourly':'Stundensatz (Gs) *','modal.service.duration':'Dauer (Minuten)',
+'modal.service.desc':'Beschreibung','modal.service.descPh':'Service kurz beschreiben...',
+'modal.service.photo':'Service-Foto','modal.service.photoBtn':'📷 Foto hochladen','modal.service.available':'Service verfügbar',
+'modal.service.cancel':'Abbrechen','modal.service.save':'Speichern','modal.service.error':'Name und Preis sind erforderlich.',
+'modal.delete.title':'Produkt löschen?','modal.delete.cancel':'Abbrechen','modal.delete.confirm':'Löschen',
+'preset.warm.label':'Warm & nahbar','preset.warm.desc':'Wie eine Freundin, die dir hilft zu wählen',
+'preset.pro.label':'Professionell & effizient','preset.pro.desc':'Direkt, schnell, ohne Umschweife',
+'preset.creative.label':'Kreativ & poetisch','preset.creative.desc':'Beschreibt Produkte mit Leidenschaft',
+'preset.fun.label':'Spaßig & jugendlich','preset.fun.desc':'Verwendet sanften Humor und Emojis',
+'preset.custom.label':'Benutzerdefiniert','preset.custom.desc':'Schreibe deine eigene Beschreibung',
+'help.title':'❓ Hilfe — Inhaberbefehle',
+'help.desc':'Sende diese Nachrichten von deinem WhatsApp an Sara Bot, um das Geschäft ohne das Webpanel zu verwalten.',
+'help.catalog.title':'📦 Katalogverwaltung','help.catalog.catalogo':'Alle Produkte mit aktuellem Bestand und Preis anzeigen',
+'help.catalog.stock':'Bestand aktualisieren. Z.B.: <i>STOCK Rote Rosen 25</i>',
+'help.catalog.precio':'Preis ändern. Z.B.: <i>PREIS Rote Rosen 160000</i>',
+'help.catalog.agotado':'Produkt als ausverkauft markieren. Sara bietet es nicht mehr an',
+'help.catalog.disponible':'Ein ausverkauftes Produkt wieder aktivieren',
+'help.catalog.nuevo':'Neues Produkt erstellen. Z.B.: <i>NEU Sonnenblumen|Sträuße|80000|10|Frische Sonnenblumen</i>',
+'help.photos.title':'📸 Produktfotos',
+'help.photos.nombre':'Diese Phrase + ein Foto in derselben Nachricht senden. Das Foto wird gespeichert und Sara zeigt es Kunden, wenn sie nach dem Produkt fragen',
+'help.photos.hint':'💡 Du kannst Fotos auch über das Webpanel hochladen → Katalog → Produkt bearbeiten.',
+'help.orders.title':'🛒 Bestellungen und Chat-Kontrolle',
+'help.orders.confirmar':'Letzte Bestellung bestätigen. Sara benachrichtigt den Kunden',
+'help.orders.cancelar':'Letzte Bestellung stornieren. Sara benachrichtigt den Kunden',
+'help.orders.chat':'Kontrolle über den Chat übernehmen. Alles geht direkt an den Kunden (Sara greift nicht ein)',
+'help.orders.fin':'Kontrolle an Sara zurückgeben. Der Bot setzt das Gespräch fort',
+'help.orders.takeover':'<b>Wie funktioniert die Übernahme?</b> Bei einer Bestellung informiert dich Sara via WhatsApp. Antworte mit <b>BESTÄTIGEN</b> oder <b>STORNIEREN</b>, oder <b>CHAT</b> zum direkten Gespräch.',
+'help.chatpanel.title':'💬 Chat-Panel — Verwaltung über das Webpanel',
+'help.chatpanel.desc':'Der Tab <b>Chats</b> ermöglicht es, alle Gespräche in Echtzeit zu verwalten.',
+'help.chatpanel.view.title':'📋 Gespräche anzeigen','help.chatpanel.view.desc':'Die Liste zeigt alle Kunden mit der letzten Nachricht und einem orangen Badge bei ausstehender Bestellung. Aktualisiert alle 8 Sekunden.',
+'help.chatpanel.order.title':'🛒 Bestellungen bestätigen oder stornieren','help.chatpanel.order.desc':'Bei einer bestätigten Bestellung erscheint ein gelbes Banner mit <b>✅ Bestätigen</b> und <b>❌ Stornieren</b>.',
+'help.chatpanel.takeover.title':'👤 Manuell eingreifen','help.chatpanel.takeover.desc':'Du kannst jederzeit direkt schreiben. Beim ersten Senden <b>pausiert Sara automatisch</b> — das blaue Banner bestätigt es.',
+'help.chatpanel.takeover.colors':'Deine Nachrichten erscheinen in <span class="font-semibold">Blau</span>, Saras Nachrichten in Grün.',
+'help.chatpanel.resume.title':'🤖 Sara reaktivieren','help.chatpanel.resume.desc':'Drücke <b>"🤖 Sara reaktivieren"</b>. Sara setzt das Gespräch mit vollem Kontext fort.',
+'help.chatpanel.img.title':'🖼 Fotos an Kunden senden','help.chatpanel.img.desc':'Mit dem 🖼 Button kannst du ein Katalogfoto senden oder ein neues Bild hochladen.',
+'help.chatpanel.colors':'<b>Nachrichtenfarben:</b><br>⬜ Weiß (links) = Kundennachrichten<br>🟩 Grün (rechts) = Saras Antworten<br>🟦 Blau (rechts) = deine manuellen Nachrichten',
+'help.other.title':'ℹ️ Weitere WhatsApp-Befehle','help.other.ayuda':'Alle verfügbaren Befehle direkt in WhatsApp anzeigen',
+'help.other.hint':'💡 Befehle sind nicht case-sensitiv.',
+},
+fr:{
+'login.user':'Utilisateur','login.password':'Mot de passe','login.submit':'Se connecter','login.hint':'Première fois : mot de passe <b>sara1234</b>',
+'nav.logout':'Se déconnecter',
+'tab.chats':'💬 Chats','tab.products':'📦 Produits','tab.services':'🛠 Services','tab.orders':'🛒 Commandes','tab.settings':'⚙️ Paramètres','tab.help':'❓ Aide',
+'stat.today':'Commandes aujourd\'hui','stat.pending':'En attente','stat.revenue':'Revenus aujourd\'hui','stat.products':'Produits actifs',
+'products.title':'Catalogue de produits','products.new':'+ Nouveau produit',
+'products.col.product':'Produit','products.col.category':'Catégorie','products.col.price':'Prix (Gs)','products.col.stock':'Stock','products.col.status':'Statut','products.col.actions':'Actions',
+'products.loading':'Chargement...','products.empty':'Aucun produit dans cette catégorie.','products.filter.all':'Tous','products.active':'✅ Actif','products.sold':'🔴 Épuisé',
+'services.title':'Catalogue de services','services.new':'+ Nouveau service','services.loading':'Chargement...','services.error':'Erreur de chargement des services.',
+'services.empty.title':'Aucun service encore','services.empty.hint':'Créez votre premier service avec le bouton ci-dessus',
+'services.active':'Actif','services.inactive':'Inactif','services.edit':'✏️ Modifier','services.delete':'🗑 Supprimer','services.perHour':'/h','services.confirm':'Supprimer ce service ?',
+'orders.title':'Commandes récentes','orders.refresh':'↻ Actualiser','orders.loading':'Chargement...','orders.empty':'Aucune commande pour l\'instant.','orders.delivery':'+livraison',
+'orders.status.pending':'En attente','orders.status.confirmed':'Confirmé','orders.status.preparing':'En préparation','orders.status.delivering':'En route','orders.status.delivered':'Livré','orders.status.cancelled':'Annulé',
+'orders.name.placeholder':'Nom du client','orders.name.save':'Enregistrer',
+'chat.title':'Conversations','chat.search':'Rechercher un client...','chat.empty.title':'Sélectionnez une conversation','chat.empty.hint':'Les réponses parviennent au client via WhatsApp',
+'chat.takeover':'👤 Mode manuel actif — Sara est en pause dans ce chat.','chat.resume':'🤖 Réactiver Sara',
+'chat.placeholder':'Écrire un message...','chat.noConvs':'Aucune conversation encore',
+'chat.confirm':'✅ Confirmer la commande','chat.cancel':'❌ Annuler','chat.pendingOrder':'🛒 Commande en attente :',
+'chat.you':'👤 Vous','chat.bot':'🤖 Sara','chat.pending':'Commande',
+'chat.errSend':'Erreur d\'envoi : ','chat.errSendImg':'Erreur d\'envoi de l\'image : ','chat.cancelOrder':'Annuler cette commande ?',
+'img.title':'Envoyer une image','img.upload':'Télécharger une photo','img.choose':'Choisir une image depuis l\'appareil','img.catalog':'Photos du catalogue','img.empty':'Aucune photo dans le catalogue','img.loading':'Chargement...','img.errLoad':'Erreur de chargement',
+'settings.title':'Paramètres',
+'settings.language.title':'🌐 Langue du panneau','settings.language.desc':'Choisissez la langue de l\'interface d\'administration.',
+'settings.sections.title':'🗂 Sections actives','settings.sections.desc':'Activez uniquement les sections que votre entreprise utilise. Sara n\'offrira que ce qui est activé.',
+'settings.sections.products':'📦 Produits','settings.sections.products.desc':'Vente d\'articles physiques avec stock (fleurs, gâteaux, pièces...)',
+'settings.sections.services':'🛠 Services','settings.sections.services.desc':'Services à prix fixe ou horaire (traiteur, coupes, consultations...)',
+'settings.sections.save':'Enregistrer les sections','settings.sections.saved':'✅ Sections enregistrées.','settings.sections.error':'❌ Erreur lors de l\'enregistrement.','settings.sections.contactAdmin':'Pour activer d\'autres sections, contactez l\'administrateur.',
+'settings.bot.title':'🤖 Personnalité de votre assistante','settings.bot.desc':'Cela définit comment Sara parle avec vos clients.',
+'settings.bot.name':'Nom du bot','settings.bot.style':'Style de personnalité',
+'settings.bot.customLabel':'Description personnalisée','settings.bot.customHint':'Décrivez la personnalité en détail — plus c\'est précis, mieux c\'est.',
+'settings.bot.save':'Enregistrer la personnalité','settings.bot.saved':'✅ Personnalité enregistrée. Sara utilisera ce style dorénavant.',
+'settings.phone.title':'📲 Votre numéro WhatsApp','settings.phone.desc':'Sara vous notifie ici à l\'arrivée d\'une nouvelle commande. Format international sans + ni espaces (ex : 595981123456).',
+'settings.phone.save':'Enregistrer le numéro','settings.phone.saved':'✅ Numéro enregistré. Sara vous avertira à la réception des commandes.','settings.phone.invalid':'Veuillez saisir un numéro valide.',
+'settings.payment.title':'💳 Instructions de paiement','settings.payment.desc':'Sara les envoie automatiquement après chaque commande confirmée.',
+'settings.payment.placeholder':'Ex : Payez par virement au compte 000-123456. Envoyez-nous le reçu 🧾',
+'settings.payment.save':'Enregistrer les instructions de paiement','settings.payment.saved':'✅ Instructions de paiement enregistrées.',
+'settings.rules.title':'📋 Règles métier','settings.rules.desc':'Écrivez en langage naturel toute règle ou information spéciale. Sara les respectera toujours.',
+'settings.rules.example':'Ex : "Les gâteaux personnalisés nécessitent 3 jours de préavis." / "Livraison uniquement lun–sam 8–13h."',
+'settings.rules.placeholder':'- Les compositions personnalisées nécessitent 48h de préavis.\n- Livraison uniquement lun–sam entre 8h00 et 13h00.\n- Demandez toujours s\'ils veulent une carte cadeau (gratuite).',
+'settings.rules.save':'Enregistrer les règles','settings.rules.saved':'✅ Règles enregistrées. Sara les respectera dans chaque conversation.',
+'settings.delivery.title':'🚚 Livraison à domicile','settings.delivery.desc':'Configurez si vous proposez des livraisons, l\'adresse et le coût.',
+'settings.delivery.enable':'Activer les livraisons','settings.delivery.address':'Adresse du commerce','settings.delivery.lat':'Latitude','settings.delivery.lng':'Longitude',
+'settings.delivery.mapsHint':'Ouvrir Google Maps, chercher votre commerce, clic droit → "C\'est quoi ici ?" et copier les coordonnées.',
+'settings.delivery.type':'Type de tarif','settings.delivery.fixed':'Tarif fixe','settings.delivery.zone':'Par zone (km)','settings.delivery.perkm':'Par kilomètre',
+'settings.delivery.baseFee':'Coût de livraison (Gs)','settings.delivery.baseFeeKm':'Tarif de base (Gs)',
+'settings.delivery.zoneRadius':'Rayon zone intérieure (km)','settings.delivery.zoneOuter':'Coût hors zone (Gs, 0 = pas de livraison)',
+'settings.delivery.perKm':'Coût supplémentaire par km (Gs)','settings.delivery.minOrder':'Commande minimum pour la livraison (Gs)','settings.delivery.minHint':'Laissez 0 pour aucun minimum.',
+'settings.delivery.disabled':'Jours/dates sans livraison','settings.delivery.disabledHint':'Séparés par des virgules. Noms de jours (dimanche, samedi) ou dates exactes (AAAA-MM-JJ).',
+'settings.delivery.save':'Enregistrer la configuration des livraisons','settings.delivery.saved':'✅ Configuration des livraisons enregistrée.',
+'settings.password.title':'🔒 Changer le mot de passe','settings.password.placeholder':'Nouveau mot de passe (min. 6 caractères)','settings.password.save':'Enregistrer le mot de passe','settings.password.saved':'✅ Mot de passe mis à jour.',
+'modal.product.new':'Nouveau produit','modal.product.edit':'Modifier le produit',
+'modal.product.name':'Nom *','modal.product.namePh':'Ex : Bouquet de Roses Rouges (12 unités)',
+'modal.product.category':'Catégorie','modal.product.categoryPh':'Ex : Bouquets',
+'modal.product.price':'Prix (Gs) *','modal.product.stock':'Stock disponible',
+'modal.product.desc':'Description','modal.product.descPh':'Courte description du produit...',
+'modal.product.photo':'Photo du produit','modal.product.uploadTap':'Appuyez pour télécharger une photo','modal.product.uploadHint':'JPG, PNG — max 10 Mo','modal.product.orUrl':'ou collez une URL',
+'modal.product.cancel':'Annuler','modal.product.save':'Enregistrer','modal.product.saving':'Enregistrement...','modal.product.error':'Le nom et le prix sont obligatoires.','modal.product.photoError':'Produit enregistré, mais erreur lors du téléchargement de la photo : ',
+'modal.service.new':'Nouveau service','modal.service.edit':'Modifier le service',
+'modal.service.name':'Nom *','modal.service.namePh':'Ex : Coupe de cheveux, Traiteur événements',
+'modal.service.category':'Catégorie','modal.service.categoryPh':'Ex : Coupes, Traiteur',
+'modal.service.priceType':'Type de prix *','modal.service.fixed':'Prix fixe','modal.service.hourly':'À l\'heure',
+'modal.service.price':'Prix (Gs) *','modal.service.priceHourly':'Tarif horaire (Gs) *','modal.service.duration':'Durée (minutes)',
+'modal.service.desc':'Description','modal.service.descPh':'Décrivez brièvement le service...',
+'modal.service.photo':'Photo du service','modal.service.photoBtn':'📷 Télécharger photo','modal.service.available':'Service disponible',
+'modal.service.cancel':'Annuler','modal.service.save':'Enregistrer','modal.service.error':'Le nom et le prix sont obligatoires.',
+'modal.delete.title':'Supprimer le produit ?','modal.delete.cancel':'Annuler','modal.delete.confirm':'Supprimer',
+'preset.warm.label':'Chaleureuse et proche','preset.warm.desc':'Comme une amie qui vous aide à choisir',
+'preset.pro.label':'Professionnelle et efficace','preset.pro.desc':'Directe, rapide, sans détour',
+'preset.creative.label':'Créative et poétique','preset.creative.desc':'Décrit les produits avec passion',
+'preset.fun.label':'Amusante et jeune','preset.fun.desc':'Utilise l\'humour léger et les emojis',
+'preset.custom.label':'Personnalisée','preset.custom.desc':'Écrivez votre propre description',
+'help.title':'❓ Aide — Commandes du propriétaire',
+'help.desc':'Envoyez ces messages depuis votre WhatsApp au numéro de Sara Bot pour gérer l\'activité sans ouvrir le panneau web.',
+'help.catalog.title':'📦 Gestion du catalogue','help.catalog.catalogo':'Voir tous les produits avec le stock et le prix actuels',
+'help.catalog.stock':'Mettre à jour le stock. Ex : <i>STOCK Roses Rouges 25</i>',
+'help.catalog.precio':'Changer le prix. Ex : <i>PRIX Roses Rouges 160000</i>',
+'help.catalog.agotado':'Marquer un produit comme épuisé. Sara arrêtera de le proposer',
+'help.catalog.disponible':'Réactiver un produit épuisé',
+'help.catalog.nuevo':'Créer un nouveau produit. Ex : <i>NOUVEAU Tournesols|Bouquets|80000|10|Tournesols frais</i>',
+'help.photos.title':'📸 Photos des produits',
+'help.photos.nombre':'Envoyer cette phrase + une photo dans le même message. La photo est sauvegardée et Sara la montrera aux clients',
+'help.photos.hint':'💡 Vous pouvez aussi télécharger des photos depuis le panneau web → Catalogue → modifier le produit.',
+'help.orders.title':'🛒 Commandes et contrôle du chat',
+'help.orders.confirmar':'Confirmer la dernière commande en attente. Sara notifie le client',
+'help.orders.cancelar':'Annuler la dernière commande en attente. Sara notifie le client',
+'help.orders.chat':'Prendre le contrôle du chat. Tout ce que vous écrivez parvient directement au client (Sara n\'intervient pas)',
+'help.orders.fin':'Rendre le contrôle à Sara. Le bot reprend la conversation',
+'help.orders.takeover':'<b>Comment fonctionne la prise en main ?</b> Quand une commande arrive, Sara vous prévient. Répondez <b>CONFIRMER</b> ou <b>ANNULER</b>, ou <b>CHAT</b> pour parler au client.',
+'help.chatpanel.title':'💬 Panneau de chats — gestion depuis le panneau web',
+'help.chatpanel.desc':'L\'onglet <b>Chats</b> vous permet de voir et gérer toutes les conversations en temps réel.',
+'help.chatpanel.view.title':'📋 Voir les conversations','help.chatpanel.view.desc':'La liste affiche tous les clients avec le dernier message et un badge orange si une commande est en attente. Mise à jour automatique toutes les 8 secondes.',
+'help.chatpanel.order.title':'🛒 Confirmer ou annuler les commandes','help.chatpanel.order.desc':'Un banner jaune apparaît avec <b>✅ Confirmer</b> et <b>❌ Annuler</b>. À la confirmation, Sara notifie le client.',
+'help.chatpanel.takeover.title':'👤 Intervenir manuellement','help.chatpanel.takeover.desc':'Vous pouvez écrire directement au client depuis le panneau. Au premier message, <b>Sara se met en pause</b> — le banner bleu le confirme.',
+'help.chatpanel.takeover.colors':'Vos messages apparaissent en <span class="font-semibold">bleu</span>, les messages de Sara en vert.',
+'help.chatpanel.resume.title':'🤖 Réactiver Sara','help.chatpanel.resume.desc':'Appuyez sur <b>"🤖 Réactiver Sara"</b>. Sara reprend la conversation avec tout le contexte.',
+'help.chatpanel.img.title':'🖼 Envoyer des photos au client','help.chatpanel.img.desc':'Avec le bouton 🖼 vous pouvez envoyer une photo du catalogue ou en télécharger une nouvelle depuis votre appareil.',
+'help.chatpanel.colors':'<b>Couleurs des messages :</b><br>⬜ Blanc (gauche) = messages du client<br>🟩 Vert (droite) = réponses automatiques de Sara<br>🟦 Bleu (droite) = messages envoyés manuellement',
+'help.other.title':'ℹ️ Autres commandes WhatsApp','help.other.ayuda':'Voir toutes les commandes disponibles directement dans WhatsApp',
+'help.other.hint':'💡 Les commandes ne sont pas sensibles à la casse.',
+}
+};
+
+let currentLang = localStorage.getItem('sara_lang') || 'es';
+
+function t(key) {
+  return (TR[currentLang] && TR[currentLang][key] !== undefined)
+    ? TR[currentLang][key]
+    : (TR.es[key] !== undefined ? TR.es[key] : key);
+}
+
+function setLang(lang) {
+  currentLang = lang;
+  localStorage.setItem('sara_lang', lang);
+  applyTranslations();
+}
+
+function applyTranslations() {
+  // data-i18n elements (innerHTML)
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const val = t(el.dataset.i18n);
+    if (val !== undefined) el.innerHTML = val;
+  });
+  // data-i18n-ph elements (placeholder)
+  document.querySelectorAll('[data-i18n-ph]').forEach(el => {
+    const val = t(el.dataset.i18nPh);
+    if (val !== undefined) el.placeholder = val;
+  });
+  // Tabs (have IDs already)
+  ['chats','products','services','orders','settings','help'].forEach(tab => {
+    const el = document.getElementById('tab' + cap(tab));
+    if (el) el.textContent = t('tab.' + tab);
+  });
+  // Language picker active state (settings panel — larger flag buttons)
+  ['es','en','de','it','fr'].forEach(lang => {
+    const el = document.getElementById('lang_' + lang);
+    if (el) {
+      el.className = currentLang === lang
+        ? 'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold border-2 border-green-500 bg-green-50 text-green-700 transition'
+        : 'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border-2 border-gray-200 text-gray-600 hover:border-green-300 transition';
+    }
+  });
+  // Re-render Help section
+  renderHelp();
+}
+
+function renderHelp() {
+  const el = document.getElementById('sectionHelp');
+  if (!el) return;
+  const cmd = (code, desc, color='green') => `
+    <div class="flex gap-3 items-start p-2 rounded-lg bg-gray-50">
+      <code class="bg-${color}-100 text-${color}-800 px-2 py-0.5 rounded font-mono text-xs whitespace-nowrap">${code}</code>
+      <span class="text-gray-600">${desc}</span>
+    </div>`;
+  el.innerHTML = `
+    <h2 class="text-lg font-semibold text-gray-800">${t('help.title')}</h2>
+    <p class="text-sm text-gray-500">${t('help.desc')}</p>
+    <div class="bg-white rounded-xl shadow-sm p-5">
+      <h3 class="font-semibold text-gray-800 mb-3">${t('help.catalog.title')}</h3>
+      <div class="space-y-2 text-sm">
+        ${cmd('CATALOGO', t('help.catalog.catalogo'))}
+        ${cmd('STOCK nombre_producto CANTIDAD', t('help.catalog.stock'))}
+        ${cmd('PRECIO nombre_producto MONTO', t('help.catalog.precio'))}
+        ${cmd('AGOTADO nombre_producto', t('help.catalog.agotado'))}
+        ${cmd('DISPONIBLE nombre_producto', t('help.catalog.disponible'))}
+        ${cmd('NUEVO nombre | categoría | precio | stock | descripción', t('help.catalog.nuevo'))}
+      </div>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm p-5">
+      <h3 class="font-semibold text-gray-800 mb-3">${t('help.photos.title')}</h3>
+      <div class="space-y-2 text-sm">
+        ${cmd('NOMBRE nombre_producto', t('help.photos.nombre'), 'blue')}
+      </div>
+      <p class="text-xs text-gray-400 mt-3">${t('help.photos.hint')}</p>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm p-5">
+      <h3 class="font-semibold text-gray-800 mb-3">${t('help.orders.title')}</h3>
+      <div class="space-y-2 text-sm">
+        ${cmd('CONFIRMAR', t('help.orders.confirmar'), 'yellow')}
+        ${cmd('CANCELAR', t('help.orders.cancelar'), 'red')}
+        ${cmd('CHAT', t('help.orders.chat'), 'purple')}
+        ${cmd('FIN', t('help.orders.fin'), 'purple')}
+      </div>
+      <div class="mt-3 p-3 bg-yellow-50 rounded-lg text-xs text-yellow-800">${t('help.orders.takeover')}</div>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm p-5">
+      <h3 class="font-semibold text-gray-800 mb-1">${t('help.chatpanel.title')}</h3>
+      <p class="text-sm text-gray-500 mb-4">${t('help.chatpanel.desc')}</p>
+      <div class="space-y-3 text-sm">
+        <div class="p-3 rounded-lg bg-gray-50">
+          <p class="font-medium text-gray-700 mb-1">${t('help.chatpanel.view.title')}</p>
+          <p class="text-gray-500">${t('help.chatpanel.view.desc')}</p>
+        </div>
+        <div class="p-3 rounded-lg bg-gray-50">
+          <p class="font-medium text-gray-700 mb-1">${t('help.chatpanel.order.title')}</p>
+          <p class="text-gray-500">${t('help.chatpanel.order.desc')}</p>
+        </div>
+        <div class="p-3 rounded-lg bg-blue-50 border border-blue-100">
+          <p class="font-medium text-blue-800 mb-1">${t('help.chatpanel.takeover.title')}</p>
+          <p class="text-blue-700">${t('help.chatpanel.takeover.desc')}</p>
+          <p class="text-blue-700 mt-1">${t('help.chatpanel.takeover.colors')}</p>
+        </div>
+        <div class="p-3 rounded-lg bg-green-50 border border-green-100">
+          <p class="font-medium text-green-800 mb-1">${t('help.chatpanel.resume.title')}</p>
+          <p class="text-green-700">${t('help.chatpanel.resume.desc')}</p>
+        </div>
+        <div class="p-3 rounded-lg bg-gray-50">
+          <p class="font-medium text-gray-700 mb-1">${t('help.chatpanel.img.title')}</p>
+          <p class="text-gray-500">${t('help.chatpanel.img.desc')}</p>
+        </div>
+      </div>
+      <div class="mt-4 p-3 bg-yellow-50 rounded-lg text-xs text-yellow-800">${t('help.chatpanel.colors')}</div>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm p-5">
+      <h3 class="font-semibold text-gray-800 mb-3">${t('help.other.title')}</h3>
+      <div class="space-y-2 text-sm">
+        ${cmd('AYUDA', t('help.other.ayuda'), 'gray')}
+      </div>
+      <p class="text-xs text-gray-400 mt-3">${t('help.other.hint')}</p>
+    </div>`;
+}
+
 // ── State ──────────────────────────────────────────────────────────────────────
 let TOKEN = localStorage.getItem('sara_token') || '';
 let products = [];
@@ -769,14 +1280,15 @@ window.onload = () => {
     TOKEN = urlToken;
     localStorage.setItem('sara_token', TOKEN);
     if (urlName) {
-      document.getElementById('navTitle').textContent  = 'Sara';
-      document.getElementById('navTenant').textContent = '— ' + decodeURIComponent(urlName);
+      document.getElementById('navTenant').textContent = decodeURIComponent(urlName);
+      document.getElementById('navTitle').textContent  = 'Sara Bot';
     }
     // Clean URL without reload
     window.history.replaceState({}, '', '/admin/index.html');
     showDashboard();
     return;
   }
+  applyTranslations();
   if (TOKEN) { showDashboard(); }
 };
 
@@ -813,16 +1325,31 @@ async function login() {
   }
 
   // Merchant: userId = phone_number_id
+  const submitBtn = document.querySelector('#loginPage button[onclick="login()"]');
   try {
+    if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = '…'; }
     const res = await api('/admin/login', 'POST', { username: userId, password }, false);
     TOKEN = res.token;
     localStorage.setItem('sara_token', TOKEN);
-    document.getElementById('navTitle').textContent  = res.botName || 'Sara Bot';
-    document.getElementById('navTenant').textContent = '— ' + res.tenantName;
+    document.getElementById('navTenant').textContent = res.tenantName || 'Mi negocio';
+    document.getElementById('navTitle').textContent  = res.botName  || 'Sara Bot';
     showDashboard();
   } catch (e) {
-    errEl.textContent = e.message;
-    errEl.classList.remove('hidden');
+    // If rate-limited, show countdown and auto-retry after wait
+    if (e.retryAfter) {
+      let secs = e.retryAfter;
+      const tick = () => {
+        errEl.textContent = `⏳ Demasiados intentos. Esperá ${secs}s...`;
+        errEl.classList.remove('hidden');
+        if (secs > 0) { secs--; setTimeout(tick, 1000); }
+        else if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = t('login.submit'); }
+      };
+      tick();
+    } else {
+      errEl.textContent = e.message;
+      errEl.classList.remove('hidden');
+      if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = t('login.submit'); }
+    }
   }
 }
 
@@ -837,18 +1364,60 @@ function logout() {
 async function showDashboard() {
   document.getElementById('loginPage').classList.add('hidden');
   document.getElementById('dashPage').classList.remove('hidden');
+  applyTranslations();
   try {
-    const [stats] = await Promise.all([
+    const [stats, settings] = await Promise.all([
       api('/admin/stats'),
-      loadProducts(),
+      api('/admin/settings'),
     ]);
     document.getElementById('statToday').textContent    = stats.todayOrders;
     document.getElementById('statPending').textContent  = stats.pendingOrders;
     document.getElementById('statRevenue').textContent  = formatGs(stats.todayRevenue);
     document.getElementById('statProducts').textContent = stats.activeProducts + '/' + stats.totalProducts;
+    applyTabVisibility(settings.products_enabled !== false, !!settings.services_enabled);
+    // Load products only if section is enabled
+    if (settings.products_enabled !== false) loadProducts();
   } catch (e) {
     if (e.status === 401) logout();
   }
+}
+
+// ── Tab visibility (based on enabled sections) ─────────────────────────────────
+function applyTabVisibility(productsEnabled, servicesEnabled) {
+  const tabP = document.getElementById('tabProducts');
+  const tabS = document.getElementById('tabServices');
+  if (tabP) tabP.style.display = productsEnabled ? '' : 'none';
+  if (tabS) tabS.style.display = servicesEnabled ? '' : 'none';
+
+  // If current active tab is now hidden, redirect to chats
+  const activeEl = document.querySelector('.tab-active');
+  if (activeEl) {
+    const id = activeEl.id;
+    if ((id === 'tabProducts' && !productsEnabled) ||
+        (id === 'tabServices' && !servicesEnabled)) {
+      switchTab('chats');
+    }
+  }
+
+  // Update read-only section badges in Settings
+  const applyBadge = (badgeId, iconId, enabled) => {
+    const card = document.getElementById(badgeId);
+    const icon = document.getElementById(iconId);
+    if (!card) return;
+    if (enabled) {
+      card.className = 'flex items-center gap-3 rounded-xl px-4 py-3 border-2 border-green-200 bg-green-50 transition';
+      card.querySelectorAll('p')[0].className = 'text-sm font-semibold text-green-800';
+      card.querySelectorAll('p')[1].className = 'text-xs text-green-600';
+      if (icon) icon.textContent = '✅';
+    } else {
+      card.className = 'flex items-center gap-3 rounded-xl px-4 py-3 border-2 border-gray-100 bg-gray-50 opacity-50 transition';
+      card.querySelectorAll('p')[0].className = 'text-sm font-semibold text-gray-400';
+      card.querySelectorAll('p')[1].className = 'text-xs text-gray-400';
+      if (icon) icon.textContent = '🔒';
+    }
+  };
+  applyBadge('sectionBadgeProducts', 'sectionBadgeProductsIcon', productsEnabled);
+  applyBadge('sectionBadgeServices', 'sectionBadgeServicesIcon', servicesEnabled);
 }
 
 // ── Tab switching ──────────────────────────────────────────────────────────────
@@ -857,6 +1426,19 @@ function switchTab(tab) {
     document.getElementById('section' + cap(t)).classList.toggle('hidden', t !== tab);
     document.getElementById('tab'     + cap(t)).classList.toggle('tab-active', t === tab);
   });
+  // Hide stats bar and remove padding on chats tab (chat needs full remaining height)
+  const statsBar = document.getElementById('statsBar');
+  const mainWrap = document.getElementById('mainWrap');
+  if (statsBar) statsBar.classList.toggle('hidden', tab === 'chats');
+  if (mainWrap) {
+    if (tab === 'chats') {
+      mainWrap.classList.remove('py-6');
+      mainWrap.classList.add('pt-0', 'pb-0');
+    } else {
+      mainWrap.classList.add('py-6');
+      mainWrap.classList.remove('pt-0', 'pb-0');
+    }
+  }
   if (tab === 'orders')   loadOrders();
   if (tab === 'settings') loadSettings();
   if (tab === 'services') loadServices();
@@ -878,7 +1460,7 @@ function renderCategoryFilters() {
   el.innerHTML = cats.map(c => `
     <button onclick="filterCategory('${c}')"
       class="px-3 py-1 rounded-full text-xs font-medium border transition ${activeCategory === c ? 'bg-green-500 text-white border-green-500' : 'bg-white text-gray-600 border-gray-200 hover:border-green-400'}">
-      ${c === 'all' ? 'Todos' : c}
+      ${c === 'all' ? t('products.filter.all') : c}
     </button>`).join('');
 }
 
@@ -892,7 +1474,7 @@ function renderProducts() {
   const filtered = activeCategory === 'all' ? products : products.filter(p => p.category === activeCategory);
   const tbody = document.getElementById('productsTable');
   if (!filtered.length) {
-    tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-400">No hay productos en esta categoría.</td></tr>';
+    tbody.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-gray-400">${t('products.empty')}</td></tr>`;
     return;
   }
   tbody.innerHTML = filtered.map(p => `
@@ -913,7 +1495,7 @@ function renderProducts() {
       <td class="px-4 py-3 text-center">
         <button onclick="toggleAvailable('${p.id}', ${!p.is_available})"
           class="status-badge ${p.is_available ? 'status-confirmed' : 'status-cancelled'} cursor-pointer hover:opacity-80">
-          ${p.is_available ? '✅ Activo' : '🔴 Agotado'}
+          ${p.is_available ? t('products.active') : t('products.sold')}
         </button>
       </td>
       <td class="px-4 py-3 text-center">
@@ -939,7 +1521,7 @@ async function toggleAvailable(id, val) {
 function openProductModal(id) {
   editingProductId = id;
   const p = id ? products.find(x => x.id === id) : null;
-  document.getElementById('modalTitle').textContent = p ? 'Editar producto' : 'Nuevo producto';
+  document.getElementById('modalTitle').textContent = p ? t('modal.product.edit') : t('modal.product.new');
   document.getElementById('pName').value     = p?.name          || '';
   document.getElementById('pCategory').value = p?.category      || '';
   document.getElementById('pPrice').value    = p?.price_guarani || '';
@@ -1004,13 +1586,13 @@ async function saveProduct() {
   errEl.classList.add('hidden');
 
   if (!name || isNaN(price_guarani)) {
-    errEl.textContent = 'Nombre y precio son obligatorios.';
+    errEl.textContent = t('modal.product.error');
     errEl.classList.remove('hidden');
     return;
   }
 
   const saveBtn = document.querySelector('#productModal button[onclick="saveProduct()"]');
-  if (saveBtn) { saveBtn.textContent = 'Guardando...'; saveBtn.disabled = true; }
+  if (saveBtn) { saveBtn.textContent = t('modal.product.saving'); saveBtn.disabled = true; }
 
   try {
     let saved;
@@ -1031,7 +1613,7 @@ async function saveProduct() {
       });
       if (!res.ok) {
         const err = await res.json();
-        throw new Error('Producto guardado, pero error al subir la foto: ' + err.error);
+        throw new Error(t('modal.product.photoError') + err.error);
       }
     }
 
@@ -1041,7 +1623,7 @@ async function saveProduct() {
     errEl.textContent = e.message;
     errEl.classList.remove('hidden');
   } finally {
-    if (saveBtn) { saveBtn.textContent = 'Guardar'; saveBtn.disabled = false; }
+    if (saveBtn) { saveBtn.textContent = t('modal.product.save'); saveBtn.disabled = false; }
   }
 }
 
@@ -1066,12 +1648,16 @@ async function loadOrders() {
   const orders = await api('/admin/orders');
   const el = document.getElementById('ordersList');
   if (!orders.length) {
-    el.innerHTML = '<div class="text-center py-8 text-gray-400">Todavía no hay pedidos.</div>';
+    el.innerHTML = `<div class="text-center py-8 text-gray-400">${t('orders.empty')}</div>`;
     return;
   }
   const statusLabels = {
-    pending:'Pendiente', confirmed:'Confirmado', preparing:'Preparando',
-    delivering:'En camino', delivered:'Entregado', cancelled:'Cancelado'
+    pending:    t('orders.status.pending'),
+    confirmed:  t('orders.status.confirmed'),
+    preparing:  t('orders.status.preparing'),
+    delivering: t('orders.status.delivering'),
+    delivered:  t('orders.status.delivered'),
+    cancelled:  t('orders.status.cancelled')
   };
   el.innerHTML = orders.map(o => {
     const items    = o.items_json.map(i => `${i.name} ×${i.qty}`).join(', ');
@@ -1090,7 +1676,7 @@ async function loadOrders() {
         </div>
         <div class="text-right flex-shrink-0">
           <div class="font-bold text-green-600 text-lg">${formatGs(o.total_guarani + (o.delivery_fee||0))}</div>
-          <div class="text-xs text-gray-400 mb-1">+envío ${formatGs(o.delivery_fee||0)}</div>
+          <div class="text-xs text-gray-400 mb-1">${t('orders.delivery')} ${formatGs(o.delivery_fee||0)}</div>
           <select onchange="updateOrderStatus('${o.id}', this.value)"
             class="text-xs border border-gray-200 rounded-lg px-2 py-1 text-gray-600 cursor-pointer hover:border-green-400">
             ${['pending','confirmed','preparing','delivering','delivered','cancelled'].map(s =>
@@ -1122,10 +1708,10 @@ function startEditName(phone, currentName) {
   if (!labelEl) return;
   labelEl.innerHTML = `
     <input id="nameinput-${phone}" type="text" value="${currentName}"
-      placeholder="Nombre del cliente"
+      placeholder="${t('orders.name.placeholder')}"
       class="border border-green-400 rounded-lg px-2 py-0.5 text-sm w-36 mr-1"
       onkeydown="if(event.key==='Enter') saveCustomerName('${phone}'); if(event.key==='Escape') loadOrders()"/>
-    <button onclick="saveCustomerName('${phone}')" class="text-green-500 text-xs font-semibold hover:underline">Guardar</button>
+    <button onclick="saveCustomerName('${phone}')" class="text-green-500 text-xs font-semibold hover:underline">${t('orders.name.save')}</button>
     <button onclick="loadOrders()" class="text-gray-400 text-xs ml-1 hover:underline">✕</button>`;
   document.getElementById('nameinput-' + phone)?.focus();
 }
@@ -1149,36 +1735,36 @@ const PERSONALITY_PRESETS = [
   {
     id: 'warm',
     emoji: '🌸',
-    label: 'Cálida y cercana',
-    desc: 'Como una amiga que te ayuda a elegir',
+    get label() { return t('preset.warm.label'); },
+    get desc()  { return t('preset.warm.desc'); },
     value: 'Sos cálida, cercana y empática. Hablás como si conocieras al cliente de hace tiempo, con un tono amigable y personal. Nunca sos fría ni distante. Usás el voseo rioplatense y algunos emojis con moderación.'
   },
   {
     id: 'pro',
     emoji: '💼',
-    label: 'Profesional y eficiente',
-    desc: 'Directa, rápida, sin rodeos',
+    get label() { return t('preset.pro.label'); },
+    get desc()  { return t('preset.pro.desc'); },
     value: 'Sos profesional, precisa y eficiente. Respondés de forma directa y concisa, sin perder tiempo. Priorizás que el cliente llegue al pedido rápidamente. Tono cordial pero sobrio, pocos emojis.'
   },
   {
     id: 'creative',
     emoji: '🎨',
-    label: 'Creativa y poética',
-    desc: 'Describe los productos con pasión',
+    get label() { return t('preset.creative.label'); },
+    get desc()  { return t('preset.creative.desc'); },
     value: 'Sos creativa, apasionada y poética. Describís cada producto como si fuera especial, usando metáforas y lenguaje evocador. Transmitís emoción y hacés que el cliente se enamore antes de comprar. Usás emojis con gusto.'
   },
   {
     id: 'fun',
     emoji: '😄',
-    label: 'Divertida y juvenil',
-    desc: 'Usa humor suave y emojis',
+    get label() { return t('preset.fun.label'); },
+    get desc()  { return t('preset.fun.desc'); },
     value: 'Sos divertida, fresca y juvenil. Usás un tono descontracturado con humor suave y emojis. Hacés que la experiencia de comprar sea entretenida. Sin ser irrespetuosa, sos espontánea y simpática.'
   },
   {
     id: 'custom',
     emoji: '✏️',
-    label: 'Personalizada',
-    desc: 'Escribí tu propia descripción',
+    get label() { return t('preset.custom.label'); },
+    get desc()  { return t('preset.custom.desc'); },
     value: null
   }
 ];
@@ -1240,8 +1826,6 @@ async function loadSettings() {
     document.getElementById('sPayment').value             = s.payment_instructions || '';
     document.getElementById('sMerchantPhone').value       = s.merchant_phone || '';
     document.getElementById('sCustomInstructions').value  = s.custom_instructions || '';
-    document.getElementById('sProductsEnabled').checked   = s.products_enabled !== false;
-    document.getElementById('sServicesEnabled').checked   = !!s.services_enabled;
     initPresets(s.bot_personality);
 
     // Delivery
@@ -1258,6 +1842,7 @@ async function loadSettings() {
     document.getElementById('sDeliveryDisabledDates').value  =
       Array.isArray(s.delivery_disabled_dates) ? s.delivery_disabled_dates.join(', ') : (s.delivery_disabled_dates || '');
     updateDeliveryFields();
+    applyTabVisibility(s.products_enabled !== false, !!s.services_enabled);
   } catch (e) { /* ignore */ }
 }
 
@@ -1266,7 +1851,7 @@ function updateDeliveryFields() {
   document.getElementById('zoneFields').classList.toggle('hidden', type !== 'zone');
   document.getElementById('perKmField').classList.toggle('hidden', type !== 'per_km');
   document.getElementById('baseFeeLabel').textContent =
-    type === 'per_km' ? 'Tarifa base (Gs)' : 'Costo de envío (Gs)';
+    type === 'per_km' ? t('settings.delivery.baseFeeKm') : t('settings.delivery.baseFee');
 }
 
 async function saveDelivery() {
@@ -1289,11 +1874,11 @@ async function saveDelivery() {
       delivery_disabled_dates: disabledArr,
     });
     msgEl.className = 'rounded-lg px-4 py-2 text-sm mb-4 bg-green-50 text-green-700';
-    msgEl.textContent = '✅ Configuración de envíos guardada.';
+    msgEl.textContent = t('settings.delivery.saved');
     msgEl.classList.remove('hidden');
   } catch (e) {
     msgEl.className = 'rounded-lg px-4 py-2 text-sm mb-4 bg-red-50 text-red-700';
-    msgEl.textContent = '❌ Error al guardar.';
+    msgEl.textContent = t('settings.sections.error');
     msgEl.classList.remove('hidden');
   }
 }
@@ -1304,7 +1889,7 @@ async function saveMerchantPhone() {
   const phone = document.getElementById('sMerchantPhone').value.trim().replace(/\D/g, '');
   if (!phone) {
     msgEl.className = 'rounded-lg px-4 py-2 text-sm mb-3 bg-red-50 text-red-700';
-    msgEl.textContent = 'Ingresá un número válido.';
+    msgEl.textContent = t('settings.phone.invalid');
     msgEl.classList.remove('hidden');
     return;
   }
@@ -1312,7 +1897,7 @@ async function saveMerchantPhone() {
     await api('/admin/settings', 'PUT', { merchant_phone: phone });
     document.getElementById('sMerchantPhone').value = phone;
     msgEl.className = 'rounded-lg px-4 py-2 text-sm mb-3 bg-green-50 text-green-700';
-    msgEl.textContent = '✅ Número guardado. Sara te avisará al recibir pedidos.';
+    msgEl.textContent = t('settings.phone.saved');
     msgEl.classList.remove('hidden');
   } catch (e) {
     msgEl.className = 'rounded-lg px-4 py-2 text-sm mb-3 bg-red-50 text-red-700';
@@ -1330,7 +1915,7 @@ async function saveSettings() {
       bot_personality: getSelectedPersonality(),
     });
     msgEl.className   = 'rounded-lg px-4 py-2 text-sm mb-4 bg-green-50 text-green-700';
-    msgEl.textContent = '✅ Personalidad guardada. Sara usará este estilo desde ahora.';
+    msgEl.textContent = t('settings.personality.saved');
     msgEl.classList.remove('hidden');
   } catch (e) {
     msgEl.className   = 'rounded-lg px-4 py-2 text-sm mb-4 bg-red-50 text-red-700';
@@ -1347,7 +1932,7 @@ async function saveCustomInstructions() {
       custom_instructions: document.getElementById('sCustomInstructions').value.trim() || null,
     });
     msgEl.className   = 'rounded-lg px-4 py-2 text-sm mb-3 bg-green-50 text-green-700';
-    msgEl.textContent = '✅ Reglas guardadas. Sara las seguirá en cada conversación.';
+    msgEl.textContent = t('settings.rules.saved');
     msgEl.classList.remove('hidden');
   } catch (e) {
     msgEl.className   = 'rounded-lg px-4 py-2 text-sm mb-3 bg-red-50 text-red-700';
@@ -1364,7 +1949,7 @@ async function savePayment() {
       payment_instructions: document.getElementById('sPayment').value.trim() || null,
     });
     msgEl.className   = 'rounded-lg px-4 py-2 text-sm mb-3 bg-green-50 text-green-700';
-    msgEl.textContent = '✅ Instrucciones de pago guardadas.';
+    msgEl.textContent = t('settings.payment.saved');
     msgEl.classList.remove('hidden');
   } catch (e) {
     msgEl.className   = 'rounded-lg px-4 py-2 text-sm mb-3 bg-red-50 text-red-700';
@@ -1379,7 +1964,7 @@ async function changePassword() {
   try {
     await api('/admin/change-password', 'POST', { newPassword: pwd });
     msgEl.className = 'rounded-lg px-4 py-2 text-sm mb-3 bg-green-50 text-green-700';
-    msgEl.textContent = '✅ Contraseña actualizada.';
+    msgEl.textContent = t('settings.password.saved');
     msgEl.classList.remove('hidden');
     document.getElementById('newPwd').value = '';
   } catch (e) {
@@ -1402,6 +1987,7 @@ async function api(path, method = 'GET', body = null, auth = true) {
   if (!res.ok) {
     const err = new Error(data.error || 'Error desconocido');
     err.status = res.status;
+    if (data.retryAfter) err.retryAfter = data.retryAfter;
     throw err;
   }
   return data;
@@ -1409,28 +1995,6 @@ async function api(path, method = 'GET', body = null, auth = true) {
 
 function formatGs(n) { return (n || 0).toLocaleString('es-PY') + ' Gs'; }
 function fmtGs(n)    { return formatGs(n); }
-
-// ══════════════════════════════════════════════════════════════════════════════
-// SECTIONS TOGGLE
-// ══════════════════════════════════════════════════════════════════════════════
-
-async function saveSections() {
-  const msgEl = document.getElementById('sectionsMsg');
-  msgEl.classList.add('hidden');
-  try {
-    await api('/admin/settings', 'PUT', {
-      products_enabled: document.getElementById('sProductsEnabled').checked,
-      services_enabled: document.getElementById('sServicesEnabled').checked,
-    });
-    msgEl.className   = 'rounded-lg px-4 py-2 text-sm mb-4 bg-green-50 text-green-700';
-    msgEl.textContent = '✅ Secciones guardadas.';
-    msgEl.classList.remove('hidden');
-  } catch(e) {
-    msgEl.className   = 'rounded-lg px-4 py-2 text-sm mb-4 bg-red-50 text-red-700';
-    msgEl.textContent = '❌ Error al guardar.';
-    msgEl.classList.remove('hidden');
-  }
-}
 
 // ══════════════════════════════════════════════════════════════════════════════
 // SERVICES
@@ -1441,12 +2005,12 @@ let currentServiceImgUrl = null;
 
 async function loadServices() {
   const list = document.getElementById('serviceList');
-  list.innerHTML = '<p class="text-gray-400 text-sm col-span-3">Cargando...</p>';
+  list.innerHTML = `<p class="text-gray-400 text-sm col-span-3">${t('services.loading')}</p>`;
   try {
     const services = await api('/admin/services');
     renderServices(services);
   } catch(e) {
-    list.innerHTML = '<p class="text-red-400 text-sm">Error al cargar servicios.</p>';
+    list.innerHTML = `<p class="text-red-400 text-sm">${t('services.error')}</p>`;
   }
 }
 
@@ -1456,14 +2020,14 @@ function renderServices(services) {
     list.innerHTML = `
       <div class="col-span-3 text-center py-16 text-gray-400">
         <div class="text-5xl mb-3">🛠</div>
-        <p class="font-medium mb-1">Sin servicios todavía</p>
-        <p class="text-sm">Creá tu primer servicio con el botón de arriba</p>
+        <p class="font-medium mb-1">${t('services.empty.title')}</p>
+        <p class="text-sm">${t('services.empty.hint')}</p>
       </div>`;
     return;
   }
   list.innerHTML = services.map(s => {
     const price = s.price_type === 'hourly'
-      ? `${fmtGs(s.price_guarani)}/hora`
+      ? `${fmtGs(s.price_guarani)}${t('services.perHour')}`
       : fmtGs(s.price_guarani);
     const dur = s.duration_min ? ` · ${s.duration_min} min` : '';
     return `
@@ -1474,14 +2038,14 @@ function renderServices(services) {
       <div class="p-4">
         <div class="flex items-start justify-between gap-2 mb-1">
           <h3 class="font-semibold text-gray-800 text-sm leading-tight">${escHtml(s.name)}</h3>
-          <span class="text-xs px-2 py-0.5 rounded-full flex-shrink-0 ${s.is_available ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}">${s.is_available ? 'Activo' : 'Inactivo'}</span>
+          <span class="text-xs px-2 py-0.5 rounded-full flex-shrink-0 ${s.is_available ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}">${s.is_available ? t('services.active') : t('services.inactive')}</span>
         </div>
         ${s.category ? `<p class="text-xs text-gray-400 mb-1">${escHtml(s.category)}</p>` : ''}
         ${s.description ? `<p class="text-xs text-gray-500 mb-2 line-clamp-2">${escHtml(s.description)}</p>` : ''}
         <p class="font-bold text-green-700 text-sm">${price}${dur}</p>
         <div class="flex gap-2 mt-3">
-          <button onclick="editService('${s.id}')" class="flex-1 text-xs border border-gray-200 rounded-lg py-1.5 hover:bg-gray-50 transition">✏️ Editar</button>
-          <button onclick="deleteService('${s.id}')" class="flex-1 text-xs border border-red-100 text-red-500 rounded-lg py-1.5 hover:bg-red-50 transition">🗑 Eliminar</button>
+          <button onclick="editService('${s.id}')" class="flex-1 text-xs border border-gray-200 rounded-lg py-1.5 hover:bg-gray-50 transition">${t('services.edit')}</button>
+          <button onclick="deleteService('${s.id}')" class="flex-1 text-xs border border-red-100 text-red-500 rounded-lg py-1.5 hover:bg-red-50 transition">${t('services.delete')}</button>
         </div>
       </div>
     </div>`;
@@ -1491,7 +2055,7 @@ function renderServices(services) {
 function openServiceModal(service = null) {
   editingServiceId     = service?.id || null;
   currentServiceImgUrl = service?.image_url || null;
-  document.getElementById('serviceModalTitle').textContent = service ? 'Editar servicio' : 'Nuevo servicio';
+  document.getElementById('serviceModalTitle').textContent = service ? t('modal.service.edit') : t('modal.service.new');
   document.getElementById('serviceModalError').classList.add('hidden');
   document.getElementById('svName').value        = service?.name || '';
   document.getElementById('svCategory').value    = service?.category || '';
@@ -1516,7 +2080,7 @@ function closeServiceModal() {
 
 function toggleServiceDuration() {
   const isHourly = document.getElementById('svPriceType').value === 'hourly';
-  document.getElementById('svPriceLabel').textContent = isHourly ? 'Tarifa por hora (Gs) *' : 'Precio (Gs) *';
+  document.getElementById('svPriceLabel').textContent = isHourly ? t('modal.service.priceHourly') : t('modal.service.price');
 }
 
 async function uploadServiceImg(input) {
@@ -1559,7 +2123,7 @@ async function saveService() {
   const name  = document.getElementById('svName').value.trim();
   const price = parseInt(document.getElementById('svPrice').value);
   if (!name || isNaN(price)) {
-    errEl.textContent = 'Nombre y precio son obligatorios.';
+    errEl.textContent = t('modal.service.error');
     errEl.classList.remove('hidden');
     return;
   }
@@ -1605,7 +2169,7 @@ async function editService(id) {
 }
 
 async function deleteService(id) {
-  if (!confirm('¿Eliminar este servicio?')) return;
+  if (!confirm(t('services.confirm'))) return;
   await api(`/admin/services/${id}`, 'DELETE');
   loadServices();
 }
@@ -1632,7 +2196,7 @@ async function loadChatList() {
 function renderChatList(convs) {
   const el = document.getElementById('chatListItems');
   if (!convs.length) {
-    el.innerHTML = '<p class="text-center text-gray-400 text-sm py-10">Sin conversaciones aún</p>';
+    el.innerHTML = `<p class="text-center text-gray-400 text-sm py-10">${t('chat.noConvs')}</p>`;
     return;
   }
   el.innerHTML = convs.map(c => {
@@ -1652,7 +2216,7 @@ function renderChatList(convs) {
         </div>
         <div class="flex items-center gap-1 mt-0.5">
           <span class="text-xs text-gray-500 truncate flex-1">${escHtml(c.preview || '')}</span>
-          ${hasPending ? '<span class="flex-shrink-0 text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-semibold">Pedido</span>' : ''}
+          ${hasPending ? `<span class="flex-shrink-0 text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-semibold">${t('chat.pending')}</span>` : ''}
         </div>
       </div>
     </div>`;
@@ -1728,7 +2292,7 @@ async function refreshChat() {
         .map(i => `${i.qty}× ${i.name}`).join(', ');
       const total = fmtGs(conv.pending_order.total_guarani + (conv.pending_order.delivery_fee||0));
       document.getElementById('orderBannerText').textContent =
-        `🛒 Pedido pendiente: ${items} — Total: ${total}`;
+        `${t('chat.pendingOrder')} ${items} — Total: ${total}`;
       banner.classList.remove('hidden');
     } else {
       currentOrderId = null;
@@ -1761,8 +2325,8 @@ function renderMessages(msgs) {
         : 'bg-green-100 text-gray-800';
 
     const label = isCustomer ? '' : isMerchant
-      ? '<span class="block text-xs font-semibold text-blue-200 mb-0.5">👤 Vos</span>'
-      : '<span class="block text-xs font-semibold text-green-600 mb-0.5">🤖 Sara</span>';
+      ? `<span class="block text-xs font-semibold text-blue-200 mb-0.5">${t('chat.you')}</span>`
+      : `<span class="block text-xs font-semibold text-green-600 mb-0.5">🤖 Sara</span>`;
 
     const body = isImage && m.image_url
       ? `<img src="${escHtml(m.image_url)}" class="rounded-lg max-w-full mt-1" style="max-height:200px"/>${clean ? `<p class="mt-1 text-sm">${escHtml(clean)}</p>` : ''}`
@@ -1792,7 +2356,7 @@ async function sendChatMsg() {
     await refreshChat();
   } catch(e) {
     input.value = text; // restore on error
-    alert('Error al enviar: ' + e.message);
+    alert(t('chat.errSend') + e.message);
   }
 }
 
@@ -1809,7 +2373,7 @@ async function confirmOrderChat() {
 
 async function cancelOrderChat() {
   if (!currentOrderId) return;
-  if (!confirm('¿Cancelar este pedido?')) return;
+  if (!confirm(t('chat.cancelOrder'))) return;
   try {
     await api(`/admin/orders/${currentOrderId}/status`, 'PUT', { status: 'cancelled' });
     await refreshChat();
@@ -1823,7 +2387,7 @@ async function openImgPicker() {
   document.getElementById('imgPickerModal').classList.remove('hidden');
   const grid  = document.getElementById('imgPickerGrid');
   const empty = document.getElementById('imgPickerEmpty');
-  grid.innerHTML = '<p class="text-xs text-gray-400 col-span-3">Cargando...</p>';
+  grid.innerHTML = `<p class="text-xs text-gray-400 col-span-3">${t('img.loading')}</p>`;
   try {
     const products = await api('/admin/products');
     const withImg  = products.filter(p => p.image_url);
@@ -1839,7 +2403,7 @@ async function openImgPicker() {
           <p class="text-xs text-center text-gray-600 px-1 py-0.5 truncate">${escHtml(p.name)}</p>
         </div>`).join('');
     }
-  } catch(e) { grid.innerHTML = '<p class="text-xs text-red-400 col-span-3">Error al cargar</p>'; }
+  } catch(e) { grid.innerHTML = `<p class="text-xs text-red-400 col-span-3">${t('img.errLoad')}</p>`; }
 }
 
 function closeImgPicker() {
@@ -1851,7 +2415,7 @@ async function sendCatalogImg(url, name) {
   try {
     await api(`/admin/chats/${currentChatPhone}/send-image`, 'POST', { url, caption: name });
     await refreshChat();
-  } catch(e) { alert('Error al enviar imagen: ' + e.message); }
+  } catch(e) { alert(t('chat.errSendImg') + e.message); }
 }
 
 async function sendUploadedImg(input) {
@@ -1867,7 +2431,7 @@ async function sendUploadedImg(input) {
     });
     if (!res.ok) throw new Error((await res.json()).error);
     await refreshChat();
-  } catch(e) { alert('Error al enviar imagen: ' + e.message); }
+  } catch(e) { alert(t('chat.errSendImg') + e.message); }
 }
 
 // ── Contact name editing ───────────────────────────────────────────────────────
