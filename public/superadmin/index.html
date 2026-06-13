@@ -207,6 +207,19 @@
           <option value="false">🔴 Inactivo</option>
         </select>
       </div>
+      <div class="pt-2 border-t border-gray-100">
+        <label class="block text-xs font-medium text-gray-500 mb-2">Secciones activas</label>
+        <div class="flex gap-3">
+          <label class="flex items-center gap-2 cursor-pointer select-none">
+            <input type="checkbox" id="eProducts" class="w-4 h-4 accent-purple-600"/>
+            <span class="text-sm text-gray-700">📦 Productos</span>
+          </label>
+          <label class="flex items-center gap-2 cursor-pointer select-none">
+            <input type="checkbox" id="eServices" class="w-4 h-4 accent-purple-600"/>
+            <span class="text-sm text-gray-700">🛠 Servicios</span>
+          </label>
+        </div>
+      </div>
     </div>
 
     <!-- Products tab -->
@@ -346,6 +359,8 @@ async function openEditModal(id) {
   document.getElementById('ePersonality').value = t.bot_personality || '';
   document.getElementById('ePayment').value     = t.payment_instructions || '';
   document.getElementById('eActive').value      = String(t.active);
+  document.getElementById('eProducts').checked  = t.products_enabled !== false;
+  document.getElementById('eServices').checked  = !!t.services_enabled;
   document.getElementById('editError').classList.add('hidden');
   switchEditTab('config');
   document.getElementById('editModal').classList.remove('hidden');
@@ -396,7 +411,9 @@ async function saveTenant() {
       merchant_phone:       document.getElementById('eMerchant').value.trim() || null,
       bot_personality:      document.getElementById('ePersonality').value.trim(),
       payment_instructions: document.getElementById('ePayment').value.trim() || null,
-      active:               document.getElementById('eActive').value === 'true',
+      active:             document.getElementById('eActive').value === 'true',
+      products_enabled:   document.getElementById('eProducts').checked,
+      services_enabled:   document.getElementById('eServices').checked,
     });
     closeEditModal();
     await loadTenants();

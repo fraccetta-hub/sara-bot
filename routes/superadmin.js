@@ -151,7 +151,8 @@ router.put('/tenants/:id', requireSuper, async (req, res) => {
     'name','login_slug','phone_number_id','bot_name','bot_personality',
     'merchant_phone','payment_instructions','active',
     'plan_expires','delivery_base_fee','delivery_per_km',
-    'location_lat','location_lng'
+    'location_lat','location_lng',
+    'products_enabled','services_enabled'
   ];
   const updates = {};
   for (const key of allowed) {
