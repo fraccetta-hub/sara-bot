@@ -5,6 +5,7 @@ const bcrypt = require('bcryptjs');
 const multer = require('multer');
 const { createClient } = require('@supabase/supabase-js');
 const { uploadImageBuffer } = require('../services/storage');
+const { sendMessage, sendImage } = require('../services/whatsapp');
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -309,6 +310,118 @@ router.get('/stats', requireAuth, async (req, res) => {
     activeProducts:  products.filter(p => p.is_available).length,
     pendingOrders:   orders.filter(o => o.status === 'pending').length,
   });
+});
+
+// ─── GET /admin/chats — conversation list with last message + pending order ────
+
+router.get('/chats', requireAuth, async (req, res) => {
+  const [convsRes, ordersRes] = await Promise.all([
+    supabase.from('conversations')
+      .select('customer_phone, customer_name, updated_at, messages_json, takeover_active')
+      .eq('tenant_id', req.tenant.tenantId)
+      .order('updated_at', { ascending: false }),
+    supabase.from('orders')
+      .select('customer_phone, id, total_guarani, items_json, delivery_fee, status')
+      .eq('tenant_id', req.tenant.tenantId)
+      .eq('status', 'pending'),
+  ]);
+
+  const pendingMap = {};
+  for (const o of ordersRes.data || []) pendingMap[o.customer_phone] = o;
+
+  const result = (convsRes.data || []).map(c => {
+    const msgs = c.messages_json || [];
+    const last = msgs[msgs.length - 1];
+    let preview = '';
+    if (last) {
+      const raw = typeof last.content === 'string' ? last.content : '';
+      const clean = raw.replace(/<[^>]+>/g, '').replace(/\[.*?\]/g, '').trim();
+      preview = (last.source === 'merchant' ? '👤 ' : last.role === 'user' ? '' : '🤖 ') +
+                clean.slice(0, 60);
+    }
+    return {
+      customer_phone:  c.customer_phone,
+      customer_name:   c.customer_name,
+      updated_at:      c.updated_at,
+      takeover_active: c.takeover_active,
+      preview,
+      pending_order:   pendingMap[c.customer_phone] || null,
+    };
+  });
+  res.json(result);
+});
+
+// ─── GET /admin/chats/:phone — full conversation ───────────────────────────────
+
+router.get('/chats/:phone', requireAuth, async (req, res) => {
+  const [convRes, orderRes] = await Promise.all([
+    supabase.from('conversations').select('*')
+      .eq('tenant_id', req.tenant.tenantId)
+      .eq('customer_phone', req.params.phone)
+      .maybeSingle(),
+    supabase.from('orders')
+      .select('id, total_guarani, items_json, delivery_fee, status, created_at')
+      .eq('tenant_id', req.tenant.tenantId)
+      .eq('customer_phone', req.params.phone)
+      .eq('status', 'pending')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+  ]);
+  if (!convRes.data) return res.status(404).json({ error: 'No encontrado' });
+  res.json({ ...convRes.data, pending_order: orderRes.data || null });
+});
+
+// ─── POST /admin/chats/:phone/send — send text from merchant ──────────────────
+
+router.post('/chats/:phone/send', requireAuth, async (req, res) => {
+  const { text } = req.body;
+  if (!text?.trim()) return res.status(400).json({ error: 'Texto requerido' });
+
+  const { data: t } = await supabase.from('tenants')
+    .select('phone_number_id, whatsapp_token').eq('id', req.tenant.tenantId).single();
+  const token = t.whatsapp_token || process.env.WHATSAPP_TOKEN;
+
+  await sendMessage(req.params.phone, text.trim(), t.phone_number_id, token);
+
+  const { data: conv } = await supabase.from('conversations').select('messages_json')
+    .eq('tenant_id', req.tenant.tenantId).eq('customer_phone', req.params.phone).maybeSingle();
+  const msgs = [...(conv?.messages_json || []),
+    { role: 'assistant', content: text.trim(), source: 'merchant' }];
+  await supabase.from('conversations')
+    .update({ messages_json: msgs, updated_at: new Date().toISOString() })
+    .eq('tenant_id', req.tenant.tenantId).eq('customer_phone', req.params.phone);
+
+  res.json({ ok: true });
+});
+
+// ─── POST /admin/chats/:phone/send-image — send image (URL or upload) ─────────
+
+router.post('/chats/:phone/send-image', requireAuth, upload.single('image'), async (req, res) => {
+  const { data: t } = await supabase.from('tenants')
+    .select('phone_number_id, whatsapp_token').eq('id', req.tenant.tenantId).single();
+  const token = t.whatsapp_token || process.env.WHATSAPP_TOKEN;
+
+  let imageUrl = req.body.url || null;
+  if (req.file) {
+    imageUrl = await uploadImageBuffer(
+      req.file.buffer, req.file.originalname, req.file.mimetype, req.tenant.tenantId
+    );
+  }
+  if (!imageUrl) return res.status(400).json({ error: 'Se requiere imagen' });
+
+  const caption = req.body.caption?.trim() || '';
+  await sendImage(req.params.phone, imageUrl, caption, t.phone_number_id, token);
+
+  const { data: conv } = await supabase.from('conversations').select('messages_json')
+    .eq('tenant_id', req.tenant.tenantId).eq('customer_phone', req.params.phone).maybeSingle();
+  const msgs = [...(conv?.messages_json || []),
+    { role: 'assistant', content: `[foto] ${caption}`.trim(), source: 'merchant', image_url: imageUrl }];
+  await supabase.from('conversations')
+    .update({ messages_json: msgs, updated_at: new Date().toISOString() })
+    .eq('tenant_id', req.tenant.tenantId).eq('customer_phone', req.params.phone);
+
+  res.json({ ok: true, url: imageUrl });
 });
 
 module.exports = router;

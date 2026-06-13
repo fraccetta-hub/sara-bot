@@ -70,6 +70,7 @@
     </div>
     <!-- Tabs -->
     <div class="max-w-6xl mx-auto px-4 flex gap-6 text-sm text-gray-500">
+      <button class="py-2" id="tabChats" onclick="switchTab('chats')">💬 Chats</button>
       <button class="py-2 tab-active" id="tabProducts" onclick="switchTab('products')">📦 Catálogo</button>
       <button class="py-2" id="tabOrders" onclick="switchTab('orders')">🛒 Pedidos</button>
       <button class="py-2" id="tabSettings" onclick="switchTab('settings')">⚙️ Ajustes</button>
@@ -96,6 +97,94 @@
       <div class="bg-white rounded-xl p-4 shadow-sm text-center">
         <div class="text-2xl font-bold text-purple-500" id="statProducts">—</div>
         <div class="text-xs text-gray-500 mt-1">Productos activos</div>
+      </div>
+    </div>
+
+    <!-- ── CHATS TAB ── -->
+    <div id="sectionChats" class="hidden" style="height:calc(100vh - 8.5rem)">
+      <div class="flex h-full rounded-xl overflow-hidden shadow-sm border border-gray-200 bg-white">
+
+        <!-- Conversation list -->
+        <div id="chatListPanel" class="w-full md:w-72 flex-shrink-0 flex flex-col border-r border-gray-200">
+          <div class="bg-green-700 text-white px-4 py-3 flex items-center justify-between">
+            <span class="font-semibold text-base">Conversaciones</span>
+            <button onclick="loadChatList()" class="opacity-80 hover:opacity-100 text-lg leading-none">↻</button>
+          </div>
+          <div class="px-3 py-2 bg-gray-50 border-b border-gray-200">
+            <input id="chatSearch" type="text" placeholder="Buscar cliente..."
+              oninput="filterChatList(this.value)"
+              class="w-full bg-white border border-gray-200 rounded-full px-4 py-1.5 text-sm focus:outline-none focus:border-green-400"/>
+          </div>
+          <div id="chatListItems" class="flex-1 overflow-y-auto divide-y divide-gray-100"></div>
+        </div>
+
+        <!-- Chat view -->
+        <div id="chatPanel" class="hidden md:flex flex-col flex-1 min-w-0">
+          <!-- Empty state -->
+          <div id="chatEmpty" class="flex-1 flex flex-col items-center justify-center text-gray-400 bg-gray-50">
+            <div class="text-5xl mb-3">💬</div>
+            <p class="font-medium">Seleccioná una conversación</p>
+            <p class="text-sm mt-1">Las respuestas llegan al cliente por WhatsApp</p>
+          </div>
+          <!-- Active conversation -->
+          <div id="chatActive" class="hidden flex-col h-full">
+            <!-- Header -->
+            <div class="bg-green-700 text-white px-4 py-2.5 flex items-center gap-3 flex-shrink-0">
+              <button onclick="closeChatMobile()" class="md:hidden text-white text-xl leading-none mr-1">←</button>
+              <div id="chatAvatarEl" class="w-9 h-9 rounded-full bg-green-500 flex items-center justify-center font-bold text-sm flex-shrink-0"></div>
+              <div class="min-w-0">
+                <div id="chatHeaderName" class="font-semibold text-sm leading-tight truncate"></div>
+                <div id="chatHeaderPhone" class="text-xs text-green-200 leading-tight"></div>
+              </div>
+            </div>
+            <!-- Pending order banner -->
+            <div id="orderBanner" class="hidden bg-amber-50 border-b border-amber-200 px-4 py-2.5 flex-shrink-0">
+              <div id="orderBannerText" class="text-sm text-amber-900 mb-2 font-medium"></div>
+              <div class="flex gap-2">
+                <button onclick="confirmOrderChat()" class="bg-green-600 hover:bg-green-700 text-white text-xs px-4 py-1.5 rounded-full font-semibold transition">✅ Confirmar pedido</button>
+                <button onclick="cancelOrderChat()" class="bg-red-500 hover:bg-red-600 text-white text-xs px-4 py-1.5 rounded-full font-semibold transition">❌ Cancelar</button>
+              </div>
+            </div>
+            <!-- Messages -->
+            <div id="chatMessages" class="flex-1 overflow-y-auto px-3 py-3 space-y-1.5" style="background:#f0f2f0"></div>
+            <!-- Input bar -->
+            <div class="bg-gray-100 border-t border-gray-200 px-3 py-2 flex items-center gap-2 flex-shrink-0">
+              <button onclick="openImgPicker()" title="Enviar imagen"
+                class="text-gray-500 hover:text-green-700 text-xl p-1 flex-shrink-0 transition">🖼</button>
+              <input id="chatInput" type="text" placeholder="Escribí un mensaje..."
+                onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChatMsg();}"
+                class="flex-1 bg-white border border-gray-200 rounded-full px-4 py-2 text-sm focus:outline-none focus:border-green-400 min-w-0"/>
+              <button onclick="sendChatMsg()"
+                class="bg-green-600 hover:bg-green-700 text-white rounded-full w-9 h-9 flex items-center justify-center flex-shrink-0 transition text-base leading-none">➤</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Image picker modal -->
+    <div id="imgPickerModal" class="hidden fixed inset-0 modal-bg flex items-end md:items-center justify-center z-50 px-0 md:px-4">
+      <div class="bg-white rounded-t-2xl md:rounded-2xl shadow-2xl w-full md:max-w-md max-h-[80vh] flex flex-col">
+        <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+          <h3 class="font-semibold text-gray-800">Enviar imagen</h3>
+          <button onclick="closeImgPicker()" class="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
+        </div>
+        <!-- Upload -->
+        <div class="px-5 pt-4 pb-3 border-b border-gray-100">
+          <p class="text-xs text-gray-500 mb-2 font-medium uppercase tracking-wide">Subir foto</p>
+          <label class="flex items-center gap-3 cursor-pointer bg-gray-50 hover:bg-gray-100 border border-dashed border-gray-300 rounded-xl px-4 py-3 transition">
+            <span class="text-2xl">📤</span>
+            <span class="text-sm text-gray-600">Elegir imagen del dispositivo</span>
+            <input type="file" accept="image/*" class="hidden" onchange="sendUploadedImg(this)"/>
+          </label>
+        </div>
+        <!-- Catalog -->
+        <div class="px-5 pt-3 pb-4 flex-1 overflow-y-auto">
+          <p class="text-xs text-gray-500 mb-2 font-medium uppercase tracking-wide">Fotos del catálogo</p>
+          <div id="imgPickerGrid" class="grid grid-cols-3 gap-2"></div>
+          <p id="imgPickerEmpty" class="hidden text-sm text-gray-400 text-center py-4">No hay fotos en el catálogo</p>
+        </div>
       </div>
     </div>
 
@@ -604,12 +693,14 @@ async function showDashboard() {
 
 // ── Tab switching ──────────────────────────────────────────────────────────────
 function switchTab(tab) {
-  ['products','orders','settings','help'].forEach(t => {
+  ['chats','products','orders','settings','help'].forEach(t => {
     document.getElementById('section' + cap(t)).classList.toggle('hidden', t !== tab);
-    document.getElementById('tab' + cap(t)).classList.toggle('tab-active', t === tab);
+    document.getElementById('tab'     + cap(t)).classList.toggle('tab-active', t === tab);
   });
   if (tab === 'orders')   loadOrders();
   if (tab === 'settings') loadSettings();
+  if (tab === 'chats')    { loadChatList(); startChatListPoll(); }
+  else                    stopChatListPoll();
 }
 function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
 
@@ -1155,6 +1246,288 @@ async function api(path, method = 'GET', body = null, auth = true) {
 
 function formatGs(n) {
   return (n || 0).toLocaleString('es-PY') + ' Gs';
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// CHATS
+// ══════════════════════════════════════════════════════════════════════════════
+
+let chatListData      = [];
+let currentChatPhone  = null;
+let currentOrderId    = null;
+let chatMsgPoll       = null;
+let chatListPollTimer = null;
+
+// ── List ───────────────────────────────────────────────────────────────────────
+
+async function loadChatList() {
+  try {
+    chatListData = await api('/admin/chats');
+    renderChatList(chatListData);
+  } catch(e) { /* silent */ }
+}
+
+function renderChatList(convs) {
+  const el = document.getElementById('chatListItems');
+  if (!convs.length) {
+    el.innerHTML = '<p class="text-center text-gray-400 text-sm py-10">Sin conversaciones aún</p>';
+    return;
+  }
+  el.innerHTML = convs.map(c => {
+    const name    = c.customer_name || c.customer_phone;
+    const initials = name.slice(0,2).toUpperCase();
+    const time    = c.updated_at ? fmtChatTime(c.updated_at) : '';
+    const active  = currentChatPhone === c.customer_phone;
+    const hasPending = !!c.pending_order;
+    return `
+    <div onclick="openChat('${c.customer_phone}')"
+      class="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-gray-50 transition ${active ? 'bg-green-50' : ''}">
+      <div class="w-11 h-11 rounded-full bg-green-600 text-white flex items-center justify-center font-bold text-sm flex-shrink-0">${initials}</div>
+      <div class="flex-1 min-w-0">
+        <div class="flex items-center justify-between gap-1">
+          <span class="font-medium text-gray-800 text-sm truncate">${escHtml(name)}</span>
+          <span class="text-xs text-gray-400 flex-shrink-0">${time}</span>
+        </div>
+        <div class="flex items-center gap-1 mt-0.5">
+          <span class="text-xs text-gray-500 truncate flex-1">${escHtml(c.preview || '')}</span>
+          ${hasPending ? '<span class="flex-shrink-0 text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-semibold">Pedido</span>' : ''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function filterChatList(q) {
+  const filtered = q
+    ? chatListData.filter(c =>
+        (c.customer_name||'').toLowerCase().includes(q.toLowerCase()) ||
+        c.customer_phone.includes(q))
+    : chatListData;
+  renderChatList(filtered);
+}
+
+function startChatListPoll() {
+  stopChatListPoll();
+  chatListPollTimer = setInterval(loadChatList, 8000);
+}
+function stopChatListPoll() {
+  clearInterval(chatListPollTimer);
+  clearInterval(chatMsgPoll);
+}
+
+// ── Open conversation ──────────────────────────────────────────────────────────
+
+async function openChat(phone) {
+  currentChatPhone = phone;
+  clearInterval(chatMsgPoll);
+
+  // Mobile: hide list, show chat
+  document.getElementById('chatListPanel').classList.add('hidden');
+  document.getElementById('chatListPanel').classList.remove('md:flex');
+  const panel = document.getElementById('chatPanel');
+  panel.classList.remove('hidden');
+  panel.classList.add('flex');
+
+  document.getElementById('chatEmpty').classList.add('hidden');
+  const active = document.getElementById('chatActive');
+  active.style.display = 'flex';
+  active.classList.remove('hidden');
+
+  renderChatList(chatListData); // refresh selected highlight
+
+  await refreshChat();
+  chatMsgPoll = setInterval(refreshChat, 3000);
+}
+
+async function refreshChat() {
+  if (!currentChatPhone) return;
+  try {
+    const conv = await api(`/admin/chats/${currentChatPhone}`);
+    const name = conv.customer_name || conv.customer_phone;
+    const initials = name.slice(0,2).toUpperCase();
+
+    document.getElementById('chatAvatarEl').textContent    = initials;
+    document.getElementById('chatHeaderName').textContent  = name;
+    document.getElementById('chatHeaderPhone').textContent = conv.customer_phone;
+
+    // Order banner
+    const banner = document.getElementById('orderBanner');
+    if (conv.pending_order) {
+      currentOrderId = conv.pending_order.id;
+      const items = (conv.pending_order.items_json || [])
+        .map(i => `${i.qty}× ${i.name}`).join(', ');
+      const total = fmtGs(conv.pending_order.total_guarani + (conv.pending_order.delivery_fee||0));
+      document.getElementById('orderBannerText').textContent =
+        `🛒 Pedido pendiente: ${items} — Total: ${total}`;
+      banner.classList.remove('hidden');
+    } else {
+      currentOrderId = null;
+      banner.classList.add('hidden');
+    }
+
+    renderMessages(conv.messages_json || []);
+  } catch(e) { /* silent */ }
+}
+
+// ── Messages ───────────────────────────────────────────────────────────────────
+
+function renderMessages(msgs) {
+  const container = document.getElementById('chatMessages');
+  const atBottom  = container.scrollHeight - container.scrollTop - container.clientHeight < 60;
+
+  container.innerHTML = msgs.map(m => {
+    const isCustomer = m.role === 'user';
+    const isMerchant = m.role === 'assistant' && m.source === 'merchant';
+    const isImage    = m.image_url || (typeof m.content === 'string' && m.content.startsWith('[foto]'));
+
+    const raw     = typeof m.content === 'string' ? m.content : '';
+    const clean   = raw.replace(/^<[A-Z_]+>.*?(?:<\/[A-Z_]+>|\n|$)/gm,'')
+                       .replace(/<[^>]+>/g,'').trim();
+
+    const bubbleColor = isCustomer
+      ? 'bg-white text-gray-800'
+      : isMerchant
+        ? 'bg-blue-500 text-white'
+        : 'bg-green-100 text-gray-800';
+
+    const label = isCustomer ? '' : isMerchant
+      ? '<span class="block text-xs font-semibold text-blue-200 mb-0.5">👤 Vos</span>'
+      : '<span class="block text-xs font-semibold text-green-600 mb-0.5">🤖 Sara</span>';
+
+    const body = isImage && m.image_url
+      ? `<img src="${escHtml(m.image_url)}" class="rounded-lg max-w-full mt-1" style="max-height:200px"/>${clean ? `<p class="mt-1 text-sm">${escHtml(clean)}</p>` : ''}`
+      : `<p class="text-sm whitespace-pre-wrap">${escHtml(clean)}</p>`;
+
+    return `
+    <div class="flex ${isCustomer ? 'justify-start' : 'justify-end'}">
+      <div class="max-w-xs lg:max-w-sm px-3 py-2 rounded-2xl shadow-sm ${bubbleColor} ${isCustomer ? 'rounded-tl-sm' : 'rounded-tr-sm'}">
+        ${label}${body}
+      </div>
+    </div>`;
+  }).join('');
+
+  if (atBottom) container.scrollTop = container.scrollHeight;
+}
+
+// ── Send message ───────────────────────────────────────────────────────────────
+
+async function sendChatMsg() {
+  const input = document.getElementById('chatInput');
+  const text  = input.value.trim();
+  if (!text || !currentChatPhone) return;
+  input.value = '';
+  input.focus();
+  try {
+    await api(`/admin/chats/${currentChatPhone}/send`, 'POST', { text });
+    await refreshChat();
+  } catch(e) {
+    input.value = text; // restore on error
+    alert('Error al enviar: ' + e.message);
+  }
+}
+
+// ── Order actions ──────────────────────────────────────────────────────────────
+
+async function confirmOrderChat() {
+  if (!currentOrderId) return;
+  try {
+    await api(`/admin/orders/${currentOrderId}/status`, 'PUT', { status: 'confirmed' });
+    await refreshChat();
+    await loadChatList();
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+async function cancelOrderChat() {
+  if (!currentOrderId) return;
+  if (!confirm('¿Cancelar este pedido?')) return;
+  try {
+    await api(`/admin/orders/${currentOrderId}/status`, 'PUT', { status: 'cancelled' });
+    await refreshChat();
+    await loadChatList();
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+// ── Image picker ───────────────────────────────────────────────────────────────
+
+async function openImgPicker() {
+  document.getElementById('imgPickerModal').classList.remove('hidden');
+  const grid  = document.getElementById('imgPickerGrid');
+  const empty = document.getElementById('imgPickerEmpty');
+  grid.innerHTML = '<p class="text-xs text-gray-400 col-span-3">Cargando...</p>';
+  try {
+    const products = await api('/admin/products');
+    const withImg  = products.filter(p => p.image_url);
+    if (!withImg.length) {
+      grid.innerHTML = '';
+      empty.classList.remove('hidden');
+    } else {
+      empty.classList.add('hidden');
+      grid.innerHTML = withImg.map(p => `
+        <div onclick="sendCatalogImg('${escHtml(p.image_url)}','${escHtml(p.name)}')"
+          class="cursor-pointer rounded-xl overflow-hidden border-2 border-transparent hover:border-green-500 transition aspect-square bg-gray-100">
+          <img src="${escHtml(p.image_url)}" class="w-full h-full object-cover"/>
+          <p class="text-xs text-center text-gray-600 px-1 py-0.5 truncate">${escHtml(p.name)}</p>
+        </div>`).join('');
+    }
+  } catch(e) { grid.innerHTML = '<p class="text-xs text-red-400 col-span-3">Error al cargar</p>'; }
+}
+
+function closeImgPicker() {
+  document.getElementById('imgPickerModal').classList.add('hidden');
+}
+
+async function sendCatalogImg(url, name) {
+  closeImgPicker();
+  try {
+    await api(`/admin/chats/${currentChatPhone}/send-image`, 'POST', { url, caption: name });
+    await refreshChat();
+  } catch(e) { alert('Error al enviar imagen: ' + e.message); }
+}
+
+async function sendUploadedImg(input) {
+  const file = input.files[0];
+  if (!file || !currentChatPhone) return;
+  closeImgPicker();
+  const form = new FormData();
+  form.append('image', file);
+  try {
+    const token = localStorage.getItem('sara_token');
+    const res   = await fetch(`/admin/chats/${currentChatPhone}/send-image`, {
+      method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: form
+    });
+    if (!res.ok) throw new Error((await res.json()).error);
+    await refreshChat();
+  } catch(e) { alert('Error al enviar imagen: ' + e.message); }
+}
+
+// ── Mobile back ────────────────────────────────────────────────────────────────
+
+function closeChatMobile() {
+  clearInterval(chatMsgPoll);
+  currentChatPhone = null;
+  document.getElementById('chatListPanel').classList.remove('hidden');
+  const panel = document.getElementById('chatPanel');
+  panel.classList.add('hidden');
+  panel.classList.remove('flex');
+  document.getElementById('chatActive').style.display = 'none';
+  document.getElementById('chatEmpty').classList.remove('hidden');
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────────────
+
+function fmtChatTime(iso) {
+  const d   = new Date(iso);
+  const now = new Date();
+  const diffH = (now - d) / 3_600_000;
+  if (diffH < 24 && d.toDateString() === now.toDateString())
+    return d.toLocaleTimeString('es-PY', { hour:'2-digit', minute:'2-digit' });
+  if (diffH < 168)
+    return d.toLocaleDateString('es-PY', { weekday:'short' });
+  return d.toLocaleDateString('es-PY', { day:'2-digit', month:'2-digit' });
+}
+
+function escHtml(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 </script>
 </body>
