@@ -131,7 +131,7 @@
           <div id="chatActive" class="hidden flex-col h-full">
             <!-- Header -->
             <div class="bg-green-700 text-white px-4 py-2.5 flex items-center gap-3 flex-shrink-0">
-              <button onclick="closeChatMobile()" class="md:hidden text-white text-xl leading-none mr-1">←</button>
+              <button id="chatBackBtn" onclick="closeChatMobile()" class="text-white text-xl leading-none mr-1" style="display:none">←</button>
               <div id="chatAvatarEl" class="w-9 h-9 rounded-full bg-green-500 flex items-center justify-center font-bold text-sm flex-shrink-0"></div>
               <div class="min-w-0 flex-1">
                 <div id="chatHeaderName" class="font-semibold text-sm leading-tight truncate"></div>
@@ -1672,9 +1672,12 @@ async function openChat(phone) {
   currentChatPhone = phone;
   clearInterval(chatMsgPoll);
 
-  // Mobile: hide list, show chat
-  document.getElementById('chatListPanel').classList.add('hidden');
-  document.getElementById('chatListPanel').classList.remove('md:flex');
+  // On mobile only: hide list, show back button
+  const isMobile = window.innerWidth < 768;
+  document.getElementById('chatBackBtn').style.display = isMobile ? 'block' : 'none';
+  if (isMobile) {
+    document.getElementById('chatListPanel').classList.add('hidden');
+  }
   const panel = document.getElementById('chatPanel');
   panel.classList.remove('hidden');
   panel.classList.add('flex');
@@ -1871,12 +1874,15 @@ async function resumeBot() {
 function closeChatMobile() {
   clearInterval(chatMsgPoll);
   currentChatPhone = null;
+  // Restore list panel (was hidden on mobile)
   document.getElementById('chatListPanel').classList.remove('hidden');
+  // Hide chat panel (goes back to empty state)
   const panel = document.getElementById('chatPanel');
   panel.classList.add('hidden');
   panel.classList.remove('flex');
   document.getElementById('chatActive').style.display = 'none';
   document.getElementById('chatEmpty').classList.remove('hidden');
+  renderChatList(chatListData); // deselect highlight
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
