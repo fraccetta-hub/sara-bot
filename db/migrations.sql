@@ -76,6 +76,33 @@ ALTER TABLE conversations
   ADD COLUMN IF NOT EXISTS delivery_fee_calc       INTEGER;
 
 -- ============================================================
+-- Migration 5: Services catalog
+-- ============================================================
+
+-- 5a. Tenants: enable/disable products and services sections independently
+ALTER TABLE tenants
+  ADD COLUMN IF NOT EXISTS products_enabled BOOLEAN NOT NULL DEFAULT true,
+  ADD COLUMN IF NOT EXISTS services_enabled BOOLEAN NOT NULL DEFAULT false;
+
+-- 5b. Services catalog (separate from products)
+CREATE TABLE IF NOT EXISTS services (
+  id            UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id     UUID        NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  name          TEXT        NOT NULL,
+  category      TEXT,
+  description   TEXT,
+  price_type    TEXT        NOT NULL DEFAULT 'fixed'
+                            CHECK (price_type IN ('fixed','hourly')),
+  price_guarani INTEGER     NOT NULL DEFAULT 0,
+  duration_min  INTEGER,
+  is_available  BOOLEAN     NOT NULL DEFAULT true,
+  image_url     TEXT,
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_services_tenant ON services(tenant_id);
+
+-- ============================================================
 -- Second sample tenant: Pastelería (for buyer demos)
 -- ============================================================
 INSERT INTO tenants (name, phone_number_id, bot_name, bot_personality, location_lat, location_lng, merchant_phone, payment_instructions)

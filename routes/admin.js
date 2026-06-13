@@ -75,6 +75,7 @@ router.get('/settings', requireAuth, async (req, res) => {
   const { data, error } = await supabase
     .from('tenants')
     .select(`bot_name, bot_personality, merchant_phone, payment_instructions, custom_instructions,
+             products_enabled, services_enabled,
              delivery_enabled, location_address, location_lat, location_lng,
              delivery_type, delivery_base_fee, delivery_zone_km,
              delivery_zone_outer_fee, delivery_per_km,
@@ -90,6 +91,7 @@ router.get('/settings', requireAuth, async (req, res) => {
 router.put('/settings', requireAuth, async (req, res) => {
   const allowed = [
     'bot_name','bot_personality','merchant_phone','payment_instructions','custom_instructions',
+    'products_enabled','services_enabled',
     'delivery_enabled','location_address','location_lat','location_lng',
     'delivery_type','delivery_base_fee','delivery_zone_km',
     'delivery_zone_outer_fee','delivery_per_km',
@@ -310,6 +312,70 @@ router.get('/stats', requireAuth, async (req, res) => {
     activeProducts:  products.filter(p => p.is_available).length,
     pendingOrders:   orders.filter(o => o.status === 'pending').length,
   });
+});
+
+// ─── GET /admin/services ──────────────────────────────────────────────────────
+
+router.get('/services', requireAuth, async (req, res) => {
+  const { data, error } = await supabase
+    .from('services').select('*')
+    .eq('tenant_id', req.tenant.tenantId)
+    .order('category').order('name');
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
+// ─── POST /admin/services ─────────────────────────────────────────────────────
+
+router.post('/services', requireAuth, async (req, res) => {
+  const { name, category, description, price_type, price_guarani, duration_min, image_url } = req.body;
+  if (!name || price_guarani == null)
+    return res.status(400).json({ error: 'Nombre y precio son obligatorios' });
+  const { data, error } = await supabase.from('services').insert({
+    tenant_id: req.tenant.tenantId,
+    name, category, description,
+    price_type: price_type || 'fixed',
+    price_guarani, duration_min: duration_min || null,
+    image_url: image_url || null, is_available: true,
+  }).select().single();
+  if (error) return res.status(500).json({ error: error.message });
+  res.status(201).json(data);
+});
+
+// ─── PUT /admin/services/:id ──────────────────────────────────────────────────
+
+router.put('/services/:id', requireAuth, async (req, res) => {
+  const fields = ['name','category','description','price_type','price_guarani','duration_min','image_url','is_available'];
+  const updates = {};
+  for (const f of fields) if (req.body[f] !== undefined) updates[f] = req.body[f];
+  const { data, error } = await supabase.from('services')
+    .update(updates).eq('id', req.params.id).eq('tenant_id', req.tenant.tenantId)
+    .select().single();
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
+// ─── POST /admin/services/:id/image ──────────────────────────────────────────
+
+router.post('/services/:id/image', requireAuth, upload.single('image'), async (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'Ningún archivo recibido' });
+  try {
+    const publicUrl = await uploadImageBuffer(req.file.buffer, req.file.originalname, req.file.mimetype, req.tenant.tenantId);
+    const { data, error } = await supabase.from('services')
+      .update({ image_url: publicUrl }).eq('id', req.params.id).eq('tenant_id', req.tenant.tenantId)
+      .select('id, name, image_url').single();
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(data);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// ─── DELETE /admin/services/:id ───────────────────────────────────────────────
+
+router.delete('/services/:id', requireAuth, async (req, res) => {
+  const { error } = await supabase.from('services')
+    .delete().eq('id', req.params.id).eq('tenant_id', req.tenant.tenantId);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ ok: true });
 });
 
 // ─── GET /admin/chats — conversation list with last message + pending order ────

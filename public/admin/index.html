@@ -71,7 +71,8 @@
     <!-- Tabs -->
     <div class="max-w-6xl mx-auto px-4 flex gap-6 text-sm text-gray-500">
       <button class="py-2" id="tabChats" onclick="switchTab('chats')">💬 Chats</button>
-      <button class="py-2 tab-active" id="tabProducts" onclick="switchTab('products')">📦 Catálogo</button>
+      <button class="py-2 tab-active" id="tabProducts" onclick="switchTab('products')">📦 Productos</button>
+      <button class="py-2" id="tabServices" onclick="switchTab('services')">🛠 Servicios</button>
       <button class="py-2" id="tabOrders" onclick="switchTab('orders')">🛒 Pedidos</button>
       <button class="py-2" id="tabSettings" onclick="switchTab('settings')">⚙️ Ajustes</button>
       <button class="py-2" id="tabHelp" onclick="switchTab('help')">❓ Ayuda</button>
@@ -225,6 +226,15 @@
       </div>
     </div>
 
+    <!-- ── SERVICES TAB ── -->
+    <div id="sectionServices" class="hidden">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold text-gray-800">Catálogo de servicios</h2>
+        <button onclick="openServiceModal()" class="btn-green px-4 py-2 rounded-lg text-sm font-semibold">+ Nuevo servicio</button>
+      </div>
+      <div id="serviceList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+    </div>
+
     <!-- ── ORDERS TAB ── -->
     <div id="sectionOrders" class="hidden">
       <div class="flex items-center justify-between mb-4">
@@ -367,6 +377,30 @@
     <!-- ── SETTINGS TAB ── -->
     <div id="sectionSettings" class="hidden max-w-xl space-y-5">
       <h2 class="text-lg font-semibold text-gray-800">Ajustes</h2>
+
+      <!-- Sections toggle -->
+      <div class="bg-white rounded-xl shadow-sm p-6">
+        <h3 class="font-medium text-gray-800 mb-1">🗂 Secciones activas</h3>
+        <p class="text-xs text-gray-400 mb-4">Activá solo las secciones que usa tu negocio. Sara solo ofrecerá lo que esté habilitado.</p>
+        <div id="sectionsMsg" class="hidden rounded-lg px-4 py-2 text-sm mb-4"></div>
+        <div class="space-y-3 mb-4">
+          <label class="flex items-center gap-3 cursor-pointer">
+            <input id="sProductsEnabled" type="checkbox" class="w-4 h-4 accent-green-600"/>
+            <div>
+              <p class="text-sm font-medium text-gray-700">📦 Productos</p>
+              <p class="text-xs text-gray-400">Venta de artículos físicos con stock (flores, tortas, repuestos...)</p>
+            </div>
+          </label>
+          <label class="flex items-center gap-3 cursor-pointer">
+            <input id="sServicesEnabled" type="checkbox" class="w-4 h-4 accent-green-600"/>
+            <div>
+              <p class="text-sm font-medium text-gray-700">🛠 Servicios</p>
+              <p class="text-xs text-gray-400">Servicios con precio fijo o por hora (catering, cortes, consultas...)</p>
+            </div>
+          </label>
+        </div>
+        <button onclick="saveSections()" class="btn-green w-full py-2 rounded-lg text-sm font-semibold">Guardar secciones</button>
+      </div>
 
       <!-- Bot personality -->
       <div class="bg-white rounded-xl shadow-sm p-6">
@@ -539,6 +573,75 @@
       </div>
     </div>
 
+  </div>
+</div>
+
+<!-- ════ SERVICE MODAL ════ -->
+<div id="serviceModal" class="hidden fixed inset-0 modal-bg flex items-center justify-center z-50 px-4">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 max-h-screen overflow-y-auto">
+    <div class="flex items-center justify-between mb-5">
+      <h3 class="font-semibold text-gray-800 text-lg" id="serviceModalTitle">Nuevo servicio</h3>
+      <button onclick="closeServiceModal()" class="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
+    </div>
+    <div id="serviceModalError" class="hidden bg-red-50 text-red-700 text-sm rounded-lg px-4 py-2 mb-4"></div>
+    <div class="space-y-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
+        <input id="svName" type="text" placeholder="Ej: Corte de cabello, Catering para eventos"
+          class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
+          <input id="svCategory" type="text" placeholder="Ej: Cortes, Catering"
+            class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Tipo de precio *</label>
+          <select id="svPriceType" onchange="toggleServiceDuration()"
+            class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
+            <option value="fixed">Precio fijo</option>
+            <option value="hourly">Por hora</option>
+          </select>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1" id="svPriceLabel">Precio (Gs) *</label>
+          <input id="svPrice" type="number" min="0" placeholder="50000"
+            class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
+        </div>
+        <div id="svDurationWrap">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Duración (minutos)</label>
+          <input id="svDuration" type="number" min="0" placeholder="60"
+            class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
+        </div>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+        <textarea id="svDescription" rows="2" placeholder="Describí el servicio brevemente..."
+          class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm resize-none"></textarea>
+      </div>
+      <!-- Image -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Foto del servicio</label>
+        <div id="svImgPreview" class="hidden mb-2">
+          <img id="svImgPreviewImg" src="" class="h-24 rounded-lg object-cover"/>
+        </div>
+        <label class="flex items-center gap-2 cursor-pointer text-sm text-green-700 hover:text-green-900">
+          <span>📷 Subir foto</span>
+          <input type="file" accept="image/*" class="hidden" onchange="uploadServiceImg(this)"/>
+        </label>
+      </div>
+      <div class="flex items-center gap-2">
+        <input id="svAvailable" type="checkbox" checked class="w-4 h-4 accent-green-600"/>
+        <label for="svAvailable" class="text-sm text-gray-700">Servicio disponible</label>
+      </div>
+    </div>
+    <div class="flex gap-3 mt-6">
+      <button onclick="closeServiceModal()" class="flex-1 border border-gray-200 py-2 rounded-lg text-sm font-semibold text-gray-600 hover:bg-gray-50">Cancelar</button>
+      <button onclick="saveService()" class="flex-1 btn-green py-2 rounded-lg text-sm font-semibold">Guardar</button>
+    </div>
   </div>
 </div>
 
@@ -739,12 +842,13 @@ async function showDashboard() {
 
 // ── Tab switching ──────────────────────────────────────────────────────────────
 function switchTab(tab) {
-  ['chats','products','orders','settings','help'].forEach(t => {
+  ['chats','products','services','orders','settings','help'].forEach(t => {
     document.getElementById('section' + cap(t)).classList.toggle('hidden', t !== tab);
     document.getElementById('tab'     + cap(t)).classList.toggle('tab-active', t === tab);
   });
   if (tab === 'orders')   loadOrders();
   if (tab === 'settings') loadSettings();
+  if (tab === 'services') loadServices();
   if (tab === 'chats')    { loadChatList(); startChatListPoll(); }
   else                    stopChatListPoll();
 }
@@ -1125,6 +1229,8 @@ async function loadSettings() {
     document.getElementById('sPayment').value             = s.payment_instructions || '';
     document.getElementById('sMerchantPhone').value       = s.merchant_phone || '';
     document.getElementById('sCustomInstructions').value  = s.custom_instructions || '';
+    document.getElementById('sProductsEnabled').checked   = s.products_enabled !== false;
+    document.getElementById('sServicesEnabled').checked   = !!s.services_enabled;
     initPresets(s.bot_personality);
 
     // Delivery
@@ -1290,8 +1396,207 @@ async function api(path, method = 'GET', body = null, auth = true) {
   return data;
 }
 
-function formatGs(n) {
-  return (n || 0).toLocaleString('es-PY') + ' Gs';
+function formatGs(n) { return (n || 0).toLocaleString('es-PY') + ' Gs'; }
+function fmtGs(n)    { return formatGs(n); }
+
+// ══════════════════════════════════════════════════════════════════════════════
+// SECTIONS TOGGLE
+// ══════════════════════════════════════════════════════════════════════════════
+
+async function saveSections() {
+  const msgEl = document.getElementById('sectionsMsg');
+  msgEl.classList.add('hidden');
+  try {
+    await api('/admin/settings', 'PUT', {
+      products_enabled: document.getElementById('sProductsEnabled').checked,
+      services_enabled: document.getElementById('sServicesEnabled').checked,
+    });
+    msgEl.className   = 'rounded-lg px-4 py-2 text-sm mb-4 bg-green-50 text-green-700';
+    msgEl.textContent = '✅ Secciones guardadas.';
+    msgEl.classList.remove('hidden');
+  } catch(e) {
+    msgEl.className   = 'rounded-lg px-4 py-2 text-sm mb-4 bg-red-50 text-red-700';
+    msgEl.textContent = '❌ Error al guardar.';
+    msgEl.classList.remove('hidden');
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// SERVICES
+// ══════════════════════════════════════════════════════════════════════════════
+
+let editingServiceId = null;
+let currentServiceImgUrl = null;
+
+async function loadServices() {
+  const list = document.getElementById('serviceList');
+  list.innerHTML = '<p class="text-gray-400 text-sm col-span-3">Cargando...</p>';
+  try {
+    const services = await api('/admin/services');
+    renderServices(services);
+  } catch(e) {
+    list.innerHTML = '<p class="text-red-400 text-sm">Error al cargar servicios.</p>';
+  }
+}
+
+function renderServices(services) {
+  const list = document.getElementById('serviceList');
+  if (!services.length) {
+    list.innerHTML = `
+      <div class="col-span-3 text-center py-16 text-gray-400">
+        <div class="text-5xl mb-3">🛠</div>
+        <p class="font-medium mb-1">Sin servicios todavía</p>
+        <p class="text-sm">Creá tu primer servicio con el botón de arriba</p>
+      </div>`;
+    return;
+  }
+  list.innerHTML = services.map(s => {
+    const price = s.price_type === 'hourly'
+      ? `${fmtGs(s.price_guarani)}/hora`
+      : fmtGs(s.price_guarani);
+    const dur = s.duration_min ? ` · ${s.duration_min} min` : '';
+    return `
+    <div class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100 ${s.is_available ? '' : 'opacity-60'}">
+      ${s.image_url
+        ? `<img src="${s.image_url}" class="w-full h-36 object-cover"/>`
+        : `<div class="w-full h-36 bg-gray-100 flex items-center justify-center text-4xl">🛠</div>`}
+      <div class="p-4">
+        <div class="flex items-start justify-between gap-2 mb-1">
+          <h3 class="font-semibold text-gray-800 text-sm leading-tight">${escHtml(s.name)}</h3>
+          <span class="text-xs px-2 py-0.5 rounded-full flex-shrink-0 ${s.is_available ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}">${s.is_available ? 'Activo' : 'Inactivo'}</span>
+        </div>
+        ${s.category ? `<p class="text-xs text-gray-400 mb-1">${escHtml(s.category)}</p>` : ''}
+        ${s.description ? `<p class="text-xs text-gray-500 mb-2 line-clamp-2">${escHtml(s.description)}</p>` : ''}
+        <p class="font-bold text-green-700 text-sm">${price}${dur}</p>
+        <div class="flex gap-2 mt-3">
+          <button onclick="editService('${s.id}')" class="flex-1 text-xs border border-gray-200 rounded-lg py-1.5 hover:bg-gray-50 transition">✏️ Editar</button>
+          <button onclick="deleteService('${s.id}')" class="flex-1 text-xs border border-red-100 text-red-500 rounded-lg py-1.5 hover:bg-red-50 transition">🗑 Eliminar</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openServiceModal(service = null) {
+  editingServiceId     = service?.id || null;
+  currentServiceImgUrl = service?.image_url || null;
+  document.getElementById('serviceModalTitle').textContent = service ? 'Editar servicio' : 'Nuevo servicio';
+  document.getElementById('serviceModalError').classList.add('hidden');
+  document.getElementById('svName').value        = service?.name || '';
+  document.getElementById('svCategory').value    = service?.category || '';
+  document.getElementById('svPriceType').value   = service?.price_type || 'fixed';
+  document.getElementById('svPrice').value       = service?.price_guarani || '';
+  document.getElementById('svDuration').value    = service?.duration_min || '';
+  document.getElementById('svDescription').value = service?.description || '';
+  document.getElementById('svAvailable').checked = service ? service.is_available : true;
+  const prev = document.getElementById('svImgPreview');
+  const img  = document.getElementById('svImgPreviewImg');
+  if (service?.image_url) { img.src = service.image_url; prev.classList.remove('hidden'); }
+  else prev.classList.add('hidden');
+  toggleServiceDuration();
+  document.getElementById('serviceModal').classList.remove('hidden');
+}
+
+function closeServiceModal() {
+  document.getElementById('serviceModal').classList.add('hidden');
+  editingServiceId = null;
+  currentServiceImgUrl = null;
+}
+
+function toggleServiceDuration() {
+  const isHourly = document.getElementById('svPriceType').value === 'hourly';
+  document.getElementById('svPriceLabel').textContent = isHourly ? 'Tarifa por hora (Gs) *' : 'Precio (Gs) *';
+}
+
+async function uploadServiceImg(input) {
+  const file = input.files[0];
+  if (!file || !editingServiceId) {
+    // If new service, store file and upload after save
+    if (file) {
+      const form = new FormData();
+      form.append('image', file);
+      const token = localStorage.getItem('sara_token');
+      // Preview locally
+      const reader = new FileReader();
+      reader.onload = e => {
+        document.getElementById('svImgPreviewImg').src = e.target.result;
+        document.getElementById('svImgPreview').classList.remove('hidden');
+      };
+      reader.readAsDataURL(file);
+      // Store file for after save
+      window._pendingServiceImg = file;
+    }
+    return;
+  }
+  const form = new FormData();
+  form.append('image', file);
+  const token = localStorage.getItem('sara_token');
+  const res   = await fetch(`/admin/services/${editingServiceId}/image`, {
+    method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: form
+  });
+  const data = await res.json();
+  if (data.image_url) {
+    currentServiceImgUrl = data.image_url;
+    document.getElementById('svImgPreviewImg').src = data.image_url;
+    document.getElementById('svImgPreview').classList.remove('hidden');
+  }
+}
+
+async function saveService() {
+  const errEl = document.getElementById('serviceModalError');
+  errEl.classList.add('hidden');
+  const name  = document.getElementById('svName').value.trim();
+  const price = parseInt(document.getElementById('svPrice').value);
+  if (!name || isNaN(price)) {
+    errEl.textContent = 'Nombre y precio son obligatorios.';
+    errEl.classList.remove('hidden');
+    return;
+  }
+  const body = {
+    name,
+    category:     document.getElementById('svCategory').value.trim() || null,
+    description:  document.getElementById('svDescription').value.trim() || null,
+    price_type:   document.getElementById('svPriceType').value,
+    price_guarani: price,
+    duration_min: parseInt(document.getElementById('svDuration').value) || null,
+    is_available: document.getElementById('svAvailable').checked,
+    image_url:    currentServiceImgUrl || null,
+  };
+  try {
+    let saved;
+    if (editingServiceId) {
+      saved = await api(`/admin/services/${editingServiceId}`, 'PUT', body);
+    } else {
+      saved = await api('/admin/services', 'POST', body);
+      // Upload pending image if any
+      if (window._pendingServiceImg) {
+        const form = new FormData();
+        form.append('image', window._pendingServiceImg);
+        const token = localStorage.getItem('sara_token');
+        await fetch(`/admin/services/${saved.id}/image`, {
+          method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: form
+        });
+        window._pendingServiceImg = null;
+      }
+    }
+    closeServiceModal();
+    loadServices();
+  } catch(e) {
+    errEl.textContent = e.message;
+    errEl.classList.remove('hidden');
+  }
+}
+
+async function editService(id) {
+  const services = await api('/admin/services');
+  const s = services.find(x => x.id === id);
+  if (s) openServiceModal(s);
+}
+
+async function deleteService(id) {
+  if (!confirm('¿Eliminar este servicio?')) return;
+  await api(`/admin/services/${id}`, 'DELETE');
+  loadServices();
 }
 
 // ══════════════════════════════════════════════════════════════════════════════

@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { createClient } = require('@supabase/supabase-js');
-const { getTenantConfig, getStock, decrementStock } = require('../services/stock');
+const { getTenantConfig, getStock, decrementStock, getServices } = require('../services/stock');
 const { sendMessage, sendImage, notifyMerchant } = require('../services/whatsapp');
 const { chat } = require('../services/claude');
 const { downloadAndStore } = require('../services/storage');
@@ -509,7 +509,10 @@ async function handleCustomerMessage(tenant, customerPhone, messageText, locatio
   }
 
   const history    = convRow?.messages_json || [];
-  const stock      = await getStock(tenant.id);
+  const [stock, services] = await Promise.all([
+    getStock(tenant.id),
+    getServices(tenant.id),
+  ]);
   const convState  = {
     delivery_choice:   convRow?.delivery_choice   || null,
     delivery_fee_calc: convRow?.delivery_fee_calc  ?? null,
@@ -557,7 +560,7 @@ async function handleCustomerMessage(tenant, customerPhone, messageText, locatio
   // ── Normal text message → Claude ───────────────────────────────────────────
   const { reply, order, imageProductName, customerName,
           deliveryChoice, deliveryAddress, offTopic, updatedHistory } = await chat({
-    tenant, stock, history,
+    tenant, stock, services, history,
     userMessage: messageText,
     convState,
     imageData: imageData || null,

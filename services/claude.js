@@ -5,18 +5,30 @@ const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 const MAX_HISTORY = 20;
 
-function buildSystemPrompt(tenant, stock, convState = {}) {
+function buildSystemPrompt(tenant, stock, convState = {}, services = []) {
   const botName = tenant.bot_name || 'Sara';
   const personality = tenant.bot_personality || 'cálida, profesional y entusiasta';
 
-  const catalog = stock.length
+  const catalog = (tenant.products_enabled !== false && stock.length)
     ? stock.map(p =>
         `• ${p.name} [${p.category}] — ${p.price_guarani.toLocaleString('es-PY')} Gs` +
         (p.stock_qty > 0 ? ` (${p.stock_qty} disponibles)` : ' (AGOTADO)') +
         (p.description ? ` — ${p.description}` : '') +
         (p.image_url ? ' [tiene foto]' : '')
       ).join('\n')
-    : '(Catálogo vacío — consultá con el local)';
+    : null;
+
+  const servicesCatalog = (tenant.services_enabled && services.length)
+    ? services.map(s => {
+        const price = s.price_type === 'hourly'
+          ? `${s.price_guarani.toLocaleString('es-PY')} Gs/hora`
+          : `${s.price_guarani.toLocaleString('es-PY')} Gs`;
+        const dur = s.duration_min ? ` (${s.duration_min} min)` : '';
+        return `• ${s.name} [${s.category || 'Servicio'}] — ${price}${dur}` +
+          (s.description ? ` — ${s.description}` : '') +
+          (s.image_url ? ' [tiene foto]' : '');
+      }).join('\n')
+    : null;
 
   const paymentBlock = tenant.payment_instructions
     ? `\nINFORMACIÓN DE PAGO:\n${tenant.payment_instructions}`
@@ -52,11 +64,15 @@ D5. Una vez calculado el envío (el sistema te lo informa), confirmá el total i
     ? `\nREGLAS ESPECÍFICAS DEL NEGOCIO (seguir siempre, tienen prioridad sobre todo):\n${tenant.custom_instructions}`
     : '';
 
+  const catalogBlock = [
+    catalog        ? `PRODUCTOS:\n${catalog}`   : null,
+    servicesCatalog ? `SERVICIOS:\n${servicesCatalog}` : null,
+  ].filter(Boolean).join('\n\n') || '(Sin catálogo disponible — consultá con el local)';
+
   return `Eres ${botName}, la asistente de ${tenant.name}. Tu personalidad: ${personality}.
 IMPORTANTE: Siempre respondés en el MISMO IDIOMA que usa el cliente. Si escribe en español rioplatense, respondés igual. Si escribe en inglés, respondés en inglés. Si escribe en portugués, respondés en portugués. Si escribe en jopará (mezcla guaraní-español, muy común en Paraguay), respondés en jopará también usando las mismas palabras guaraní que usó el cliente mezcladas con español. Si escribe en guaraní puro, hacé lo mejor que podás mezclando con español cuando sea necesario para ser claro. Adaptate automáticamente. Nunca decís que sos un bot.
 
-CATÁLOGO ACTUAL:
-${catalog}
+${catalogBlock}
 ${paymentBlock}
 ${customBlock}
 ${deliveryBlock}
@@ -67,8 +83,8 @@ REGLAS:
 1c. Si el cliente pide algo y no lo encontrás en el catálogo, buscá bien antes de decir que no lo tenés.
 2. Cuando el cliente quiera pedir, confirmá productos y cantidades.
 3. Una vez que el cliente CONFIRME EXPLÍCITAMENTE el pedido y la entrega esté resuelta (retiro o envío con tarifa confirmada), respondé de forma natural Y agregá al final:
-<ORDER>{"items":[{"name":"NOMBRE_EXACTO_DEL_PRODUCTO","qty":1,"price_guarani":0}],"total_guarani":0,"delivery_fee":0}</ORDER>
-4. Completá el JSON con los datos reales. En delivery_fee poné el costo de envío (0 si retira en local).
+<ORDER>{"items":[{"name":"NOMBRE_EXACTO","qty":1,"price_guarani":0,"type":"product"}],"total_guarani":0,"delivery_fee":0}</ORDER>
+4. Completá el JSON con los datos reales. Para servicios usá "type":"service". Para servicios por hora, multiplicá el precio por la cantidad de horas. En delivery_fee poné el costo de envío (0 si retira en local o es un servicio).
 5. Después de confirmar un pedido, incluí las instrucciones de pago en tu respuesta (si están disponibles).
 6. Si el cliente pregunta por un producto que tiene foto: <SHOW_IMAGE:NOMBRE_EXACTO_DEL_PRODUCTO>
 7. Si el cliente menciona su nombre por primera vez: <CUSTOMER_NAME:NOMBRE_DEL_CLIENTE>
@@ -77,8 +93,8 @@ REGLAS:
 10. Si el cliente envía una imagen o mensaje que no tiene ninguna relación con los productos o servicios del local, respondé ÚNICAMENTE con: <OFF_TOPIC> No procesás contenido que no esté relacionado con el negocio.`;
 }
 
-async function chat({ tenant, stock, history, userMessage, convState, imageData }) {
-  const systemPrompt = buildSystemPrompt(tenant, stock, convState || {});
+async function chat({ tenant, stock, services, history, userMessage, convState, imageData }) {
+  const systemPrompt = buildSystemPrompt(tenant, stock, convState || {}, services || []);
 
   // Build user content — plain text or image+text for vision messages
   let userContent;

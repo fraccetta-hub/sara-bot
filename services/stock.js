@@ -57,4 +57,19 @@ async function decrementStock(tenantId, items) {
   }
 }
 
-module.exports = { getTenantConfig, getStock, decrementStock };
+async function getServices(tenantId) {
+  const { data, error } = await supabase
+    .from('services')
+    .select('*')
+    .eq('tenant_id', tenantId)
+    .eq('is_available', true)
+    .order('category');
+
+  if (error) {
+    console.error('getServices error:', error.message);
+    return [];
+  }
+  return data || [];
+}
+
+module.exports = { getTenantConfig, getStock, decrementStock, getServices };
