@@ -1261,6 +1261,159 @@ router.get('/orders/export', requireAuth, async (req, res) => {
   res.send('﻿' + csv); // BOM for Excel UTF-8 compatibility
 });
 
+// ─── GET /admin/orders/new — check for orders newer than a timestamp ──────────
+router.get('/orders/new', requireAuth, async (req, res) => {
+  const since = req.query.since;
+  if (!since) return res.json({ orders: [] });
+  const { data } = await supabase
+    .from('orders')
+    .select('id, created_at, total_guarani, items_json, customer_phone, conversations(customer_name)')
+    .eq('tenant_id', req.tenant.tenantId)
+    .gt('created_at', since)
+    .order('created_at', { ascending: false });
+  const orders = (data || []).map(o => ({
+    ...o,
+    customer_name: o.conversations?.customer_name || '',
+    conversations: undefined,
+  }));
+  res.json({ orders });
+});
+
+// ─── GET /admin/products/export — CSV export of the full catalog ─────────────
+router.get('/products/export', requireAuth, async (req, res) => {
+  const { data, error } = await supabase
+    .from('products')
+    .select('name, category, price_guarani, stock_qty, is_available, description, image_url, created_at')
+    .eq('tenant_id', req.tenant.tenantId)
+    .order('category', { ascending: true });
+  if (error) return res.status(500).json({ error: error.message });
+
+  const escape = v => {
+    if (v == null) return '';
+    const s = String(v);
+    return s.includes(',') || s.includes('"') || s.includes('\n')
+      ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+
+  const headers = ['nombre','categoria','precio_guarani','stock','activo','descripcion','imagen_url','creado_en'];
+  const rows = (data || []).map(p => [
+    p.name, p.category, p.price_guarani, p.stock_qty ?? '',
+    p.is_available ? 'si' : 'no', p.description, p.image_url,
+    p.created_at ? new Date(p.created_at).toISOString().slice(0,19).replace('T',' ') : '',
+  ].map(escape).join(','));
+
+  const csv = [headers.join(','), ...rows].join('\r\n');
+  const date = new Date().toISOString().slice(0,10);
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', `attachment; filename="catalogo_${date}.csv"`);
+  res.send('﻿' + csv);
+});
+
+// ─── GET /admin/customers/export — CSV export of all customers ────────────────
+router.get('/customers/export', requireAuth, async (req, res) => {
+  const [convsRes, ordersRes] = await Promise.all([
+    supabase.from('conversations')
+      .select('customer_phone, customer_name, updated_at')
+      .eq('tenant_id', req.tenant.tenantId),
+    supabase.from('orders')
+      .select('customer_phone, total_guarani, status, created_at')
+      .eq('tenant_id', req.tenant.tenantId),
+  ]);
+
+  const convs  = convsRes.data  || [];
+  const orders = ordersRes.data || [];
+
+  const escape = v => {
+    if (v == null) return '';
+    const s = String(v);
+    return s.includes(',') || s.includes('"') || s.includes('\n')
+      ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+
+  const headers = ['telefono','nombre','total_pedidos','pedidos_completados','gasto_total_guarani','ultimo_contacto'];
+  const rows = convs.map(c => {
+    const cOrders = orders.filter(o => o.customer_phone === c.customer_phone);
+    const completed = cOrders.filter(o => o.status === 'delivered').length;
+    const spent = cOrders
+      .filter(o => !['cancelled'].includes(o.status))
+      .reduce((s, o) => s + (o.total_guarani || 0), 0);
+    return [
+      c.customer_phone, c.customer_name || '',
+      cOrders.length, completed, spent,
+      c.updated_at ? new Date(c.updated_at).toISOString().slice(0,19).replace('T',' ') : '',
+    ].map(escape).join(',');
+  });
+
+  const csv = [headers.join(','), ...rows].join('\r\n');
+  const date = new Date().toISOString().slice(0,10);
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', `attachment; filename="clientes_${date}.csv"`);
+  res.send('﻿' + csv);
+});
+
+// ─── GET /admin/analytics — weekly/monthly stats ──────────────────────────────
+router.get('/analytics', requireAuth, async (req, res) => {
+  const period = req.query.period === 'month' ? 30 : 7;
+  const since  = new Date(Date.now() - period * 24 * 60 * 60 * 1000).toISOString();
+
+  const [ordersRes, convsRes] = await Promise.all([
+    supabase.from('orders')
+      .select('total_guarani, status, created_at, items_json, customer_phone')
+      .eq('tenant_id', req.tenant.tenantId)
+      .gte('created_at', since),
+    supabase.from('conversations')
+      .select('customer_phone, updated_at')
+      .eq('tenant_id', req.tenant.tenantId)
+      .gte('updated_at', since),
+  ]);
+
+  const orders = ordersRes.data || [];
+  const convs  = convsRes.data  || [];
+
+  // Orders by day
+  const byDay = {};
+  for (let i = 0; i < period; i++) {
+    const d = new Date(Date.now() - (period - 1 - i) * 24 * 60 * 60 * 1000).toISOString().slice(0,10);
+    byDay[d] = { date: d, orders: 0, revenue: 0 };
+  }
+  for (const o of orders) {
+    const d = o.created_at.slice(0,10);
+    if (byDay[d]) {
+      byDay[d].orders++;
+      if (o.status !== 'cancelled') byDay[d].revenue += (o.total_guarani || 0);
+    }
+  }
+
+  // Top products
+  const productCount = {};
+  for (const o of orders) {
+    for (const item of o.items_json || []) {
+      productCount[item.name] = (productCount[item.name] || 0) + (item.qty || 1);
+    }
+  }
+  const topProducts = Object.entries(productCount)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([name, qty]) => ({ name, qty }));
+
+  const nonCancelled = orders.filter(o => o.status !== 'cancelled');
+  const totalRevenue = nonCancelled.reduce((s, o) => s + (o.total_guarani || 0), 0);
+  const uniqueCustomers = new Set(orders.map(o => o.customer_phone)).size;
+  const activeConvs = new Set(convs.map(c => c.customer_phone)).size;
+
+  res.json({
+    period,
+    days: Object.values(byDay),
+    totalOrders:     orders.length,
+    totalRevenue,
+    avgOrderValue:   nonCancelled.length ? Math.round(totalRevenue / nonCancelled.length) : 0,
+    cancelledOrders: orders.filter(o => o.status === 'cancelled').length,
+    uniqueCustomers,
+    activeConvs,
+    topProducts,
+  });
+});
+
 // ─── DELETE /admin/account — delete all tenant data ───────────────────────────
 router.delete('/account', requireAuth, async (req, res) => {
   const tenantId = req.tenant.tenantId;
