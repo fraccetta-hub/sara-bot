@@ -4,12 +4,20 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Sara Bot — Panel de administración</title>
+  <link rel="manifest" href="/manifest.json"/>
+  <meta name="theme-color" content="#22c55e"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+  <meta name="apple-mobile-web-app-title" content="Sara Bot"/>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     :root { --green: #25D366; }
     .btn-green { background:#25D366; color:#fff; }
     .btn-green:hover { background:#1da851; }
     .status-badge { font-size:.72rem; padding:2px 8px; border-radius:999px; font-weight:600; }
+    .order-filter-btn { background:#f9fafb; color:#6b7280; border-color:#e5e7eb; }
+    .order-filter-btn:hover { border-color:#22c55e; color:#16a34a; }
+    .order-filter-btn.active-filter { background:#dcfce7; color:#15803d; border-color:#86efac; }
     .status-pending    { background:#FEF3C7; color:#92400E; }
     .status-confirmed  { background:#D1FAE5; color:#065F46; }
     .status-preparing  { background:#DBEAFE; color:#1E40AF; }
@@ -389,6 +397,7 @@
             oninput="renderProducts()"/>
         </div>
         <div class="flex gap-2 flex-wrap" id="categoryFilters"></div>
+        <div id="lowStockBanner" class="hidden mt-3 text-sm font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-4 py-2"></div>
       </div>
 
       <div class="bg-white rounded-xl shadow-sm overflow-hidden">
@@ -422,7 +431,7 @@
 
     <!-- ── ORDERS TAB ── -->
     <div id="sectionOrders" class="hidden">
-      <div class="flex items-center justify-between mb-4">
+      <div class="flex items-center justify-between mb-3">
         <h2 data-i18n="orders.title" class="text-lg font-semibold text-gray-800">Pedidos recientes</h2>
         <div class="flex items-center gap-3">
           <button onclick="exportOrders()" data-i18n="orders.export"
@@ -431,6 +440,15 @@
           </button>
           <button onclick="loadOrders()" data-i18n="orders.refresh" class="text-sm text-green-500 hover:underline">↻ Actualizar</button>
         </div>
+      </div>
+      <!-- Status filters -->
+      <div class="flex gap-2 flex-wrap mb-4" id="orderFilters">
+        <button onclick="setOrderFilter('all')"       id="of-all"       class="order-filter-btn active-filter text-xs px-3 py-1.5 rounded-full border font-medium transition" data-i18n="orders.filter.all">Todos</button>
+        <button onclick="setOrderFilter('pending')"   id="of-pending"   class="order-filter-btn text-xs px-3 py-1.5 rounded-full border font-medium transition" data-i18n="orders.status.pending">Pendiente</button>
+        <button onclick="setOrderFilter('confirmed')" id="of-confirmed" class="order-filter-btn text-xs px-3 py-1.5 rounded-full border font-medium transition" data-i18n="orders.status.confirmed">Confirmado</button>
+        <button onclick="setOrderFilter('preparing')" id="of-preparing" class="order-filter-btn text-xs px-3 py-1.5 rounded-full border font-medium transition" data-i18n="orders.status.preparing">Preparando</button>
+        <button onclick="setOrderFilter('delivered')" id="of-delivered" class="order-filter-btn text-xs px-3 py-1.5 rounded-full border font-medium transition" data-i18n="orders.status.delivered">Entregado</button>
+        <button onclick="setOrderFilter('cancelled')" id="of-cancelled" class="order-filter-btn text-xs px-3 py-1.5 rounded-full border font-medium transition" data-i18n="orders.status.cancelled">Cancelado</button>
       </div>
       <div class="space-y-3" id="ordersList">
         <div class="text-center py-8 text-gray-400">Cargando...</div>
@@ -627,6 +645,7 @@
           <button id="lang_de" onclick="setLang('de')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border-2 transition">🇩🇪 Deutsch</button>
           <button id="lang_it" onclick="setLang('it')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border-2 transition">🇮🇹 Italiano</button>
           <button id="lang_fr" onclick="setLang('fr')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border-2 transition">🇫🇷 Français</button>
+          <button id="lang_pt" onclick="setLang('pt')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border-2 transition">🇧🇷 Português</button>
         </div>
       </div>
 
@@ -930,11 +949,18 @@
             <div id="planStatusSub" class="text-sm mt-0.5"></div>
           </div>
         </div>
-        <button onclick="switchTab('support')"
-          class="mt-4 w-full py-2 rounded-lg text-sm font-semibold bg-green-50 text-green-700 border border-green-200 hover:bg-green-100 transition"
-          data-i18n="plan.status.renew">
-          💬 Contactar soporte para renovar
-        </button>
+        <div class="mt-4 flex flex-col gap-2">
+          <button id="mpPayBtn" onclick="startMpCheckout()"
+            class="w-full py-2 rounded-lg text-sm font-semibold bg-blue-600 text-white hover:bg-blue-700 transition"
+            data-i18n="plan.pay.btn">
+            💳 Pagar con MercadoPago
+          </button>
+          <button onclick="switchTab('support')"
+            class="w-full py-2 rounded-lg text-sm font-semibold bg-green-50 text-green-700 border border-green-200 hover:bg-green-100 transition"
+            data-i18n="plan.status.renew">
+            💬 Contactar soporte para renovar
+          </button>
+        </div>
       </div>
 
       <!-- Planes disponibles -->
@@ -1406,7 +1432,9 @@ es:{
 'services.title':'Catálogo de servicios','services.new':'+ Nuevo servicio','services.loading':'Cargando...','services.error':'Error al cargar servicios.',
 'services.empty.title':'Sin servicios todavía','services.empty.hint':'Creá tu primer servicio con el botón de arriba',
 'services.active':'Activo','services.inactive':'Inactivo','services.edit':'✏️ Editar','services.delete':'🗑 Eliminar','services.perHour':'/hora','services.confirm':'¿Eliminar este servicio?',
-'orders.title':'Pedidos recientes','orders.refresh':'↻ Actualizar','orders.export':'⬇ Exportar CSV','orders.loading':'Cargando...','orders.empty':'Todavía no hay pedidos.','orders.delivery':'+envío',
+'orders.title':'Pedidos recientes','orders.refresh':'↻ Actualizar','orders.export':'⬇ Exportar CSV','orders.loading':'Cargando...','orders.empty':'Todavía no hay pedidos.','orders.delivery':'+envío','orders.filter.all':'Todos',
+'plan.pay.btn':'💳 Pagar con MercadoPago','plan.pay.processing':'Procesando...','plan.pay.error':'No se pudo iniciar el pago. Contactá soporte.','plan.pay.not_configured':'El pago online no está configurado aún. Contactá soporte.',
+'products.lowstock':'⚠️ {n} producto(s) con stock bajo (≤5 unidades)',
 'support.title':'Soporte técnico','support.subtitle':'Envianos tu consulta y te respondemos a la brevedad.','support.empty':'Aún no hay mensajes. ¡Escribinos!','support.placeholder':'Escribí tu consulta aquí...','support.send':'Enviar','support.loading':'Cargando...',
 'feedback.title':'¿Algo que podamos mejorar?','feedback.desc':'Contanos qué necesitás — una función nueva, algo que no funciona como esperabas, o simplemente una idea. Revisamos cada mensaje y lo que tiene sentido lo implementamos rápido.','feedback.placeholder':'Ej: Me gustaría poder filtrar los pedidos por fecha, o ver el historial de un cliente...','feedback.send':'Enviar sugerencia','feedback.sent':'✅ ¡Gracias! Tu sugerencia fue enviada.',
 'tab.plan':'💳 Plan',
@@ -1578,7 +1606,9 @@ en:{
 'services.title':'Services catalog','services.new':'+ New service','services.loading':'Loading...','services.error':'Error loading services.',
 'services.empty.title':'No services yet','services.empty.hint':'Create your first service with the button above',
 'services.active':'Active','services.inactive':'Inactive','services.edit':'✏️ Edit','services.delete':'🗑 Delete','services.perHour':'/hr','services.confirm':'Delete this service?',
-'orders.title':'Recent orders','orders.refresh':'↻ Refresh','orders.export':'⬇ Export CSV','orders.loading':'Loading...','orders.empty':'No orders yet.','orders.delivery':'+delivery',
+'orders.title':'Recent orders','orders.refresh':'↻ Refresh','orders.export':'⬇ Export CSV','orders.loading':'Loading...','orders.empty':'No orders yet.','orders.delivery':'+delivery','orders.filter.all':'All',
+'plan.pay.btn':'💳 Pay with MercadoPago','plan.pay.processing':'Processing...','plan.pay.error':'Could not start payment. Contact support.','plan.pay.not_configured':'Online payment not configured yet. Contact support.',
+'products.lowstock':'⚠️ {n} product(s) with low stock (≤5 units)',
 'support.title':'Technical support','support.subtitle':'Send us your question and we\'ll reply shortly.','support.empty':'No messages yet. Write to us!','support.placeholder':'Type your question here...','support.send':'Send','support.loading':'Loading...',
 'feedback.title':'Anything we can improve?','feedback.desc':'Tell us what you need — a new feature, something that\'s not working as expected, or just an idea. We read every message and implement what makes sense, fast.','feedback.placeholder':'E.g.: I\'d like to filter orders by date, or see a customer\'s full history...','feedback.send':'Send suggestion','feedback.sent':'✅ Thanks! Your suggestion has been sent.',
 'tab.plan':'💳 Plan',
@@ -1750,7 +1780,9 @@ it:{
 'services.title':'Catalogo servizi','services.new':'+ Nuovo servizio','services.loading':'Caricamento...','services.error':'Errore nel caricamento dei servizi.',
 'services.empty.title':'Nessun servizio ancora','services.empty.hint':'Crea il tuo primo servizio con il pulsante in alto',
 'services.active':'Attivo','services.inactive':'Non attivo','services.edit':'✏️ Modifica','services.delete':'🗑 Elimina','services.perHour':'/ora','services.confirm':'Eliminare questo servizio?',
-'orders.title':'Ordini recenti','orders.refresh':'↻ Aggiorna','orders.export':'⬇ Esporta CSV','orders.loading':'Caricamento...','orders.empty':'Ancora nessun ordine.','orders.delivery':'+consegna',
+'orders.title':'Ordini recenti','orders.refresh':'↻ Aggiorna','orders.export':'⬇ Esporta CSV','orders.loading':'Caricamento...','orders.empty':'Ancora nessun ordine.','orders.delivery':'+consegna','orders.filter.all':'Tutti',
+'plan.pay.btn':'💳 Paga con MercadoPago','plan.pay.processing':'Elaborazione...','plan.pay.error':'Impossibile avviare il pagamento. Contatta il supporto.','plan.pay.not_configured':'Il pagamento online non è ancora configurato. Contatta il supporto.',
+'products.lowstock':'⚠️ {n} prodotto/i con scorte basse (≤5 unità)',
 'support.title':'Supporto tecnico','support.subtitle':'Inviaci la tua richiesta e ti risponderemo al più presto.','support.empty':'Ancora nessun messaggio. Scrivici!','support.placeholder':'Scrivi qui la tua domanda...','support.send':'Invia','support.loading':'Caricamento...',
 'feedback.title':'Qualcosa che possiamo migliorare?','feedback.desc':'Dicci cosa ti serve — una nuova funzione, qualcosa che non funziona come ti aspettavi, o semplicemente un\'idea. Leggiamo ogni messaggio e implementiamo ciò che ha senso, in tempi brevi.','feedback.placeholder':'Es: Vorrei poter filtrare gli ordini per data, o vedere la cronologia di un cliente...','feedback.send':'Invia suggerimento','feedback.sent':'✅ Grazie! Il tuo suggerimento è stato inviato.',
 'tab.plan':'💳 Piano',
@@ -1921,7 +1953,9 @@ de:{
 'services.title':'Dienstleistungskatalog','services.new':'+ Neuer Service','services.loading':'Wird geladen...','services.error':'Fehler beim Laden der Services.',
 'services.empty.title':'Noch keine Services','services.empty.hint':'Erstelle deinen ersten Service mit dem Button oben',
 'services.active':'Aktiv','services.inactive':'Inaktiv','services.edit':'✏️ Bearbeiten','services.delete':'🗑 Löschen','services.perHour':'/Std.','services.confirm':'Diesen Service löschen?',
-'orders.title':'Letzte Bestellungen','orders.refresh':'↻ Aktualisieren','orders.export':'⬇ CSV exportieren','orders.loading':'Wird geladen...','orders.empty':'Noch keine Bestellungen.','orders.delivery':'+Lieferung',
+'orders.title':'Letzte Bestellungen','orders.refresh':'↻ Aktualisieren','orders.export':'⬇ CSV exportieren','orders.loading':'Wird geladen...','orders.empty':'Noch keine Bestellungen.','orders.delivery':'+Lieferung','orders.filter.all':'Alle',
+'plan.pay.btn':'💳 Mit MercadoPago bezahlen','plan.pay.processing':'Verarbeitung...','plan.pay.error':'Zahlung konnte nicht gestartet werden. Support kontaktieren.','plan.pay.not_configured':'Online-Zahlung noch nicht konfiguriert. Support kontaktieren.',
+'products.lowstock':'⚠️ {n} Produkt(e) mit niedrigem Lagerbestand (≤5 Einheiten)',
 'support.title':'Technischer Support','support.subtitle':'Sende uns deine Anfrage und wir antworten dir schnellstmöglich.','support.empty':'Noch keine Nachrichten. Schreib uns!','support.placeholder':'Schreib deine Frage hier...','support.send':'Senden','support.loading':'Wird geladen...',
 'feedback.title':'Etwas, das wir verbessern können?','feedback.desc':'Sag uns, was du brauchst — eine neue Funktion, etwas das nicht wie erwartet funktioniert, oder einfach eine Idee. Wir lesen jede Nachricht und setzen um, was Sinn ergibt — schnell.','feedback.placeholder':'Z.B.: Ich würde gerne Bestellungen nach Datum filtern oder den Verlauf eines Kunden sehen...','feedback.send':'Vorschlag senden','feedback.sent':'✅ Danke! Dein Vorschlag wurde gesendet.',
 'tab.plan':'💳 Tarif',
@@ -2092,7 +2126,9 @@ fr:{
 'services.title':'Catalogue de services','services.new':'+ Nouveau service','services.loading':'Chargement...','services.error':'Erreur de chargement des services.',
 'services.empty.title':'Aucun service encore','services.empty.hint':'Créez votre premier service avec le bouton ci-dessus',
 'services.active':'Actif','services.inactive':'Inactif','services.edit':'✏️ Modifier','services.delete':'🗑 Supprimer','services.perHour':'/h','services.confirm':'Supprimer ce service ?',
-'orders.title':'Commandes récentes','orders.refresh':'↻ Actualiser','orders.export':'⬇ Exporter CSV','orders.loading':'Chargement...','orders.empty':'Aucune commande pour l\'instant.','orders.delivery':'+livraison',
+'orders.title':'Commandes récentes','orders.refresh':'↻ Actualiser','orders.export':'⬇ Exporter CSV','orders.loading':'Chargement...','orders.empty':'Aucune commande pour l\'instant.','orders.delivery':'+livraison','orders.filter.all':'Tous',
+'plan.pay.btn':'💳 Payer avec MercadoPago','plan.pay.processing':'Traitement...','plan.pay.error':'Impossible de démarrer le paiement. Contactez le support.','plan.pay.not_configured':'Le paiement en ligne n\'est pas encore configuré. Contactez le support.',
+'products.lowstock':'⚠️ {n} produit(s) avec stock faible (≤5 unités)',
 'support.title':'Support technique','support.subtitle':'Envoyez-nous votre question et nous vous répondrons rapidement.','support.empty':'Pas encore de messages. Écrivez-nous !','support.placeholder':'Écrivez votre question ici...','support.send':'Envoyer','support.loading':'Chargement...',
 'feedback.title':'Quelque chose à améliorer ?','feedback.desc':'Dites-nous ce dont vous avez besoin — une nouvelle fonctionnalité, quelque chose qui ne fonctionne pas comme prévu, ou simplement une idée. Nous lisons chaque message et implémentons ce qui a du sens, rapidement.','feedback.placeholder':'Ex : J\'aimerais filtrer les commandes par date, ou voir l\'historique complet d\'un client...','feedback.send':'Envoyer une suggestion','feedback.sent':'✅ Merci ! Votre suggestion a bien été envoyée.',
 'tab.plan':'💳 Abonnement',
@@ -2251,6 +2287,175 @@ fr:{
 'analytics.chart.title':'Commandes par jour','analytics.top.title':'🏆 Produits les plus commandés','analytics.top.empty':'Aucune commande sur cette période.',
 'analytics.export.title':'⬇ Exporter les données','analytics.export.orders':'🛒 Commandes CSV','analytics.export.products':'📦 Catalogue CSV','analytics.export.customers':'👥 Clients CSV',
 'notif.new_order':'Nouvelle commande','notif.view':'Voir la commande',
+},
+pt:{
+'login.user':'Usuário','login.password':'Senha','login.submit':'Entrar','login.hint':'Primeira vez: senha <b>sara1234</b>',
+'nav.logout':'Sair',
+'tab.chats':'💬 Chats','tab.products':'📦 Produtos','tab.services':'🛠 Serviços','tab.orders':'🛒 Pedidos','tab.settings':'⚙️ Configurações','tab.help':'❓ Ajuda','tab.plan':'💳 Plano','tab.analytics':'📊 Analytics','tab.appointments':'📅 Agendamentos',
+'stat.today':'Pedidos hoje','stat.pending':'Pendentes','stat.revenue':'Receita hoje','stat.products':'Produtos ativos',
+'products.title':'Catálogo de produtos','products.new':'+ Novo produto',
+'products.col.product':'Produto','products.col.category':'Categoria','products.col.price':'Preço (Gs)','products.col.stock':'Estoque','products.col.status':'Status','products.col.actions':'Ações',
+'products.loading':'Carregando...','products.empty':'Nenhum produto nesta categoria.','products.filter.all':'Todos','products.active':'✅ Ativo','products.sold':'🔴 Esgotado',
+'products.search':'Buscar por nome ou código...','products.lowstock':'⚠️ {n} produto(s) com estoque baixo (≤5 unidades)',
+'services.title':'Catálogo de serviços','services.new':'+ Novo serviço','services.loading':'Carregando...','services.error':'Erro ao carregar serviços.',
+'services.empty.title':'Ainda sem serviços','services.empty.hint':'Crie seu primeiro serviço com o botão acima',
+'services.active':'Ativo','services.inactive':'Inativo','services.edit':'✏️ Editar','services.delete':'🗑 Excluir','services.perHour':'/hora','services.confirm':'Excluir este serviço?',
+'orders.title':'Pedidos recentes','orders.refresh':'↻ Atualizar','orders.export':'⬇ Exportar CSV','orders.loading':'Carregando...','orders.empty':'Ainda não há pedidos.','orders.delivery':'+entrega','orders.filter.all':'Todos',
+'orders.status.pending':'Pendente','orders.status.confirmed':'Confirmado','orders.status.preparing':'Preparando','orders.status.delivering':'Em entrega','orders.status.delivered':'Entregue','orders.status.cancelled':'Cancelado',
+'orders.name.placeholder':'Nome do cliente','orders.name.save':'Salvar',
+'support.title':'Suporte técnico','support.subtitle':'Envie sua dúvida e responderemos em breve.','support.empty':'Ainda não há mensagens. Escreva-nos!','support.placeholder':'Escreva sua dúvida aqui...','support.send':'Enviar','support.loading':'Carregando...',
+'feedback.title':'Algo que possamos melhorar?','feedback.desc':'Diga-nos o que precisa — uma nova funcionalidade, algo que não funcionou como esperado ou simplesmente uma ideia. Lemos cada mensagem e implementamos o que faz sentido, rápido.','feedback.placeholder':'Ex: Gostaria de filtrar os pedidos por data, ou ver o histórico completo de um cliente...','feedback.send':'Enviar sugestão','feedback.sent':'✅ Obrigado! Sua sugestão foi enviada.',
+'plan.month':'/mês','plan.plans.chat_support':'Suporte via chat',
+'plan.status.title':'📋 Status da assinatura','plan.status.renew':'💬 Contatar suporte para renovar','plan.plans.title':'🚀 Planos disponíveis',
+'plan.status.active':'Assinatura ativa','plan.status.no_expiry':'Sem data de vencimento configurada',
+'plan.status.expires_on':'Vence em {date} ({days} dias restantes)',
+'plan.status.expiring':'Assinatura prestes a vencer','plan.status.expiring.sub':'Vence em {date} — restam {days} dias',
+'plan.status.expired':'Assinatura vencida','plan.status.expired.sub':'Venceu em {date}. Renove para continuar usando o bot.',
+'plan.status.suspended':'Conta desativada','plan.status.suspended.sub':'Sua conta foi desativada. Entre em contato com o suporte.',
+'plan.banner.suspended':'Sua conta está suspensa.','plan.banner.expired':'Seu plano venceu. O bot está pausado.','plan.banner.contact':'Contatar suporte','plan.banner.view':'Ver opções',
+'plan.pay.btn':'💳 Pagar com MercadoPago','plan.pay.processing':'Processando...','plan.pay.error':'Não foi possível iniciar o pagamento. Contate o suporte.','plan.pay.not_configured':'Pagamento online ainda não configurado. Contate o suporte.',
+'settings.danger.title':'🗑 Excluir conta','settings.danger.desc':'Exclua permanentemente sua conta e todos os seus dados. Esta ação é irreversível.','settings.danger.btn':'Excluir minha conta permanentemente','settings.danger.confirm1':'Tem certeza de que deseja excluir sua conta? Isso apagará TODOS os seus dados permanentemente.','settings.danger.confirm2':'Para confirmar, digite exatamente: EXCLUIR','settings.danger.aborted':'Exclusão cancelada.','settings.danger.deleted':'Conta excluída. Até mais!',
+'chat.title':'Conversas','chat.search':'Buscar cliente...','chat.empty.title':'Selecione uma conversa','chat.empty.hint':'As respostas chegam ao cliente via WhatsApp',
+'chat.takeover':'👤 Modo manual ativo — Sara está em pausa neste chat.','chat.resume':'🤖 Reativar Sara',
+'chat.placeholder':'Escreva uma mensagem...','chat.noConvs':'Ainda não há conversas',
+'chat.confirm':'✅ Confirmar pedido','chat.cancel':'❌ Cancelar','chat.pendingOrder':'🛒 Pedido pendente:',
+'chat.you':'👤 Você','chat.bot':'🤖 Sara','chat.pending':'Pedido',
+'chat.errSend':'Erro ao enviar: ','chat.errSendImg':'Erro ao enviar imagem: ','chat.cancelOrder':'Cancelar este pedido?',
+'img.title':'Enviar imagem','img.upload':'Enviar foto','img.choose':'Escolher imagem do dispositivo','img.catalog':'Fotos do catálogo','img.empty':'Sem fotos no catálogo','img.loading':'Carregando...','img.errLoad':'Erro ao carregar',
+'settings.title':'Configurações',
+'settings.language.title':'🌐 Idioma do painel','settings.language.desc':'Escolha o idioma da interface de administração.',
+'settings.sections.title':'🗂 Seções ativas','settings.sections.desc':'Ative apenas as seções que seu negócio usa. Sara só oferecerá o que estiver habilitado.',
+'settings.sections.products':'📦 Produtos','settings.sections.products.desc':'Venda de itens físicos com estoque (flores, bolos, peças...)',
+'settings.sections.services':'🛠 Serviços','settings.sections.services.desc':'Serviços com preço fixo ou por hora (catering, cortes, consultas...)',
+'settings.sections.save':'Salvar seções','settings.sections.saved':'✅ Seções salvas.','settings.sections.error':'❌ Erro ao salvar.','settings.sections.contactAdmin':'Para ativar mais seções, entre em contato com o administrador.',
+'settings.bot.title':'🤖 Personalidade do seu assistente','settings.bot.desc':'Isso define como Sara fala com seus clientes.',
+'settings.bot.name':'Nome do bot','settings.bot.style':'Estilo de personalidade',
+'settings.bot.customLabel':'Descrição personalizada','settings.bot.customHint':'Descreva a personalidade em detalhes — quanto mais específico, melhor.',
+'settings.bot.save':'Salvar personalidade','settings.bot.saved':'✅ Personalidade salva. Sara usará este estilo a partir de agora.',
+'settings.phone.title':'📲 Seu número de WhatsApp','settings.phone.desc':'Sara te avisa aqui quando um novo pedido chega. Formato internacional sem + ou espaços (ex: 5521987654321).',
+'settings.phone.save':'Salvar número','settings.phone.saved':'✅ Número salvo. Sara avisará você ao receber pedidos.','settings.phone.invalid':'Digite um número válido.',
+'settings.payment.title':'💳 Instruções de pagamento','settings.payment.desc':'Sara as envia automaticamente após cada pedido confirmado.',
+'settings.payment.placeholder':'Ex: Pague via Pix para 99999-9999. Envie o comprovante 🧾',
+'settings.payment.save':'Salvar instruções de pagamento','settings.payment.saved':'✅ Instruções de pagamento salvas.',
+'settings.rules.title':'📋 Regras do negócio','settings.rules.desc':'Escreva em linguagem natural qualquer regra, restrição ou informação especial do seu negócio. Sara sempre as seguirá.',
+'settings.rules.example':'Ex: "Bolos personalizados exigem 3 dias de antecedência." / "Só entregamos de seg. a sáb. das 8 às 13h."',
+'settings.rules.placeholder':'- Composições personalizadas exigem 48h de antecedência.\n- Entregas apenas seg.–sáb. entre 8:00 e 13:00.',
+'settings.rules.save':'Salvar regras','settings.rules.saved':'✅ Regras salvas. Sara as seguirá em cada conversa.',
+'settings.delivery.title':'🚚 Entregas a domicílio','settings.delivery.desc':'Configure se você oferece entregas, o endereço do seu local e o custo.',
+'settings.delivery.enable':'Ativar entregas','settings.delivery.address':'Endereço do local','settings.delivery.lat':'Latitude','settings.delivery.lng':'Longitude',
+'settings.delivery.mapsHint':'Abra o Google Maps, encontre seu local, clique com o botão direito → "O que há aqui?" e copie as coordenadas.',
+'settings.delivery.type':'Tipo de tarifa','settings.delivery.fixed':'Tarifa fixa','settings.delivery.zone':'Por zona (km)','settings.delivery.perkm':'Por quilômetro',
+'settings.delivery.baseFee':'Custo de entrega (Gs)','settings.delivery.baseFeeKm':'Tarifa base (Gs)',
+'settings.delivery.zoneRadius':'Raio da zona interior (km)','settings.delivery.zoneOuter':'Custo fora da zona (Gs, 0 = sem entrega)',
+'settings.delivery.perKm':'Custo adicional por km (Gs)','settings.delivery.minOrder':'Valor mínimo para entrega (Gs)','settings.delivery.minHint':'Deixe 0 para sem mínimo.',
+'settings.delivery.disabled':'Dias/datas sem entrega','settings.delivery.disabledHint':'Separados por vírgula. Nomes de dias (domingo, sábado) ou datas exatas (AAAA-MM-DD).',
+'settings.delivery.save':'Salvar configurações de entrega','settings.delivery.saved':'✅ Configurações de entrega salvas.',
+'settings.password.title':'🔒 Alterar senha','settings.password.placeholder':'Nova senha (mín. 6 caracteres)','settings.password.save':'Salvar senha','settings.password.saved':'✅ Senha atualizada.',
+'settings.legal.title':'📄 Legal','settings.legal.terms':'📋 Termos de Serviço','settings.legal.privacy':'🔒 Política de Privacidade','settings.legal.disclaimer':'⚠️ Aviso Legal','settings.legal.note':'Ao usar este serviço você aceita os termos e condições.',
+'settings.plan.title':'💳 Plano e pagamentos','settings.plan.subtitle':'Sua assinatura ativa do Sara Bot.',
+'settings.plan.starter':'Starter','settings.plan.pro':'Pro','settings.plan.enterprise':'Enterprise','settings.plan.popular':'Popular','settings.plan.custom':'Consultar',
+'settings.plan.f1':'1 número WhatsApp','settings.plan.f2':'Catálogo ilimitado','settings.plan.f3':'1.000 conv./mês','settings.plan.f4':'Suporte por e-mail','settings.plan.f5':'5.000 conv./mês','settings.plan.f6':'Agenda de horários','settings.plan.f7':'Suporte prioritário','settings.plan.f8':'Multi-número','settings.plan.f9':'Conversas ilimitadas','settings.plan.f10':'Integrações personalizadas','settings.plan.f11':'SLA garantido',
+'settings.plan.contact':'Para contratar ou mudar de plano, fale conosco em',
+'modal.product.new':'Novo produto','modal.product.edit':'Editar produto',
+'modal.product.name':'Nome *','modal.product.namePh':'Ex: Buquê de Rosas Vermelhas (12 unidades)',
+'modal.product.category':'Categoria','modal.product.categoryPh':'Ex: Buquês',
+'modal.product.sku':'Código / SKU',
+'modal.product.price':'Preço (Gs) *','modal.product.stock':'Estoque disponível','modal.product.unlimited':'Sem limite de estoque',
+'modal.product.desc':'Descrição','modal.product.descPh':'Breve descrição do produto...',
+'modal.product.photo':'Foto do produto','modal.product.uploadTap':'Toque para enviar uma foto','modal.product.uploadHint':'JPG, PNG — máx. 10 MB','modal.product.orUrl':'ou cole uma URL',
+'modal.product.cancel':'Cancelar','modal.product.save':'Salvar','modal.product.saving':'Salvando...','modal.product.error':'Nome e preço são obrigatórios.','modal.product.photoError':'Produto salvo, mas erro ao enviar a foto: ',
+'modal.service.new':'Novo serviço','modal.service.edit':'Editar serviço',
+'modal.service.name':'Nome *','modal.service.namePh':'Ex: Corte de cabelo, Catering para eventos',
+'modal.service.category':'Categoria','modal.service.categoryPh':'Ex: Cortes, Catering',
+'modal.service.priceType':'Tipo de preço *','modal.service.fixed':'Preço fixo','modal.service.hourly':'Por hora',
+'modal.service.price':'Preço (Gs) *','modal.service.priceHourly':'Taxa por hora (Gs) *','modal.service.duration':'Duração (minutos)',
+'modal.service.desc':'Descrição','modal.service.descPh':'Descreva brevemente o serviço...',
+'modal.service.photo':'Foto do serviço','modal.service.photoBtn':'📷 Enviar foto','modal.service.available':'Serviço disponível',
+'modal.service.cancel':'Cancelar','modal.service.save':'Salvar','modal.service.error':'Nome e preço são obrigatórios.',
+'modal.delete.title':'Excluir produto?','modal.delete.cancel':'Cancelar','modal.delete.confirm':'Excluir',
+'preset.warm.label':'Calorosa e próxima','preset.warm.desc':'Como uma amiga ajudando você a escolher',
+'preset.pro.label':'Profissional e eficiente','preset.pro.desc':'Direta, rápida, sem rodeios',
+'preset.creative.label':'Criativa e poética','preset.creative.desc':'Descreve os produtos com paixão',
+'preset.fun.label':'Divertida e jovial','preset.fun.desc':'Usa humor leve e emojis',
+'preset.custom.label':'Personalizada','preset.custom.desc':'Escreva sua própria descrição',
+'help.title':'❓ Ajuda — Comandos do proprietário',
+'help.desc':'Envie essas mensagens do seu WhatsApp para o número do Sara Bot para gerenciar o negócio sem abrir o painel web.',
+'help.catalog.title':'📦 Gestão do catálogo',
+'help.catalog.catalogo':'Ver todos os produtos com estoque e preço atuais',
+'help.catalog.stock':'Atualizar o estoque de um produto. Ex: <i>STOCK Rosas Vermelhas 25</i>',
+'help.catalog.precio':'Alterar preço em guaranis. Ex: <i>PRECIO Rosas Vermelhas 160000</i>',
+'help.catalog.agotado':'Marcar um produto como esgotado. Sara deixará de oferecê-lo',
+'help.catalog.disponible':'Reativar um produto esgotado',
+'help.catalog.nuevo':'Criar um novo produto. Ex: <i>NUEVO Girassóis|Buquês|80000|10|Girassóis frescos</i>',
+'help.photos.title':'📸 Fotos de produtos',
+'help.photos.nombre':'Envie esta frase + uma foto na mesma mensagem. A foto é salva e Sara a mostrará aos clientes quando perguntarem por esse produto',
+'help.photos.hint':'💡 Você também pode enviar fotos pelo painel web → Catálogo → editar produto.',
+'help.orders.title':'🛒 Pedidos e controle do chat',
+'help.orders.confirmar':'Confirmar o último pedido pendente. Sara notifica o cliente',
+'help.orders.cancelar':'Cancelar o último pedido pendente. Sara notifica o cliente',
+'help.orders.chat':'Assumir o controle do chat com o cliente. Tudo que você escrever vai direto ao cliente (Sara não intervém)',
+'help.orders.fin':'Devolver o controle à Sara. O bot retoma a conversa',
+'help.orders.takeover':'<b>Como funciona o takeover?</b> Quando um pedido chega, Sara te avisa pelo WhatsApp com os detalhes. Responda <b>CONFIRMAR</b> ou <b>CANCELAR</b> para gerenciar o pedido, ou <b>CHAT</b> para falar diretamente com o cliente.',
+'help.chatpanel.title':'💬 Painel de chats — gestão pelo painel web',
+'help.chatpanel.desc':'A aba <b>Chats</b> permite ver e gerenciar todas as conversas com seus clientes em tempo real, sem sair do painel.',
+'help.chatpanel.view.title':'📋 Ver conversas','help.chatpanel.view.desc':'A lista mostra todos os clientes com a última mensagem, hora e um badge laranja se tiverem um pedido pendente. Atualiza automaticamente a cada 8 segundos.',
+'help.chatpanel.order.title':'🛒 Confirmar ou cancelar pedidos','help.chatpanel.order.desc':'Quando um cliente confirma um pedido, aparece um banner amarelo no topo do chat com os detalhes e dois botões: <b>✅ Confirmar</b> e <b>❌ Cancelar</b>. Ao confirmar, Sara notifica automaticamente o cliente.',
+'help.chatpanel.takeover.title':'👤 Intervir manualmente em um chat','help.chatpanel.takeover.desc':'Você pode escrever diretamente ao cliente a qualquer momento pelo painel. Ao enviar sua primeira mensagem, <b>Sara pausa automaticamente</b> neste chat — o banner azul "Modo manual ativo" confirma que o bot está em pausa.',
+'help.chatpanel.takeover.colors':'Suas mensagens aparecem em <span class="font-semibold">azul</span> para se distinguirem das mensagens automáticas de Sara (em verde).',
+'help.chatpanel.resume.title':'🤖 Reativar Sara','help.chatpanel.resume.desc':'Quando terminar de falar com o cliente, pressione o botão <b>"🤖 Reativar Sara"</b> no topo do chat. Sara retoma a conversa com todo o contexto, incluindo o que você escreveu.',
+'help.chatpanel.img.title':'🖼 Enviar fotos ao cliente','help.chatpanel.img.desc':'Com o botão 🖼 você pode enviar uma foto do catálogo existente ou enviar uma nova imagem diretamente do seu dispositivo. A foto chega ao cliente via WhatsApp.',
+'help.chatpanel.colors':'<b>Cores das mensagens no painel:</b><br>⬜ Branco (esquerda) = mensagens do cliente<br>🟩 Verde (direita) = respostas automáticas de Sara<br>🟦 Azul (direita) = mensagens enviadas por você manualmente',
+'help.other.title':'ℹ️ Outros comandos WhatsApp','help.other.ayuda':'Ver todos os comandos disponíveis diretamente no WhatsApp',
+'help.other.hint':'💡 Os comandos não diferenciam maiúsculas/minúsculas. Você pode escrever "catalogo", "CATALOGO" ou "Catalogo".',
+'import.btn':'📥 Importar catálogo','import.title':'📥 Importar catálogo',
+'import.tab.sheets':'Google Sheets','import.tab.csv':'CSV','import.tab.photos':'Fotos IA',
+'import.how':'📌 Como usar:','import.sheets.s1':'Abra o ','import.sheets.template':'template do Google Sheets →',
+'import.sheets.s2':'Faça uma cópia: <b>Arquivo → Fazer uma cópia</b>','import.sheets.s3':'Preencha seu catálogo na cópia',
+'import.sheets.s4':'Compartilhe como público: <b>Compartilhar → Qualquer pessoa com o link → Leitor</b>','import.sheets.s5':'Cole o link abaixo',
+'import.sheets.urlLabel':'URL do seu Google Sheet','import.sheets.urlPh':'https://docs.google.com/spreadsheets/d/...',
+'import.preview.btn':'Pré-visualizar →','import.preview.found':'Produtos encontrados:','import.preview.back':'← Mudar fonte',
+'import.preview.note':'Produtos com o mesmo nome exato não serão duplicados.',
+'import.col.name':'Nome','import.col.category':'Categoria','import.col.price':'Preço (Gs)','import.col.stock':'Estoque',
+'import.confirm.btn':'Adicionar ao catálogo','import.confirm.done':'produtos importados.','import.confirm.skipped':'já existiam e foram ignorados.',
+'import.csv.hint':'Colunas esperadas (em qualquer ordem):','import.csv.drop':'Clique ou arraste seu arquivo CSV aqui',
+'import.photos.hint':'Envie fotos do catálogo. Claude extrai os produtos automaticamente.','import.photos.drop':'Clique ou arraste as fotos aqui','import.photos.limit':'JPG, PNG — até 6 imagens','import.photos.btn':'🤖 Extrair produtos com IA',
+'import.error.noUrl':'Cole a URL do seu Google Sheet.','import.error.sheet':'Erro ao ler o Sheet.','import.error.csv':'Erro ao ler o CSV.','import.error.noProducts':'Nenhum produto encontrado nas imagens.','import.error.generic':'Erro ao importar.',
+'appt.today':'Hoje','appt.addBlock':'🚫 Adicionar bloqueio','appt.newAppt':'+ Agendamento',
+'appt.legend.free':'Livre','appt.legend.confirmed':'Confirmado','appt.legend.pending':'Pendente','appt.legend.blocked':'Bloqueado','appt.legend.outside':'Fora do horário',
+'appt.modal.new':'Novo agendamento','appt.modal.edit':'Editar agendamento',
+'appt.modal.date':'Data','appt.modal.service':'Serviço','appt.modal.noService':'— Sem serviço —',
+'appt.modal.slot':'Horário disponível','appt.modal.slotHint':'Escolha a data primeiro',
+'appt.modal.customer':'Cliente (nome)','appt.modal.phone':'Telefone',
+'appt.modal.notes':'Notas','appt.modal.notesPh':'Observações opcionais...',
+'appt.modal.cancel':'Cancelar','appt.modal.save':'Salvar',
+'appt.block.title':'🚫 Adicionar bloqueio','appt.block.reason':'Motivo (opcional)','appt.block.reasonPh':'Almoço, Feriado, Reunião...',
+'appt.block.start':'Início','appt.block.end':'Fim',
+'appt.detail.title':'Detalhe do agendamento','appt.detail.confirm':'✅ Confirmar','appt.detail.complete':'✔ Concluir','appt.detail.cancel':'✕ Cancelar','appt.detail.delete':'🗑 Excluir',
+'appt.bh.closed':'Fechado',
+'day.sun':'Domingo','day.mon':'Segunda','day.tue':'Terça','day.wed':'Quarta','day.thu':'Quinta','day.fri':'Sexta','day.sat':'Sábado',
+'wiz.start':'Iniciar configuração →','wiz.back':'← Voltar','wiz.next':'Continuar →',
+'wiz.s1.title':'Bem-vindo ao Sara Bot!','wiz.s1.subtitle':'Em 3 passos seu assistente WhatsApp estará funcionando.',
+'wiz.s1.i1.title':'Conecte seu número WhatsApp Business','wiz.s1.i1.desc':'Usamos a API oficial da Meta — seus clientes escrevem para o seu número habitual.',
+'wiz.s1.i2.title':'Configure seu catálogo','wiz.s1.i2.desc':'Adicione produtos, serviços e horários pelo painel.',
+'wiz.s1.i3.title':'Sara começa a atender','wiz.s1.i3.desc':'Seu bot gerencia pedidos e reservas 24/7 automaticamente.',
+'wiz.s2.title':'Conectar WhatsApp Business','wiz.s2.subtitle':'Autorize o Sara Bot a usar seu número WhatsApp Business oficial.',
+'wiz.s2.success':'WhatsApp conectado com sucesso.','wiz.s2.fb_btn':'Conectar com Facebook / Meta',
+'wiz.s2.manual_toggle':'Prefere inserir os dados manualmente?','wiz.s2.manual_hint':'Insira os dados do seu aplicativo Meta manualmente:',
+'wiz.s2.token_label':'Access Token (permanente)','wiz.s2.save_manual':'Salvar credenciais',
+'wiz.s3.title':'Seu número pessoal de WhatsApp','wiz.s3.subtitle':'Vamos usá-lo para enviar notificações de pedidos e para você gerenciar o bot pelo WhatsApp.',
+'wiz.s3.label':'Seu número WhatsApp (com código do país, sem +)','wiz.s3.example':'Exemplo: 5521987654321 (Brasil), 5491123456789 (Argentina)',
+'wiz.s4.title':'Tudo pronto!','wiz.s4.subtitle':'Seu WhatsApp Business está conectado. Sara já pode atender seus clientes.',
+'wiz.s4.hint':'Agora configure seu catálogo de produtos ou serviços para que Sara saiba o que oferecer.',
+'wiz.s4.connected':'Número conectado:','wiz.s4.personal':'✅ Número pessoal registrado','wiz.s4.active':'✅ Bot ativo e pronto para responder',
+'wiz.s4.webhook':'✅ Webhook configurado automaticamente','wiz.s4.btn':'Ir ao painel →',
+'wiz.token_error':'⚠️ Sua conexão WhatsApp tem um problema. Reconecte sua conta para que Sara continue funcionando.',
+'wiz.token_reconnect':'Reconectar WhatsApp',
+'analytics.title':'📊 Analytics','analytics.week':'7 dias','analytics.month':'30 dias',
+'analytics.kpi.orders':'Pedidos','analytics.kpi.revenue':'Receita','analytics.kpi.avg':'Ticket médio',
+'analytics.kpi.customers':'Clientes únicos','analytics.kpi.cancelled':'Cancelados','analytics.kpi.convs':'Conversas ativas',
+'analytics.chart.title':'Pedidos por dia','analytics.top.title':'🏆 Produtos mais pedidos','analytics.top.empty':'Sem pedidos neste período.',
+'analytics.export.title':'⬇ Exportar dados','analytics.export.orders':'🛒 Pedidos CSV','analytics.export.products':'📦 Catálogo CSV','analytics.export.customers':'👥 Clientes CSV',
+'notif.new_order':'Novo pedido','notif.view':'Ver pedido',
 }
 };
 
@@ -2565,7 +2770,19 @@ window.onload = () => {
     return;
   }
   applyTranslations();
-  if (TOKEN) { showDashboard(); }
+  if (TOKEN) {
+    showDashboard();
+    if (params.get('paid') === 'ok') {
+      window.history.replaceState({}, '', '/admin/index.html');
+      setTimeout(() => {
+        const el = document.createElement('div');
+        el.className = 'fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-green-600 text-white text-sm font-semibold px-5 py-3 rounded-xl shadow-lg';
+        el.textContent = '✅ Pago recibido. Tu plan ha sido renovado.';
+        document.body.appendChild(el);
+        setTimeout(() => el.remove(), 6000);
+      }, 800);
+    }
+  }
 };
 
 // ── Auth ───────────────────────────────────────────────────────────────────────
@@ -2876,6 +3093,17 @@ async function loadProducts() {
   products = await api('/admin/products');
   renderCategoryFilters();
   renderProducts();
+  // Low stock banner
+  const lowStock = products.filter(p => p.is_available && p.stock_qty !== null && p.stock_qty <= 5);
+  const banner = document.getElementById('lowStockBanner');
+  if (banner) {
+    if (lowStock.length) {
+      banner.textContent = t('products.lowstock').replace('{n}', lowStock.length);
+      banner.classList.remove('hidden');
+    } else {
+      banner.classList.add('hidden');
+    }
+  }
 }
 
 function renderCategoryFilters() {
@@ -3089,8 +3317,19 @@ async function confirmDelete() {
 }
 
 // ── Orders ─────────────────────────────────────────────────────────────────────
+let _orderFilter = 'all';
+
+function setOrderFilter(status) {
+  _orderFilter = status;
+  document.querySelectorAll('.order-filter-btn').forEach(b => b.classList.remove('active-filter'));
+  const btn = document.getElementById(`of-${status}`);
+  if (btn) btn.classList.add('active-filter');
+  loadOrders();
+}
+
 async function loadOrders() {
-  const orders = await api('/admin/orders');
+  const allOrders = await api('/admin/orders');
+  const orders = _orderFilter === 'all' ? allOrders : allOrders.filter(o => o.status === _orderFilter);
   const el = document.getElementById('ordersList');
   if (!orders.length) {
     el.innerHTML = `<div class="text-center py-8 text-gray-400">${t('orders.empty')}</div>`;
@@ -3489,6 +3728,25 @@ function getSelectedPersonality() {
     return document.getElementById('sPersonalityCustom').value.trim() || null;
   }
   return preset?.value || null;
+}
+
+async function startMpCheckout() {
+  const btn = document.getElementById('mpPayBtn');
+  if (btn) { btn.disabled = true; btn.textContent = t('plan.pay.processing'); }
+  try {
+    const data = await api('/admin/plan/checkout', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({}) });
+    if (data && data.checkout_url) {
+      window.location.href = data.checkout_url;
+    } else if (data && (data.error === 'not_configured' || data.error === 'payment_not_configured')) {
+      alert(t('plan.pay.not_configured'));
+    } else {
+      alert(t('plan.pay.error'));
+    }
+  } catch(e) {
+    alert(t('plan.pay.error'));
+  } finally {
+    if (btn) { btn.disabled = false; applyTranslations(); }
+  }
 }
 
 async function loadPlan() {

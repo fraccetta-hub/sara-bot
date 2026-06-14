@@ -1414,6 +1414,53 @@ router.get('/analytics', requireAuth, async (req, res) => {
   });
 });
 
+// ─── POST /admin/plan/checkout — create MercadoPago preference ───────────────
+router.post('/plan/checkout', requireAuth, async (req, res) => {
+  const { MercadoPagoConfig, Preference } = require('mercadopago');
+  const { plan = 'pro' } = req.body;
+
+  const { data: tenant } = await supabase.from('tenants')
+    .select('id, name, plan_currency').eq('id', req.tenant.tenantId).single();
+
+  const currency = tenant?.plan_currency || process.env.MP_CURRENCY || 'USD';
+  const prices   = {
+    starter: parseInt(process.env.MP_PRICE_STARTER) || 29,
+    pro:     parseInt(process.env.MP_PRICE_PRO)     || 59,
+  };
+  const price = prices[plan] || prices.pro;
+
+  const CURRENCY_TOKEN_MAP = {
+    ARS:'MP_ACCESS_TOKEN_AR', BRL:'MP_ACCESS_TOKEN_BR', MXN:'MP_ACCESS_TOKEN_MX',
+    CLP:'MP_ACCESS_TOKEN_CL', COP:'MP_ACCESS_TOKEN_CO', UYU:'MP_ACCESS_TOKEN_UY',
+    PEN:'MP_ACCESS_TOKEN_PE', PYG:'MP_ACCESS_TOKEN_PY',
+  };
+  const token = process.env[CURRENCY_TOKEN_MAP[currency]] || process.env.MP_ACCESS_TOKEN;
+  if (!token) return res.status(503).json({ error: 'payment_not_configured' });
+
+  try {
+    const client = new MercadoPagoConfig({ accessToken: token });
+    const pref   = new Preference(client);
+    const BASE   = process.env.APP_URL || 'https://candidatelens.com';
+    const label  = plan === 'starter' ? 'Sara Bot Starter' : 'Sara Bot Pro';
+
+    const result = await pref.create({ body: {
+      items: [{ title: `${label} — 1 mes`, quantity: 1, unit_price: price, currency_id: currency }],
+      external_reference: tenant.id,
+      back_urls: {
+        success: `${BASE}/admin/index.html?paid=ok&plan=${plan}`,
+        failure: `${BASE}/admin/index.html?paid=fail`,
+        pending: `${BASE}/admin/index.html?paid=pending`,
+      },
+      auto_return: 'approved',
+      notification_url: `${BASE}/payments/mp/webhook`,
+    }});
+    res.json({ checkout_url: result.init_point });
+  } catch(e) {
+    console.error('[plan/checkout]', e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // ─── DELETE /admin/account — delete all tenant data ───────────────────────────
 router.delete('/account', requireAuth, async (req, res) => {
   const tenantId = req.tenant.tenantId;

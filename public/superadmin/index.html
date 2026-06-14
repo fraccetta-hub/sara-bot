@@ -120,6 +120,24 @@
             <input id="nMerchant" type="text" placeholder="595981000001"
               class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
           </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Moneda (plan)</label>
+            <select id="nCurrency" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
+              <option value="USD">🇺🇸 USD</option>
+              <option value="ARS">🇦🇷 ARS — Argentina</option>
+              <option value="BRL">🇧🇷 BRL — Brasil</option>
+              <option value="MXN">🇲🇽 MXN — México</option>
+              <option value="CLP">🇨🇱 CLP — Chile</option>
+              <option value="COP">🇨🇴 COP — Colombia</option>
+              <option value="UYU">🇺🇾 UYU — Uruguay</option>
+              <option value="PEN">🇵🇪 PEN — Perú</option>
+              <option value="PYG">🇵🇾 PYG — Paraguay</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Vence (opcional)</label>
+            <input id="nExpires" type="date" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
+          </div>
         </div>
         <button onclick="createTenant()"
           class="btn-purple w-full py-2 rounded-lg text-sm font-semibold mt-5 transition" id="createBtn">
@@ -173,12 +191,33 @@
           </label>
         </div>
       </div>
-      <div class="flex items-center gap-3 pt-1">
-        <label class="text-xs font-medium text-gray-500">Estado</label>
-        <select id="eActive" class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm">
-          <option value="true">✅ Activo</option>
-          <option value="false">🔴 Inactivo</option>
-        </select>
+      <div class="grid grid-cols-2 gap-3 pt-1">
+        <div class="flex items-center gap-2">
+          <label class="text-xs font-medium text-gray-500 shrink-0">Estado</label>
+          <select id="eActive" class="flex-1 border border-gray-200 rounded-lg px-2 py-1.5 text-sm">
+            <option value="true">✅ Activo</option>
+            <option value="false">🔴 Inactivo</option>
+          </select>
+        </div>
+        <div class="flex items-center gap-2">
+          <label class="text-xs font-medium text-gray-500 shrink-0">Moneda</label>
+          <select id="eCurrency" class="flex-1 border border-gray-200 rounded-lg px-2 py-1.5 text-sm">
+            <option value="USD">USD</option>
+            <option value="ARS">ARS 🇦🇷</option>
+            <option value="BRL">BRL 🇧🇷</option>
+            <option value="MXN">MXN 🇲🇽</option>
+            <option value="CLP">CLP 🇨🇱</option>
+            <option value="COP">COP 🇨🇴</option>
+            <option value="UYU">UYU 🇺🇾</option>
+            <option value="PEN">PEN 🇵🇪</option>
+            <option value="PYG">PYG 🇵🇾</option>
+          </select>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 pt-1">
+        <label class="text-xs font-medium text-gray-500 shrink-0">Vence</label>
+        <input id="eExpires" type="date" class="flex-1 border border-gray-200 rounded-lg px-3 py-1.5 text-sm"/>
+        <button onclick="document.getElementById('eExpires').value=''" class="text-xs text-gray-400 hover:text-red-400">✕ Sin vto</button>
       </div>
     </div>
 
@@ -446,7 +485,9 @@ async function openEditModal(id) {
   document.getElementById('eName').value     = t.name           || '';
   document.getElementById('eSlug').value     = t.login_slug     || '';
   document.getElementById('eMerchant').value = t.merchant_phone || '';
-  document.getElementById('eActive').value   = String(t.active);
+  document.getElementById('eActive').value    = String(t.active);
+  document.getElementById('eCurrency').value  = t.plan_currency || 'USD';
+  document.getElementById('eExpires').value   = t.plan_expires ? t.plan_expires.slice(0,10) : '';
   document.getElementById('eProducts').checked      = t.products_enabled !== false;
   document.getElementById('eServices').checked      = !!t.services_enabled;
   document.getElementById('eAppointments').checked  = !!t.appointments_enabled;
@@ -628,6 +669,8 @@ async function saveTenant() {
       login_slug:          document.getElementById('eSlug').value.trim().toLowerCase().replace(/\s+/g,'') || null,
       merchant_phone:      document.getElementById('eMerchant').value.trim() || null,
       active:              newActive,
+      plan_currency:       document.getElementById('eCurrency').value || 'USD',
+      plan_expires:        document.getElementById('eExpires').value || null,
       products_enabled:    document.getElementById('eProducts').checked,
       services_enabled:    document.getElementById('eServices').checked,
       appointments_enabled: document.getElementById('eAppointments').checked,
@@ -673,6 +716,8 @@ async function createTenant() {
       login_slug:      slug || null,
       phone_number_id: document.getElementById('nPhoneId').value.trim(),
       merchant_phone:  document.getElementById('nMerchant').value.trim() || null,
+      plan_currency:   document.getElementById('nCurrency').value || 'USD',
+      plan_expires:    document.getElementById('nExpires').value || null,
     });
 
     succEl.innerHTML = `

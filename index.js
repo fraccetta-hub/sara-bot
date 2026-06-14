@@ -6,6 +6,7 @@ const webhookRoutes      = require('./routes/webhook');
 const adminRoutes        = require('./routes/admin');
 const superadminRoutes   = require('./routes/superadmin');
 const { router: telegramRouter, notifyTokenError } = require('./routes/telegram');
+const paymentsRouter = require('./routes/payments');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -28,6 +29,7 @@ app.use('/webhook',          webhookRoutes);
 app.use('/admin',            adminRoutes);
 app.use('/superadmin',       superadminRoutes);
 app.use('/telegram-webhook', telegramRouter);
+app.use('/payments',         paymentsRouter);
 
 // Serve admin panel at /admin
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'index.html')));
