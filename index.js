@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const path = require('path');
+const { createClient } = require('@supabase/supabase-js');
 const webhookRoutes      = require('./routes/webhook');
 const adminRoutes        = require('./routes/admin');
 const superadminRoutes   = require('./routes/superadmin');
@@ -41,5 +42,28 @@ app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'landingpage', 'ind
 app.listen(PORT, () => {
   console.log(`WhatsApp Bot server listening on port ${PORT}`);
 });
+
+// ─── Cron: auto-delete conversations older than 90 days ──────────────────────
+// Runs once at startup and then every 24h
+(function scheduleConversationCleanup() {
+  const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
+
+  async function cleanOldConversations() {
+    const cutoff = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
+    const { error, count } = await supabase
+      .from('conversations')
+      .delete({ count: 'exact' })
+      .lt('updated_at', cutoff);
+    if (error) {
+      console.error('[cleanup] Error deleting old conversations:', error.message);
+    } else {
+      if (count > 0) console.log(`[cleanup] Deleted ${count} conversations older than 90 days`);
+    }
+  }
+
+  // Run at startup (after 5s to let server settle) and every 24h
+  setTimeout(cleanOldConversations, 5000);
+  setInterval(cleanOldConversations, 24 * 60 * 60 * 1000);
+})();
 
 module.exports = app;

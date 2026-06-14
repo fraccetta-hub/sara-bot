@@ -397,7 +397,13 @@
     <div id="sectionOrders" class="hidden">
       <div class="flex items-center justify-between mb-4">
         <h2 data-i18n="orders.title" class="text-lg font-semibold text-gray-800">Pedidos recientes</h2>
-        <button onclick="loadOrders()" data-i18n="orders.refresh" class="text-sm text-green-500 hover:underline">↻ Actualizar</button>
+        <div class="flex items-center gap-3">
+          <button onclick="exportOrders()" data-i18n="orders.export"
+            class="flex items-center gap-1.5 text-sm text-green-600 border border-green-200 bg-green-50 hover:bg-green-100 px-3 py-1.5 rounded-lg transition font-medium">
+            ⬇ Exportar CSV
+          </button>
+          <button onclick="loadOrders()" data-i18n="orders.refresh" class="text-sm text-green-500 hover:underline">↻ Actualizar</button>
+        </div>
       </div>
       <div class="space-y-3" id="ordersList">
         <div class="text-center py-8 text-gray-400">Cargando...</div>
@@ -781,6 +787,21 @@
           <span>ℹ️</span>
           <span data-i18n="settings.plan.contact">Para contratar o cambiar de plan, contactanos en <a href="mailto:soporte@candidatelens.com" class="underline font-medium">soporte@candidatelens.com</a></span>
         </div>
+      </div>
+
+      <!-- ── Danger zone ── -->
+      <div class="bg-white rounded-xl shadow-sm p-6 border border-red-100">
+        <h3 data-i18n="settings.danger.title" class="font-medium text-red-700 mb-1">🗑 Eliminar cuenta</h3>
+        <p data-i18n="settings.danger.desc" class="text-xs text-gray-400 mb-4">
+          Eliminá permanentemente tu cuenta y todos tus datos: catálogo, pedidos, conversaciones y configuración.
+          Esta acción es irreversible.
+        </p>
+        <div id="deleteAccountMsg" class="hidden rounded-lg px-4 py-2 text-sm mb-4"></div>
+        <button onclick="deleteAccount()"
+          class="w-full py-2 rounded-lg text-sm font-semibold bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 transition"
+          data-i18n="settings.danger.btn">
+          Eliminar mi cuenta permanentemente
+        </button>
       </div>
 
     </div>
@@ -1207,7 +1228,8 @@ es:{
 'services.title':'Catálogo de servicios','services.new':'+ Nuevo servicio','services.loading':'Cargando...','services.error':'Error al cargar servicios.',
 'services.empty.title':'Sin servicios todavía','services.empty.hint':'Creá tu primer servicio con el botón de arriba',
 'services.active':'Activo','services.inactive':'Inactivo','services.edit':'✏️ Editar','services.delete':'🗑 Eliminar','services.perHour':'/hora','services.confirm':'¿Eliminar este servicio?',
-'orders.title':'Pedidos recientes','orders.refresh':'↻ Actualizar','orders.loading':'Cargando...','orders.empty':'Todavía no hay pedidos.','orders.delivery':'+envío',
+'orders.title':'Pedidos recientes','orders.refresh':'↻ Actualizar','orders.export':'⬇ Exportar CSV','orders.loading':'Cargando...','orders.empty':'Todavía no hay pedidos.','orders.delivery':'+envío',
+'settings.danger.title':'🗑 Eliminar cuenta','settings.danger.desc':'Eliminá permanentemente tu cuenta y todos tus datos. Esta acción es irreversible.','settings.danger.btn':'Eliminar mi cuenta permanentemente','settings.danger.confirm1':'¿Estás seguro de que querés eliminar tu cuenta? Esta acción borrará TODOS tus datos (catálogo, pedidos, conversaciones) de forma permanente.','settings.danger.confirm2':'Para confirmar, escribí exactamente: ELIMINAR','settings.danger.aborted':'Eliminación cancelada.','settings.danger.deleted':'Cuenta eliminada. Hasta pronto.',
 'orders.status.pending':'Pendiente','orders.status.confirmed':'Confirmado','orders.status.preparing':'Preparando','orders.status.delivering':'En camino','orders.status.delivered':'Entregado','orders.status.cancelled':'Cancelado',
 'orders.name.placeholder':'Nombre del cliente','orders.name.save':'Guardar',
 'chat.title':'Conversaciones','chat.search':'Buscar cliente...','chat.empty.title':'Seleccioná una conversación','chat.empty.hint':'Las respuestas llegan al cliente por WhatsApp',
@@ -1343,7 +1365,8 @@ en:{
 'services.title':'Services catalog','services.new':'+ New service','services.loading':'Loading...','services.error':'Error loading services.',
 'services.empty.title':'No services yet','services.empty.hint':'Create your first service with the button above',
 'services.active':'Active','services.inactive':'Inactive','services.edit':'✏️ Edit','services.delete':'🗑 Delete','services.perHour':'/hr','services.confirm':'Delete this service?',
-'orders.title':'Recent orders','orders.refresh':'↻ Refresh','orders.loading':'Loading...','orders.empty':'No orders yet.','orders.delivery':'+delivery',
+'orders.title':'Recent orders','orders.refresh':'↻ Refresh','orders.export':'⬇ Export CSV','orders.loading':'Loading...','orders.empty':'No orders yet.','orders.delivery':'+delivery',
+'settings.danger.title':'🗑 Delete account','settings.danger.desc':'Permanently delete your account and all your data. This action is irreversible.','settings.danger.btn':'Permanently delete my account','settings.danger.confirm1':'Are you sure you want to delete your account? This will permanently erase ALL your data (catalog, orders, conversations).','settings.danger.confirm2':'To confirm, type exactly: DELETE','settings.danger.aborted':'Deletion cancelled.','settings.danger.deleted':'Account deleted. Goodbye!',
 'orders.status.pending':'Pending','orders.status.confirmed':'Confirmed','orders.status.preparing':'Preparing','orders.status.delivering':'On the way','orders.status.delivered':'Delivered','orders.status.cancelled':'Cancelled',
 'orders.name.placeholder':'Customer name','orders.name.save':'Save',
 'chat.title':'Conversations','chat.search':'Search customer...','chat.empty.title':'Select a conversation','chat.empty.hint':'Replies reach the customer via WhatsApp',
@@ -1479,7 +1502,8 @@ it:{
 'services.title':'Catalogo servizi','services.new':'+ Nuovo servizio','services.loading':'Caricamento...','services.error':'Errore nel caricamento dei servizi.',
 'services.empty.title':'Nessun servizio ancora','services.empty.hint':'Crea il tuo primo servizio con il pulsante in alto',
 'services.active':'Attivo','services.inactive':'Non attivo','services.edit':'✏️ Modifica','services.delete':'🗑 Elimina','services.perHour':'/ora','services.confirm':'Eliminare questo servizio?',
-'orders.title':'Ordini recenti','orders.refresh':'↻ Aggiorna','orders.loading':'Caricamento...','orders.empty':'Ancora nessun ordine.','orders.delivery':'+consegna',
+'orders.title':'Ordini recenti','orders.refresh':'↻ Aggiorna','orders.export':'⬇ Esporta CSV','orders.loading':'Caricamento...','orders.empty':'Ancora nessun ordine.','orders.delivery':'+consegna',
+'settings.danger.title':'🗑 Elimina account','settings.danger.desc':'Elimina permanentemente il tuo account e tutti i tuoi dati. Questa azione è irreversibile.','settings.danger.btn':'Elimina definitivamente il mio account','settings.danger.confirm1':'Sei sicuro di voler eliminare il tuo account? Questo cancellerà TUTTI i tuoi dati (catalogo, ordini, conversazioni) in modo permanente.','settings.danger.confirm2':'Per confermare, scrivi esattamente: ELIMINA','settings.danger.aborted':'Eliminazione annullata.','settings.danger.deleted':'Account eliminato. Arrivederci!',
 'orders.status.pending':'In attesa','orders.status.confirmed':'Confermato','orders.status.preparing':'In preparazione','orders.status.delivering':'In consegna','orders.status.delivered':'Consegnato','orders.status.cancelled':'Annullato',
 'orders.name.placeholder':'Nome cliente','orders.name.save':'Salva',
 'chat.title':'Conversazioni','chat.search':'Cerca cliente...','chat.empty.title':'Seleziona una conversazione','chat.empty.hint':'Le risposte arrivano al cliente tramite WhatsApp',
@@ -1614,7 +1638,8 @@ de:{
 'services.title':'Dienstleistungskatalog','services.new':'+ Neuer Service','services.loading':'Wird geladen...','services.error':'Fehler beim Laden der Services.',
 'services.empty.title':'Noch keine Services','services.empty.hint':'Erstelle deinen ersten Service mit dem Button oben',
 'services.active':'Aktiv','services.inactive':'Inaktiv','services.edit':'✏️ Bearbeiten','services.delete':'🗑 Löschen','services.perHour':'/Std.','services.confirm':'Diesen Service löschen?',
-'orders.title':'Letzte Bestellungen','orders.refresh':'↻ Aktualisieren','orders.loading':'Wird geladen...','orders.empty':'Noch keine Bestellungen.','orders.delivery':'+Lieferung',
+'orders.title':'Letzte Bestellungen','orders.refresh':'↻ Aktualisieren','orders.export':'⬇ CSV exportieren','orders.loading':'Wird geladen...','orders.empty':'Noch keine Bestellungen.','orders.delivery':'+Lieferung',
+'settings.danger.title':'🗑 Konto löschen','settings.danger.desc':'Lösche dauerhaft dein Konto und alle deine Daten. Diese Aktion ist unwiderruflich.','settings.danger.btn':'Mein Konto dauerhaft löschen','settings.danger.confirm1':'Bist du sicher, dass du dein Konto löschen möchtest? Alle deine Daten (Katalog, Bestellungen, Gespräche) werden dauerhaft gelöscht.','settings.danger.confirm2':'Zur Bestätigung, schreib genau: LÖSCHEN','settings.danger.aborted':'Löschung abgebrochen.','settings.danger.deleted':'Konto gelöscht. Auf Wiedersehen!',
 'orders.status.pending':'Ausstehend','orders.status.confirmed':'Bestätigt','orders.status.preparing':'In Vorbereitung','orders.status.delivering':'Unterwegs','orders.status.delivered':'Geliefert','orders.status.cancelled':'Storniert',
 'orders.name.placeholder':'Kundenname','orders.name.save':'Speichern',
 'chat.title':'Gespräche','chat.search':'Kunde suchen...','chat.empty.title':'Gespräch auswählen','chat.empty.hint':'Antworten erreichen den Kunden über WhatsApp',
@@ -1749,7 +1774,8 @@ fr:{
 'services.title':'Catalogue de services','services.new':'+ Nouveau service','services.loading':'Chargement...','services.error':'Erreur de chargement des services.',
 'services.empty.title':'Aucun service encore','services.empty.hint':'Créez votre premier service avec le bouton ci-dessus',
 'services.active':'Actif','services.inactive':'Inactif','services.edit':'✏️ Modifier','services.delete':'🗑 Supprimer','services.perHour':'/h','services.confirm':'Supprimer ce service ?',
-'orders.title':'Commandes récentes','orders.refresh':'↻ Actualiser','orders.loading':'Chargement...','orders.empty':'Aucune commande pour l\'instant.','orders.delivery':'+livraison',
+'orders.title':'Commandes récentes','orders.refresh':'↻ Actualiser','orders.export':'⬇ Exporter CSV','orders.loading':'Chargement...','orders.empty':'Aucune commande pour l\'instant.','orders.delivery':'+livraison',
+'settings.danger.title':'🗑 Supprimer le compte','settings.danger.desc':'Supprimez définitivement votre compte et toutes vos données. Cette action est irréversible.','settings.danger.btn':'Supprimer définitivement mon compte','settings.danger.confirm1':'Êtes-vous sûr de vouloir supprimer votre compte ? Toutes vos données (catalogue, commandes, conversations) seront effacées définitivement.','settings.danger.confirm2':'Pour confirmer, tapez exactement : SUPPRIMER','settings.danger.aborted':'Suppression annulée.','settings.danger.deleted':'Compte supprimé. Au revoir !',
 'orders.status.pending':'En attente','orders.status.confirmed':'Confirmé','orders.status.preparing':'En préparation','orders.status.delivering':'En route','orders.status.delivered':'Livré','orders.status.cancelled':'Annulé',
 'orders.name.placeholder':'Nom du client','orders.name.save':'Enregistrer',
 'chat.title':'Conversations','chat.search':'Rechercher un client...','chat.empty.title':'Sélectionnez une conversation','chat.empty.hint':'Les réponses parviennent au client via WhatsApp',
@@ -2598,6 +2624,53 @@ async function loadOrders() {
       </div>
     </div>`;
   }).join('');
+}
+
+// ── Export orders as CSV ──────────────────────────────────────────────────────
+async function exportOrders() {
+  try {
+    const TOKEN = localStorage.getItem('sara_token');
+    const res = await fetch('/admin/orders/export', { headers: { Authorization: `Bearer ${TOKEN}` } });
+    if (!res.ok) throw new Error('Error al exportar');
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `pedidos_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  } catch (e) {
+    alert('Error al exportar: ' + e.message);
+  }
+}
+
+// ── Delete account permanently ────────────────────────────────────────────────
+async function deleteAccount() {
+  const msg = document.getElementById('deleteAccountMsg');
+  const confirm1 = confirm(t('settings.danger.confirm1'));
+  if (!confirm1) return;
+  // The expected word varies by language (embedded in the confirm2 string after ': ')
+  const confirm2text = t('settings.danger.confirm2');
+  const expectedWord = confirm2text.split(': ').pop().trim();
+  const input = prompt(confirm2text);
+  if (input !== expectedWord) {
+    msg.textContent = t('settings.danger.aborted');
+    msg.className = 'rounded-lg px-4 py-2 text-sm mb-4 bg-yellow-50 text-yellow-700';
+    msg.classList.remove('hidden');
+    return;
+  }
+  try {
+    const TOKEN = localStorage.getItem('sara_token');
+    const res = await fetch('/admin/account', { method: 'DELETE', headers: { Authorization: `Bearer ${TOKEN}` } });
+    if (!res.ok) { const d = await res.json(); throw new Error(d.error); }
+    alert(t('settings.danger.deleted'));
+    localStorage.removeItem('sara_token');
+    window.location.href = '/admin';
+  } catch (e) {
+    msg.textContent = 'Error: ' + e.message;
+    msg.className = 'rounded-lg px-4 py-2 text-sm mb-4 bg-red-50 text-red-700';
+    msg.classList.remove('hidden');
+  }
 }
 
 // ── Customer name label with inline edit ──────────────────────────────────────

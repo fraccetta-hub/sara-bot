@@ -1136,4 +1136,70 @@ router.post('/whatsapp-profile', requireAuth, upload.single('photo'), async (req
   res.json({ ok: true });
 });
 
+// ─── GET /admin/orders/export — CSV download of all orders ───────────────────
+router.get('/orders/export', requireAuth, async (req, res) => {
+  const { data, error } = await supabase
+    .from('orders')
+    .select('*, conversations(customer_name)')
+    .eq('tenant_id', req.tenant.tenantId)
+    .order('created_at', { ascending: false });
+  if (error) return res.status(500).json({ error: error.message });
+
+  const orders = (data || []).map(o => ({
+    ...o,
+    customer_name: o.conversations?.customer_name || '',
+    conversations: undefined,
+  }));
+
+  // Build CSV
+  const escape = v => {
+    if (v == null) return '';
+    const s = typeof v === 'object' ? JSON.stringify(v) : String(v);
+    return s.includes(',') || s.includes('"') || s.includes('\n')
+      ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+
+  const headers = ['id','created_at','status','customer_phone','customer_name','items','total_guarani','delivery_fee'];
+  const rows = orders.map(o => [
+    o.id,
+    o.created_at ? new Date(o.created_at).toISOString().slice(0,19).replace('T',' ') : '',
+    o.status,
+    o.customer_phone,
+    o.customer_name,
+    Array.isArray(o.items_json)
+      ? o.items_json.map(i => `${i.qty||1}x ${i.name}`).join(' | ')
+      : '',
+    o.total_guarani,
+    o.delivery_fee || 0,
+  ].map(escape).join(','));
+
+  const csv = [headers.join(','), ...rows].join('\r\n');
+  const date = new Date().toISOString().slice(0,10);
+
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', `attachment; filename="orders_${date}.csv"`);
+  res.send('﻿' + csv); // BOM for Excel UTF-8 compatibility
+});
+
+// ─── DELETE /admin/account — delete all tenant data ───────────────────────────
+router.delete('/account', requireAuth, async (req, res) => {
+  const tenantId = req.tenant.tenantId;
+  try {
+    // Delete in order to respect FK constraints
+    await supabase.from('appointment_blocks').delete().eq('tenant_id', tenantId);
+    await supabase.from('appointments').delete().eq('tenant_id', tenantId);
+    await supabase.from('orders').delete().eq('tenant_id', tenantId);
+    await supabase.from('conversations').delete().eq('tenant_id', tenantId);
+    await supabase.from('products').delete().eq('tenant_id', tenantId);
+    await supabase.from('services').delete().eq('tenant_id', tenantId);
+    await supabase.from('business_hours').delete().eq('tenant_id', tenantId);
+    const { error } = await supabase.from('tenants').delete().eq('id', tenantId);
+    if (error) throw error;
+    res.json({ ok: true });
+  } catch (e) {
+    console.error('[delete-account]', e);
+    res.status(500).json({ error: e.message });
+  }
+});
+
 module.exports = router;
