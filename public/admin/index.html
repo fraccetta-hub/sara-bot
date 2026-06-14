@@ -81,33 +81,33 @@
     <div id="wizStep1">
       <div class="text-center mb-6">
         <div class="text-5xl mb-3">🌸</div>
-        <h2 class="text-xl font-bold text-gray-800 mb-2">¡Bienvenido a Sara Bot!</h2>
-        <p class="text-gray-500 text-sm">En 3 pasos vas a tener tu asistente de WhatsApp funcionando. Empecemos.</p>
+        <h2 data-i18n="wiz.s1.title" class="text-xl font-bold text-gray-800 mb-2">¡Bienvenido a Sara Bot!</h2>
+        <p data-i18n="wiz.s1.subtitle" class="text-gray-500 text-sm">En 3 pasos vas a tener tu asistente de WhatsApp funcionando. Empecemos.</p>
       </div>
       <div class="space-y-3 mb-6">
         <div class="flex items-start gap-3 bg-green-50 rounded-xl p-3">
           <span class="text-lg mt-0.5">1️⃣</span>
           <div>
-            <p class="text-sm font-semibold text-gray-800">Conectá tu número de WhatsApp Business</p>
-            <p class="text-xs text-gray-500">Usamos la API oficial de Meta — tus clientes escriben a tu número de siempre.</p>
+            <p data-i18n="wiz.s1.i1.title" class="text-sm font-semibold text-gray-800">Conectá tu número de WhatsApp Business</p>
+            <p data-i18n="wiz.s1.i1.desc" class="text-xs text-gray-500">Usamos la API oficial de Meta — tus clientes escriben a tu número de siempre.</p>
           </div>
         </div>
         <div class="flex items-start gap-3 bg-blue-50 rounded-xl p-3">
           <span class="text-lg mt-0.5">2️⃣</span>
           <div>
-            <p class="text-sm font-semibold text-gray-800">Configurá tu catálogo</p>
-            <p class="text-xs text-gray-500">Cargá productos, servicios y horarios desde el panel.</p>
+            <p data-i18n="wiz.s1.i2.title" class="text-sm font-semibold text-gray-800">Configurá tu catálogo</p>
+            <p data-i18n="wiz.s1.i2.desc" class="text-xs text-gray-500">Cargá productos, servicios y horarios desde el panel.</p>
           </div>
         </div>
         <div class="flex items-start gap-3 bg-purple-50 rounded-xl p-3">
           <span class="text-lg mt-0.5">3️⃣</span>
           <div>
-            <p class="text-sm font-semibold text-gray-800">Sara empieza a atender</p>
-            <p class="text-xs text-gray-500">Tu bot responde pedidos y reservas 24/7 automáticamente.</p>
+            <p data-i18n="wiz.s1.i3.title" class="text-sm font-semibold text-gray-800">Sara empieza a atender</p>
+            <p data-i18n="wiz.s1.i3.desc" class="text-xs text-gray-500">Tu bot responde pedidos y reservas 24/7 automáticamente.</p>
           </div>
         </div>
       </div>
-      <button onclick="wizNext(1)" class="btn-green w-full py-3 rounded-xl text-sm font-semibold">
+      <button onclick="wizNext(1)" data-i18n="wiz.start" class="btn-green w-full py-3 rounded-xl text-sm font-semibold">
         Empezar configuración →
       </button>
     </div>
@@ -116,47 +116,45 @@
     <div id="wizStep2" class="hidden">
       <div class="text-center mb-5">
         <div class="text-4xl mb-2">📱</div>
-        <h2 class="text-lg font-bold text-gray-800">Conectá tu WhatsApp Business</h2>
-        <p class="text-sm text-gray-500 mt-1">Autorizá a Sara Bot a usar tu número oficial de WhatsApp Business.</p>
+        <h2 data-i18n="wiz.s2.title" class="text-lg font-bold text-gray-800">Conectá tu WhatsApp Business</h2>
+        <p data-i18n="wiz.s2.subtitle" class="text-sm text-gray-500 mt-1">Autorizá a Sara Bot a usar tu número oficial de WhatsApp Business.</p>
       </div>
 
       <div id="wizConnectError" class="hidden bg-red-50 text-red-700 text-sm rounded-lg px-4 py-2 mb-4"></div>
       <div id="wizConnectSuccess" class="hidden bg-green-50 text-green-700 text-sm rounded-lg px-4 py-3 mb-4">
-        ✅ <span id="wizSuccessMsg">WhatsApp conectado correctamente.</span>
+        ✅ <span id="wizSuccessMsg" data-i18n="wiz.s2.success">WhatsApp conectado correctamente.</span>
       </div>
 
-      <!-- Embedded Signup button -->
       <button id="wizFbBtn" onclick="launchEmbeddedSignup()"
         class="w-full flex items-center justify-center gap-3 bg-[#1877F2] hover:bg-[#166FE5] text-white py-3 rounded-xl text-sm font-semibold transition mb-3">
         <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
-        Conectar con Facebook / Meta
+        <span data-i18n="wiz.s2.fb_btn">Conectar con Facebook / Meta</span>
       </button>
 
-      <!-- Manual fallback -->
-      <button onclick="toggleManual()" class="w-full text-xs text-gray-400 hover:text-gray-600 py-1 underline">
+      <button onclick="toggleManual()" data-i18n="wiz.s2.manual_toggle" class="w-full text-xs text-gray-400 hover:text-gray-600 py-1 underline">
         ¿Preferís ingresar los datos manualmente?
       </button>
 
       <div id="wizManual" class="hidden mt-4 space-y-3 border-t pt-4">
-        <p class="text-xs text-gray-500">Ingresá los datos de tu Meta App manualmente:</p>
+        <p data-i18n="wiz.s2.manual_hint" class="text-xs text-gray-500">Ingresá los datos de tu Meta App manualmente:</p>
         <div>
           <label class="block text-xs font-medium text-gray-600 mb-1">Phone Number ID</label>
           <input type="text" id="wizPhoneId" placeholder="1234567890123456"
             class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
         </div>
         <div>
-          <label class="block text-xs font-medium text-gray-600 mb-1">Access Token (permanente)</label>
+          <label data-i18n="wiz.s2.token_label" class="block text-xs font-medium text-gray-600 mb-1">Access Token (permanente)</label>
           <textarea id="wizToken" rows="2" placeholder="EAAxxxxx..."
             class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm resize-none font-mono text-xs"></textarea>
         </div>
-        <button onclick="saveManual()" class="btn-green w-full py-2 rounded-lg text-sm font-semibold">
+        <button onclick="saveManual()" data-i18n="wiz.s2.save_manual" class="btn-green w-full py-2 rounded-lg text-sm font-semibold">
           Guardar credenciales
         </button>
       </div>
 
       <div class="flex gap-3 mt-4">
-        <button onclick="wizBack(2)" class="flex-1 border border-gray-200 text-gray-500 py-2 rounded-xl text-sm hover:bg-gray-50">← Atrás</button>
-        <button id="wizNextBtn2" onclick="wizNext(2)" disabled
+        <button onclick="wizBack(2)" data-i18n="wiz.back" class="flex-1 border border-gray-200 text-gray-500 py-2 rounded-xl text-sm hover:bg-gray-50">← Atrás</button>
+        <button id="wizNextBtn2" onclick="wizNext(2)" disabled data-i18n="wiz.next"
           class="flex-1 btn-green py-2 rounded-xl text-sm font-semibold disabled:opacity-40 disabled:cursor-not-allowed">
           Continuar →
         </button>
@@ -167,22 +165,22 @@
     <div id="wizStep3" class="hidden">
       <div class="text-center mb-5">
         <div class="text-4xl mb-2">📲</div>
-        <h2 class="text-lg font-bold text-gray-800">Tu número personal de WhatsApp</h2>
-        <p class="text-sm text-gray-500 mt-1">Lo usaremos para enviarte notificaciones de pedidos y para que puedas gestionar el bot desde WhatsApp.</p>
+        <h2 data-i18n="wiz.s3.title" class="text-lg font-bold text-gray-800">Tu número personal de WhatsApp</h2>
+        <p data-i18n="wiz.s3.subtitle" class="text-sm text-gray-500 mt-1">Lo usaremos para enviarte notificaciones de pedidos y para que puedas gestionar el bot desde WhatsApp.</p>
       </div>
       <div id="wizPhoneError" class="hidden bg-red-50 text-red-700 text-sm rounded-lg px-4 py-2 mb-4"></div>
       <div class="space-y-3">
         <div>
-          <label class="block text-xs font-medium text-gray-600 mb-1">Tu número WhatsApp (con código de país, sin +)</label>
+          <label data-i18n="wiz.s3.label" class="block text-xs font-medium text-gray-600 mb-1">Tu número WhatsApp (con código de país, sin +)</label>
           <input type="tel" id="wizMerchantPhone" placeholder="595981234567"
             class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"
             oninput="document.getElementById('wizNextBtn3').disabled = this.value.trim().length < 8"/>
         </div>
-        <p class="text-xs text-gray-400">Ejemplo: 595981234567 (Paraguay), 5491123456789 (Argentina), 393331234567 (Italia)</p>
+        <p data-i18n="wiz.s3.example" class="text-xs text-gray-400">Ejemplo: 595981234567 (Paraguay), 5491123456789 (Argentina), 393331234567 (Italia)</p>
       </div>
       <div class="flex gap-3 mt-5">
-        <button onclick="wizBack(3)" class="flex-1 border border-gray-200 text-gray-500 py-2 rounded-xl text-sm hover:bg-gray-50">← Atrás</button>
-        <button id="wizNextBtn3" onclick="saveMerchantPhone()" disabled
+        <button onclick="wizBack(3)" data-i18n="wiz.back" class="flex-1 border border-gray-200 text-gray-500 py-2 rounded-xl text-sm hover:bg-gray-50">← Atrás</button>
+        <button id="wizNextBtn3" onclick="saveMerchantPhone()" disabled data-i18n="wiz.next"
           class="flex-1 btn-green py-2 rounded-xl text-sm font-semibold disabled:opacity-40 disabled:cursor-not-allowed">
           Continuar →
         </button>
@@ -192,16 +190,16 @@
     <!-- Step 4: Done -->
     <div id="wizStep4" class="hidden text-center">
       <div class="text-6xl mb-4">🎉</div>
-      <h2 class="text-xl font-bold text-gray-800 mb-2">¡Todo listo!</h2>
-      <p class="text-gray-500 text-sm mb-2">Tu WhatsApp Business está conectado. Sara ya puede atender a tus clientes.</p>
-      <p class="text-xs text-gray-400 mb-6">Ahora configurá tu catálogo de productos o servicios para que Sara sepa qué ofrecer.</p>
+      <h2 data-i18n="wiz.s4.title" class="text-xl font-bold text-gray-800 mb-2">¡Todo listo!</h2>
+      <p data-i18n="wiz.s4.subtitle" class="text-gray-500 text-sm mb-2">Tu WhatsApp Business está conectado. Sara ya puede atender a tus clientes.</p>
+      <p data-i18n="wiz.s4.hint" class="text-xs text-gray-400 mb-6">Ahora configurá tu catálogo de productos o servicios para que Sara sepa qué ofrecer.</p>
       <div class="bg-green-50 rounded-xl p-4 text-left mb-6 space-y-1">
-        <p class="text-sm text-green-800">✅ Número conectado: <span id="wizDonePhone" class="font-mono font-semibold"></span></p>
-        <p class="text-sm text-green-700">✅ Tu número personal registrado</p>
-        <p class="text-sm text-green-700">✅ Bot activo y listo para responder</p>
-        <p class="text-sm text-green-700">✅ Webhook configurado automáticamente</p>
+        <p class="text-sm text-green-800">✅ <span data-i18n="wiz.s4.connected">Número conectado:</span> <span id="wizDonePhone" class="font-mono font-semibold"></span></p>
+        <p data-i18n="wiz.s4.personal" class="text-sm text-green-700">✅ Tu número personal registrado</p>
+        <p data-i18n="wiz.s4.active" class="text-sm text-green-700">✅ Bot activo y listo para responder</p>
+        <p data-i18n="wiz.s4.webhook" class="text-sm text-green-700">✅ Webhook configurado automáticamente</p>
       </div>
-      <button onclick="finishOnboarding()" class="btn-green w-full py-3 rounded-xl text-sm font-semibold">
+      <button onclick="finishOnboarding()" data-i18n="wiz.s4.btn" class="btn-green w-full py-3 rounded-xl text-sm font-semibold">
         Ir al panel de control →
       </button>
     </div>
@@ -1437,6 +1435,23 @@ es:{
 'appt.detail.title':'Detalle del turno','appt.detail.confirm':'✅ Confirmar','appt.detail.complete':'✔ Completar','appt.detail.cancel':'✕ Cancelar','appt.detail.delete':'🗑 Eliminar',
 'appt.bh.closed':'Cerrado',
 'day.sun':'Domingo','day.mon':'Lunes','day.tue':'Martes','day.wed':'Miércoles','day.thu':'Jueves','day.fri':'Viernes','day.sat':'Sábado',
+'wiz.start':'Empezar configuración →','wiz.back':'← Atrás','wiz.next':'Continuar →',
+'wiz.s1.title':'¡Bienvenido a Sara Bot!','wiz.s1.subtitle':'En 3 pasos vas a tener tu asistente de WhatsApp funcionando. Empecemos.',
+'wiz.s1.i1.title':'Conectá tu número de WhatsApp Business','wiz.s1.i1.desc':'Usamos la API oficial de Meta — tus clientes escriben a tu número de siempre.',
+'wiz.s1.i2.title':'Configurá tu catálogo','wiz.s1.i2.desc':'Cargá productos, servicios y horarios desde el panel.',
+'wiz.s1.i3.title':'Sara empieza a atender','wiz.s1.i3.desc':'Tu bot responde pedidos y reservas 24/7 automáticamente.',
+'wiz.s2.title':'Conectá tu WhatsApp Business','wiz.s2.subtitle':'Autorizá a Sara Bot a usar tu número oficial de WhatsApp Business.',
+'wiz.s2.success':'WhatsApp conectado correctamente.','wiz.s2.fb_btn':'Conectar con Facebook / Meta',
+'wiz.s2.manual_toggle':'¿Preferís ingresar los datos manualmente?','wiz.s2.manual_hint':'Ingresá los datos de tu Meta App manualmente:',
+'wiz.s2.token_label':'Access Token (permanente)','wiz.s2.save_manual':'Guardar credenciales',
+'wiz.s3.title':'Tu número personal de WhatsApp','wiz.s3.subtitle':'Lo usaremos para enviarte notificaciones de pedidos y para que puedas gestionar el bot desde WhatsApp.',
+'wiz.s3.label':'Tu número WhatsApp (con código de país, sin +)','wiz.s3.example':'Ejemplo: 595981234567 (Paraguay), 5491123456789 (Argentina), 393331234567 (Italia)',
+'wiz.s4.title':'¡Todo listo!','wiz.s4.subtitle':'Tu WhatsApp Business está conectado. Sara ya puede atender a tus clientes.',
+'wiz.s4.hint':'Ahora configurá tu catálogo de productos o servicios para que Sara sepa qué ofrecer.',
+'wiz.s4.connected':'Número conectado:','wiz.s4.personal':'✅ Tu número personal registrado','wiz.s4.active':'✅ Bot activo y listo para responder',
+'wiz.s4.webhook':'✅ Webhook configurado automáticamente','wiz.s4.btn':'Ir al panel de control →',
+'wiz.token_error':'⚠️ Tu conexión de WhatsApp tiene un problema. Reconectá tu cuenta para que Sara siga funcionando.',
+'wiz.token_reconnect':'Reconectar WhatsApp',
 },
 en:{
 'login.user':'Username','login.password':'Password','login.submit':'Sign in','login.hint':'First time: password <b>sara1234</b>',
@@ -1584,6 +1599,23 @@ en:{
 'appt.detail.title':'Appointment detail','appt.detail.confirm':'✅ Confirm','appt.detail.complete':'✔ Complete','appt.detail.cancel':'✕ Cancel','appt.detail.delete':'🗑 Delete',
 'appt.bh.closed':'Closed',
 'day.sun':'Sunday','day.mon':'Monday','day.tue':'Tuesday','day.wed':'Wednesday','day.thu':'Thursday','day.fri':'Friday','day.sat':'Saturday',
+'wiz.start':'Start setup →','wiz.back':'← Back','wiz.next':'Continue →',
+'wiz.s1.title':'Welcome to Sara Bot!','wiz.s1.subtitle':'In 3 steps your WhatsApp assistant will be up and running.',
+'wiz.s1.i1.title':'Connect your WhatsApp Business number','wiz.s1.i1.desc':'We use the official Meta API — your customers write to your existing number.',
+'wiz.s1.i2.title':'Set up your catalog','wiz.s1.i2.desc':'Add products, services and hours from the panel.',
+'wiz.s1.i3.title':'Sara starts attending','wiz.s1.i3.desc':'Your bot handles orders and bookings 24/7 automatically.',
+'wiz.s2.title':'Connect your WhatsApp Business','wiz.s2.subtitle':'Authorize Sara Bot to use your official WhatsApp Business number.',
+'wiz.s2.success':'WhatsApp connected successfully.','wiz.s2.fb_btn':'Connect with Facebook / Meta',
+'wiz.s2.manual_toggle':'Prefer to enter data manually?','wiz.s2.manual_hint':'Enter your Meta App data manually:',
+'wiz.s2.token_label':'Access Token (permanent)','wiz.s2.save_manual':'Save credentials',
+'wiz.s3.title':'Your personal WhatsApp number','wiz.s3.subtitle':'We will use it to send you order notifications and so you can manage the bot from WhatsApp.',
+'wiz.s3.label':'Your WhatsApp number (with country code, no +)','wiz.s3.example':'Example: 595981234567 (Paraguay), 5491123456789 (Argentina), 393331234567 (Italy)',
+'wiz.s4.title':'All done!','wiz.s4.subtitle':'Your WhatsApp Business is connected. Sara can now serve your customers.',
+'wiz.s4.hint':'Now set up your product or service catalog so Sara knows what to offer.',
+'wiz.s4.connected':'Number connected:','wiz.s4.personal':'✅ Your personal number registered','wiz.s4.active':'✅ Bot active and ready to respond',
+'wiz.s4.webhook':'✅ Webhook configured automatically','wiz.s4.btn':'Go to dashboard →',
+'wiz.token_error':'⚠️ Your WhatsApp connection has an issue. Reconnect your account so Sara keeps working.',
+'wiz.token_reconnect':'Reconnect WhatsApp',
 },
 it:{
 'login.user':'Utente','login.password':'Password','login.submit':'Accedi','login.hint':'Prima volta: password <b>sara1234</b>',
@@ -1730,6 +1762,23 @@ it:{
 'appt.detail.title':'Dettaglio appuntamento','appt.detail.confirm':'✅ Conferma','appt.detail.complete':'✔ Completato','appt.detail.cancel':'✕ Annulla','appt.detail.delete':'🗑 Elimina',
 'appt.bh.closed':'Chiuso',
 'day.sun':'Domenica','day.mon':'Lunedì','day.tue':'Martedì','day.wed':'Mercoledì','day.thu':'Giovedì','day.fri':'Venerdì','day.sat':'Sabato',
+'wiz.start':'Inizia configurazione →','wiz.back':'← Indietro','wiz.next':'Continua →',
+'wiz.s1.title':'Benvenuto in Sara Bot!','wiz.s1.subtitle':'In 3 passi avrai il tuo assistente WhatsApp operativo.',
+'wiz.s1.i1.title':'Collega il tuo numero WhatsApp Business','wiz.s1.i1.desc':'Usiamo l\'API ufficiale di Meta — i tuoi clienti scrivono al tuo numero abituale.',
+'wiz.s1.i2.title':'Configura il catalogo','wiz.s1.i2.desc':'Carica prodotti, servizi e orari dal pannello.',
+'wiz.s1.i3.title':'Sara inizia a rispondere','wiz.s1.i3.desc':'Il tuo bot gestisce ordini e prenotazioni 24/7 automaticamente.',
+'wiz.s2.title':'Collega il tuo WhatsApp Business','wiz.s2.subtitle':'Autorizza Sara Bot a usare il tuo numero WhatsApp Business ufficiale.',
+'wiz.s2.success':'WhatsApp collegato correttamente.','wiz.s2.fb_btn':'Collega con Facebook / Meta',
+'wiz.s2.manual_toggle':'Preferisci inserire i dati manualmente?','wiz.s2.manual_hint':'Inserisci manualmente i dati della tua Meta App:',
+'wiz.s2.token_label':'Access Token (permanente)','wiz.s2.save_manual':'Salva credenziali',
+'wiz.s3.title':'Il tuo numero WhatsApp personale','wiz.s3.subtitle':'Lo useremo per inviarti notifiche degli ordini e per gestire il bot da WhatsApp.',
+'wiz.s3.label':'Il tuo numero WhatsApp (con prefisso internazionale, senza +)','wiz.s3.example':'Esempio: 393331234567 (Italia), 5491123456789 (Argentina)',
+'wiz.s4.title':'Tutto pronto!','wiz.s4.subtitle':'Il tuo WhatsApp Business è collegato. Sara può ora servire i tuoi clienti.',
+'wiz.s4.hint':'Ora configura il catalogo prodotti o servizi in modo che Sara sappia cosa offrire.',
+'wiz.s4.connected':'Numero collegato:','wiz.s4.personal':'✅ Numero personale registrato','wiz.s4.active':'✅ Bot attivo e pronto a rispondere',
+'wiz.s4.webhook':'✅ Webhook configurato automaticamente','wiz.s4.btn':'Vai al pannello →',
+'wiz.token_error':'⚠️ La connessione WhatsApp ha un problema. Ricollega il tuo account affinché Sara continui a funzionare.',
+'wiz.token_reconnect':'Ricollegare WhatsApp',
 },
 de:{
 'login.user':'Benutzername','login.password':'Passwort','login.submit':'Anmelden','login.hint':'Erstmalig: Passwort <b>sara1234</b>',
@@ -1876,6 +1925,23 @@ de:{
 'appt.detail.title':'Termindetails','appt.detail.confirm':'✅ Bestätigen','appt.detail.complete':'✔ Abgeschlossen','appt.detail.cancel':'✕ Stornieren','appt.detail.delete':'🗑 Löschen',
 'appt.bh.closed':'Geschlossen',
 'day.sun':'Sonntag','day.mon':'Montag','day.tue':'Dienstag','day.wed':'Mittwoch','day.thu':'Donnerstag','day.fri':'Freitag','day.sat':'Samstag',
+'wiz.start':'Einrichtung starten →','wiz.back':'← Zurück','wiz.next':'Weiter →',
+'wiz.s1.title':'Willkommen bei Sara Bot!','wiz.s1.subtitle':'In 3 Schritten ist dein WhatsApp-Assistent einsatzbereit.',
+'wiz.s1.i1.title':'Verbinde deine WhatsApp Business-Nummer','wiz.s1.i1.desc':'Wir nutzen die offizielle Meta API — deine Kunden schreiben an deine gewohnte Nummer.',
+'wiz.s1.i2.title':'Katalog einrichten','wiz.s1.i2.desc':'Lade Produkte, Dienstleistungen und Öffnungszeiten im Panel hoch.',
+'wiz.s1.i3.title':'Sara beginnt zu antworten','wiz.s1.i3.desc':'Dein Bot bearbeitet Bestellungen und Buchungen 24/7 automatisch.',
+'wiz.s2.title':'WhatsApp Business verbinden','wiz.s2.subtitle':'Autorisiere Sara Bot, deine offizielle WhatsApp Business-Nummer zu verwenden.',
+'wiz.s2.success':'WhatsApp erfolgreich verbunden.','wiz.s2.fb_btn':'Mit Facebook / Meta verbinden',
+'wiz.s2.manual_toggle':'Daten lieber manuell eingeben?','wiz.s2.manual_hint':'Gib die Daten deiner Meta App manuell ein:',
+'wiz.s2.token_label':'Access Token (dauerhaft)','wiz.s2.save_manual':'Zugangsdaten speichern',
+'wiz.s3.title':'Deine persönliche WhatsApp-Nummer','wiz.s3.subtitle':'Wir nutzen sie, um dir Bestellbenachrichtigungen zu senden und damit du den Bot über WhatsApp verwalten kannst.',
+'wiz.s3.label':'Deine WhatsApp-Nummer (mit Ländervorwahl, ohne +)','wiz.s3.example':'Beispiel: 4917612345678 (Deutschland), 393331234567 (Italien)',
+'wiz.s4.title':'Alles bereit!','wiz.s4.subtitle':'Dein WhatsApp Business ist verbunden. Sara kann jetzt deine Kunden bedienen.',
+'wiz.s4.hint':'Richte jetzt deinen Produkt- oder Dienstleistungskatalog ein, damit Sara weiß, was sie anbieten soll.',
+'wiz.s4.connected':'Verbundene Nummer:','wiz.s4.personal':'✅ Persönliche Nummer registriert','wiz.s4.active':'✅ Bot aktiv und bereit zu antworten',
+'wiz.s4.webhook':'✅ Webhook automatisch konfiguriert','wiz.s4.btn':'Zum Dashboard →',
+'wiz.token_error':'⚠️ Deine WhatsApp-Verbindung hat ein Problem. Verbinde dein Konto erneut, damit Sara weiterarbeiten kann.',
+'wiz.token_reconnect':'WhatsApp neu verbinden',
 },
 fr:{
 'login.user':'Utilisateur','login.password':'Mot de passe','login.submit':'Se connecter','login.hint':'Première fois : mot de passe <b>sara1234</b>',
@@ -2022,6 +2088,23 @@ fr:{
 'appt.detail.title':'Détail du rendez-vous','appt.detail.confirm':'✅ Confirmer','appt.detail.complete':'✔ Terminer','appt.detail.cancel':'✕ Annuler','appt.detail.delete':'🗑 Supprimer',
 'appt.bh.closed':'Fermé',
 'day.sun':'Dimanche','day.mon':'Lundi','day.tue':'Mardi','day.wed':'Mercredi','day.thu':'Jeudi','day.fri':'Vendredi','day.sat':'Samedi',
+'wiz.start':'Démarrer la configuration →','wiz.back':'← Retour','wiz.next':'Continuer →',
+'wiz.s1.title':'Bienvenue sur Sara Bot !','wiz.s1.subtitle':'En 3 étapes, ton assistant WhatsApp sera opérationnel.',
+'wiz.s1.i1.title':'Connecte ton numéro WhatsApp Business','wiz.s1.i1.desc':'Nous utilisons l\'API officielle de Meta — tes clients écrivent à ton numéro habituel.',
+'wiz.s1.i2.title':'Configure ton catalogue','wiz.s1.i2.desc':'Ajoute produits, services et horaires depuis le panneau.',
+'wiz.s1.i3.title':'Sara commence à répondre','wiz.s1.i3.desc':'Ton bot gère commandes et réservations 24h/24 automatiquement.',
+'wiz.s2.title':'Connecter WhatsApp Business','wiz.s2.subtitle':'Autorise Sara Bot à utiliser ton numéro WhatsApp Business officiel.',
+'wiz.s2.success':'WhatsApp connecté avec succès.','wiz.s2.fb_btn':'Connecter avec Facebook / Meta',
+'wiz.s2.manual_toggle':'Préfères-tu saisir les données manuellement ?','wiz.s2.manual_hint':'Saisis manuellement les données de ton application Meta :',
+'wiz.s2.token_label':'Access Token (permanent)','wiz.s2.save_manual':'Enregistrer les identifiants',
+'wiz.s3.title':'Ton numéro WhatsApp personnel','wiz.s3.subtitle':'Nous l\'utiliserons pour t\'envoyer des notifications de commandes et pour gérer le bot depuis WhatsApp.',
+'wiz.s3.label':'Ton numéro WhatsApp (avec indicatif pays, sans +)','wiz.s3.example':'Exemple : 33612345678 (France), 393331234567 (Italie)',
+'wiz.s4.title':'Tout est prêt !','wiz.s4.subtitle':'Ton WhatsApp Business est connecté. Sara peut maintenant servir tes clients.',
+'wiz.s4.hint':'Configure maintenant ton catalogue de produits ou services pour que Sara sache quoi proposer.',
+'wiz.s4.connected':'Numéro connecté :','wiz.s4.personal':'✅ Numéro personnel enregistré','wiz.s4.active':'✅ Bot actif et prêt à répondre',
+'wiz.s4.webhook':'✅ Webhook configuré automatiquement','wiz.s4.btn':'Aller au tableau de bord →',
+'wiz.token_error':'⚠️ Ta connexion WhatsApp a un problème. Reconnecte ton compte pour que Sara continue à fonctionner.',
+'wiz.token_reconnect':'Reconnecter WhatsApp',
 }
 };
 
@@ -2438,9 +2521,25 @@ async function showDashboard() {
     document.getElementById('statProducts').textContent = stats.activeProducts + '/' + stats.totalProducts;
     applyTabVisibility(settings.products_enabled !== false, !!settings.services_enabled, !!settings.appointments_enabled);
     if (settings.products_enabled !== false) loadProducts();
+    if (settings.whatsapp_token_refresh_error) showTokenErrorBanner();
   } catch (e) {
     if (e.status === 401) logout();
   }
+}
+
+function showTokenErrorBanner() {
+  if (document.getElementById('tokenErrorBanner')) return;
+  const banner = document.createElement('div');
+  banner.id = 'tokenErrorBanner';
+  banner.className = 'fixed top-0 left-0 right-0 z-50 bg-orange-500 text-white px-4 py-3 flex items-center justify-between gap-3 shadow-lg';
+  banner.innerHTML = `
+    <span class="text-sm font-medium flex-1">${t('wiz.token_error')}</span>
+    <button onclick="switchTab('settings')" class="shrink-0 bg-white text-orange-600 font-semibold text-xs px-3 py-1.5 rounded-lg hover:bg-orange-50 transition">
+      ${t('wiz.token_reconnect')}
+    </button>
+    <button onclick="this.parentElement.remove()" class="shrink-0 text-white/80 hover:text-white text-lg leading-none">✕</button>
+  `;
+  document.body.prepend(banner);
 }
 
 // ── Tab visibility (based on enabled sections) ─────────────────────────────────
