@@ -555,8 +555,35 @@
     </div>
 
     <!-- ── SUPPORT TAB ── -->
-    <div id="sectionSupport" class="hidden max-w-2xl">
-      <div class="bg-white rounded-xl shadow-sm flex flex-col" style="height:calc(100vh - 14rem)">
+    <div id="sectionSupport" class="hidden max-w-2xl space-y-4">
+
+      <!-- Feedback card (shown first, more prominent) -->
+      <div class="bg-gradient-to-br from-green-50 to-emerald-50 border border-green-100 rounded-xl p-5">
+        <div class="flex items-start gap-3 mb-3">
+          <span class="text-2xl">💡</span>
+          <div>
+            <h3 data-i18n="feedback.title" class="font-semibold text-gray-800 text-sm">¿Algo que podamos mejorar?</h3>
+            <p data-i18n="feedback.desc" class="text-xs text-gray-500 mt-0.5 leading-relaxed">
+              Contanos qué necesitás — una función nueva, algo que no funciona como esperabas, o simplemente una idea. Revisamos cada mensaje y lo que tiene sentido lo implementamos rápido.
+            </p>
+          </div>
+        </div>
+        <textarea id="feedbackInput" rows="3"
+          data-i18n-ph="feedback.placeholder"
+          placeholder="Ej: Me gustaría poder filtrar los pedidos por fecha, o ver el historial de un cliente..."
+          class="w-full border border-green-200 bg-white rounded-xl px-3 py-2.5 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-green-400 mb-3"></textarea>
+        <div class="flex items-center justify-between gap-3">
+          <p id="feedbackStatus" class="text-xs text-green-600 hidden"></p>
+          <button onclick="sendFeedback()"
+            class="ml-auto btn-green px-4 py-2 rounded-xl text-sm font-semibold"
+            data-i18n="feedback.send">
+            Enviar sugerencia
+          </button>
+        </div>
+      </div>
+
+      <!-- Support chat -->
+      <div class="bg-white rounded-xl shadow-sm flex flex-col" style="height:calc(100vh - 22rem); min-height:280px">
         <!-- Header -->
         <div class="px-5 py-4 border-b flex items-center gap-3">
           <span class="text-xl">💬</span>
@@ -583,6 +610,7 @@
           </button>
         </div>
       </div>
+
     </div>
 
     <!-- ── SETTINGS TAB ── -->
@@ -1380,6 +1408,7 @@ es:{
 'services.active':'Activo','services.inactive':'Inactivo','services.edit':'✏️ Editar','services.delete':'🗑 Eliminar','services.perHour':'/hora','services.confirm':'¿Eliminar este servicio?',
 'orders.title':'Pedidos recientes','orders.refresh':'↻ Actualizar','orders.export':'⬇ Exportar CSV','orders.loading':'Cargando...','orders.empty':'Todavía no hay pedidos.','orders.delivery':'+envío',
 'support.title':'Soporte técnico','support.subtitle':'Envianos tu consulta y te respondemos a la brevedad.','support.empty':'Aún no hay mensajes. ¡Escribinos!','support.placeholder':'Escribí tu consulta aquí...','support.send':'Enviar','support.loading':'Cargando...',
+'feedback.title':'¿Algo que podamos mejorar?','feedback.desc':'Contanos qué necesitás — una función nueva, algo que no funciona como esperabas, o simplemente una idea. Revisamos cada mensaje y lo que tiene sentido lo implementamos rápido.','feedback.placeholder':'Ej: Me gustaría poder filtrar los pedidos por fecha, o ver el historial de un cliente...','feedback.send':'Enviar sugerencia','feedback.sent':'✅ ¡Gracias! Tu sugerencia fue enviada.',
 'tab.plan':'💳 Plan',
 'plan.month':'/mes','plan.plans.chat_support':'Soporte por chat',
 'plan.status.title':'📋 Estado de tu suscripción','plan.status.renew':'💬 Contactar soporte para renovar','plan.plans.title':'🚀 Planes disponibles',
@@ -1551,6 +1580,7 @@ en:{
 'services.active':'Active','services.inactive':'Inactive','services.edit':'✏️ Edit','services.delete':'🗑 Delete','services.perHour':'/hr','services.confirm':'Delete this service?',
 'orders.title':'Recent orders','orders.refresh':'↻ Refresh','orders.export':'⬇ Export CSV','orders.loading':'Loading...','orders.empty':'No orders yet.','orders.delivery':'+delivery',
 'support.title':'Technical support','support.subtitle':'Send us your question and we\'ll reply shortly.','support.empty':'No messages yet. Write to us!','support.placeholder':'Type your question here...','support.send':'Send','support.loading':'Loading...',
+'feedback.title':'Anything we can improve?','feedback.desc':'Tell us what you need — a new feature, something that\'s not working as expected, or just an idea. We read every message and implement what makes sense, fast.','feedback.placeholder':'E.g.: I\'d like to filter orders by date, or see a customer\'s full history...','feedback.send':'Send suggestion','feedback.sent':'✅ Thanks! Your suggestion has been sent.',
 'tab.plan':'💳 Plan',
 'plan.month':'/mo','plan.plans.chat_support':'Chat support',
 'plan.status.title':'📋 Subscription status','plan.status.renew':'💬 Contact support to renew','plan.plans.title':'🚀 Available plans',
@@ -1722,6 +1752,7 @@ it:{
 'services.active':'Attivo','services.inactive':'Non attivo','services.edit':'✏️ Modifica','services.delete':'🗑 Elimina','services.perHour':'/ora','services.confirm':'Eliminare questo servizio?',
 'orders.title':'Ordini recenti','orders.refresh':'↻ Aggiorna','orders.export':'⬇ Esporta CSV','orders.loading':'Caricamento...','orders.empty':'Ancora nessun ordine.','orders.delivery':'+consegna',
 'support.title':'Supporto tecnico','support.subtitle':'Inviaci la tua richiesta e ti risponderemo al più presto.','support.empty':'Ancora nessun messaggio. Scrivici!','support.placeholder':'Scrivi qui la tua domanda...','support.send':'Invia','support.loading':'Caricamento...',
+'feedback.title':'Qualcosa che possiamo migliorare?','feedback.desc':'Dicci cosa ti serve — una nuova funzione, qualcosa che non funziona come ti aspettavi, o semplicemente un\'idea. Leggiamo ogni messaggio e implementiamo ciò che ha senso, in tempi brevi.','feedback.placeholder':'Es: Vorrei poter filtrare gli ordini per data, o vedere la cronologia di un cliente...','feedback.send':'Invia suggerimento','feedback.sent':'✅ Grazie! Il tuo suggerimento è stato inviato.',
 'tab.plan':'💳 Piano',
 'plan.month':'/mese','plan.plans.chat_support':'Supporto via chat',
 'plan.status.title':'📋 Stato abbonamento','plan.status.renew':'💬 Contatta il supporto per rinnovare','plan.plans.title':'🚀 Piani disponibili',
@@ -1892,6 +1923,7 @@ de:{
 'services.active':'Aktiv','services.inactive':'Inaktiv','services.edit':'✏️ Bearbeiten','services.delete':'🗑 Löschen','services.perHour':'/Std.','services.confirm':'Diesen Service löschen?',
 'orders.title':'Letzte Bestellungen','orders.refresh':'↻ Aktualisieren','orders.export':'⬇ CSV exportieren','orders.loading':'Wird geladen...','orders.empty':'Noch keine Bestellungen.','orders.delivery':'+Lieferung',
 'support.title':'Technischer Support','support.subtitle':'Sende uns deine Anfrage und wir antworten dir schnellstmöglich.','support.empty':'Noch keine Nachrichten. Schreib uns!','support.placeholder':'Schreib deine Frage hier...','support.send':'Senden','support.loading':'Wird geladen...',
+'feedback.title':'Etwas, das wir verbessern können?','feedback.desc':'Sag uns, was du brauchst — eine neue Funktion, etwas das nicht wie erwartet funktioniert, oder einfach eine Idee. Wir lesen jede Nachricht und setzen um, was Sinn ergibt — schnell.','feedback.placeholder':'Z.B.: Ich würde gerne Bestellungen nach Datum filtern oder den Verlauf eines Kunden sehen...','feedback.send':'Vorschlag senden','feedback.sent':'✅ Danke! Dein Vorschlag wurde gesendet.',
 'tab.plan':'💳 Tarif',
 'plan.month':'/Monat','plan.plans.chat_support':'Chat-Support',
 'plan.status.title':'📋 Abonnementstatus','plan.status.renew':'💬 Support kontaktieren zum Verlängern','plan.plans.title':'🚀 Verfügbare Tarife',
@@ -2062,6 +2094,7 @@ fr:{
 'services.active':'Actif','services.inactive':'Inactif','services.edit':'✏️ Modifier','services.delete':'🗑 Supprimer','services.perHour':'/h','services.confirm':'Supprimer ce service ?',
 'orders.title':'Commandes récentes','orders.refresh':'↻ Actualiser','orders.export':'⬇ Exporter CSV','orders.loading':'Chargement...','orders.empty':'Aucune commande pour l\'instant.','orders.delivery':'+livraison',
 'support.title':'Support technique','support.subtitle':'Envoyez-nous votre question et nous vous répondrons rapidement.','support.empty':'Pas encore de messages. Écrivez-nous !','support.placeholder':'Écrivez votre question ici...','support.send':'Envoyer','support.loading':'Chargement...',
+'feedback.title':'Quelque chose à améliorer ?','feedback.desc':'Dites-nous ce dont vous avez besoin — une nouvelle fonctionnalité, quelque chose qui ne fonctionne pas comme prévu, ou simplement une idée. Nous lisons chaque message et implémentons ce qui a du sens, rapidement.','feedback.placeholder':'Ex : J\'aimerais filtrer les commandes par date, ou voir l\'historique complet d\'un client...','feedback.send':'Envoyer une suggestion','feedback.sent':'✅ Merci ! Votre suggestion a bien été envoyée.',
 'tab.plan':'💳 Abonnement',
 'plan.month':'/mois','plan.plans.chat_support':'Support par chat',
 'plan.status.title':'📋 État de l\'abonnement','plan.status.renew':'💬 Contacter le support pour renouveler','plan.plans.title':'🚀 Plans disponibles',
@@ -2786,6 +2819,22 @@ async function sendSupportMessage() {
   } finally {
     input.disabled = false;
     input.focus();
+  }
+}
+
+async function sendFeedback() {
+  const input  = document.getElementById('feedbackInput');
+  const status = document.getElementById('feedbackStatus');
+  const content = input.value.trim();
+  if (!content) return;
+  try {
+    await api('/admin/support', 'POST', { content: `💡 Feedback: ${content}` });
+    input.value = '';
+    status.textContent = t('feedback.sent');
+    status.classList.remove('hidden');
+    setTimeout(() => status.classList.add('hidden'), 4000);
+  } catch(e) {
+    alert('Error: ' + e.message);
   }
 }
 
