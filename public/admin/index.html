@@ -335,8 +335,8 @@
         <h2 data-i18n="products.title" class="text-lg font-semibold text-gray-800">Catálogo de productos</h2>
         <div class="flex gap-2">
           <button onclick="openImportModal()"
-            class="px-4 py-2 rounded-lg text-sm font-semibold border border-gray-200 text-gray-600 hover:bg-gray-50 flex items-center gap-1">
-            📋 Importar desde Google Sheets
+            class="px-4 py-2 rounded-lg text-sm font-semibold border border-gray-200 text-gray-600 hover:bg-gray-50 flex items-center gap-1" data-i18n="import.btn">
+            📥 Importar catálogo
           </button>
           <button onclick="openProductModal(null)"
             class="btn-green px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-1" data-i18n="products.new">
@@ -866,80 +866,128 @@
   <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl p-6 max-h-screen overflow-y-auto">
 
     <div class="flex items-center justify-between mb-4">
-      <h3 class="text-base font-semibold text-gray-800">📋 Importar catálogo desde Google Sheets</h3>
+      <h3 class="text-base font-semibold text-gray-800" data-i18n="import.title">📥 Importar catálogo</h3>
       <button onclick="closeImportModal()" class="text-gray-400 hover:text-gray-600 text-xl leading-none">✕</button>
     </div>
 
-    <!-- Step 1: URL input -->
-    <div id="importStep1">
-      <div class="bg-blue-50 rounded-xl p-4 mb-4">
-        <p class="text-sm font-semibold text-blue-800 mb-1">📌 Cómo usar:</p>
-        <ol class="text-xs text-blue-700 space-y-1 list-decimal list-inside">
-          <li>Abrí el <a id="templateLink" href="#" target="_blank" class="underline font-medium">template de Google Sheets →</a></li>
-          <li>Hacé una copia: <b>Archivo → Hacer una copia</b></li>
-          <li>Completá tu catálogo en la copia</li>
-          <li>Compartí como público: <b>Compartir → Cualquiera con el enlace → Lector</b></li>
-          <li>Pegá el enlace abajo</li>
-        </ol>
+    <!-- Source selector (hidden once preview is shown) -->
+    <div id="importSourceSelect">
+      <!-- 3 source buttons -->
+      <div class="grid grid-cols-3 gap-3 mb-5">
+        <button onclick="selectImportSource('sheets')" id="importSrcSheets"
+          class="flex flex-col items-center gap-2 p-4 rounded-xl border-2 border-purple-400 bg-purple-50 text-purple-700 font-semibold text-sm transition">
+          <span class="text-2xl">📋</span>
+          <span data-i18n="import.tab.sheets">Google Sheets</span>
+        </button>
+        <button onclick="selectImportSource('csv')" id="importSrcCsv"
+          class="flex flex-col items-center gap-2 p-4 rounded-xl border-2 border-gray-200 text-gray-500 font-semibold text-sm hover:border-purple-300 hover:bg-purple-50 transition">
+          <span class="text-2xl">📄</span>
+          <span data-i18n="import.tab.csv">CSV</span>
+        </button>
+        <button onclick="selectImportSource('photos')" id="importSrcPhotos"
+          class="flex flex-col items-center gap-2 p-4 rounded-xl border-2 border-gray-200 text-gray-500 font-semibold text-sm hover:border-purple-300 hover:bg-purple-50 transition">
+          <span class="text-2xl">📸</span>
+          <span data-i18n="import.tab.photos">Fotos IA</span>
+        </button>
       </div>
 
-      <div id="importError" class="hidden bg-red-50 text-red-700 text-sm rounded-lg px-4 py-2 mb-3"></div>
+      <!-- Google Sheets panel -->
+      <div id="importPanelSheets">
+        <div class="bg-blue-50 rounded-xl p-4 mb-4">
+          <p class="text-sm font-semibold text-blue-800 mb-1" data-i18n="import.how">📌 Cómo usar:</p>
+          <ol class="text-xs text-blue-700 space-y-1 list-decimal list-inside">
+            <li><span data-i18n="import.sheets.s1">Abrí el </span><a id="templateLink" href="#" target="_blank" class="underline font-medium" data-i18n="import.sheets.template">template de Google Sheets →</a></li>
+            <li data-i18n="import.sheets.s2">Hacé una copia: <b>Archivo → Hacer una copia</b></li>
+            <li data-i18n="import.sheets.s3">Completá tu catálogo en la copia</li>
+            <li data-i18n="import.sheets.s4">Compartí como público: <b>Compartir → Cualquiera con el enlace → Lector</b></li>
+            <li data-i18n="import.sheets.s5">Pegá el enlace abajo</li>
+          </ol>
+        </div>
+        <div id="importError" class="hidden bg-red-50 text-red-700 text-sm rounded-lg px-4 py-2 mb-3"></div>
+        <label class="block text-sm font-medium text-gray-700 mb-1" data-i18n="import.sheets.urlLabel">URL de tu Google Sheet</label>
+        <input type="url" id="importUrl" data-i18n-ph="import.sheets.urlPh" placeholder="https://docs.google.com/spreadsheets/d/..."
+          class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-4"/>
+        <button onclick="previewImport()" id="importPreviewBtn"
+          class="btn-green w-full py-2 rounded-lg text-sm font-semibold" data-i18n="import.preview.btn">
+          Previsualizar →
+        </button>
+      </div>
 
-      <label class="block text-sm font-medium text-gray-700 mb-1">URL de tu Google Sheet</label>
-      <input type="url" id="importUrl" placeholder="https://docs.google.com/spreadsheets/d/..."
-        class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-4"/>
+      <!-- CSV panel -->
+      <div id="importPanelCsv" class="hidden">
+        <div class="bg-blue-50 rounded-xl p-4 mb-4 text-xs text-blue-700">
+          <p class="font-semibold text-blue-800 mb-1" data-i18n="import.csv.hint">Columnas esperadas (en cualquier orden):</p>
+          <code class="block mt-1">nombre / name, categoría / category, precio / price, stock, descripción / description</code>
+        </div>
+        <div id="importCsvError" class="hidden bg-red-50 text-red-700 text-sm rounded-lg px-4 py-2 mb-3"></div>
+        <div id="importCsvDrop"
+          class="border-2 border-dashed border-gray-200 rounded-xl p-8 text-center cursor-pointer hover:border-purple-300 hover:bg-purple-50 transition mb-4"
+          onclick="document.getElementById('importCsvInput').click()"
+          ondragover="event.preventDefault();this.classList.add('border-purple-400','bg-purple-50')"
+          ondragleave="this.classList.remove('border-purple-400','bg-purple-50')"
+          ondrop="handleCsvDrop(event)">
+          <div class="text-3xl mb-2">📄</div>
+          <p class="text-sm font-medium text-gray-600" data-i18n="import.csv.drop">Clic o arrastrá tu archivo CSV aquí</p>
+          <p class="text-xs text-gray-400 mt-1">.csv</p>
+          <input type="file" id="importCsvInput" accept=".csv,text/csv" class="hidden" onchange="handleCsvFile(this.files[0])"/>
+        </div>
+      </div>
 
-      <button onclick="previewImport()" id="importPreviewBtn"
-        class="btn-green w-full py-2 rounded-lg text-sm font-semibold">
-        Previsualizar importación →
-      </button>
+      <!-- Photos AI panel -->
+      <div id="importPanelPhotos" class="hidden">
+        <p class="text-xs text-gray-500 mb-3" data-i18n="import.photos.hint">Subí fotos del catálogo. Claude extrae los productos automáticamente.</p>
+        <div id="importPhotosDrop"
+          class="border-2 border-dashed border-gray-200 rounded-xl p-6 text-center cursor-pointer hover:border-purple-300 hover:bg-purple-50 transition mb-3"
+          onclick="document.getElementById('importPhotosInput').click()"
+          ondragover="event.preventDefault();this.classList.add('border-purple-400','bg-purple-50')"
+          ondragleave="this.classList.remove('border-purple-400','bg-purple-50')"
+          ondrop="handlePhotosDrop(event)">
+          <div class="text-3xl mb-2">📸</div>
+          <p class="text-sm font-medium text-gray-600" data-i18n="import.photos.drop">Clic o arrastrá las fotos aquí</p>
+          <p class="text-xs text-gray-400 mt-1" data-i18n="import.photos.limit">JPG, PNG — hasta 6 imágenes</p>
+          <input type="file" id="importPhotosInput" accept="image/*" multiple class="hidden" onchange="handlePhotosFiles(this.files)"/>
+        </div>
+        <div id="importPhotosPreviews" class="flex gap-2 flex-wrap mb-3"></div>
+        <div id="importPhotosError" class="hidden bg-red-50 text-red-700 text-sm rounded-lg px-3 py-2 mb-3"></div>
+        <button id="importPhotosBtn" onclick="runPhotosImport()" disabled
+          class="btn-purple w-full py-2 rounded-lg text-sm font-semibold disabled:opacity-40 disabled:cursor-not-allowed" data-i18n="import.photos.btn">
+          🤖 Extraer productos con IA
+        </button>
+      </div>
     </div>
 
-    <!-- Step 2: Preview -->
-    <div id="importStep2" class="hidden">
+    <!-- Preview table (shared, shown after any source is parsed) -->
+    <div id="importPreviewSection" class="hidden">
       <div class="flex items-center justify-between mb-3">
-        <p class="text-sm text-gray-600">Se encontraron <span id="importCount" class="font-bold text-green-600"></span> productos. Revisá antes de importar:</p>
-        <button onclick="importBack()" class="text-xs text-gray-400 hover:text-gray-600 underline">← Cambiar URL</button>
+        <p class="text-sm text-gray-600">
+          <span data-i18n="import.preview.found">Productos encontrados:</span>
+          <span id="importCount" class="font-bold text-green-600 ml-1"></span>
+        </p>
+        <button onclick="importBack()" class="text-xs text-gray-400 hover:text-gray-600 underline" data-i18n="import.preview.back">← Cambiar fuente</button>
       </div>
-
-      <div id="importPreviewTable" class="border border-gray-200 rounded-xl overflow-hidden mb-4">
+      <div class="bg-green-50 border border-green-200 rounded-xl p-3 mb-4">
+        <p class="text-xs text-green-700" data-i18n="import.preview.note">Los productos con el mismo nombre exacto no se duplicarán.</p>
+      </div>
+      <div class="border border-gray-200 rounded-xl overflow-hidden mb-4">
         <div class="overflow-x-auto max-h-64">
           <table class="w-full text-xs">
             <thead class="bg-gray-50 text-gray-500 uppercase">
               <tr>
-                <th class="px-3 py-2 text-left">Nombre</th>
-                <th class="px-3 py-2 text-left">Categoría</th>
-                <th class="px-3 py-2 text-right">Precio (Gs)</th>
-                <th class="px-3 py-2 text-center">Stock</th>
-                <th class="px-3 py-2 text-center">Imagen</th>
-                <th class="px-3 py-2 text-center">Estado</th>
+                <th class="px-3 py-2 text-left" data-i18n="import.col.name">Nombre</th>
+                <th class="px-3 py-2 text-left" data-i18n="import.col.category">Categoría</th>
+                <th class="px-3 py-2 text-right" data-i18n="import.col.price">Precio (Gs)</th>
+                <th class="px-3 py-2 text-center" data-i18n="import.col.stock">Stock</th>
               </tr>
             </thead>
             <tbody id="importPreviewBody" class="divide-y divide-gray-100"></tbody>
           </table>
         </div>
       </div>
-
-      <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-4">
-        <p class="text-xs font-semibold text-amber-800 mb-2">¿Qué hacer con los productos existentes?</p>
-        <div class="flex gap-4">
-          <label class="flex items-center gap-2 text-xs text-gray-700 cursor-pointer">
-            <input type="radio" name="importMode" value="add" checked class="accent-green-500"/>
-            <span><b>Agregar</b> — mantener lo que hay y agregar los nuevos</span>
-          </label>
-          <label class="flex items-center gap-2 text-xs text-gray-700 cursor-pointer">
-            <input type="radio" name="importMode" value="replace" class="accent-red-500"/>
-            <span><b>Reemplazar</b> — borrar todo y cargar solo estos</span>
-          </label>
-        </div>
-      </div>
-
       <div id="importConfirmError" class="hidden bg-red-50 text-red-700 text-sm rounded-lg px-4 py-2 mb-3"></div>
       <div id="importSuccess" class="hidden bg-green-50 text-green-700 text-sm rounded-lg px-4 py-3 mb-3"></div>
-
       <button onclick="confirmImport()" id="importConfirmBtn"
-        class="btn-green w-full py-2 rounded-lg text-sm font-semibold">
-        ✅ Confirmar importación
+        class="btn-green w-full py-2 rounded-lg text-sm font-semibold" data-i18n="import.confirm.btn">
+        ✅ Agregar al catálogo
       </button>
     </div>
 
@@ -1144,6 +1192,20 @@ es:{
 'help.chatpanel.colors':'<b>Colores de los mensajes en el panel:</b><br>⬜ Blanco (izquierda) = mensajes del cliente<br>🟩 Verde (derecha) = respuestas automáticas de Sara<br>🟦 Azul (derecha) = mensajes enviados por vos manualmente',
 'help.other.title':'ℹ️ Otros comandos WhatsApp','help.other.ayuda':'Ver todos los comandos disponibles directamente en WhatsApp',
 'help.other.hint':'💡 Los comandos no distinguen mayúsculas/minúsculas. Podés escribir "catalogo", "CATALOGO" o "Catalogo".',
+'import.btn':'📥 Importar catálogo','import.title':'📥 Importar catálogo',
+'import.tab.sheets':'Google Sheets','import.tab.csv':'CSV','import.tab.photos':'Fotos IA',
+'import.how':'📌 Cómo usar:','import.sheets.s1':'Abrí el ','import.sheets.template':'template de Google Sheets →',
+'import.sheets.s2':'Hacé una copia: <b>Archivo → Hacer una copia</b>','import.sheets.s3':'Completá tu catálogo en la copia',
+'import.sheets.s4':'Compartí como público: <b>Compartir → Cualquiera con el enlace → Lector</b>','import.sheets.s5':'Pegá el enlace abajo',
+'import.sheets.urlLabel':'URL de tu Google Sheet','import.sheets.urlPh':'https://docs.google.com/spreadsheets/d/...',
+'import.preview.btn':'Previsualizar →','import.preview.found':'Productos encontrados:','import.preview.back':'← Cambiar fuente',
+'import.preview.note':'Los productos con el mismo nombre exacto no se duplicarán.',
+'import.col.name':'Nombre','import.col.category':'Categoría','import.col.price':'Precio (Gs)','import.col.stock':'Stock',
+'import.confirm.btn':'Agregar al catálogo','import.confirm.done':'productos importados.','import.confirm.skipped':'ya existían y se omitieron.',
+'import.csv.hint':'Columnas esperadas (en cualquier orden):','import.csv.drop':'Clic o arrastrá tu archivo CSV aquí',
+'import.photos.hint':'Subí fotos del catálogo. Claude extrae los productos automáticamente.',
+'import.photos.drop':'Clic o arrastrá las fotos aquí','import.photos.limit':'JPG, PNG — hasta 6 imágenes','import.photos.btn':'🤖 Extraer productos con IA',
+'import.error.noUrl':'Pegá la URL de tu Google Sheet.','import.error.sheet':'Error al leer el Sheet.','import.error.csv':'Error al leer el CSV.','import.error.noProducts':'No se encontraron productos en las imágenes.','import.error.generic':'Error al importar.',
 'tab.appointments':'📅 Turnos',
 'appt.today':'Hoy','appt.addBlock':'🚫 Agregar bloqueo','appt.newAppt':'+ Turno',
 'appt.legend.free':'Libre','appt.legend.confirmed':'Confirmado','appt.legend.pending':'Pendiente','appt.legend.blocked':'Bloqueado','appt.legend.outside':'Fuera de horario',
@@ -1259,6 +1321,20 @@ en:{
 'help.chatpanel.colors':'<b>Message colours in the panel:</b><br>⬜ White (left) = customer messages<br>🟩 Green (right) = Sara\'s automatic replies<br>🟦 Blue (right) = messages sent by you manually',
 'help.other.title':'ℹ️ Other WhatsApp commands','help.other.ayuda':'View all available commands directly in WhatsApp',
 'help.other.hint':'💡 Commands are case-insensitive.',
+'import.btn':'📥 Import catalog','import.title':'📥 Import catalog',
+'import.tab.sheets':'Google Sheets','import.tab.csv':'CSV','import.tab.photos':'AI Photos',
+'import.how':'📌 How to use:','import.sheets.s1':'Open the ','import.sheets.template':'Google Sheets template →',
+'import.sheets.s2':'Make a copy: <b>File → Make a copy</b>','import.sheets.s3':'Fill in your catalog in the copy',
+'import.sheets.s4':'Share as public: <b>Share → Anyone with the link → Viewer</b>','import.sheets.s5':'Paste the link below',
+'import.sheets.urlLabel':'Your Google Sheet URL','import.sheets.urlPh':'https://docs.google.com/spreadsheets/d/...',
+'import.preview.btn':'Preview →','import.preview.found':'Products found:','import.preview.back':'← Change source',
+'import.preview.note':'Products with the exact same name will not be duplicated.',
+'import.col.name':'Name','import.col.category':'Category','import.col.price':'Price (Gs)','import.col.stock':'Stock',
+'import.confirm.btn':'Add to catalog','import.confirm.done':'products imported.','import.confirm.skipped':'already existed and were skipped.',
+'import.csv.hint':'Expected columns (any order):','import.csv.drop':'Click or drag your CSV file here',
+'import.photos.hint':'Upload catalog photos. Claude extracts products automatically.',
+'import.photos.drop':'Click or drag photos here','import.photos.limit':'JPG, PNG — up to 6 images','import.photos.btn':'🤖 Extract products with AI',
+'import.error.noUrl':'Paste your Google Sheet URL.','import.error.sheet':'Error reading the Sheet.','import.error.csv':'Error reading the CSV.','import.error.noProducts':'No products found in the images.','import.error.generic':'Import error.',
 'tab.appointments':'📅 Appointments',
 'appt.today':'Today','appt.addBlock':'🚫 Add block','appt.newAppt':'+ Appointment',
 'appt.legend.free':'Free','appt.legend.confirmed':'Confirmed','appt.legend.pending':'Pending','appt.legend.blocked':'Blocked','appt.legend.outside':'Outside hours',
@@ -1373,6 +1449,20 @@ it:{
 'help.chatpanel.colors':'<b>Colori dei messaggi:</b><br>⬜ Bianco (sinistra) = messaggi del cliente<br>🟩 Verde (destra) = risposte automatiche di Sara<br>🟦 Blu (destra) = messaggi inviati da te',
 'help.other.title':'ℹ️ Altri comandi WhatsApp','help.other.ayuda':'Visualizza tutti i comandi disponibili direttamente in WhatsApp',
 'help.other.hint':'💡 I comandi non distinguono maiuscole/minuscole.',
+'import.btn':'📥 Importa catalogo','import.title':'📥 Importa catalogo',
+'import.tab.sheets':'Google Sheets','import.tab.csv':'CSV','import.tab.photos':'Foto IA',
+'import.how':'📌 Come usare:','import.sheets.s1':'Apri il ','import.sheets.template':'template Google Sheets →',
+'import.sheets.s2':'Fai una copia: <b>File → Fai una copia</b>','import.sheets.s3':'Compila il tuo catalogo nella copia',
+'import.sheets.s4':'Condividi come pubblico: <b>Condividi → Chiunque abbia il link → Lettore</b>','import.sheets.s5':'Incolla il link qui sotto',
+'import.sheets.urlLabel':'URL del tuo Google Sheet','import.sheets.urlPh':'https://docs.google.com/spreadsheets/d/...',
+'import.preview.btn':'Anteprima →','import.preview.found':'Prodotti trovati:','import.preview.back':'← Cambia fonte',
+'import.preview.note':'I prodotti con lo stesso nome esatto non verranno duplicati.',
+'import.col.name':'Nome','import.col.category':'Categoria','import.col.price':'Prezzo (Gs)','import.col.stock':'Stock',
+'import.confirm.btn':'Aggiungi al catalogo','import.confirm.done':'prodotti importati.','import.confirm.skipped':'già esistenti, omessi.',
+'import.csv.hint':'Colonne attese (in qualsiasi ordine):','import.csv.drop':'Clicca o trascina il file CSV qui',
+'import.photos.hint':'Carica foto del catalogo. Claude estrae i prodotti automaticamente.',
+'import.photos.drop':'Clicca o trascina le foto qui','import.photos.limit':'JPG, PNG — fino a 6 immagini','import.photos.btn':'🤖 Estrai prodotti con IA',
+'import.error.noUrl':'Incolla l\'URL del tuo Google Sheet.','import.error.sheet':'Errore nella lettura del Sheet.','import.error.csv':'Errore nella lettura del CSV.','import.error.noProducts':'Nessun prodotto trovato nelle immagini.','import.error.generic':'Errore durante l\'importazione.',
 'tab.appointments':'📅 Appuntamenti',
 'appt.today':'Oggi','appt.addBlock':'🚫 Aggiungi blocco','appt.newAppt':'+ Appuntamento',
 'appt.legend.free':'Libero','appt.legend.confirmed':'Confermato','appt.legend.pending':'In attesa','appt.legend.blocked':'Bloccato','appt.legend.outside':'Fuori orario',
@@ -1487,6 +1577,20 @@ de:{
 'help.chatpanel.colors':'<b>Nachrichtenfarben:</b><br>⬜ Weiß (links) = Kundennachrichten<br>🟩 Grün (rechts) = Saras Antworten<br>🟦 Blau (rechts) = deine manuellen Nachrichten',
 'help.other.title':'ℹ️ Weitere WhatsApp-Befehle','help.other.ayuda':'Alle verfügbaren Befehle direkt in WhatsApp anzeigen',
 'help.other.hint':'💡 Befehle sind nicht case-sensitiv.',
+'import.btn':'📥 Katalog importieren','import.title':'📥 Katalog importieren',
+'import.tab.sheets':'Google Sheets','import.tab.csv':'CSV','import.tab.photos':'KI-Fotos',
+'import.how':'📌 Anleitung:','import.sheets.s1':'Öffne die ','import.sheets.template':'Google Sheets Vorlage →',
+'import.sheets.s2':'Kopieren: <b>Datei → Kopie erstellen</b>','import.sheets.s3':'Füll deinen Katalog in der Kopie aus',
+'import.sheets.s4':'Öffentlich teilen: <b>Teilen → Jeder mit dem Link → Betrachter</b>','import.sheets.s5':'Link unten einfügen',
+'import.sheets.urlLabel':'URL deines Google Sheets','import.sheets.urlPh':'https://docs.google.com/spreadsheets/d/...',
+'import.preview.btn':'Vorschau →','import.preview.found':'Gefundene Produkte:','import.preview.back':'← Quelle ändern',
+'import.preview.note':'Produkte mit demselben genauen Namen werden nicht dupliziert.',
+'import.col.name':'Name','import.col.category':'Kategorie','import.col.price':'Preis (Gs)','import.col.stock':'Bestand',
+'import.confirm.btn':'Zum Katalog hinzufügen','import.confirm.done':'Produkte importiert.','import.confirm.skipped':'bereits vorhanden, übersprungen.',
+'import.csv.hint':'Erwartete Spalten (beliebige Reihenfolge):','import.csv.drop':'CSV-Datei hier klicken oder ablegen',
+'import.photos.hint':'Lade Katalogfotos hoch. Claude extrahiert Produkte automatisch.',
+'import.photos.drop':'Fotos hier klicken oder ablegen','import.photos.limit':'JPG, PNG — bis zu 6 Bilder','import.photos.btn':'🤖 Produkte mit KI extrahieren',
+'import.error.noUrl':'Füge deine Google Sheet URL ein.','import.error.sheet':'Fehler beim Lesen des Sheets.','import.error.csv':'Fehler beim Lesen der CSV.','import.error.noProducts':'Keine Produkte in den Bildern gefunden.','import.error.generic':'Importfehler.',
 'tab.appointments':'📅 Termine',
 'appt.today':'Heute','appt.addBlock':'🚫 Blockierung','appt.newAppt':'+ Termin',
 'appt.legend.free':'Frei','appt.legend.confirmed':'Bestätigt','appt.legend.pending':'Ausstehend','appt.legend.blocked':'Blockiert','appt.legend.outside':'Außerhalb',
@@ -1601,6 +1705,20 @@ fr:{
 'help.chatpanel.colors':'<b>Couleurs des messages :</b><br>⬜ Blanc (gauche) = messages du client<br>🟩 Vert (droite) = réponses automatiques de Sara<br>🟦 Bleu (droite) = messages envoyés manuellement',
 'help.other.title':'ℹ️ Autres commandes WhatsApp','help.other.ayuda':'Voir toutes les commandes disponibles directement dans WhatsApp',
 'help.other.hint':'💡 Les commandes ne sont pas sensibles à la casse.',
+'import.btn':'📥 Importer le catalogue','import.title':'📥 Importer le catalogue',
+'import.tab.sheets':'Google Sheets','import.tab.csv':'CSV','import.tab.photos':'Photos IA',
+'import.how':'📌 Comment utiliser :','import.sheets.s1':'Ouvrez le ','import.sheets.template':'modèle Google Sheets →',
+'import.sheets.s2':'Faites une copie : <b>Fichier → Faire une copie</b>','import.sheets.s3':'Remplissez votre catalogue dans la copie',
+'import.sheets.s4':'Partagez en public : <b>Partager → Toute personne ayant le lien → Lecteur</b>','import.sheets.s5':'Collez le lien ci-dessous',
+'import.sheets.urlLabel':'URL de votre Google Sheet','import.sheets.urlPh':'https://docs.google.com/spreadsheets/d/...',
+'import.preview.btn':'Aperçu →','import.preview.found':'Produits trouvés :','import.preview.back':'← Changer la source',
+'import.preview.note':'Les produits avec le même nom exact ne seront pas dupliqués.',
+'import.col.name':'Nom','import.col.category':'Catégorie','import.col.price':'Prix (Gs)','import.col.stock':'Stock',
+'import.confirm.btn':'Ajouter au catalogue','import.confirm.done':'produits importés.','import.confirm.skipped':'déjà existants, ignorés.',
+'import.csv.hint':'Colonnes attendues (dans n\'importe quel ordre) :','import.csv.drop':'Cliquez ou déposez votre fichier CSV ici',
+'import.photos.hint':'Téléchargez des photos du catalogue. Claude extrait les produits automatiquement.',
+'import.photos.drop':'Cliquez ou déposez les photos ici','import.photos.limit':'JPG, PNG — jusqu\'à 6 images','import.photos.btn':'🤖 Extraire les produits avec l\'IA',
+'import.error.noUrl':'Collez l\'URL de votre Google Sheet.','import.error.sheet':'Erreur lors de la lecture du Sheet.','import.error.csv':'Erreur lors de la lecture du CSV.','import.error.noProducts':'Aucun produit trouvé dans les images.','import.error.generic':'Erreur lors de l\'importation.',
 'tab.appointments':'📅 Rendez-vous',
 'appt.today':'Aujourd\'hui','appt.addBlock':'🚫 Ajouter blocage','appt.newAppt':'+ Rendez-vous',
 'appt.legend.free':'Libre','appt.legend.confirmed':'Confirmé','appt.legend.pending':'En attente','appt.legend.blocked':'Bloqué','appt.legend.outside':'Hors horaires',
@@ -3206,99 +3324,176 @@ function escHtml(s) {
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-// IMPORT FROM GOOGLE SHEETS
+// IMPORT CATALOG (Google Sheets / CSV / Photos AI)
 // ══════════════════════════════════════════════════════════════════════════════
 
-// Link al template pubblico (da aggiornare con il tuo Sheet)
 const TEMPLATE_SHEET_URL = 'https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms/edit';
 
 let importPreviewRows = [];
+let importSource = 'sheets'; // 'sheets' | 'csv' | 'photos'
+let importPhotoFiles = [];
 
 function openImportModal() {
   document.getElementById('importModal').classList.remove('hidden');
-  document.getElementById('importStep1').classList.remove('hidden');
-  document.getElementById('importStep2').classList.add('hidden');
+  document.getElementById('importSourceSelect').classList.remove('hidden');
+  document.getElementById('importPreviewSection').classList.add('hidden');
   document.getElementById('importUrl').value = '';
   document.getElementById('importError').classList.add('hidden');
   document.getElementById('templateLink').href = TEMPLATE_SHEET_URL;
+  document.getElementById('importPhotosPreviews').innerHTML = '';
+  document.getElementById('importPhotosBtn').disabled = true;
+  document.getElementById('importPhotosError').classList.add('hidden');
+  importPhotoFiles = [];
   importPreviewRows = [];
+  selectImportSource('sheets');
 }
 
 function closeImportModal() {
   document.getElementById('importModal').classList.add('hidden');
 }
 
-function importBack() {
-  document.getElementById('importStep2').classList.add('hidden');
-  document.getElementById('importStep1').classList.remove('hidden');
+function selectImportSource(src) {
+  importSource = src;
+  ['sheets','csv','photos'].forEach(s => {
+    const btn = document.getElementById('importSrc' + s.charAt(0).toUpperCase() + s.slice(1));
+    const panel = document.getElementById('importPanel' + s.charAt(0).toUpperCase() + s.slice(1));
+    const active = s === src;
+    btn.className = `flex flex-col items-center gap-2 p-4 rounded-xl border-2 font-semibold text-sm transition ${active ? 'border-purple-400 bg-purple-50 text-purple-700' : 'border-gray-200 text-gray-500 hover:border-purple-300 hover:bg-purple-50'}`;
+    panel.classList.toggle('hidden', !active);
+  });
 }
 
+function importBack() {
+  document.getElementById('importPreviewSection').classList.add('hidden');
+  document.getElementById('importSourceSelect').classList.remove('hidden');
+}
+
+function showImportPreview(rows) {
+  importPreviewRows = rows;
+  document.getElementById('importCount').textContent = rows.length;
+  document.getElementById('importPreviewBody').innerHTML = rows.map(r => `
+    <tr class="hover:bg-gray-50">
+      <td class="px-3 py-1.5 font-medium text-gray-800 max-w-[160px] truncate">${escHtml(r.name)}</td>
+      <td class="px-3 py-1.5 text-gray-500">${escHtml(r.category||'—')}</td>
+      <td class="px-3 py-1.5 text-right text-gray-700">${(r.price_guarani||0).toLocaleString('es-PY')}</td>
+      <td class="px-3 py-1.5 text-center text-gray-500">${r.stock_qty ?? '—'}</td>
+    </tr>`).join('');
+  document.getElementById('importConfirmError').classList.add('hidden');
+  document.getElementById('importSuccess').classList.add('hidden');
+  document.getElementById('importConfirmBtn').disabled = false;
+  document.getElementById('importConfirmBtn').textContent = t('import.confirm.btn');
+  document.getElementById('importSourceSelect').classList.add('hidden');
+  document.getElementById('importPreviewSection').classList.remove('hidden');
+}
+
+// ── Google Sheets ──────────────────────────────────────────────────────────────
 async function previewImport() {
   const url   = document.getElementById('importUrl').value.trim();
   const errEl = document.getElementById('importError');
   const btn   = document.getElementById('importPreviewBtn');
   errEl.classList.add('hidden');
-
-  if (!url) {
-    errEl.textContent = 'Pegá la URL de tu Google Sheet.';
-    errEl.classList.remove('hidden'); return;
-  }
-
-  btn.textContent = '⏳ Cargando...'; btn.disabled = true;
+  if (!url) { errEl.textContent = t('import.error.noUrl'); errEl.classList.remove('hidden'); return; }
+  btn.textContent = '⏳'; btn.disabled = true;
   try {
     const data = await api('/admin/import-preview', 'POST', { url });
-    importPreviewRows = data.rows;
-
-    // Render preview table
-    document.getElementById('importCount').textContent = data.total;
-    document.getElementById('importPreviewBody').innerHTML = data.rows.map(r => `
-      <tr class="hover:bg-gray-50">
-        <td class="px-3 py-1.5 font-medium text-gray-800 max-w-[140px] truncate">${escHtml(r.name)}</td>
-        <td class="px-3 py-1.5 text-gray-500">${escHtml(r.category||'—')}</td>
-        <td class="px-3 py-1.5 text-right text-gray-700">${(r.price_guarani||0).toLocaleString('es-PY')}</td>
-        <td class="px-3 py-1.5 text-center text-gray-500">${r.stock_qty ?? '—'}</td>
-        <td class="px-3 py-1.5 text-center">${r.image_url ? '<span class="text-green-500">✓</span>' : '<span class="text-gray-300">—</span>'}</td>
-        <td class="px-3 py-1.5 text-center">${r.is_available ? '<span class="text-green-600 text-[10px] font-bold bg-green-50 px-1.5 py-0.5 rounded-full">Activo</span>' : '<span class="text-gray-400 text-[10px] font-bold bg-gray-100 px-1.5 py-0.5 rounded-full">Inactivo</span>'}</td>
-      </tr>`).join('');
-
-    document.getElementById('importStep1').classList.add('hidden');
-    document.getElementById('importStep2').classList.remove('hidden');
-    document.getElementById('importConfirmError').classList.add('hidden');
-    document.getElementById('importSuccess').classList.add('hidden');
-    document.getElementById('importConfirmBtn').disabled = false;
-    document.getElementById('importConfirmBtn').textContent = '✅ Confirmar importación';
+    showImportPreview(data.rows);
   } catch(e) {
-    errEl.textContent = e.message || 'Error al leer el Sheet.';
+    errEl.textContent = e.message || t('import.error.sheet');
     errEl.classList.remove('hidden');
   } finally {
-    btn.textContent = 'Previsualizar importación →'; btn.disabled = false;
+    btn.textContent = t('import.preview.btn'); btn.disabled = false;
   }
 }
 
+// ── CSV ────────────────────────────────────────────────────────────────────────
+function handleCsvDrop(e) {
+  e.preventDefault();
+  document.getElementById('importCsvDrop').classList.remove('border-purple-400','bg-purple-50');
+  const file = e.dataTransfer.files[0];
+  if (file) handleCsvFile(file);
+}
+
+async function handleCsvFile(file) {
+  if (!file) return;
+  const errEl = document.getElementById('importCsvError');
+  errEl.classList.add('hidden');
+  try {
+    const text = await file.text();
+    const data = await api('/admin/import-preview', 'POST', { csvText: text });
+    showImportPreview(data.rows);
+  } catch(e) {
+    errEl.textContent = e.message || t('import.error.csv');
+    errEl.classList.remove('hidden');
+  }
+}
+
+// ── Photos AI ─────────────────────────────────────────────────────────────────
+function handlePhotosDrop(e) {
+  e.preventDefault();
+  document.getElementById('importPhotosDrop').classList.remove('border-purple-400','bg-purple-50');
+  handlePhotosFiles(e.dataTransfer.files);
+}
+
+function handlePhotosFiles(files) {
+  const allowed = [...files].filter(f => f.type.startsWith('image/')).slice(0, 6);
+  importPhotoFiles = allowed;
+  const prevEl = document.getElementById('importPhotosPreviews');
+  prevEl.innerHTML = allowed.map((f,i) => {
+    const url = URL.createObjectURL(f);
+    return `<div class="relative"><img src="${url}" class="w-16 h-16 object-cover rounded-lg border border-gray-200"/>
+      <button onclick="removePhotoFile(${i})" class="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 text-xs flex items-center justify-center leading-none">✕</button></div>`;
+  }).join('');
+  document.getElementById('importPhotosBtn').disabled = allowed.length === 0;
+}
+
+function removePhotoFile(idx) {
+  importPhotoFiles.splice(idx, 1);
+  handlePhotosFiles(importPhotoFiles);
+}
+
+async function runPhotosImport() {
+  const btn = document.getElementById('importPhotosBtn');
+  const errEl = document.getElementById('importPhotosError');
+  errEl.classList.add('hidden');
+  btn.textContent = '⏳ ' + t('import.photos.btn'); btn.disabled = true;
+  try {
+    const formData = new FormData();
+    importPhotoFiles.forEach(f => formData.append('images', f));
+    const res = await fetch('/admin/import-from-images', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + TOKEN },
+      body: formData
+    });
+    if (!res.ok) { const e = await res.json(); throw new Error(e.error); }
+    const data = await res.json();
+    if (!data.products?.length) throw new Error(t('import.error.noProducts'));
+    showImportPreview(data.products.map(p => ({ ...p, stock_qty: 99 })));
+  } catch(e) {
+    errEl.textContent = e.message;
+    errEl.classList.remove('hidden');
+    btn.textContent = t('import.photos.btn'); btn.disabled = false;
+  }
+}
+
+// ── Confirm (shared) ──────────────────────────────────────────────────────────
 async function confirmImport() {
   const btn   = document.getElementById('importConfirmBtn');
   const errEl = document.getElementById('importConfirmError');
   const okEl  = document.getElementById('importSuccess');
   errEl.classList.add('hidden');
   okEl.classList.add('hidden');
-
-  const mode = document.querySelector('input[name="importMode"]:checked')?.value || 'add';
-  btn.textContent = '⏳ Importando...'; btn.disabled = true;
-
+  btn.textContent = '⏳'; btn.disabled = true;
   try {
-    const res = await api('/admin/import-confirm', 'POST', { rows: importPreviewRows, mode });
-    okEl.textContent = `✅ ${res.imported} productos importados correctamente.`;
+    const res = await api('/admin/import-confirm', 'POST', { rows: importPreviewRows });
+    const msg = `✅ ${res.imported} ${t('import.confirm.done')}${res.skipped ? ' · ' + res.skipped + ' ' + t('import.confirm.skipped') : ''}`;
+    okEl.textContent = msg;
     okEl.classList.remove('hidden');
-    btn.textContent = '✅ Importación completada';
-    // Reload products after 1.5s and close
-    setTimeout(async () => {
-      await loadProducts();
-      closeImportModal();
-    }, 1500);
+    btn.textContent = '✅ ' + t('import.confirm.btn');
+    setTimeout(async () => { await loadProducts(); closeImportModal(); }, 1800);
   } catch(e) {
-    errEl.textContent = e.message || 'Error al importar.';
+    errEl.textContent = e.message || t('import.error.generic');
     errEl.classList.remove('hidden');
-    btn.textContent = '✅ Confirmar importación'; btn.disabled = false;
+    btn.textContent = t('import.confirm.btn'); btn.disabled = false;
   }
 }
 

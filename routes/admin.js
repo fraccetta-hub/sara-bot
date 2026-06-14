@@ -3,9 +3,13 @@ const router = express.Router();
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const multer = require('multer');
+const Anthropic = require('@anthropic-ai/sdk');
 const { createClient } = require('@supabase/supabase-js');
 const { uploadImageBuffer } = require('../services/storage');
 const { sendMessage, sendImage } = require('../services/whatsapp');
+
+const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+const uploadCatalog = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024, files: 6 } });
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -639,25 +643,28 @@ router.post('/whatsapp-connect-manual', requireAuth, async (req, res) => {
 
 // ─── POST /admin/import-preview — fetch & parse Google Sheet ─────────────────
 router.post('/import-preview', requireAuth, async (req, res) => {
-  const { url } = req.body;
-  if (!url) return res.status(400).json({ error: 'URL requerida' });
-
-  // Extract sheet ID and gid from various Google Sheets URL formats
-  const idMatch  = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9_-]+)/);
-  const gidMatch = url.match(/[?&]gid=(\d+)/);
-  if (!idMatch) return res.status(400).json({ error: 'URL de Google Sheets inválida' });
-
-  const sheetId = idMatch[1];
-  const gid     = gidMatch?.[1] || '0';
-  const csvUrl  = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${gid}`;
+  const { url, csvText } = req.body;
+  if (!url && !csvText) return res.status(400).json({ error: 'URL o CSV requerido' });
 
   try {
-    const response = await fetch(csvUrl);
-    if (!response.ok) {
-      if (response.status === 403) return res.status(400).json({ error: 'El Sheet no es público. Compartilo como "Cualquiera con el enlace puede ver".' });
-      return res.status(400).json({ error: `No se pudo acceder al Sheet (${response.status})` });
+    let csv;
+    if (csvText) {
+      csv = csvText;
+    } else {
+      // Extract sheet ID and gid from various Google Sheets URL formats
+      const idMatch  = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9_-]+)/);
+      const gidMatch = url.match(/[?&]gid=(\d+)/);
+      if (!idMatch) return res.status(400).json({ error: 'URL de Google Sheets inválida' });
+      const sheetId = idMatch[1];
+      const gid     = gidMatch?.[1] || '0';
+      const csvUrl  = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${gid}`;
+      const response = await fetch(csvUrl);
+      if (!response.ok) {
+        if (response.status === 403) return res.status(400).json({ error: 'El Sheet no es público. Compartilo como "Cualquiera con el enlace puede ver".' });
+        return res.status(400).json({ error: `No se pudo acceder al Sheet (${response.status})` });
+      }
+      csv = await response.text();
     }
-    const csv = await response.text();
 
     // Parse CSV
     const lines = csv.split('\n').map(l => l.trim()).filter(Boolean);
@@ -719,36 +726,84 @@ router.post('/import-preview', requireAuth, async (req, res) => {
   }
 });
 
-// ─── POST /admin/import-confirm — bulk insert products ────────────────────────
+// ─── POST /admin/import-confirm — bulk insert products (append + deduplicate) ──
 router.post('/import-confirm', requireAuth, async (req, res) => {
-  const { rows, mode } = req.body; // mode: 'add' | 'replace'
+  const { rows } = req.body;
   if (!Array.isArray(rows) || !rows.length)
     return res.status(400).json({ error: 'Sin datos para importar' });
 
   try {
-    if (mode === 'replace') {
-      // Delete existing products for this tenant
-      await supabase.from('products').delete().eq('tenant_id', req.tenant.tenantId);
+    // Fetch existing product names to avoid duplicates (exact match)
+    const { data: existing } = await supabase
+      .from('products').select('name').eq('tenant_id', req.tenant.tenantId);
+    const existingNames = new Set((existing || []).map(p => p.name.trim().toLowerCase()));
+
+    const toInsert = rows
+      .filter(r => r.name && !existingNames.has(String(r.name).trim().toLowerCase()))
+      .map(r => ({
+        tenant_id:     req.tenant.tenantId,
+        name:          String(r.name).trim(),
+        category:      r.category     || null,
+        description:   r.description  || null,
+        price_guarani: r.price_guarani || 0,
+        price_type:    r.price_type    || 'fixed',
+        duration_min:  r.duration_min  || null,
+        stock_qty:     r.stock_qty     ?? 99,
+        image_url:     r.image_url     || null,
+        is_available:  r.is_available  ?? true,
+      }));
+
+    const skipped = rows.length - toInsert.length;
+    if (toInsert.length > 0) {
+      const { error } = await supabase.from('products').insert(toInsert);
+      if (error) return res.status(500).json({ error: error.message });
     }
 
-    const toInsert = rows.map(r => ({
-      tenant_id:    req.tenant.tenantId,
-      name:         r.name,
-      category:     r.category     || null,
-      description:  r.description  || null,
-      price_guarani: r.price_guarani,
-      price_type:   r.price_type   || 'fixed',
-      duration_min: r.duration_min  || null,
-      stock_qty:    r.stock_qty    ?? 0,
-      image_url:    r.image_url    || null,
-      is_available: r.is_available ?? true,
-    }));
-
-    const { error } = await supabase.from('products').insert(toInsert);
-    if (error) return res.status(500).json({ error: error.message });
-
-    res.json({ ok: true, imported: toInsert.length });
+    res.json({ ok: true, imported: toInsert.length, skipped });
   } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ─── POST /admin/import-from-images — AI catalog extraction ───────────────────
+router.post('/import-from-images', requireAuth, uploadCatalog.array('images', 6), async (req, res) => {
+  if (!req.files || req.files.length === 0)
+    return res.status(400).json({ error: 'No se enviaron imágenes' });
+
+  const content = [{
+    type: 'text',
+    text: `Analizá estas ${req.files.length} imágenes de un catálogo de negocios (menú, lista de precios, catálogo de WhatsApp Business, etc.).
+
+Extraé TODOS los productos o servicios que puedas ver, con:
+- name: nombre del producto/servicio (obligatorio)
+- category: categoría (si hay, sino inferí una razonable)
+- price_guarani: precio como número entero (si no hay precio pon 0)
+- description: descripción breve si hay (sino dejar vacío)
+
+Respondé ÚNICAMENTE con un JSON válido, sin texto adicional, en este formato:
+{"products":[{"name":"...","category":"...","price_guarani":0,"description":"..."}]}`
+  }];
+
+  for (const file of req.files) {
+    content.push({
+      type: 'image',
+      source: { type: 'base64', media_type: file.mimetype || 'image/jpeg', data: file.buffer.toString('base64') }
+    });
+  }
+
+  try {
+    const response = await anthropic.messages.create({
+      model: 'claude-opus-4-5',
+      max_tokens: 2048,
+      messages: [{ role: 'user', content }]
+    });
+    const text = response.content[0].text.trim();
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error('Respuesta inesperada de la IA');
+    const parsed = JSON.parse(jsonMatch[0]);
+    res.json({ products: parsed.products || [] });
+  } catch (e) {
+    console.error('[import-from-images]', e.message);
     res.status(500).json({ error: e.message });
   }
 });
