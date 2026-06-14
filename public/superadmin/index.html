@@ -34,6 +34,7 @@
     <div class="max-w-7xl mx-auto px-4 flex gap-6 text-sm text-gray-500">
       <button class="py-2 tab-active" id="tabTenants"  onclick="switchTab('tenants')">🏪 Clientes</button>
       <button class="py-2"            id="tabNew"      onclick="switchTab('new')">➕ Nuevo cliente</button>
+      <button class="py-2 relative"   id="tabSupport"  onclick="switchTab('support')">💬 Soporte<span id="supportBadge" class="hidden absolute -top-0.5 -right-2 bg-red-500 text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center"></span></button>
     </div>
   </nav>
 
@@ -296,10 +297,56 @@
   </div>
 </div>
 
+<!-- ════ SOPORTE ════ -->
+<div id="sectionSupport" class="hidden">
+  <div class="flex gap-4 h-[calc(100vh-140px)]">
+
+    <!-- Left: merchant list -->
+    <div class="w-72 flex-shrink-0 bg-white rounded-xl shadow-sm overflow-hidden flex flex-col">
+      <div class="px-4 py-3 border-b border-gray-100">
+        <h2 class="font-semibold text-gray-700 text-sm">💬 Conversaciones</h2>
+      </div>
+      <div id="supportList" class="flex-1 overflow-y-auto divide-y divide-gray-50">
+        <div class="text-center py-8 text-gray-400 text-sm">Cargando...</div>
+      </div>
+    </div>
+
+    <!-- Right: chat panel -->
+    <div class="flex-1 bg-white rounded-xl shadow-sm flex flex-col overflow-hidden">
+      <!-- Empty state -->
+      <div id="supportChatEmpty" class="flex-1 flex items-center justify-center text-gray-400 text-sm">
+        Seleccioná un cliente para ver la conversación
+      </div>
+
+      <!-- Active chat -->
+      <div id="supportChatActive" class="hidden flex-1 flex flex-col overflow-hidden">
+        <div class="px-4 py-3 border-b border-gray-100 flex items-center gap-2">
+          <span class="text-lg">🏪</span>
+          <span class="font-semibold text-gray-800" id="supportChatName">—</span>
+        </div>
+        <div id="supportChatMsgs" class="flex-1 overflow-y-auto p-4 space-y-2 flex flex-col"></div>
+        <div class="px-4 py-3 border-t border-gray-100 flex gap-2">
+          <textarea id="supportReplyInput" rows="2"
+            class="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm resize-none focus:outline-none"
+            placeholder="Escribí tu respuesta..."
+            onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendSupportReply();}"></textarea>
+          <button onclick="sendSupportReply()"
+            class="btn-purple px-4 rounded-lg text-sm font-semibold self-end py-2 transition">
+            Enviar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 let TOKEN = localStorage.getItem('sara_super_token') || '';
 let allTenants = [];
 let editingTenantId = null;
+let activeSupportTenantId = null;
+let supportListPollTimer = null;
+let supportChatPollTimer = null;
 
 window.onload = () => {
   if (TOKEN) showDashboard();
@@ -329,10 +376,20 @@ async function showDashboard() {
 
 // ── Tabs ───────────────────────────────────────────────────────────────────────
 function switchTab(tab) {
-  ['tenants','new'].forEach(t => {
+  ['tenants','new','support'].forEach(t => {
     document.getElementById('section' + cap(t)).classList.toggle('hidden', t !== tab);
     document.getElementById('tab'     + cap(t)).classList.toggle('tab-active', t === tab);
   });
+  if (tab === 'support') {
+    loadSupportList();
+    clearInterval(supportListPollTimer);
+    supportListPollTimer = setInterval(loadSupportList, 10000);
+  } else {
+    clearInterval(supportListPollTimer);
+    clearInterval(supportChatPollTimer);
+    supportListPollTimer = null;
+    supportChatPollTimer = null;
+  }
 }
 function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
 
@@ -653,6 +710,103 @@ async function createTenant() {
     btn.textContent = 'Crear cliente'; btn.disabled = false;
   }
 }
+
+// ── Support chat ───────────────────────────────────────────────────────────────
+async function loadSupportList() {
+  try {
+    const list = await api('/superadmin/support');
+    const el = document.getElementById('supportList');
+    if (!list.length) {
+      el.innerHTML = '<div class="text-center py-8 text-gray-400 text-sm">Sin conversaciones aún.</div>';
+      document.getElementById('supportBadge').classList.add('hidden');
+      return;
+    }
+    const totalUnread = list.reduce((s, t) => s + (t.unread || 0), 0);
+    const badge = document.getElementById('supportBadge');
+    if (totalUnread > 0) {
+      badge.textContent = totalUnread > 9 ? '9+' : totalUnread;
+      badge.classList.remove('hidden');
+    } else {
+      badge.classList.add('hidden');
+    }
+    el.innerHTML = list.map(t => `
+      <div onclick="openSupportChat('${t.tenant_id}','${escHtml(t.tenant_name)}')"
+        class="px-4 py-3 cursor-pointer hover:bg-purple-50 transition ${activeSupportTenantId === t.tenant_id ? 'bg-purple-50' : ''}">
+        <div class="flex items-center justify-between">
+          <span class="font-medium text-sm text-gray-800">${escHtml(t.tenant_name)}</span>
+          ${t.unread > 0 ? `<span class="bg-red-500 text-white text-[10px] font-bold rounded-full px-1.5 py-0.5">${t.unread}</span>` : ''}
+        </div>
+        <div class="text-xs text-gray-400 mt-0.5 truncate">${escHtml(t.last_message || '')}</div>
+        <div class="text-[10px] text-gray-300 mt-0.5">${t.last_at ? new Date(t.last_at).toLocaleString('es-PY') : ''}</div>
+      </div>`).join('');
+  } catch(e) { console.error('[support] loadSupportList error:', e.message); }
+}
+
+async function openSupportChat(tenantId, tenantName) {
+  activeSupportTenantId = tenantId;
+  document.getElementById('supportChatName').textContent = tenantName;
+  document.getElementById('supportChatEmpty').classList.add('hidden');
+  document.getElementById('supportChatActive').classList.remove('hidden');
+
+  await renderSupportMessages();
+
+  // Poll active chat every 5s
+  clearInterval(supportChatPollTimer);
+  supportChatPollTimer = setInterval(renderSupportMessages, 5000);
+
+  // Refresh list to clear unread badge
+  loadSupportList();
+}
+
+async function renderSupportMessages() {
+  if (!activeSupportTenantId) return;
+  try {
+    const msgs = await api(`/superadmin/support/${activeSupportTenantId}`);
+    const el = document.getElementById('supportChatMsgs');
+    const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 60;
+    el.innerHTML = msgs.map(m => {
+      const isMerchant = m.role === 'merchant';
+      return `<div class="flex ${isMerchant ? 'justify-start' : 'justify-end'}">
+        <div class="max-w-[75%] px-3 py-2 rounded-xl text-sm ${isMerchant ? 'bg-gray-100 text-gray-800' : 'bg-purple-600 text-white'}">
+          ${escHtml(m.content)}
+          <div class="text-[10px] mt-1 ${isMerchant ? 'text-gray-400' : 'text-purple-200'} text-right">
+            ${new Date(m.created_at).toLocaleTimeString('es-PY', {hour:'2-digit',minute:'2-digit'})}
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+    if (atBottom || msgs.length === 0) el.scrollTop = el.scrollHeight;
+  } catch(e) { console.error('[support] renderSupportMessages error:', e.message); }
+}
+
+async function sendSupportReply() {
+  if (!activeSupportTenantId) return;
+  const input = document.getElementById('supportReplyInput');
+  const content = input.value.trim();
+  if (!content) return;
+  input.value = '';
+  try {
+    await api(`/superadmin/support/${activeSupportTenantId}`, 'POST', { content });
+    await renderSupportMessages();
+    loadSupportList();
+  } catch(e) {
+    alert('Error al enviar: ' + e.message);
+    input.value = content;
+  }
+}
+
+// Background badge poll (when not on support tab)
+setInterval(async () => {
+  if (document.getElementById('sectionSupport').classList.contains('hidden')) {
+    try {
+      const list = await api('/superadmin/support');
+      const total = list.reduce((s, t) => s + (t.unread || 0), 0);
+      const badge = document.getElementById('supportBadge');
+      if (total > 0) { badge.textContent = total > 9 ? '9+' : total; badge.classList.remove('hidden'); }
+      else { badge.classList.add('hidden'); }
+    } catch(e) {}
+  }
+}, 30000);
 
 // ── API helper ─────────────────────────────────────────────────────────────────
 async function api(path, method = 'GET', body = null, auth = true) {

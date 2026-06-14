@@ -1136,6 +1136,42 @@ router.post('/whatsapp-profile', requireAuth, upload.single('photo'), async (req
   res.json({ ok: true });
 });
 
+// ─── GET /admin/support — fetch support conversation ─────────────────────────
+router.get('/support', requireAuth, async (req, res) => {
+  const { data, error } = await supabase
+    .from('support_messages')
+    .select('id, role, content, created_at')
+    .eq('tenant_id', req.tenant.tenantId)
+    .order('created_at', { ascending: true });
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data || []);
+});
+
+// ─── POST /admin/support — merchant sends a support message ──────────────────
+router.post('/support', requireAuth, async (req, res) => {
+  const { content } = req.body;
+  if (!content?.trim()) return res.status(400).json({ error: 'Mensaje vacío' });
+
+  const { error } = await supabase.from('support_messages').insert({
+    tenant_id: req.tenant.tenantId,
+    role: 'merchant',
+    content: content.trim(),
+  });
+  if (error) return res.status(500).json({ error: error.message });
+
+  // Notify superadmin via Telegram
+  try {
+    const { data: tenant } = await supabase.from('tenants')
+      .select('name').eq('id', req.tenant.tenantId).single();
+    const { notifySuperadmin } = require('./telegram');
+    await notifySuperadmin(tenant?.name || req.tenant.tenantId, req.tenant.tenantId, content.trim());
+  } catch (e) {
+    console.warn('[support] Telegram notify failed:', e.message);
+  }
+
+  res.json({ ok: true });
+});
+
 // ─── GET /admin/orders/export — CSV download of all orders ───────────────────
 router.get('/orders/export', requireAuth, async (req, res) => {
   const { data, error } = await supabase

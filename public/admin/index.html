@@ -207,6 +207,7 @@
       <button class="py-2 px-1 sm:px-0 whitespace-nowrap flex-shrink-0" id="tabAppointments" onclick="switchTab('appointments')">📅 Turnos</button>
       <button class="py-2 px-1 sm:px-0 whitespace-nowrap flex-shrink-0" id="tabSettings" onclick="switchTab('settings')">⚙️ Ajustes</button>
       <button class="py-2 px-1 sm:px-0 whitespace-nowrap flex-shrink-0" id="tabHelp" onclick="switchTab('help')">❓ Ayuda</button>
+      <button class="py-2 px-1 sm:px-0 whitespace-nowrap flex-shrink-0 relative" id="tabSupport" onclick="switchTab('support')">💬 Soporte<span id="supportUnreadBadge" class="hidden absolute -top-0.5 -right-1 w-4 h-4 bg-red-500 rounded-full text-white text-[9px] font-bold flex items-center justify-center">!</span></button>
     </div>
   </nav>
 
@@ -449,6 +450,37 @@
 
     <!-- ── HELP TAB ── (rendered by renderHelp() JS function) -->
     <div id="sectionHelp" class="hidden max-w-2xl space-y-5"></div>
+
+    <!-- ── SUPPORT TAB ── -->
+    <div id="sectionSupport" class="hidden max-w-2xl">
+      <div class="bg-white rounded-xl shadow-sm flex flex-col" style="height:calc(100vh - 14rem)">
+        <!-- Header -->
+        <div class="px-5 py-4 border-b flex items-center gap-3">
+          <span class="text-xl">💬</span>
+          <div>
+            <h2 data-i18n="support.title" class="font-semibold text-gray-800">Soporte técnico</h2>
+            <p data-i18n="support.subtitle" class="text-xs text-gray-400">Envianos tu consulta y te respondemos a la brevedad.</p>
+          </div>
+        </div>
+        <!-- Messages -->
+        <div id="supportMessages" class="flex-1 overflow-y-auto px-5 py-4 space-y-3">
+          <div class="text-center text-gray-400 text-sm py-8" data-i18n="support.loading">Cargando...</div>
+        </div>
+        <!-- Input -->
+        <div class="px-5 py-4 border-t flex gap-3">
+          <textarea id="supportInput" rows="2"
+            data-i18n-ph="support.placeholder"
+            placeholder="Escribí tu consulta aquí..."
+            class="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-green-400"
+            onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendSupportMessage()}"></textarea>
+          <button onclick="sendSupportMessage()"
+            class="btn-green px-4 py-2 rounded-xl text-sm font-semibold self-end flex-shrink-0"
+            data-i18n="support.send">
+            Enviar
+          </button>
+        </div>
+      </div>
+    </div>
 
     <!-- ── SETTINGS TAB ── -->
     <div id="sectionSettings" class="hidden max-w-xl space-y-5">
@@ -1229,6 +1261,7 @@ es:{
 'services.empty.title':'Sin servicios todavía','services.empty.hint':'Creá tu primer servicio con el botón de arriba',
 'services.active':'Activo','services.inactive':'Inactivo','services.edit':'✏️ Editar','services.delete':'🗑 Eliminar','services.perHour':'/hora','services.confirm':'¿Eliminar este servicio?',
 'orders.title':'Pedidos recientes','orders.refresh':'↻ Actualizar','orders.export':'⬇ Exportar CSV','orders.loading':'Cargando...','orders.empty':'Todavía no hay pedidos.','orders.delivery':'+envío',
+'support.title':'Soporte técnico','support.subtitle':'Envianos tu consulta y te respondemos a la brevedad.','support.empty':'Aún no hay mensajes. ¡Escribinos!','support.placeholder':'Escribí tu consulta aquí...','support.send':'Enviar','support.loading':'Cargando...',
 'settings.danger.title':'🗑 Eliminar cuenta','settings.danger.desc':'Eliminá permanentemente tu cuenta y todos tus datos. Esta acción es irreversible.','settings.danger.btn':'Eliminar mi cuenta permanentemente','settings.danger.confirm1':'¿Estás seguro de que querés eliminar tu cuenta? Esta acción borrará TODOS tus datos (catálogo, pedidos, conversaciones) de forma permanente.','settings.danger.confirm2':'Para confirmar, escribí exactamente: ELIMINAR','settings.danger.aborted':'Eliminación cancelada.','settings.danger.deleted':'Cuenta eliminada. Hasta pronto.',
 'orders.status.pending':'Pendiente','orders.status.confirmed':'Confirmado','orders.status.preparing':'Preparando','orders.status.delivering':'En camino','orders.status.delivered':'Entregado','orders.status.cancelled':'Cancelado',
 'orders.name.placeholder':'Nombre del cliente','orders.name.save':'Guardar',
@@ -1366,6 +1399,7 @@ en:{
 'services.empty.title':'No services yet','services.empty.hint':'Create your first service with the button above',
 'services.active':'Active','services.inactive':'Inactive','services.edit':'✏️ Edit','services.delete':'🗑 Delete','services.perHour':'/hr','services.confirm':'Delete this service?',
 'orders.title':'Recent orders','orders.refresh':'↻ Refresh','orders.export':'⬇ Export CSV','orders.loading':'Loading...','orders.empty':'No orders yet.','orders.delivery':'+delivery',
+'support.title':'Technical support','support.subtitle':'Send us your question and we\'ll reply shortly.','support.empty':'No messages yet. Write to us!','support.placeholder':'Type your question here...','support.send':'Send','support.loading':'Loading...',
 'settings.danger.title':'🗑 Delete account','settings.danger.desc':'Permanently delete your account and all your data. This action is irreversible.','settings.danger.btn':'Permanently delete my account','settings.danger.confirm1':'Are you sure you want to delete your account? This will permanently erase ALL your data (catalog, orders, conversations).','settings.danger.confirm2':'To confirm, type exactly: DELETE','settings.danger.aborted':'Deletion cancelled.','settings.danger.deleted':'Account deleted. Goodbye!',
 'orders.status.pending':'Pending','orders.status.confirmed':'Confirmed','orders.status.preparing':'Preparing','orders.status.delivering':'On the way','orders.status.delivered':'Delivered','orders.status.cancelled':'Cancelled',
 'orders.name.placeholder':'Customer name','orders.name.save':'Save',
@@ -1503,6 +1537,7 @@ it:{
 'services.empty.title':'Nessun servizio ancora','services.empty.hint':'Crea il tuo primo servizio con il pulsante in alto',
 'services.active':'Attivo','services.inactive':'Non attivo','services.edit':'✏️ Modifica','services.delete':'🗑 Elimina','services.perHour':'/ora','services.confirm':'Eliminare questo servizio?',
 'orders.title':'Ordini recenti','orders.refresh':'↻ Aggiorna','orders.export':'⬇ Esporta CSV','orders.loading':'Caricamento...','orders.empty':'Ancora nessun ordine.','orders.delivery':'+consegna',
+'support.title':'Supporto tecnico','support.subtitle':'Inviaci la tua richiesta e ti risponderemo al più presto.','support.empty':'Ancora nessun messaggio. Scrivici!','support.placeholder':'Scrivi qui la tua domanda...','support.send':'Invia','support.loading':'Caricamento...',
 'settings.danger.title':'🗑 Elimina account','settings.danger.desc':'Elimina permanentemente il tuo account e tutti i tuoi dati. Questa azione è irreversibile.','settings.danger.btn':'Elimina definitivamente il mio account','settings.danger.confirm1':'Sei sicuro di voler eliminare il tuo account? Questo cancellerà TUTTI i tuoi dati (catalogo, ordini, conversazioni) in modo permanente.','settings.danger.confirm2':'Per confermare, scrivi esattamente: ELIMINA','settings.danger.aborted':'Eliminazione annullata.','settings.danger.deleted':'Account eliminato. Arrivederci!',
 'orders.status.pending':'In attesa','orders.status.confirmed':'Confermato','orders.status.preparing':'In preparazione','orders.status.delivering':'In consegna','orders.status.delivered':'Consegnato','orders.status.cancelled':'Annullato',
 'orders.name.placeholder':'Nome cliente','orders.name.save':'Salva',
@@ -1639,6 +1674,7 @@ de:{
 'services.empty.title':'Noch keine Services','services.empty.hint':'Erstelle deinen ersten Service mit dem Button oben',
 'services.active':'Aktiv','services.inactive':'Inaktiv','services.edit':'✏️ Bearbeiten','services.delete':'🗑 Löschen','services.perHour':'/Std.','services.confirm':'Diesen Service löschen?',
 'orders.title':'Letzte Bestellungen','orders.refresh':'↻ Aktualisieren','orders.export':'⬇ CSV exportieren','orders.loading':'Wird geladen...','orders.empty':'Noch keine Bestellungen.','orders.delivery':'+Lieferung',
+'support.title':'Technischer Support','support.subtitle':'Sende uns deine Anfrage und wir antworten dir schnellstmöglich.','support.empty':'Noch keine Nachrichten. Schreib uns!','support.placeholder':'Schreib deine Frage hier...','support.send':'Senden','support.loading':'Wird geladen...',
 'settings.danger.title':'🗑 Konto löschen','settings.danger.desc':'Lösche dauerhaft dein Konto und alle deine Daten. Diese Aktion ist unwiderruflich.','settings.danger.btn':'Mein Konto dauerhaft löschen','settings.danger.confirm1':'Bist du sicher, dass du dein Konto löschen möchtest? Alle deine Daten (Katalog, Bestellungen, Gespräche) werden dauerhaft gelöscht.','settings.danger.confirm2':'Zur Bestätigung, schreib genau: LÖSCHEN','settings.danger.aborted':'Löschung abgebrochen.','settings.danger.deleted':'Konto gelöscht. Auf Wiedersehen!',
 'orders.status.pending':'Ausstehend','orders.status.confirmed':'Bestätigt','orders.status.preparing':'In Vorbereitung','orders.status.delivering':'Unterwegs','orders.status.delivered':'Geliefert','orders.status.cancelled':'Storniert',
 'orders.name.placeholder':'Kundenname','orders.name.save':'Speichern',
@@ -1775,6 +1811,7 @@ fr:{
 'services.empty.title':'Aucun service encore','services.empty.hint':'Créez votre premier service avec le bouton ci-dessus',
 'services.active':'Actif','services.inactive':'Inactif','services.edit':'✏️ Modifier','services.delete':'🗑 Supprimer','services.perHour':'/h','services.confirm':'Supprimer ce service ?',
 'orders.title':'Commandes récentes','orders.refresh':'↻ Actualiser','orders.export':'⬇ Exporter CSV','orders.loading':'Chargement...','orders.empty':'Aucune commande pour l\'instant.','orders.delivery':'+livraison',
+'support.title':'Support technique','support.subtitle':'Envoyez-nous votre question et nous vous répondrons rapidement.','support.empty':'Pas encore de messages. Écrivez-nous !','support.placeholder':'Écrivez votre question ici...','support.send':'Envoyer','support.loading':'Chargement...',
 'settings.danger.title':'🗑 Supprimer le compte','settings.danger.desc':'Supprimez définitivement votre compte et toutes vos données. Cette action est irréversible.','settings.danger.btn':'Supprimer définitivement mon compte','settings.danger.confirm1':'Êtes-vous sûr de vouloir supprimer votre compte ? Toutes vos données (catalogue, commandes, conversations) seront effacées définitivement.','settings.danger.confirm2':'Pour confirmer, tapez exactement : SUPPRIMER','settings.danger.aborted':'Suppression annulée.','settings.danger.deleted':'Compte supprimé. Au revoir !',
 'orders.status.pending':'En attente','orders.status.confirmed':'Confirmé','orders.status.preparing':'En préparation','orders.status.delivering':'En route','orders.status.delivered':'Livré','orders.status.cancelled':'Annulé',
 'orders.name.placeholder':'Nom du client','orders.name.save':'Enregistrer',
@@ -2337,7 +2374,7 @@ function applyTabVisibility(productsEnabled, servicesEnabled, appointmentsEnable
 
 // ── Tab switching ──────────────────────────────────────────────────────────────
 function switchTab(tab) {
-  ['chats','products','services','orders','appointments','settings','help'].forEach(t => {
+  ['chats','products','services','orders','appointments','settings','help','support'].forEach(t => {
     document.getElementById('section' + cap(t)).classList.toggle('hidden', t !== tab);
     document.getElementById('tab'     + cap(t)).classList.toggle('tab-active', t === tab);
   });
@@ -2358,9 +2395,103 @@ function switchTab(tab) {
   if (tab === 'settings')     loadSettings();
   if (tab === 'services')     loadServices();
   if (tab === 'appointments') initCalendar();
+  if (tab === 'support')      { loadSupportMessages(); startSupportPoll(); }
+  else                        stopSupportPoll();
   if (tab === 'chats')        { loadChatList(); startChatListPoll(); }
   else                        stopChatListPoll();
 }
+// ── Support chat ───────────────────────────────────────────────────────────────
+let supportPollTimer = null;
+let lastSupportCount = 0;
+
+async function loadSupportMessages(scrollToBottom = true) {
+  const box = document.getElementById('supportMessages');
+  if (!box) return;
+  try {
+    const msgs = await api('/admin/support');
+    if (msgs.length === 0) {
+      box.innerHTML = `<div class="text-center text-gray-400 text-sm py-8">${t('support.empty')}</div>`;
+      return;
+    }
+    // Check for new messages (unread badge)
+    const newCount = msgs.length;
+    const hasNew = newCount > lastSupportCount && lastSupportCount > 0;
+    lastSupportCount = newCount;
+    if (hasNew) {
+      const badge = document.getElementById('supportUnreadBadge');
+      if (badge && !document.getElementById('tabSupport').classList.contains('tab-active')) {
+        badge.classList.remove('hidden');
+      }
+    }
+    box.innerHTML = msgs.map(m => {
+      const isMerchant = m.role === 'merchant';
+      const time = new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const date = new Date(m.created_at).toLocaleDateString([], { day: '2-digit', month: '2-digit' });
+      return `<div class="flex ${isMerchant ? 'justify-end' : 'justify-start'}">
+        <div class="max-w-[75%] ${isMerchant
+          ? 'bg-green-500 text-white rounded-2xl rounded-br-sm'
+          : 'bg-gray-100 text-gray-800 rounded-2xl rounded-bl-sm'
+        } px-4 py-2.5 shadow-sm">
+          <p class="text-sm whitespace-pre-wrap">${escHtml(m.content)}</p>
+          <p class="text-[10px] mt-1 ${isMerchant ? 'text-green-100' : 'text-gray-400'} text-right">${date} ${time}</p>
+        </div>
+      </div>`;
+    }).join('');
+    if (scrollToBottom) box.scrollTop = box.scrollHeight;
+  } catch(e) {
+    box.innerHTML = `<div class="text-center text-red-400 text-sm py-4">Error: ${e.message}</div>`;
+  }
+}
+
+async function sendSupportMessage() {
+  const input = document.getElementById('supportInput');
+  const content = input.value.trim();
+  if (!content) return;
+  input.value = '';
+  input.disabled = true;
+  try {
+    await api('/admin/support', 'POST', { content });
+    await loadSupportMessages(true);
+  } catch(e) {
+    alert('Error al enviar: ' + e.message);
+    input.value = content;
+  } finally {
+    input.disabled = false;
+    input.focus();
+  }
+}
+
+function startSupportPoll() {
+  stopSupportPoll();
+  loadSupportMessages(false);
+  supportPollTimer = setInterval(() => loadSupportMessages(false), 5000);
+  // Hide badge when tab is active
+  const badge = document.getElementById('supportUnreadBadge');
+  if (badge) badge.classList.add('hidden');
+  lastSupportCount = 0;
+}
+
+function stopSupportPoll() {
+  if (supportPollTimer) { clearInterval(supportPollTimer); supportPollTimer = null; }
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// Poll for unread support messages (badge) even when tab is not active
+setInterval(async () => {
+  try {
+    if (document.getElementById('tabSupport')?.classList.contains('tab-active')) return;
+    const msgs = await api('/admin/support');
+    if (msgs.length > lastSupportCount && lastSupportCount > 0) {
+      const badge = document.getElementById('supportUnreadBadge');
+      if (badge) badge.classList.remove('hidden');
+    }
+    if (lastSupportCount === 0) lastSupportCount = msgs.length;
+  } catch(_) {}
+}, 30000);
+
 function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
 
 // ── Products ───────────────────────────────────────────────────────────────────

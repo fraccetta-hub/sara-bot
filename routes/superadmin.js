@@ -338,4 +338,68 @@ router.post('/tenants/:id/import-confirm', requireSuper, async (req, res) => {
   res.json({ ok: true, count: toInsert.length });
 });
 
+// ─── GET /superadmin/support — list all tenants with support messages ─────────
+router.get('/support', requireSuper, async (req, res) => {
+  // Get all support messages with tenant info
+  const { data, error } = await supabase
+    .from('support_messages')
+    .select('id, tenant_id, role, content, created_at, tenants(name)')
+    .order('created_at', { ascending: false });
+  if (error) return res.status(500).json({ error: error.message });
+
+  // Group by tenant, include last message + unread count (merchant messages not replied to)
+  const byTenant = {};
+  for (const msg of (data || [])) {
+    const tid = msg.tenant_id;
+    if (!byTenant[tid]) {
+      byTenant[tid] = {
+        tenant_id: tid,
+        tenant_name: msg.tenants?.name || tid,
+        messages: [],
+        unread: 0,
+        last_at: null,
+      };
+    }
+    byTenant[tid].messages.push(msg);
+    if (!byTenant[tid].last_at) byTenant[tid].last_at = msg.created_at;
+  }
+
+  // Count unread = merchant messages after the last support reply
+  for (const t of Object.values(byTenant)) {
+    t.messages.reverse(); // now ascending
+    let lastSupportIdx = -1;
+    t.messages.forEach((m, i) => { if (m.role === 'support') lastSupportIdx = i; });
+    t.unread = t.messages.slice(lastSupportIdx + 1).filter(m => m.role === 'merchant').length;
+    delete t.messages; // don't send full history in list
+  }
+
+  const list = Object.values(byTenant).sort((a, b) => new Date(b.last_at) - new Date(a.last_at));
+  res.json(list);
+});
+
+// ─── GET /superadmin/support/:tenantId — full conversation ───────────────────
+router.get('/support/:tenantId', requireSuper, async (req, res) => {
+  const { data, error } = await supabase
+    .from('support_messages')
+    .select('id, role, content, created_at')
+    .eq('tenant_id', req.params.tenantId)
+    .order('created_at', { ascending: true });
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data || []);
+});
+
+// ─── POST /superadmin/support/:tenantId — superadmin replies ─────────────────
+router.post('/support/:tenantId', requireSuper, async (req, res) => {
+  const { content } = req.body;
+  if (!content?.trim()) return res.status(400).json({ error: 'Mensaje vacío' });
+
+  const { error } = await supabase.from('support_messages').insert({
+    tenant_id: req.params.tenantId,
+    role: 'support',
+    content: content.trim(),
+  });
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ ok: true });
+});
+
 module.exports = router;
