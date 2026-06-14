@@ -345,14 +345,24 @@
         </div>
       </div>
 
-      <!-- Category filter -->
-      <div class="flex gap-2 mb-4 flex-wrap" id="categoryFilters"></div>
+      <!-- Search + Category filter -->
+      <div class="flex flex-col sm:flex-row gap-2 mb-4">
+        <div class="relative flex-1">
+          <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">🔍</span>
+          <input id="productSearch" type="text" data-i18n-ph="products.search"
+            placeholder="Buscar por nombre o código..."
+            class="w-full pl-8 pr-3 py-2 border border-gray-200 rounded-lg text-sm"
+            oninput="renderProducts()"/>
+        </div>
+        <div class="flex gap-2 flex-wrap" id="categoryFilters"></div>
+      </div>
 
       <div class="bg-white rounded-xl shadow-sm overflow-hidden">
         <table class="w-full text-sm">
           <thead class="bg-gray-50 text-gray-500 uppercase text-xs">
             <tr>
               <th data-i18n="products.col.product" class="px-4 py-3 text-left">Producto</th>
+              <th class="px-4 py-3 text-left hidden md:table-cell text-gray-400 font-mono text-xs">SKU</th>
               <th data-i18n="products.col.category" class="px-4 py-3 text-left hidden sm:table-cell">Categoría</th>
               <th data-i18n="products.col.price" class="px-4 py-3 text-right">Precio (Gs)</th>
               <th data-i18n="products.col.stock" class="px-4 py-3 text-center">Stock</th>
@@ -361,7 +371,7 @@
             </tr>
           </thead>
           <tbody id="productsTable" class="divide-y divide-gray-50">
-            <tr><td colspan="6" class="text-center py-8 text-gray-400">Cargando...</td></tr>
+            <tr><td colspan="7" class="text-center py-8 text-gray-400">Cargando...</td></tr>
           </tbody>
         </table>
       </div>
@@ -1015,13 +1025,24 @@
             class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
         </div>
         <div>
-          <label data-i18n="modal.product.price" class="block text-sm font-medium text-gray-700 mb-1">Precio (Gs) *</label>
-          <input id="pPrice" type="number" placeholder="150000"
-            class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
+          <label data-i18n="modal.product.sku" class="block text-sm font-medium text-gray-700 mb-1">Código / SKU</label>
+          <input id="pSku" type="text" placeholder="ABC-001"
+            class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono"/>
         </div>
       </div>
       <div>
-        <label data-i18n="modal.product.stock" class="block text-sm font-medium text-gray-700 mb-1">Stock disponible</label>
+        <label data-i18n="modal.product.price" class="block text-sm font-medium text-gray-700 mb-1">Precio (Gs) *</label>
+        <input id="pPrice" type="number" placeholder="150000"
+          class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
+      </div>
+      <div>
+        <div class="flex items-center justify-between mb-1">
+          <label data-i18n="modal.product.stock" class="block text-sm font-medium text-gray-700">Stock disponible</label>
+          <label class="flex items-center gap-1.5 cursor-pointer select-none">
+            <input type="checkbox" id="pUnlimited" class="w-3.5 h-3.5 accent-green-500" onchange="toggleUnlimitedStock(this.checked)"/>
+            <span data-i18n="modal.product.unlimited" class="text-xs text-gray-500">Sin límite</span>
+          </label>
+        </div>
         <input id="pStock" type="number" placeholder="10" min="0"
           class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
       </div>
@@ -1145,7 +1166,9 @@ es:{
 'modal.product.new':'Nuevo producto','modal.product.edit':'Editar producto',
 'modal.product.name':'Nombre *','modal.product.namePh':'Ej: Ramo de Rosas Rojas (12 unidades)',
 'modal.product.category':'Categoría','modal.product.categoryPh':'Ej: Ramos',
-'modal.product.price':'Precio (Gs) *','modal.product.stock':'Stock disponible',
+'modal.product.sku':'Código / SKU',
+'modal.product.price':'Precio (Gs) *','modal.product.stock':'Stock disponible','modal.product.unlimited':'Sin límite de stock',
+'products.search':'Buscar por nombre o código...',
 'modal.product.desc':'Descripción','modal.product.descPh':'Descripción breve del producto...',
 'modal.product.photo':'Foto del producto','modal.product.uploadTap':'Tocá para subir una foto','modal.product.uploadHint':'JPG, PNG — máx. 10 MB','modal.product.orUrl':'o pegá una URL',
 'modal.product.cancel':'Cancelar','modal.product.save':'Guardar','modal.product.saving':'Guardando...','modal.product.error':'Nombre y precio son obligatorios.','modal.product.photoError':'Producto guardado, pero error al subir la foto: ',
@@ -1274,7 +1297,9 @@ en:{
 'modal.product.new':'New product','modal.product.edit':'Edit product',
 'modal.product.name':'Name *','modal.product.namePh':'E.g.: Red Rose Bouquet (12 units)',
 'modal.product.category':'Category','modal.product.categoryPh':'E.g.: Bouquets',
-'modal.product.price':'Price (Gs) *','modal.product.stock':'Available stock',
+'modal.product.sku':'Code / SKU',
+'modal.product.price':'Price (Gs) *','modal.product.stock':'Available stock','modal.product.unlimited':'Unlimited stock',
+'products.search':'Search by name or code...',
 'modal.product.desc':'Description','modal.product.descPh':'Brief product description...',
 'modal.product.photo':'Product photo','modal.product.uploadTap':'Tap to upload a photo','modal.product.uploadHint':'JPG, PNG — max 10 MB','modal.product.orUrl':'or paste a URL',
 'modal.product.cancel':'Cancel','modal.product.save':'Save','modal.product.saving':'Saving...','modal.product.error':'Name and price are required.','modal.product.photoError':'Product saved, but error uploading photo: ',
@@ -1403,7 +1428,9 @@ it:{
 'modal.product.new':'Nuovo prodotto','modal.product.edit':'Modifica prodotto',
 'modal.product.name':'Nome *','modal.product.namePh':'Es: Mazzo di Rose Rosse (12 unità)',
 'modal.product.category':'Categoria','modal.product.categoryPh':'Es: Mazzi',
-'modal.product.price':'Prezzo (Gs) *','modal.product.stock':'Stock disponibile',
+'modal.product.sku':'Codice / SKU',
+'modal.product.price':'Prezzo (Gs) *','modal.product.stock':'Stock disponibile','modal.product.unlimited':'Stock illimitato',
+'products.search':'Cerca per nome o codice...',
 'modal.product.desc':'Descrizione','modal.product.descPh':'Breve descrizione del prodotto...',
 'modal.product.photo':'Foto del prodotto','modal.product.uploadTap':'Tocca per caricare una foto','modal.product.uploadHint':'JPG, PNG — max 10 MB','modal.product.orUrl':'o incolla un URL',
 'modal.product.cancel':'Annulla','modal.product.save':'Salva','modal.product.saving':'Salvataggio...','modal.product.error':'Nome e prezzo sono obbligatori.','modal.product.photoError':'Prodotto salvato, ma errore nel caricamento della foto: ',
@@ -1531,7 +1558,9 @@ de:{
 'modal.product.new':'Neues Produkt','modal.product.edit':'Produkt bearbeiten',
 'modal.product.name':'Name *','modal.product.namePh':'Z.B.: Rosenstrauß Rot (12 Stück)',
 'modal.product.category':'Kategorie','modal.product.categoryPh':'Z.B.: Sträuße',
-'modal.product.price':'Preis (Gs) *','modal.product.stock':'Verfügbarer Bestand',
+'modal.product.sku':'Code / SKU',
+'modal.product.price':'Preis (Gs) *','modal.product.stock':'Verfügbarer Bestand','modal.product.unlimited':'Unbegrenzter Bestand',
+'products.search':'Nach Name oder Code suchen...',
 'modal.product.desc':'Beschreibung','modal.product.descPh':'Kurze Produktbeschreibung...',
 'modal.product.photo':'Produktfoto','modal.product.uploadTap':'Tippe, um ein Foto hochzuladen','modal.product.uploadHint':'JPG, PNG — max. 10 MB','modal.product.orUrl':'oder URL einfügen',
 'modal.product.cancel':'Abbrechen','modal.product.save':'Speichern','modal.product.saving':'Speichern...','modal.product.error':'Name und Preis sind erforderlich.','modal.product.photoError':'Produkt gespeichert, aber Fehler beim Hochladen des Fotos: ',
@@ -1659,7 +1688,9 @@ fr:{
 'modal.product.new':'Nouveau produit','modal.product.edit':'Modifier le produit',
 'modal.product.name':'Nom *','modal.product.namePh':'Ex : Bouquet de Roses Rouges (12 unités)',
 'modal.product.category':'Catégorie','modal.product.categoryPh':'Ex : Bouquets',
-'modal.product.price':'Prix (Gs) *','modal.product.stock':'Stock disponible',
+'modal.product.sku':'Code / SKU',
+'modal.product.price':'Prix (Gs) *','modal.product.stock':'Stock disponible','modal.product.unlimited':'Stock illimité',
+'products.search':'Rechercher par nom ou code...',
 'modal.product.desc':'Description','modal.product.descPh':'Courte description du produit...',
 'modal.product.photo':'Photo du produit','modal.product.uploadTap':'Appuyez pour télécharger une photo','modal.product.uploadHint':'JPG, PNG — max 10 Mo','modal.product.orUrl':'ou collez une URL',
 'modal.product.cancel':'Annuler','modal.product.save':'Enregistrer','modal.product.saving':'Enregistrement...','modal.product.error':'Le nom et le prix sont obligatoires.','modal.product.photoError':'Produit enregistré, mais erreur lors du téléchargement de la photo : ',
@@ -2222,27 +2253,35 @@ function filterCategory(cat) {
 }
 
 function renderProducts() {
-  const filtered = activeCategory === 'all' ? products : products.filter(p => p.category === activeCategory);
+  const q = (document.getElementById('productSearch')?.value || '').toLowerCase().trim();
+  let filtered = activeCategory === 'all' ? products : products.filter(p => p.category === activeCategory);
+  if (q) filtered = filtered.filter(p =>
+    p.name.toLowerCase().includes(q) || (p.sku && p.sku.toLowerCase().includes(q))
+  );
   const tbody = document.getElementById('productsTable');
   if (!filtered.length) {
-    tbody.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-gray-400">${t('products.empty')}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-gray-400">${t('products.empty')}</td></tr>`;
     return;
   }
-  tbody.innerHTML = filtered.map(p => `
+  tbody.innerHTML = filtered.map(p => {
+    const unlimited = p.stock_qty === null;
+    const stockCell = unlimited
+      ? `<span class="text-green-500 font-bold text-base" title="${t('modal.product.unlimited')}">∞</span>`
+      : `<input type="number" value="${p.stock_qty}" min="0"
+          class="w-16 border border-gray-200 rounded-lg px-2 py-1 text-center text-sm"
+          onchange="quickUpdateStock('${p.id}', this.value)"/>`;
+    return `
     <tr class="hover:bg-gray-50 transition">
       <td class="px-4 py-3">
         <div class="flex items-center gap-3">
           ${p.image_url ? `<img src="${p.image_url}" class="w-10 h-10 rounded-lg object-cover border border-gray-100" onerror="this.style.display='none'"/>` : '<div class="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400 text-lg">📦</div>'}
-          <span class="font-medium text-gray-800">${p.name}</span>
+          <span class="font-medium text-gray-800">${escHtml(p.name)}</span>
         </div>
       </td>
-      <td class="px-4 py-3 text-gray-500 hidden sm:table-cell">${p.category || '—'}</td>
+      <td class="px-4 py-3 hidden md:table-cell text-gray-400 font-mono text-xs">${p.sku ? escHtml(p.sku) : '—'}</td>
+      <td class="px-4 py-3 text-gray-500 hidden sm:table-cell">${escHtml(p.category || '—')}</td>
       <td class="px-4 py-3 text-right font-medium">${formatGs(p.price_guarani)}</td>
-      <td class="px-4 py-3 text-center">
-        <input type="number" value="${p.stock_qty}" min="0"
-          class="w-16 border border-gray-200 rounded-lg px-2 py-1 text-center text-sm"
-          onchange="quickUpdateStock('${p.id}', this.value)"/>
-      </td>
+      <td class="px-4 py-3 text-center">${stockCell}</td>
       <td class="px-4 py-3 text-center">
         <button onclick="toggleAvailable('${p.id}', ${!p.is_available})"
           class="status-badge ${p.is_available ? 'status-confirmed' : 'status-cancelled'} cursor-pointer hover:opacity-80">
@@ -2255,7 +2294,8 @@ function renderProducts() {
           <button onclick="openDeleteModal('${p.id}', '${p.name.replace(/'/g,"\\'")}')}" class="text-red-400 hover:text-red-600 text-sm">🗑️</button>
         </div>
       </td>
-    </tr>`).join('');
+    </tr>`;
+  }).join('');
 }
 
 async function quickUpdateStock(id, qty) {
@@ -2275,8 +2315,12 @@ function openProductModal(id) {
   document.getElementById('modalTitle').textContent = p ? t('modal.product.edit') : t('modal.product.new');
   document.getElementById('pName').value     = p?.name          || '';
   document.getElementById('pCategory').value = p?.category      || '';
+  document.getElementById('pSku').value      = p?.sku           || '';
   document.getElementById('pPrice').value    = p?.price_guarani || '';
-  document.getElementById('pStock').value    = p?.stock_qty     ?? '';
+  const unlimited = p ? p.stock_qty === null : false;
+  document.getElementById('pUnlimited').checked = unlimited;
+  document.getElementById('pStock').value    = unlimited ? '' : (p?.stock_qty ?? '');
+  document.getElementById('pStock').disabled = unlimited;
   document.getElementById('pDesc').value     = p?.description   || '';
   document.getElementById('pImage').value    = p?.image_url     || '';
   document.getElementById('pImageFile').value = '';
@@ -2325,11 +2369,19 @@ function closeProductModal() {
   editingProductId = null;
 }
 
+function toggleUnlimitedStock(checked) {
+  const stockInput = document.getElementById('pStock');
+  stockInput.disabled = checked;
+  if (checked) stockInput.value = '';
+}
+
 async function saveProduct() {
   const name          = document.getElementById('pName').value.trim();
   const category      = document.getElementById('pCategory').value.trim();
+  const sku           = document.getElementById('pSku').value.trim() || null;
   const price_guarani = parseInt(document.getElementById('pPrice').value);
-  const stock_qty     = parseInt(document.getElementById('pStock').value) || 0;
+  const unlimited     = document.getElementById('pUnlimited').checked;
+  const stock_qty     = unlimited ? null : (parseInt(document.getElementById('pStock').value) || 0);
   const description   = document.getElementById('pDesc').value.trim() || null;
   const image_url     = document.getElementById('pImage').value.trim() || null;
   const imageFile     = document.getElementById('pImageFile').files?.[0] || null;
@@ -2348,9 +2400,9 @@ async function saveProduct() {
   try {
     let saved;
     if (editingProductId) {
-      saved = await api(`/admin/products/${editingProductId}`, 'PUT', { name, category, price_guarani, stock_qty, description, image_url });
+      saved = await api(`/admin/products/${editingProductId}`, 'PUT', { name, category, sku, price_guarani, stock_qty, description, image_url });
     } else {
-      saved = await api('/admin/products', 'POST', { name, category, price_guarani, stock_qty, description, image_url });
+      saved = await api('/admin/products', 'POST', { name, category, sku, price_guarani, stock_qty, description, image_url });
     }
 
     // Upload image file if one was selected

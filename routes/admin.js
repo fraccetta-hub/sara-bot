@@ -198,17 +198,21 @@ router.get('/products', requireAuth, async (req, res) => {
 // ─── POST /admin/products ─────────────────────────────────────────────────────
 
 router.post('/products', requireAuth, async (req, res) => {
-  const { name, category, price_guarani, stock_qty, description, image_url } = req.body;
+  const { name, category, price_guarani, stock_qty, description, image_url, sku } = req.body;
   if (!name || !price_guarani)
     return res.status(400).json({ error: 'Nombre y precio son obligatorios' });
 
+  // stock_qty === null means unlimited (always available)
+  const unlimited = stock_qty === null || stock_qty === undefined;
   const { data, error } = await supabase
     .from('products')
     .insert({
       tenant_id: req.tenant.tenantId,
-      name, category, price_guarani, stock_qty: stock_qty || 0,
+      name, category, price_guarani,
+      stock_qty: unlimited ? null : (stock_qty || 0),
       description, image_url,
-      is_available: (stock_qty || 0) > 0
+      sku: sku || null,
+      is_available: unlimited ? true : (stock_qty || 0) > 0
     })
     .select()
     .single();
@@ -219,7 +223,7 @@ router.post('/products', requireAuth, async (req, res) => {
 // ─── PUT /admin/products/:id ──────────────────────────────────────────────────
 
 router.put('/products/:id', requireAuth, async (req, res) => {
-  const { name, category, price_guarani, stock_qty, description, image_url, is_available } = req.body;
+  const { name, category, price_guarani, stock_qty, description, image_url, is_available, sku } = req.body;
 
   const updates = {};
   if (name          !== undefined) updates.name          = name;
@@ -227,9 +231,11 @@ router.put('/products/:id', requireAuth, async (req, res) => {
   if (price_guarani !== undefined) updates.price_guarani = price_guarani;
   if (description   !== undefined) updates.description   = description;
   if (image_url     !== undefined) updates.image_url     = image_url;
+  if (sku           !== undefined) updates.sku           = sku || null;
   if (stock_qty     !== undefined) {
-    updates.stock_qty    = stock_qty;
-    updates.is_available = stock_qty > 0;
+    // null = unlimited stock (always available)
+    updates.stock_qty    = stock_qty === null ? null : stock_qty;
+    updates.is_available = stock_qty === null ? true : stock_qty > 0;
   }
   if (is_available  !== undefined) updates.is_available  = is_available;
 

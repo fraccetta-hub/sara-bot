@@ -11,8 +11,8 @@ function buildSystemPrompt(tenant, stock, convState = {}, services = [], appoint
 
   const catalog = (tenant.products_enabled !== false && stock.length)
     ? stock.map(p =>
-        `• ${p.name} [${p.category}] — ${p.price_guarani.toLocaleString('es-PY')} Gs` +
-        (p.stock_qty > 0 ? ` (${p.stock_qty} disponibles)` : ' (AGOTADO)') +
+        `• ${p.name}${p.sku ? ` [SKU:${p.sku}]` : ''} [${p.category}] — ${p.price_guarani.toLocaleString('es-PY')} Gs` +
+        (p.stock_qty === null ? '' : p.stock_qty > 0 ? ` (${p.stock_qty} disponibles)` : ' (AGOTADO)') +
         (p.description ? ` — ${p.description}` : '') +
         (p.image_url ? ' [tiene foto]' : '')
       ).join('\n')
@@ -139,7 +139,7 @@ ${deliveryBlock}
 ${appointmentsBlock}
 
 REGLAS:
-1. Solo ofrecés productos con stock disponible (>0 unidades).
+1. Solo ofrecés productos con stock disponible (stock > 0, o sin límite de stock).
 1b. NUNCA inventes restricciones o limitaciones que no están en el catálogo. Si un producto existe y tiene stock, se puede vender. No digas "solo vendemos en pack", "no vendemos por unidad", ni ninguna limitación inventada.
 1c. Si el cliente pide algo y no lo encontrás en el catálogo, buscá bien antes de decir que no lo tenés.
 2. Cuando el cliente quiera pedir, confirmá productos y cantidades.
