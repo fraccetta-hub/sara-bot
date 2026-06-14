@@ -510,21 +510,26 @@ async function handleCustomerMessage(tenant, customerPhone, messageText, locatio
     return;
   }
 
-  // Sanitize history: convert any array content (old image blocks) to plain text
-  // Anthropic now rejects old image source formats stored in conversation history
+  // Sanitize history before sending to Anthropic.
+  // Anthropic only accepts { role, content } — any extra field causes 'Extra inputs are not permitted'.
+  // Known extra fields in our DB: source:'merchant', image_url (from takeover messages),
+  // and old array content blocks (from image messages saved before the text-only fix).
   const rawHistory = convRow?.messages_json || [];
-  const history = rawHistory.map(msg => {
-    if (Array.isArray(msg.content)) {
-      // Flatten content blocks to text only
-      const text = msg.content
-        .filter(b => b.type === 'text')
-        .map(b => b.text)
-        .join(' ')
-        .trim() || '[mensaje con imagen]';
-      return { role: msg.role, content: text };
-    }
-    return msg;
-  });
+  const history = rawHistory
+    .filter(msg => msg.role === 'user' || msg.role === 'assistant') // skip any malformed entries
+    .map(msg => {
+      let content = msg.content;
+      // Flatten array content blocks to plain text
+      if (Array.isArray(content)) {
+        content = content
+          .filter(b => b.type === 'text')
+          .map(b => b.text)
+          .join(' ')
+          .trim() || '[mensaje con imagen]';
+      }
+      // Return ONLY role + content — strip source, image_url, and any other extra fields
+      return { role: msg.role, content: typeof content === 'string' ? content : String(content) };
+    });
   const [stock, services] = await Promise.all([
     getStock(tenant.id),
     getServices(tenant.id),
