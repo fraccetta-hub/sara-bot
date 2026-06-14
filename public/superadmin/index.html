@@ -164,14 +164,7 @@
     </div>
     <div id="editError" class="hidden bg-red-50 text-red-700 text-sm rounded-lg px-4 py-2 mb-4"></div>
 
-    <!-- Tabs dentro modal -->
-    <div class="flex gap-4 text-sm text-gray-500 border-b mb-4">
-      <button class="py-2 border-b-2 border-purple-600 text-purple-600 font-semibold" id="etabConfig" onclick="switchEditTab('config')">⚙️ Config</button>
-      <button class="py-2" id="etabProducts" onclick="switchEditTab('products')">📦 Catálogo</button>
-      <button class="py-2" id="etabImport" onclick="switchEditTab('import')">📸 Importar</button>
-    </div>
-
-    <!-- Config tab -->
+    <!-- Config (unica scheda visibile) -->
     <div id="editConfig" class="space-y-3">
       <div class="grid grid-cols-2 gap-3">
         <div>
@@ -183,30 +176,9 @@
           <input id="eSlug" type="text" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" placeholder="lasorquideas"/>
         </div>
       </div>
-      <div class="grid grid-cols-2 gap-3">
-        <div>
-          <label class="block text-xs font-medium text-gray-500 mb-1">Nombre del bot</label>
-          <input id="eBotName" type="text" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
-        </div>
-        <div>
-          <label class="block text-xs font-medium text-gray-500 mb-1">WhatsApp merchant</label>
-          <input id="eMerchant" type="text" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
-        </div>
-      </div>
       <div>
-        <label class="block text-xs font-medium text-gray-500 mb-1">Personalidad</label>
-        <input id="ePersonality" type="text" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
-      </div>
-      <div>
-        <label class="block text-xs font-medium text-gray-500 mb-1">Instrucciones de pago</label>
-        <textarea id="ePayment" rows="2" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm resize-none"></textarea>
-      </div>
-      <div class="flex items-center gap-3 pt-1">
-        <label class="text-xs font-medium text-gray-500">Estado</label>
-        <select id="eActive" class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm">
-          <option value="true">✅ Activo</option>
-          <option value="false">🔴 Inactivo</option>
-        </select>
+        <label class="block text-xs font-medium text-gray-500 mb-1">WhatsApp merchant</label>
+        <input id="eMerchant" type="text" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
       </div>
       <div class="pt-2 border-t border-gray-100">
         <label class="block text-xs font-medium text-gray-500 mb-2">Secciones activas</label>
@@ -225,17 +197,19 @@
           </label>
         </div>
       </div>
-    </div>
-
-    <!-- Products tab -->
-    <div id="editProducts" class="hidden">
-      <div class="text-xs text-gray-400 mb-3">Catálogo del cliente. Edición básica — para cambios avanzados usá Impersonar.</div>
-      <div id="editProductsList" class="space-y-2 max-h-64 overflow-y-auto">
-        <div class="text-center py-4 text-gray-400 text-sm">Cargando...</div>
+      <div class="flex items-center gap-3 pt-1">
+        <label class="text-xs font-medium text-gray-500">Estado</label>
+        <select id="eActive" class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm">
+          <option value="true">✅ Activo</option>
+          <option value="false">🔴 Inactivo</option>
+        </select>
       </div>
     </div>
 
-    <!-- Import tab -->
+    <!-- Products tab (hidden, kept for JS compatibility) -->
+    <div id="editProducts" class="hidden"></div>
+
+    <!-- Import tab (hidden, kept for JS compatibility) -->
     <div id="editImport" class="hidden">
       <p class="text-xs text-gray-500 mb-3">Subí fotos del catálogo WhatsApp, listino prezzi, menú o cualquier imagen con productos y precios. Claude extrae todo automáticamente.</p>
 
@@ -419,13 +393,10 @@ async function openEditModal(id) {
   editingTenantId = id;
   const t = await api(`/superadmin/tenants/${id}`);
   document.getElementById('editModalTitle').textContent = t.name;
-  document.getElementById('eName').value        = t.name        || '';
-  document.getElementById('eSlug').value        = t.login_slug  || '';
-  document.getElementById('eBotName').value     = t.bot_name    || '';
-  document.getElementById('eMerchant').value    = t.merchant_phone || '';
-  document.getElementById('ePersonality').value = t.bot_personality || '';
-  document.getElementById('ePayment').value     = t.payment_instructions || '';
-  document.getElementById('eActive').value      = String(t.active);
+  document.getElementById('eName').value     = t.name           || '';
+  document.getElementById('eSlug').value     = t.login_slug     || '';
+  document.getElementById('eMerchant').value = t.merchant_phone || '';
+  document.getElementById('eActive').value   = String(t.active);
   document.getElementById('eProducts').checked      = t.products_enabled !== false;
   document.getElementById('eServices').checked      = !!t.services_enabled;
   document.getElementById('eAppointments').checked  = !!t.appointments_enabled;
@@ -596,21 +567,25 @@ async function loadEditProducts() {
 
 async function saveTenant() {
   const btn = document.getElementById('editSaveBtn');
-  btn.textContent = 'Guardando...'; btn.disabled = true;
   const errEl = document.getElementById('editError');
   errEl.classList.add('hidden');
+  const newActive = document.getElementById('eActive').value === 'true';
+  const tenant = allTenants.find(x => x.id === editingTenantId);
+  // Confirm if deactivating an active account
+  if (tenant?.active && !newActive) {
+    const name = document.getElementById('eName').value.trim() || tenant.name;
+    if (!confirm(`⚠️ ¿Seguro que querés DESACTIVAR "${name}"?\nEl bot dejará de responder a sus clientes.`)) return;
+  }
+  btn.textContent = 'Guardando...'; btn.disabled = true;
   try {
     await api(`/superadmin/tenants/${editingTenantId}`, 'PUT', {
-      name:                 document.getElementById('eName').value.trim(),
-      login_slug:           document.getElementById('eSlug').value.trim().toLowerCase().replace(/\s+/g,'') || null,
-      bot_name:             document.getElementById('eBotName').value.trim(),
-      merchant_phone:       document.getElementById('eMerchant').value.trim() || null,
-      bot_personality:      document.getElementById('ePersonality').value.trim(),
-      payment_instructions: document.getElementById('ePayment').value.trim() || null,
-      active:             document.getElementById('eActive').value === 'true',
-      products_enabled:      document.getElementById('eProducts').checked,
-      services_enabled:      document.getElementById('eServices').checked,
-      appointments_enabled:  document.getElementById('eAppointments').checked,
+      name:                document.getElementById('eName').value.trim(),
+      login_slug:          document.getElementById('eSlug').value.trim().toLowerCase().replace(/\s+/g,'') || null,
+      merchant_phone:      document.getElementById('eMerchant').value.trim() || null,
+      active:              newActive,
+      products_enabled:    document.getElementById('eProducts').checked,
+      services_enabled:    document.getElementById('eServices').checked,
+      appointments_enabled: document.getElementById('eAppointments').checked,
     });
     closeEditModal();
     await loadTenants();
