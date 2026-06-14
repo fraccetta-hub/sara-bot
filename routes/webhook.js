@@ -48,7 +48,12 @@ async function processIncoming(body) {
   const waProfileName = value.contacts?.[0]?.profile?.name || null;
 
 
-  const messageText = messageType === 'text' ? message.text.body.trim() : null;
+  // Truncate excessively long messages to prevent prompt injection payloads and high API costs
+  const MAX_MSG_LENGTH = 2000;
+  const rawText = messageType === 'text' ? message.text.body.trim() : null;
+  const messageText = rawText && rawText.length > MAX_MSG_LENGTH
+    ? rawText.slice(0, MAX_MSG_LENGTH) + ' [mensaje truncado]'
+    : rawText;
 
   // 1. Identify tenant
   const tenant = await getTenantConfig(phoneNumberId);
@@ -86,6 +91,14 @@ async function processIncoming(body) {
       await sendMessage(senderPhone, blockMessage(rl.reason), phoneNumberId, token);
     }
     return;
+  }
+
+  // ── Log potential prompt injection attempts (don't block — no feedback to attacker) ─────
+  if (messageText) {
+    const injectionPatterns = /ignore.*instruct|system\s*:|prompt\s*:|jailbreak|act as|modo desarrollador|developer mode|sin restricciones|unrestricted|ignore previous|olvida.*instruc|ignora.*instruc/i;
+    if (injectionPatterns.test(messageText)) {
+      console.warn(`[security] Possible prompt injection attempt from ${senderPhone} on tenant ${tenant.id}: "${messageText.slice(0, 100)}"`);
+    }
   }
 
   // ── Route by message type ────────────────────────────────────────────────────
