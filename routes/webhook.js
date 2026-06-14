@@ -510,7 +510,21 @@ async function handleCustomerMessage(tenant, customerPhone, messageText, locatio
     return;
   }
 
-  const history    = convRow?.messages_json || [];
+  // Sanitize history: convert any array content (old image blocks) to plain text
+  // Anthropic now rejects old image source formats stored in conversation history
+  const rawHistory = convRow?.messages_json || [];
+  const history = rawHistory.map(msg => {
+    if (Array.isArray(msg.content)) {
+      // Flatten content blocks to text only
+      const text = msg.content
+        .filter(b => b.type === 'text')
+        .map(b => b.text)
+        .join(' ')
+        .trim() || '[mensaje con imagen]';
+      return { role: msg.role, content: text };
+    }
+    return msg;
+  });
   const [stock, services] = await Promise.all([
     getStock(tenant.id),
     getServices(tenant.id),
