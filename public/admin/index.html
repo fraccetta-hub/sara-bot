@@ -2291,7 +2291,7 @@ function renderProducts() {
       <td class="px-4 py-3 text-center">
         <div class="flex items-center justify-center gap-2">
           <button onclick="openProductModal('${p.id}')" class="text-blue-500 hover:text-blue-700 text-sm">✏️</button>
-          <button onclick="openDeleteModal('${p.id}', '${p.name.replace(/'/g,"\\'")}')}" class="text-red-400 hover:text-red-600 text-sm">🗑️</button>
+          <button onclick="openDeleteModal('${p.id}', '${p.name.replace(/'/g,"\\'")}')" class="text-red-400 hover:text-red-600 text-sm">🗑️</button>
         </div>
       </td>
     </tr>`;
