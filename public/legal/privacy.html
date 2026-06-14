@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Política de Privacidad — Sara Bot</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 800px; margin: 0 auto; padding: 40px 24px 80px; color: #1a1a1a; line-height: 1.7; }
+    h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+    h2 { font-size: 18px; font-weight: 600; margin-top: 36px; margin-bottom: 10px; color: #111; }
+    p, li { font-size: 15px; color: #333; }
+    ul { padding-left: 20px; margin: 8px 0; }
+    .meta { font-size: 13px; color: #888; margin-bottom: 36px; }
+    a { color: #25D366; }
+    hr { border: none; border-top: 1px solid #eee; margin: 40px 0; }
+    table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px; }
+    th, td { text-align: left; padding: 10px 12px; border: 1px solid #e5e5e5; }
+    th { background: #f9f9f9; font-weight: 600; }
+  </style>
+</head>
+<body>
+
+<h1>Política de Privacidad</h1>
+<p class="meta">Última actualización: Junio 2025 · Sara Bot SaaS</p>
+
+<p>En <strong>Sara Bot</strong> nos comprometemos a proteger la privacidad de quienes utilizan nuestra plataforma. Esta Política describe qué datos recopilamos, cómo los usamos y cuáles son sus derechos.</p>
+
+<h2>1. Responsable del Tratamiento</h2>
+<p>El responsable del tratamiento de datos es el operador de la plataforma Sara Bot, accesible en <a href="https://candidatelens.com">candidatelens.com</a>. Para consultas sobre privacidad: <a href="mailto:soporte@candidatelens.com">soporte@candidatelens.com</a></p>
+
+<h2>2. Datos que Recopilamos</h2>
+
+<h3 style="font-size:16px;margin-top:20px;margin-bottom:6px;">2.1 Datos del Merchant (usuario del panel de administración)</h3>
+<table>
+  <tr><th>Dato</th><th>Finalidad</th><th>Conservación</th></tr>
+  <tr><td>Nombre del negocio</td><td>Identificación de cuenta</td><td>Duración del contrato + 90 días</td></tr>
+  <tr><td>Número de WhatsApp</td><td>Conexión con la API de Meta</td><td>Duración del contrato + 90 días</td></tr>
+  <tr><td>Contraseña (hash)</td><td>Autenticación segura</td><td>Duración del contrato + 90 días</td></tr>
+  <tr><td>Catálogo de productos</td><td>Respuestas del bot</td><td>Duración del contrato + 90 días</td></tr>
+  <tr><td>Configuración del bot</td><td>Personalización del asistente</td><td>Duración del contrato + 90 días</td></tr>
+</table>
+
+<h3 style="font-size:16px;margin-top:20px;margin-bottom:6px;">2.2 Datos de Clientes Finales (usuarios del bot de WhatsApp)</h3>
+<p>Los clientes finales son personas que interactúan con el bot de WhatsApp del Merchant. Sara Bot procesa estos datos en calidad de <strong>encargado del tratamiento</strong>, siendo el Merchant el responsable frente a sus clientes.</p>
+<table>
+  <tr><th>Dato</th><th>Finalidad</th><th>Conservación</th></tr>
+  <tr><td>Número de teléfono WhatsApp</td><td>Identificación de la conversación</td><td>90 días tras última interacción</td></tr>
+  <tr><td>Nombre de perfil WhatsApp</td><td>Personalización de respuestas</td><td>90 días tras última interacción</td></tr>
+  <tr><td>Historial de conversación</td><td>Contexto para el bot de IA</td><td>90 días tras última interacción</td></tr>
+  <tr><td>Pedidos realizados</td><td>Gestión comercial del Merchant</td><td>1 año</td></tr>
+</table>
+
+<h2>3. Base Legal del Tratamiento</h2>
+<ul>
+  <li><strong>Ejecución contractual</strong>: para proveer el Servicio al Merchant.</li>
+  <li><strong>Interés legítimo</strong>: para la seguridad, prevención de fraude y mejora del Servicio.</li>
+  <li><strong>Consentimiento</strong>: para comunicaciones de marketing (si aplica).</li>
+</ul>
+
+<h2>4. Terceros que Reciben Datos</h2>
+<ul>
+  <li><strong>Meta Platforms Inc.</strong> — proveedor de la API de WhatsApp Business.</li>
+  <li><strong>Anthropic PBC</strong> — proveedor de la inteligencia artificial (Claude). Los mensajes se envían a sus servidores para generar respuestas. No se usan para entrenar modelos sin consentimiento explícito.</li>
+  <li><strong>Supabase Inc.</strong> — base de datos en la nube donde se almacena la información.</li>
+  <li><strong>Render Inc.</strong> — infraestructura de servidor.</li>
+</ul>
+<p>Todos los proveedores tienen sus propias políticas de privacidad y operan bajo estándares de seguridad adecuados.</p>
+
+<h2>5. Transferencias Internacionales</h2>
+<p>Los datos pueden ser procesados en servidores ubicados en Estados Unidos u otras jurisdicciones. Tomamos las medidas contractuales necesarias para garantizar un nivel adecuado de protección.</p>
+
+<h2>6. Seguridad</h2>
+<p>Implementamos medidas técnicas y organizativas para proteger los datos, incluyendo:</p>
+<ul>
+  <li>Contraseñas almacenadas con hash bcrypt (nunca en texto plano).</li>
+  <li>Comunicaciones cifradas mediante HTTPS/TLS.</li>
+  <li>Autenticación mediante tokens JWT con expiración.</li>
+  <li>Acceso a datos de producción restringido a personal autorizado.</li>
+</ul>
+
+<h2>7. Derechos del Usuario</h2>
+<p>El Merchant puede, en cualquier momento:</p>
+<ul>
+  <li><strong>Acceder</strong> a sus datos desde el panel de administración.</li>
+  <li><strong>Rectificar</strong> datos incorrectos desde las configuraciones.</li>
+  <li><strong>Eliminar</strong> su cuenta y datos asociados solicitándolo a soporte.</li>
+  <li><strong>Portabilidad</strong>: solicitar exportación de su catálogo y datos.</li>
+</ul>
+<p>Para ejercer estos derechos: <a href="mailto:soporte@candidatelens.com">soporte@candidatelens.com</a></p>
+
+<h2>8. Cookies</h2>
+<p>El sitio web utiliza exclusivamente cookies esenciales para el funcionamiento del panel de administración (sesión, preferencias de idioma). No utilizamos cookies de rastreo o publicidad de terceros sin consentimiento previo.</p>
+
+<h2>9. Menores</h2>
+<p>El Servicio no está dirigido a menores de 18 años. No recopilamos intencionalmente datos de menores.</p>
+
+<h2>10. Cambios en esta Política</h2>
+<p>Podemos actualizar esta Política periódicamente. Notificaremos los cambios significativos por correo electrónico. El uso continuado del Servicio tras la notificación implica aceptación.</p>
+
+<hr>
+<p style="font-size:13px;color:#888;">Contacto de privacidad: <a href="mailto:soporte@candidatelens.com">soporte@candidatelens.com</a></p>
+
+</body>
+</html>

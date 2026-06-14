@@ -52,6 +52,13 @@
       <p data-i18n="login.hint" class="text-center text-xs text-gray-400">Primera vez: contraseña <b>sara1234</b></p>
     </div>
 
+    <p class="text-center text-xs text-gray-400 mt-5 leading-relaxed">
+      Al ingresar aceptás nuestros
+      <a href="/legal/terms" target="_blank" class="underline hover:text-gray-600">Términos de servicio</a>,
+      la <a href="/legal/privacy" target="_blank" class="underline hover:text-gray-600">Política de privacidad</a>
+      y el <a href="/legal/disclaimer" target="_blank" class="underline hover:text-gray-600">Disclaimer</a>.
+    </p>
+
   </div>
 </div>
 
@@ -700,6 +707,82 @@
           Guardar contraseña
         </button>
       </div>
+
+      <!-- ── Legal ── -->
+      <div class="bg-white rounded-xl shadow-sm p-6">
+        <h3 data-i18n="settings.legal.title" class="font-medium text-gray-800 mb-3">📄 Legal</h3>
+        <div class="space-y-2">
+          <a href="/legal/terms" target="_blank"
+            class="flex items-center justify-between px-4 py-3 rounded-lg border border-gray-100 hover:bg-gray-50 transition">
+            <span class="text-sm text-gray-700" data-i18n="settings.legal.terms">📋 Términos de Servicio</span>
+            <span class="text-gray-400 text-xs">↗</span>
+          </a>
+          <a href="/legal/privacy" target="_blank"
+            class="flex items-center justify-between px-4 py-3 rounded-lg border border-gray-100 hover:bg-gray-50 transition">
+            <span class="text-sm text-gray-700" data-i18n="settings.legal.privacy">🔒 Política de Privacidad</span>
+            <span class="text-gray-400 text-xs">↗</span>
+          </a>
+          <a href="/legal/disclaimer" target="_blank"
+            class="flex items-center justify-between px-4 py-3 rounded-lg border border-gray-100 hover:bg-gray-50 transition">
+            <span class="text-sm text-gray-700" data-i18n="settings.legal.disclaimer">⚠️ Disclaimer</span>
+            <span class="text-gray-400 text-xs">↗</span>
+          </a>
+        </div>
+        <p class="text-xs text-gray-400 mt-3" data-i18n="settings.legal.note">Al usar este servicio aceptás los términos y condiciones.</p>
+      </div>
+
+      <!-- ── Plan & Pagos ── -->
+      <div class="bg-white rounded-xl shadow-sm p-6">
+        <h3 data-i18n="settings.plan.title" class="font-medium text-gray-800 mb-1">💳 Plan y pagos</h3>
+        <p class="text-xs text-gray-400 mb-4" data-i18n="settings.plan.subtitle">Tu suscripción activa a Sara Bot.</p>
+
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-3 mb-4">
+          <!-- Starter -->
+          <div class="rounded-xl border-2 border-gray-100 p-4 text-center">
+            <div class="text-2xl mb-1">🌱</div>
+            <div class="font-bold text-gray-800 text-sm" data-i18n="settings.plan.starter">Starter</div>
+            <div class="text-lg font-bold text-green-600 my-1">$29<span class="text-xs font-normal text-gray-400">/mes</span></div>
+            <ul class="text-xs text-gray-500 space-y-1 text-left mt-2">
+              <li>✓ <span data-i18n="settings.plan.f1">1 número WhatsApp</span></li>
+              <li>✓ <span data-i18n="settings.plan.f2">Catálogo ilimitado</span></li>
+              <li>✓ <span data-i18n="settings.plan.f3">1.000 conv./mes</span></li>
+              <li>✓ <span data-i18n="settings.plan.f4">Soporte por email</span></li>
+            </ul>
+          </div>
+          <!-- Pro -->
+          <div class="rounded-xl border-2 border-green-400 bg-green-50 p-4 text-center relative">
+            <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-green-500 text-white text-xs font-bold px-3 py-0.5 rounded-full" data-i18n="settings.plan.popular">Popular</div>
+            <div class="text-2xl mb-1">🚀</div>
+            <div class="font-bold text-gray-800 text-sm" data-i18n="settings.plan.pro">Pro</div>
+            <div class="text-lg font-bold text-green-600 my-1">$59<span class="text-xs font-normal text-gray-400">/mes</span></div>
+            <ul class="text-xs text-gray-500 space-y-1 text-left mt-2">
+              <li>✓ <span data-i18n="settings.plan.f1">1 número WhatsApp</span></li>
+              <li>✓ <span data-i18n="settings.plan.f2">Catálogo ilimitado</span></li>
+              <li>✓ <span data-i18n="settings.plan.f5">5.000 conv./mes</span></li>
+              <li>✓ <span data-i18n="settings.plan.f6">Agenda de turnos</span></li>
+              <li>✓ <span data-i18n="settings.plan.f7">Soporte prioritario</span></li>
+            </ul>
+          </div>
+          <!-- Enterprise -->
+          <div class="rounded-xl border-2 border-gray-100 p-4 text-center">
+            <div class="text-2xl mb-1">🏢</div>
+            <div class="font-bold text-gray-800 text-sm" data-i18n="settings.plan.enterprise">Enterprise</div>
+            <div class="text-lg font-bold text-gray-700 my-1" data-i18n="settings.plan.custom">A consultar</div>
+            <ul class="text-xs text-gray-500 space-y-1 text-left mt-2">
+              <li>✓ <span data-i18n="settings.plan.f8">Multi-número</span></li>
+              <li>✓ <span data-i18n="settings.plan.f9">Conversaciones ilimitadas</span></li>
+              <li>✓ <span data-i18n="settings.plan.f10">Integraciones a medida</span></li>
+              <li>✓ <span data-i18n="settings.plan.f11">SLA garantizado</span></li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm text-amber-800 flex items-center gap-2">
+          <span>ℹ️</span>
+          <span data-i18n="settings.plan.contact">Para contratar o cambiar de plan, contactanos en <a href="mailto:soporte@candidatelens.com" class="underline font-medium">soporte@candidatelens.com</a></span>
+        </div>
+      </div>
+
     </div>
 
   </div>
@@ -1163,6 +1246,11 @@ es:{
 'settings.delivery.disabled':'Días/fechas sin envío','settings.delivery.disabledHint':'Separados por coma. Podés poner nombres de días (domingo, sabado) o fechas exactas (AAAA-MM-DD).',
 'settings.delivery.save':'Guardar configuración de envíos','settings.delivery.saved':'✅ Configuración de envíos guardada.',
 'settings.password.title':'🔒 Cambiar contraseña','settings.password.placeholder':'Nueva contraseña (mín. 6 caracteres)','settings.password.save':'Guardar contraseña','settings.password.saved':'✅ Contraseña actualizada.',
+'settings.legal.title':'📄 Legal','settings.legal.terms':'📋 Términos de Servicio','settings.legal.privacy':'🔒 Política de Privacidad','settings.legal.disclaimer':'⚠️ Disclaimer','settings.legal.note':'Al usar este servicio aceptás los términos y condiciones.',
+'settings.plan.title':'💳 Plan y pagos','settings.plan.subtitle':'Tu suscripción activa a Sara Bot.',
+'settings.plan.starter':'Starter','settings.plan.pro':'Pro','settings.plan.enterprise':'Enterprise','settings.plan.popular':'Popular','settings.plan.custom':'A consultar',
+'settings.plan.f1':'1 número WhatsApp','settings.plan.f2':'Catálogo ilimitado','settings.plan.f3':'1.000 conv./mes','settings.plan.f4':'Soporte por email','settings.plan.f5':'5.000 conv./mes','settings.plan.f6':'Agenda de turnos','settings.plan.f7':'Soporte prioritario','settings.plan.f8':'Multi-número','settings.plan.f9':'Conversaciones ilimitadas','settings.plan.f10':'Integraciones a medida','settings.plan.f11':'SLA garantizado',
+'settings.plan.contact':'Para contratar o cambiar de plan, contactanos en',
 'modal.product.new':'Nuevo producto','modal.product.edit':'Editar producto',
 'modal.product.name':'Nombre *','modal.product.namePh':'Ej: Ramo de Rosas Rojas (12 unidades)',
 'modal.product.category':'Categoría','modal.product.categoryPh':'Ej: Ramos',
@@ -1294,6 +1382,11 @@ en:{
 'settings.delivery.disabled':'Days/dates without delivery','settings.delivery.disabledHint':'Comma separated. Day names (sunday, saturday) or exact dates (YYYY-MM-DD).',
 'settings.delivery.save':'Save delivery settings','settings.delivery.saved':'✅ Delivery settings saved.',
 'settings.password.title':'🔒 Change password','settings.password.placeholder':'New password (min. 6 characters)','settings.password.save':'Save password','settings.password.saved':'✅ Password updated.',
+'settings.legal.title':'📄 Legal','settings.legal.terms':'📋 Terms of Service','settings.legal.privacy':'🔒 Privacy Policy','settings.legal.disclaimer':'⚠️ Disclaimer','settings.legal.note':'By using this service you accept the terms and conditions.',
+'settings.plan.title':'💳 Plan & billing','settings.plan.subtitle':'Your active Sara Bot subscription.',
+'settings.plan.starter':'Starter','settings.plan.pro':'Pro','settings.plan.enterprise':'Enterprise','settings.plan.popular':'Popular','settings.plan.custom':'Contact us',
+'settings.plan.f1':'1 WhatsApp number','settings.plan.f2':'Unlimited catalog','settings.plan.f3':'1,000 conv./month','settings.plan.f4':'Email support','settings.plan.f5':'5,000 conv./month','settings.plan.f6':'Appointments','settings.plan.f7':'Priority support','settings.plan.f8':'Multi-number','settings.plan.f9':'Unlimited conversations','settings.plan.f10':'Custom integrations','settings.plan.f11':'SLA guaranteed',
+'settings.plan.contact':'To subscribe or change plan, contact us at',
 'modal.product.new':'New product','modal.product.edit':'Edit product',
 'modal.product.name':'Name *','modal.product.namePh':'E.g.: Red Rose Bouquet (12 units)',
 'modal.product.category':'Category','modal.product.categoryPh':'E.g.: Bouquets',
@@ -1425,6 +1518,11 @@ it:{
 'settings.delivery.disabled':'Giorni/date senza consegna','settings.delivery.disabledHint':'Separati da virgola. Nomi di giorni (domenica, sabato) o date esatte (AAAA-MM-GG).',
 'settings.delivery.save':'Salva configurazione consegne','settings.delivery.saved':'✅ Configurazione consegne salvata.',
 'settings.password.title':'🔒 Cambia password','settings.password.placeholder':'Nuova password (min. 6 caratteri)','settings.password.save':'Salva password','settings.password.saved':'✅ Password aggiornata.',
+'settings.legal.title':'📄 Legale','settings.legal.terms':'📋 Termini di Servizio','settings.legal.privacy':'🔒 Informativa sulla Privacy','settings.legal.disclaimer':'⚠️ Disclaimer','settings.legal.note':'Utilizzando questo servizio accetti i termini e le condizioni.',
+'settings.plan.title':'💳 Piano e pagamenti','settings.plan.subtitle':'Il tuo abbonamento attivo a Sara Bot.',
+'settings.plan.starter':'Starter','settings.plan.pro':'Pro','settings.plan.enterprise':'Enterprise','settings.plan.popular':'Popolare','settings.plan.custom':'Su richiesta',
+'settings.plan.f1':'1 numero WhatsApp','settings.plan.f2':'Catalogo illimitato','settings.plan.f3':'1.000 conv./mese','settings.plan.f4':'Supporto email','settings.plan.f5':'5.000 conv./mese','settings.plan.f6':'Agenda appuntamenti','settings.plan.f7':'Supporto prioritario','settings.plan.f8':'Multi-numero','settings.plan.f9':'Conversazioni illimitate','settings.plan.f10':'Integrazioni su misura','settings.plan.f11':'SLA garantito',
+'settings.plan.contact':'Per sottoscrivere o cambiare piano, contattaci a',
 'modal.product.new':'Nuovo prodotto','modal.product.edit':'Modifica prodotto',
 'modal.product.name':'Nome *','modal.product.namePh':'Es: Mazzo di Rose Rosse (12 unità)',
 'modal.product.category':'Categoria','modal.product.categoryPh':'Es: Mazzi',
@@ -1555,6 +1653,11 @@ de:{
 'settings.delivery.disabled':'Tage/Daten ohne Lieferung','settings.delivery.disabledHint':'Kommagetrennt. Tagesnamen (sonntag, samstag) oder Daten (JJJJ-MM-TT).',
 'settings.delivery.save':'Liefereinstellungen speichern','settings.delivery.saved':'✅ Liefereinstellungen gespeichert.',
 'settings.password.title':'🔒 Passwort ändern','settings.password.placeholder':'Neues Passwort (min. 6 Zeichen)','settings.password.save':'Passwort speichern','settings.password.saved':'✅ Passwort aktualisiert.',
+'settings.legal.title':'📄 Rechtliches','settings.legal.terms':'📋 Nutzungsbedingungen','settings.legal.privacy':'🔒 Datenschutzrichtlinie','settings.legal.disclaimer':'⚠️ Haftungsausschluss','settings.legal.note':'Durch die Nutzung dieses Dienstes akzeptieren Sie die Nutzungsbedingungen.',
+'settings.plan.title':'💳 Tarif & Zahlung','settings.plan.subtitle':'Dein aktives Sara Bot Abonnement.',
+'settings.plan.starter':'Starter','settings.plan.pro':'Pro','settings.plan.enterprise':'Enterprise','settings.plan.popular':'Beliebt','settings.plan.custom':'Auf Anfrage',
+'settings.plan.f1':'1 WhatsApp-Nummer','settings.plan.f2':'Unbegrenzter Katalog','settings.plan.f3':'1.000 Gespräche/Monat','settings.plan.f4':'E-Mail-Support','settings.plan.f5':'5.000 Gespräche/Monat','settings.plan.f6':'Terminkalender','settings.plan.f7':'Prioritäts-Support','settings.plan.f8':'Multi-Nummer','settings.plan.f9':'Unbegrenzte Gespräche','settings.plan.f10':'Individuelle Integrationen','settings.plan.f11':'SLA-Garantie',
+'settings.plan.contact':'Für Abonnements oder Planänderungen kontaktiere uns unter',
 'modal.product.new':'Neues Produkt','modal.product.edit':'Produkt bearbeiten',
 'modal.product.name':'Name *','modal.product.namePh':'Z.B.: Rosenstrauß Rot (12 Stück)',
 'modal.product.category':'Kategorie','modal.product.categoryPh':'Z.B.: Sträuße',
@@ -1685,6 +1788,11 @@ fr:{
 'settings.delivery.disabled':'Jours/dates sans livraison','settings.delivery.disabledHint':'Séparés par des virgules. Noms de jours (dimanche, samedi) ou dates exactes (AAAA-MM-JJ).',
 'settings.delivery.save':'Enregistrer la configuration des livraisons','settings.delivery.saved':'✅ Configuration des livraisons enregistrée.',
 'settings.password.title':'🔒 Changer le mot de passe','settings.password.placeholder':'Nouveau mot de passe (min. 6 caractères)','settings.password.save':'Enregistrer le mot de passe','settings.password.saved':'✅ Mot de passe mis à jour.',
+'settings.legal.title':'📄 Mentions légales','settings.legal.terms':'📋 Conditions d\'utilisation','settings.legal.privacy':'🔒 Politique de confidentialité','settings.legal.disclaimer':'⚠️ Avertissement','settings.legal.note':'En utilisant ce service vous acceptez les conditions générales.',
+'settings.plan.title':'💳 Abonnement et paiements','settings.plan.subtitle':'Votre abonnement Sara Bot actif.',
+'settings.plan.starter':'Starter','settings.plan.pro':'Pro','settings.plan.enterprise':'Enterprise','settings.plan.popular':'Populaire','settings.plan.custom':'Sur devis',
+'settings.plan.f1':'1 numéro WhatsApp','settings.plan.f2':'Catalogue illimité','settings.plan.f3':'1 000 conv./mois','settings.plan.f4':'Support par email','settings.plan.f5':'5 000 conv./mois','settings.plan.f6':'Agenda de rendez-vous','settings.plan.f7':'Support prioritaire','settings.plan.f8':'Multi-numéro','settings.plan.f9':'Conversations illimitées','settings.plan.f10':'Intégrations sur mesure','settings.plan.f11':'SLA garanti',
+'settings.plan.contact':'Pour souscrire ou changer de plan, contactez-nous à',
 'modal.product.new':'Nouveau produit','modal.product.edit':'Modifier le produit',
 'modal.product.name':'Nom *','modal.product.namePh':'Ex : Bouquet de Roses Rouges (12 unités)',
 'modal.product.category':'Catégorie','modal.product.categoryPh':'Ex : Bouquets',

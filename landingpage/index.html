@@ -789,5 +789,33 @@ document.addEventListener('click', e => {
   }
 });
 </script>
+
+<!-- ════ COOKIE BANNER ════ -->
+<div id="cookieBanner" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9999;background:#1a1a1a;color:#fff;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;font-family:'Inter',sans-serif;font-size:14px;box-shadow:0 -2px 16px rgba(0,0,0,0.3);">
+  <p style="margin:0;flex:1;min-width:220px;">
+    🍪 Usamos cookies esenciales para el funcionamiento del sitio.
+    <a href="/legal/privacy" target="_blank" style="color:#25D366;text-decoration:underline;margin-left:4px;">Política de privacidad</a> ·
+    <a href="/legal/terms" target="_blank" style="color:#25D366;text-decoration:underline;margin-left:4px;">Términos de uso</a>
+  </p>
+  <div style="display:flex;gap:10px;flex-shrink:0;">
+    <button onclick="rejectCookies()" style="background:transparent;border:1px solid #555;color:#aaa;padding:8px 18px;border-radius:8px;cursor:pointer;font-size:13px;">Solo esenciales</button>
+    <button onclick="acceptCookies()" style="background:#25D366;border:none;color:#fff;padding:8px 18px;border-radius:8px;cursor:pointer;font-weight:600;font-size:13px;">Aceptar</button>
+  </div>
+</div>
+<script>
+(function() {
+  if (!localStorage.getItem('cookie_consent')) {
+    document.getElementById('cookieBanner').style.display = 'flex';
+  }
+})();
+function acceptCookies() {
+  localStorage.setItem('cookie_consent', 'all');
+  document.getElementById('cookieBanner').style.display = 'none';
+}
+function rejectCookies() {
+  localStorage.setItem('cookie_consent', 'essential');
+  document.getElementById('cookieBanner').style.display = 'none';
+}
+</script>
 </body>
 </html>

@@ -31,6 +31,11 @@ app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'adm
 
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
 
+// Legal pages
+app.get('/legal/terms',      (req, res) => res.sendFile(path.join(__dirname, 'public', 'legal', 'terms.html')));
+app.get('/legal/privacy',    (req, res) => res.sendFile(path.join(__dirname, 'public', 'legal', 'privacy.html')));
+app.get('/legal/disclaimer', (req, res) => res.sendFile(path.join(__dirname, 'public', 'legal', 'disclaimer.html')));
+
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'landingpage', 'index.html')));
 
 app.listen(PORT, () => {
