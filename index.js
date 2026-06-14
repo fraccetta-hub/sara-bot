@@ -68,4 +68,47 @@ app.listen(PORT, () => {
   setInterval(cleanOldConversations, 24 * 60 * 60 * 1000);
 })();
 
+// ─── Cron: auto-renew WhatsApp tokens expiring within 15 days ────────────────
+(function scheduleTokenRenewal() {
+  const supabase   = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
+  const APP_ID     = process.env.META_APP_ID;
+  const APP_SECRET = process.env.META_APP_SECRET;
+
+  async function renewTokens() {
+    if (!APP_ID || !APP_SECRET) return;
+    const soon = new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString();
+    const { data: tenants } = await supabase
+      .from('tenants')
+      .select('id, name, whatsapp_token')
+      .not('whatsapp_token', 'is', null)
+      .or(`whatsapp_token_expires_at.is.null,whatsapp_token_expires_at.lt.${soon}`);
+
+    for (const tenant of tenants || []) {
+      try {
+        const url  = `https://graph.facebook.com/v19.0/oauth/access_token` +
+          `?grant_type=fb_exchange_token&client_id=${APP_ID}&client_secret=${APP_SECRET}` +
+          `&fb_exchange_token=${tenant.whatsapp_token}`;
+        const data = await fetch(url).then(r => r.json());
+        if (data.access_token) {
+          const expiresAt = new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString();
+          await supabase.from('tenants')
+            .update({ whatsapp_token: data.access_token, whatsapp_token_expires_at: expiresAt, whatsapp_token_refresh_error: null })
+            .eq('id', tenant.id);
+          console.log(`[token-renewal] Renewed for ${tenant.name}`);
+        } else {
+          await supabase.from('tenants')
+            .update({ whatsapp_token_refresh_error: data.error?.message || 'unknown' })
+            .eq('id', tenant.id);
+          console.error(`[token-renewal] Failed for ${tenant.name}: ${data.error?.message}`);
+        }
+      } catch (e) {
+        console.error(`[token-renewal] Error for ${tenant.name}: ${e.message}`);
+      }
+    }
+  }
+
+  setTimeout(renewTokens, 15000);
+  setInterval(renewTokens, 24 * 60 * 60 * 1000);
+})();
+
 module.exports = app;

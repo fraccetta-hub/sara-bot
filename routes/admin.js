@@ -181,7 +181,7 @@ router.get('/settings', requireAuth, async (req, res) => {
              delivery_type, delivery_base_fee, delivery_zone_km,
              delivery_zone_outer_fee, delivery_per_km,
              delivery_min_order, delivery_disabled_dates,
-             active, plan_expires`)
+             active, plan_expires, phone_number_id`)
     .eq('id', req.tenant.tenantId)
     .single();
   if (error) return res.status(500).json({ error: error.message });
@@ -661,8 +661,9 @@ router.post('/whatsapp-connect', requireAuth, async (req, res) => {
     } catch (_) { /* non-fatal */ }
 
     // 5. Save to tenant
+    const tokenExpiresAt = new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString();
     const { error: dbErr } = await supabase.from('tenants')
-      .update({ phone_number_id: phoneNumberId, whatsapp_token: accessToken })
+      .update({ phone_number_id: phoneNumberId, whatsapp_token: accessToken, whatsapp_token_expires_at: tokenExpiresAt })
       .eq('id', req.tenant.tenantId);
     if (dbErr) return res.status(500).json({ error: dbErr.message });
 
@@ -679,8 +680,9 @@ router.post('/whatsapp-connect-manual', requireAuth, async (req, res) => {
   if (!phone_number_id || !access_token)
     return res.status(400).json({ error: 'phone_number_id y access_token son obligatorios' });
 
+  const tokenExpiresAt = new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString();
   const { error } = await supabase.from('tenants')
-    .update({ phone_number_id, whatsapp_token: access_token })
+    .update({ phone_number_id, whatsapp_token: access_token, whatsapp_token_expires_at: tokenExpiresAt })
     .eq('id', req.tenant.tenantId);
   if (error) return res.status(500).json({ error: error.message });
   res.json({ ok: true });
