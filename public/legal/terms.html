@@ -3,87 +3,186 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Términos de Servicio — Sara Bot</title>
+  <title>Terms of Service — Sara Bot</title>
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 800px; margin: 0 auto; padding: 40px 24px 80px; color: #1a1a1a; line-height: 1.7; }
-    h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
-    h2 { font-size: 18px; font-weight: 600; margin-top: 36px; margin-bottom: 10px; color: #111; }
-    p, li { font-size: 15px; color: #333; }
-    ul { padding-left: 20px; margin: 8px 0; }
-    .meta { font-size: 13px; color: #888; margin-bottom: 36px; }
-    a { color: #25D366; }
-    hr { border: none; border-top: 1px solid #eee; margin: 40px 0; }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f9f9f9;color:#1a1a1a;line-height:1.7}
+    .topbar{background:#fff;border-bottom:1px solid #e5e5e5;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;position:sticky;top:0;z-index:10}
+    .topbar a{font-weight:700;font-size:16px;color:#1a1a1a;text-decoration:none}
+    .langs{display:flex;gap:6px;flex-wrap:wrap}
+    .langs button{padding:4px 12px;border-radius:20px;border:1px solid #ddd;background:#fff;cursor:pointer;font-size:13px;transition:all .15s}
+    .langs button.active{background:#25D366;color:#fff;border-color:#25D366}
+    .content{max-width:800px;margin:0 auto;padding:40px 24px 80px;background:#fff;min-height:100vh}
+    h1{font-size:26px;font-weight:700;margin-bottom:6px}
+    h2{font-size:17px;font-weight:600;margin-top:32px;margin-bottom:8px}
+    p,li{font-size:14px;color:#333}
+    ul{padding-left:20px;margin:6px 0}
+    .meta{font-size:12px;color:#999;margin-bottom:32px}
+    a{color:#25D366}
+    hr{border:none;border-top:1px solid #eee;margin:36px 0}
+    [data-lang]{display:none}
+    [data-lang].visible{display:block}
   </style>
 </head>
 <body>
+<div class="topbar">
+  <a href="/">Sara Bot</a>
+  <div class="langs">
+    <button onclick="setLang('es')" id="btn-es">🇪🇸 ES</button>
+    <button onclick="setLang('en')" id="btn-en">🇬🇧 EN</button>
+    <button onclick="setLang('it')" id="btn-it">🇮🇹 IT</button>
+    <button onclick="setLang('de')" id="btn-de">🇩🇪 DE</button>
+    <button onclick="setLang('fr')" id="btn-fr">🇫🇷 FR</button>
+  </div>
+</div>
+<div class="content">
 
+<!-- ═══ ES ═══ -->
+<div data-lang="es">
 <h1>Términos de Servicio</h1>
-<p class="meta">Última actualización: Junio 2025 · Sara Bot SaaS</p>
-
-<p>Al acceder y utilizar la plataforma <strong>Sara Bot</strong> (en adelante "el Servicio"), usted acepta quedar vinculado por los presentes Términos de Servicio. Si no está de acuerdo con alguno de estos términos, le pedimos que no utilice el Servicio.</p>
-
+<p class="meta">Última actualización: Junio 2025 · Sara Bot</p>
+<p>Al acceder y utilizar la plataforma <strong>Sara Bot</strong>, usted acepta quedar vinculado por los presentes Términos. Si no está de acuerdo, le pedimos que no utilice el Servicio.</p>
 <h2>1. Descripción del Servicio</h2>
-<p>Sara Bot es una plataforma SaaS que permite a comerciantes (en adelante "Merchant") desplegar un asistente virtual automatizado en WhatsApp Business, con funcionalidades de gestión de catálogo, pedidos, agenda y atención al cliente mediante inteligencia artificial.</p>
-
+<p>Sara Bot es una plataforma SaaS que permite a comerciantes desplegar un asistente virtual en WhatsApp Business con gestión de catálogo, pedidos, agenda y atención al cliente mediante inteligencia artificial.</p>
 <h2>2. Registro y Cuenta</h2>
-<ul>
-  <li>El Merchant debe proporcionar información veraz, completa y actualizada durante el registro.</li>
-  <li>El Merchant es responsable de mantener la confidencialidad de sus credenciales de acceso.</li>
-  <li>Cada cuenta es personal e intransferible. Está prohibido compartir accesos con terceros no autorizados.</li>
-  <li>El Merchant debe ser mayor de 18 años y tener capacidad legal para celebrar contratos.</li>
-</ul>
-
+<ul><li>El Merchant debe proporcionar información veraz y completa.</li><li>El Merchant es responsable de la confidencialidad de sus credenciales.</li><li>La cuenta es personal e intransferible.</li><li>El Merchant debe ser mayor de 18 años con capacidad legal para contratar.</li></ul>
 <h2>3. Uso Aceptable</h2>
-<p>El Merchant se compromete a utilizar el Servicio exclusivamente para fines lícitos y comerciales legítimos. Queda expresamente prohibido:</p>
-<ul>
-  <li>Enviar spam, mensajes no solicitados o contenido engañoso a través del bot.</li>
-  <li>Comercializar productos o servicios ilegales, falsificados o que infrinjan derechos de terceros.</li>
-  <li>Utilizar el Servicio para recopilar datos personales de usuarios sin su consentimiento.</li>
-  <li>Intentar acceder, alterar o dañar los sistemas de la plataforma.</li>
-  <li>Violar las Políticas de WhatsApp Business de Meta Platforms Inc.</li>
-</ul>
-
+<p>Queda prohibido: enviar spam, comercializar productos ilegales, recopilar datos sin consentimiento, dañar los sistemas de la plataforma o violar las políticas de WhatsApp Business de Meta.</p>
 <h2>4. Planes y Pagos</h2>
-<ul>
-  <li>El acceso al Servicio está condicionado al pago del plan contratado según la tarifa vigente.</li>
-  <li>Los pagos se procesan de forma mensual o anual según lo seleccionado por el Merchant.</li>
-  <li>En caso de impago, la cuenta podrá ser suspendida automáticamente tras un período de gracia de 7 días.</li>
-  <li>Los precios pueden ser modificados con un preaviso de 30 días comunicado por correo electrónico.</li>
-  <li>No se realizan reembolsos por períodos parciales, salvo disposición legal contraria.</li>
-</ul>
-
+<ul><li>El acceso está condicionado al pago del plan contratado.</li><li>En caso de impago, la cuenta puede suspenderse tras 7 días de gracia.</li><li>Los precios pueden modificarse con 30 días de preaviso.</li><li>No se realizan reembolsos por períodos parciales salvo disposición legal contraria.</li></ul>
 <h2>5. Suspensión y Cancelación</h2>
-<ul>
-  <li>Sara Bot se reserva el derecho de suspender o cancelar cuentas que incumplan estos Términos, con o sin previo aviso según la gravedad de la infracción.</li>
-  <li>El Merchant puede cancelar su cuenta en cualquier momento desde el panel de administración. El acceso permanecerá activo hasta el fin del período abonado.</li>
-  <li>Ante la cancelación, los datos del Merchant serán eliminados del sistema en un plazo máximo de 90 días.</li>
-</ul>
-
+<ul><li>Sara Bot puede suspender cuentas que incumplan estos Términos.</li><li>El Merchant puede cancelar en cualquier momento; el acceso continúa hasta fin del período abonado.</li><li>Los datos se eliminan en un plazo máximo de 90 días tras la cancelación.</li></ul>
 <h2>6. Propiedad Intelectual</h2>
-<p>Todo el software, diseño, código fuente y marca de Sara Bot son propiedad exclusiva de sus desarrolladores. El Merchant no adquiere ningún derecho sobre la plataforma más allá del uso del Servicio según estos Términos.</p>
-<p>El contenido del catálogo, imágenes y textos cargados por el Merchant son de su exclusiva responsabilidad y propiedad.</p>
-
+<p>Todo el software y marca de Sara Bot son propiedad de sus desarrolladores. El contenido del catálogo cargado por el Merchant es de su exclusiva responsabilidad.</p>
 <h2>7. Limitación de Responsabilidad</h2>
-<p>Sara Bot no será responsable por:</p>
-<ul>
-  <li>Pérdidas de ventas, clientes o datos derivadas de interrupciones del Servicio.</li>
-  <li>Respuestas incorrectas generadas por la inteligencia artificial que puedan causar malentendidos con los clientes finales.</li>
-  <li>Cambios en las políticas de Meta/WhatsApp que afecten el funcionamiento del bot.</li>
-  <li>Accesos no autorizados derivados de negligencia del Merchant en la custodia de sus credenciales.</li>
-</ul>
-<p>La responsabilidad máxima de Sara Bot se limita al importe abonado por el Merchant en los últimos 3 meses de servicio.</p>
+<p>Sara Bot no será responsable por pérdidas derivadas de interrupciones, respuestas incorrectas de la IA, cambios en las políticas de Meta o accesos no autorizados por negligencia del Merchant. La responsabilidad máxima se limita al importe abonado en los últimos 3 meses.</p>
+<h2>8. Modificaciones</h2>
+<p>Sara Bot puede modificar estos Términos con 15 días de preaviso por correo electrónico. El uso continuado implica aceptación.</p>
+<h2>9. Ley Aplicable</h2>
+<p>Estos Términos se rigen por las leyes de la jurisdicción del proveedor. Las disputas se resolverán por las vías legales competentes.</p>
+<hr><p style="font-size:12px;color:#999">Contacto: <a href="mailto:soporte@candidatelens.com">soporte@candidatelens.com</a></p>
+</div>
 
-<h2>8. Disponibilidad del Servicio</h2>
-<p>Sara Bot se compromete a mantener una disponibilidad del 99% mensual. Mantenimientos programados serán comunicados con al menos 24 horas de anticipación. No se garantiza disponibilidad ininterrumpida en casos de fuerza mayor.</p>
+<!-- ═══ EN ═══ -->
+<div data-lang="en">
+<h1>Terms of Service</h1>
+<p class="meta">Last updated: June 2025 · Sara Bot</p>
+<p>By accessing and using the <strong>Sara Bot</strong> platform, you agree to be bound by these Terms. If you disagree with any part, please do not use the Service.</p>
+<h2>1. Description of Service</h2>
+<p>Sara Bot is a SaaS platform that allows merchants to deploy a virtual assistant on WhatsApp Business with catalog management, orders, scheduling, and AI-powered customer service.</p>
+<h2>2. Registration and Account</h2>
+<ul><li>The Merchant must provide accurate and complete information.</li><li>The Merchant is responsible for keeping credentials confidential.</li><li>Accounts are personal and non-transferable.</li><li>The Merchant must be at least 18 years old with legal capacity to contract.</li></ul>
+<h2>3. Acceptable Use</h2>
+<p>Prohibited: sending spam, selling illegal products, collecting data without consent, damaging platform systems, or violating Meta's WhatsApp Business policies.</p>
+<h2>4. Plans and Payments</h2>
+<ul><li>Access is conditioned on payment of the contracted plan.</li><li>Non-payment may result in account suspension after a 7-day grace period.</li><li>Prices may be modified with 30 days' notice.</li><li>No refunds for partial periods unless required by applicable law.</li></ul>
+<h2>5. Suspension and Cancellation</h2>
+<ul><li>Sara Bot may suspend accounts that violate these Terms.</li><li>The Merchant may cancel at any time; access continues until the end of the paid period.</li><li>Data is deleted within 90 days of cancellation.</li></ul>
+<h2>6. Intellectual Property</h2>
+<p>All Sara Bot software and branding are owned by its developers. Catalog content uploaded by the Merchant is the Merchant's sole responsibility.</p>
+<h2>7. Limitation of Liability</h2>
+<p>Sara Bot is not liable for losses from outages, incorrect AI responses, Meta policy changes, or unauthorized access due to Merchant negligence. Maximum liability is limited to the amount paid in the last 3 months.</p>
+<h2>8. Modifications</h2>
+<p>Sara Bot may modify these Terms with 15 days' email notice. Continued use implies acceptance.</p>
+<h2>9. Governing Law</h2>
+<p>These Terms are governed by the laws of the provider's jurisdiction. Disputes will be resolved through the appropriate legal channels.</p>
+<hr><p style="font-size:12px;color:#999">Contact: <a href="mailto:soporte@candidatelens.com">soporte@candidatelens.com</a></p>
+</div>
 
-<h2>9. Modificaciones</h2>
-<p>Sara Bot puede modificar estos Términos en cualquier momento. Los cambios serán notificados por correo electrónico con al menos 15 días de anticipación. El uso continuado del Servicio tras la notificación implica aceptación de los nuevos términos.</p>
+<!-- ═══ IT ═══ -->
+<div data-lang="it">
+<h1>Termini di Servizio</h1>
+<p class="meta">Ultimo aggiornamento: Giugno 2025 · Sara Bot</p>
+<p>Accedendo e utilizzando la piattaforma <strong>Sara Bot</strong>, accetti di essere vincolato dai presenti Termini. In caso di disaccordo, ti chiediamo di non utilizzare il Servizio.</p>
+<h2>1. Descrizione del Servizio</h2>
+<p>Sara Bot è una piattaforma SaaS che consente ai commercianti di distribuire un assistente virtuale su WhatsApp Business con gestione del catalogo, ordini, agenda e assistenza clienti tramite intelligenza artificiale.</p>
+<h2>2. Registrazione e Account</h2>
+<ul><li>Il Merchant deve fornire informazioni veritiere e complete.</li><li>Il Merchant è responsabile della riservatezza delle proprie credenziali.</li><li>L'account è personale e non trasferibile.</li><li>Il Merchant deve avere almeno 18 anni e capacità giuridica di contrattare.</li></ul>
+<h2>3. Uso Accettabile</h2>
+<p>È vietato: inviare spam, commercializzare prodotti illegali, raccogliere dati senza consenso, danneggiare i sistemi della piattaforma o violare le politiche di WhatsApp Business di Meta.</p>
+<h2>4. Piani e Pagamenti</h2>
+<ul><li>L'accesso è condizionato al pagamento del piano sottoscritto.</li><li>In caso di mancato pagamento, l'account può essere sospeso dopo 7 giorni di grazia.</li><li>I prezzi possono essere modificati con 30 giorni di preavviso.</li><li>Non sono previsti rimborsi per periodi parziali salvo disposizione di legge contraria.</li></ul>
+<h2>5. Sospensione e Cancellazione</h2>
+<ul><li>Sara Bot può sospendere account che violano questi Termini.</li><li>Il Merchant può cancellare in qualsiasi momento; l'accesso continua fino alla fine del periodo pagato.</li><li>I dati vengono eliminati entro 90 giorni dalla cancellazione.</li></ul>
+<h2>6. Proprietà Intellettuale</h2>
+<p>Tutto il software e il marchio Sara Bot sono di proprietà dei suoi sviluppatori. Il contenuto del catalogo caricato dal Merchant è di sua esclusiva responsabilità.</p>
+<h2>7. Limitazione di Responsabilità</h2>
+<p>Sara Bot non è responsabile per perdite derivanti da interruzioni, risposte errate dell'IA, modifiche alle politiche di Meta o accessi non autorizzati per negligenza del Merchant. La responsabilità massima è limitata all'importo pagato negli ultimi 3 mesi.</p>
+<h2>8. Modifiche</h2>
+<p>Sara Bot può modificare questi Termini con 15 giorni di preavviso via email. L'uso continuato implica accettazione.</p>
+<h2>9. Legge Applicabile</h2>
+<p>Questi Termini sono disciplinati dalle leggi della giurisdizione del fornitore. Le controversie saranno risolte attraverso le vie legali competenti.</p>
+<hr><p style="font-size:12px;color:#999">Contatto: <a href="mailto:soporte@candidatelens.com">soporte@candidatelens.com</a></p>
+</div>
 
-<h2>10. Ley Aplicable</h2>
-<p>Estos Términos se rigen por las leyes aplicables en la jurisdicción del proveedor del Servicio. Cualquier disputa será resuelta por las vías legales competentes en dicha jurisdicción.</p>
+<!-- ═══ DE ═══ -->
+<div data-lang="de">
+<h1>Nutzungsbedingungen</h1>
+<p class="meta">Letzte Aktualisierung: Juni 2025 · Sara Bot</p>
+<p>Durch den Zugriff auf und die Nutzung der <strong>Sara Bot</strong>-Plattform erklären Sie sich mit diesen Bedingungen einverstanden. Bei Ablehnung bitten wir Sie, den Dienst nicht zu nutzen.</p>
+<h2>1. Beschreibung des Dienstes</h2>
+<p>Sara Bot ist eine SaaS-Plattform, die es Händlern ermöglicht, einen virtuellen Assistenten auf WhatsApp Business mit Katalogverwaltung, Bestellungen, Terminplanung und KI-gestütztem Kundendienst einzusetzen.</p>
+<h2>2. Registrierung und Konto</h2>
+<ul><li>Der Händler muss wahrheitsgemäße und vollständige Angaben machen.</li><li>Der Händler ist für die Vertraulichkeit seiner Zugangsdaten verantwortlich.</li><li>Das Konto ist persönlich und nicht übertragbar.</li><li>Der Händler muss mindestens 18 Jahre alt und geschäftsfähig sein.</li></ul>
+<h2>3. Zulässige Nutzung</h2>
+<p>Verboten: Spam versenden, illegale Produkte verkaufen, Daten ohne Einwilligung erheben, Plattformsysteme beschädigen oder Meta WhatsApp Business-Richtlinien verletzen.</p>
+<h2>4. Pläne und Zahlungen</h2>
+<ul><li>Der Zugang ist an die Bezahlung des gebuchten Plans gebunden.</li><li>Bei Nichtzahlung kann das Konto nach einer Nachfrist von 7 Tagen gesperrt werden.</li><li>Preise können mit 30 Tagen Vorankündigung geändert werden.</li><li>Keine Rückerstattungen für Teilzeiträume, sofern nicht gesetzlich vorgeschrieben.</li></ul>
+<h2>5. Sperrung und Kündigung</h2>
+<ul><li>Sara Bot kann Konten, die gegen diese Bedingungen verstoßen, sperren.</li><li>Der Händler kann jederzeit kündigen; der Zugang bleibt bis zum Ende des bezahlten Zeitraums bestehen.</li><li>Daten werden innerhalb von 90 Tagen nach Kündigung gelöscht.</li></ul>
+<h2>6. Geistiges Eigentum</h2>
+<p>Alle Sara Bot-Software und Marken sind Eigentum ihrer Entwickler. Der vom Händler hochgeladene Kataloginhalt liegt in seiner alleinigen Verantwortung.</p>
+<h2>7. Haftungsbeschränkung</h2>
+<p>Sara Bot haftet nicht für Verluste durch Ausfälle, fehlerhafte KI-Antworten, Meta-Richtlinienänderungen oder unbefugten Zugriff aufgrund von Fahrlässigkeit des Händlers. Die maximale Haftung ist auf den in den letzten 3 Monaten gezahlten Betrag begrenzt.</p>
+<h2>8. Änderungen</h2>
+<p>Sara Bot kann diese Bedingungen mit 15-tägiger E-Mail-Vorankündigung ändern. Die fortgesetzte Nutzung gilt als Zustimmung.</p>
+<h2>9. Anwendbares Recht</h2>
+<p>Diese Bedingungen unterliegen dem Recht der Jurisdiktion des Anbieters. Streitigkeiten werden auf dem ordentlichen Rechtsweg gelöst.</p>
+<hr><p style="font-size:12px;color:#999">Kontakt: <a href="mailto:soporte@candidatelens.com">soporte@candidatelens.com</a></p>
+</div>
 
-<hr>
-<p style="font-size:13px;color:#888;">¿Preguntas? Contáctenos en <a href="mailto:soporte@candidatelens.com">soporte@candidatelens.com</a></p>
+<!-- ═══ FR ═══ -->
+<div data-lang="fr">
+<h1>Conditions d'Utilisation</h1>
+<p class="meta">Dernière mise à jour : Juin 2025 · Sara Bot</p>
+<p>En accédant à la plateforme <strong>Sara Bot</strong>, vous acceptez d'être lié par les présentes Conditions. En cas de désaccord, nous vous demandons de ne pas utiliser le Service.</p>
+<h2>1. Description du Service</h2>
+<p>Sara Bot est une plateforme SaaS permettant aux commerçants de déployer un assistant virtuel sur WhatsApp Business avec gestion du catalogue, des commandes, de l'agenda et du service client par intelligence artificielle.</p>
+<h2>2. Inscription et Compte</h2>
+<ul><li>Le Marchand doit fournir des informations exactes et complètes.</li><li>Le Marchand est responsable de la confidentialité de ses identifiants.</li><li>Le compte est personnel et non transférable.</li><li>Le Marchand doit avoir au moins 18 ans et la capacité légale de contracter.</li></ul>
+<h2>3. Utilisation Acceptable</h2>
+<p>Interdit : envoyer du spam, vendre des produits illégaux, collecter des données sans consentement, endommager les systèmes de la plateforme ou violer les politiques WhatsApp Business de Meta.</p>
+<h2>4. Abonnements et Paiements</h2>
+<ul><li>L'accès est conditionné au paiement de l'abonnement souscrit.</li><li>En cas de non-paiement, le compte peut être suspendu après 7 jours de grâce.</li><li>Les tarifs peuvent être modifiés avec un préavis de 30 jours.</li><li>Aucun remboursement pour les périodes partielles sauf disposition légale contraire.</li></ul>
+<h2>5. Suspension et Résiliation</h2>
+<ul><li>Sara Bot peut suspendre les comptes enfreignant ces Conditions.</li><li>Le Marchand peut résilier à tout moment ; l'accès se poursuit jusqu'à la fin de la période payée.</li><li>Les données sont supprimées dans un délai maximum de 90 jours après résiliation.</li></ul>
+<h2>6. Propriété Intellectuelle</h2>
+<p>Tous les logiciels et marques Sara Bot appartiennent à ses développeurs. Le contenu du catalogue téléchargé par le Marchand relève de sa seule responsabilité.</p>
+<h2>7. Limitation de Responsabilité</h2>
+<p>Sara Bot n'est pas responsable des pertes résultant d'interruptions, de réponses IA incorrectes, de modifications des politiques Meta ou d'accès non autorisés dus à la négligence du Marchand. La responsabilité maximale est limitée au montant payé au cours des 3 derniers mois.</p>
+<h2>8. Modifications</h2>
+<p>Sara Bot peut modifier ces Conditions avec un préavis de 15 jours par email. L'utilisation continue vaut acceptation.</p>
+<h2>9. Loi Applicable</h2>
+<p>Ces Conditions sont régies par les lois de la juridiction du prestataire. Les litiges seront résolus par les voies légales compétentes.</p>
+<hr><p style="font-size:12px;color:#999">Contact : <a href="mailto:soporte@candidatelens.com">soporte@candidatelens.com</a></p>
+</div>
 
+</div><!-- /content -->
+<script>
+const LANGS = ['es','en','it','de','fr'];
+function setLang(l) {
+  localStorage.setItem('legal_lang', l);
+  LANGS.forEach(x => {
+    document.querySelectorAll('[data-lang="'+x+'"]').forEach(el => el.classList.toggle('visible', x===l));
+    document.getElementById('btn-'+x).classList.toggle('active', x===l);
+  });
+  document.documentElement.lang = l;
+}
+(function(){
+  const saved = localStorage.getItem('legal_lang') || localStorage.getItem('sara_lang') || navigator.language.slice(0,2);
+  const l = LANGS.includes(saved) ? saved : 'es';
+  setLang(l);
+})();
+</script>
 </body>
 </html>

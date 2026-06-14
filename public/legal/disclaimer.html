@@ -5,74 +5,144 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Disclaimer — Sara Bot</title>
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 800px; margin: 0 auto; padding: 40px 24px 80px; color: #1a1a1a; line-height: 1.7; }
-    h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
-    h2 { font-size: 18px; font-weight: 600; margin-top: 36px; margin-bottom: 10px; color: #111; }
-    p, li { font-size: 15px; color: #333; }
-    ul { padding-left: 20px; margin: 8px 0; }
-    .meta { font-size: 13px; color: #888; margin-bottom: 36px; }
-    a { color: #25D366; }
-    .box { background: #fff8e1; border-left: 4px solid #f59e0b; padding: 16px 20px; border-radius: 8px; margin: 24px 0; }
-    hr { border: none; border-top: 1px solid #eee; margin: 40px 0; }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f9f9f9;color:#1a1a1a;line-height:1.7}
+    .topbar{background:#fff;border-bottom:1px solid #e5e5e5;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;position:sticky;top:0;z-index:10}
+    .topbar a{font-weight:700;font-size:16px;color:#1a1a1a;text-decoration:none}
+    .langs{display:flex;gap:6px;flex-wrap:wrap}
+    .langs button{padding:4px 12px;border-radius:20px;border:1px solid #ddd;background:#fff;cursor:pointer;font-size:13px;transition:all .15s}
+    .langs button.active{background:#25D366;color:#fff;border-color:#25D366}
+    .content{max-width:800px;margin:0 auto;padding:40px 24px 80px;background:#fff;min-height:100vh}
+    h1{font-size:26px;font-weight:700;margin-bottom:6px}
+    h2{font-size:17px;font-weight:600;margin-top:32px;margin-bottom:8px}
+    p,li{font-size:14px;color:#333}
+    ul{padding-left:20px;margin:6px 0}
+    .meta{font-size:12px;color:#999;margin-bottom:32px}
+    a{color:#25D366}
+    .box{background:#fff8e1;border-left:4px solid #f59e0b;padding:14px 18px;border-radius:8px;margin:20px 0;font-size:14px}
+    hr{border:none;border-top:1px solid #eee;margin:36px 0}
+    [data-lang]{display:none}
+    [data-lang].visible{display:block}
   </style>
 </head>
 <body>
+<div class="topbar">
+  <a href="/">Sara Bot</a>
+  <div class="langs">
+    <button onclick="setLang('es')" id="btn-es">🇪🇸 ES</button>
+    <button onclick="setLang('en')" id="btn-en">🇬🇧 EN</button>
+    <button onclick="setLang('it')" id="btn-it">🇮🇹 IT</button>
+    <button onclick="setLang('de')" id="btn-de">🇩🇪 DE</button>
+    <button onclick="setLang('fr')" id="btn-fr">🇫🇷 FR</button>
+  </div>
+</div>
+<div class="content">
 
+<!-- ═══ ES ═══ -->
+<div data-lang="es">
 <h1>Disclaimer y Limitación de Responsabilidad</h1>
-<p class="meta">Última actualización: Junio 2025 · Sara Bot SaaS</p>
-
-<div class="box">
-  <strong>⚠️ Aviso importante:</strong> Sara Bot es una herramienta de automatización basada en inteligencia artificial. Las respuestas generadas por el bot son orientativas y pueden contener errores. El Merchant es el único responsable del contenido que su bot comunica a sus clientes finales.
+<p class="meta">Última actualización: Junio 2025 · Sara Bot</p>
+<div class="box">⚠️ Sara Bot es una herramienta de automatización basada en IA. Las respuestas del bot son orientativas y pueden contener errores. El Merchant es el único responsable del contenido que su bot comunica a sus clientes.</div>
+<h2>1. Naturaleza del Servicio</h2>
+<p>Sara Bot provee una plataforma tecnológica para la automatización de atención al cliente vía WhatsApp, utilizando modelos de IA de terceros (Anthropic Claude). Las respuestas se basan en el catálogo y configuración del Merchant, pero pueden contener imprecisiones.</p>
+<h2>2. Responsabilidad del Merchant</h2>
+<ul><li>Veracidad y legalidad del catálogo cargado.</li><li>Cumplimiento de la legislación de comercio electrónico y defensa del consumidor.</li><li>Supervisar las conversaciones del bot y corregir configuraciones incorrectas.</li><li>Obtener las autorizaciones de Meta para operar su número WhatsApp Business.</li></ul>
+<h2>3. Limitaciones de la IA</h2>
+<ul><li>Las respuestas pueden no ser perfectas en todos los casos.</li><li>El bot puede interpretar incorrectamente solicitudes ambiguas.</li><li>El rendimiento depende de la calidad de la información en el catálogo.</li></ul>
+<h2>4. Exclusión de Responsabilidad de Sara Bot</h2>
+<p>Sara Bot no asume responsabilidad por: disputas entre el Merchant y sus clientes, pérdidas por respuestas incorrectas del bot, interrupciones del servicio de Meta/WhatsApp, cambios en políticas de Meta, o uso indebido del Servicio.</p>
+<h2>5. Relación con Meta y Anthropic</h2>
+<p>Sara Bot no tiene afiliación oficial con Meta Platforms Inc. ni Anthropic PBC. WhatsApp® es marca registrada de Meta. El Merchant acepta los términos de Meta de forma independiente.</p>
+<h2>6. Aceptación Tácita</h2>
+<p>Al utilizar el bot de Sara Bot, el Merchant confirma que ha leído y acepta este Disclaimer, los <a href="/legal/terms">Términos de Servicio</a> y la <a href="/legal/privacy">Política de Privacidad</a>.</p>
+<hr><p style="font-size:12px;color:#999">Contacto: <a href="mailto:soporte@candidatelens.com">soporte@candidatelens.com</a></p>
 </div>
 
-<h2>1. Naturaleza del Servicio</h2>
-<p>Sara Bot proporciona una plataforma tecnológica para la automatización de atención al cliente vía WhatsApp. La plataforma utiliza modelos de inteligencia artificial de terceros (Anthropic Claude) para generar respuestas. Estas respuestas se basan en el catálogo y configuración proporcionados por el Merchant, pero pueden contener imprecisiones, omisiones o errores.</p>
+<!-- ═══ EN ═══ -->
+<div data-lang="en">
+<h1>Disclaimer and Limitation of Liability</h1>
+<p class="meta">Last updated: June 2025 · Sara Bot</p>
+<div class="box">⚠️ Sara Bot is an AI-based automation tool. Bot responses are indicative and may contain errors. The Merchant is solely responsible for the content their bot communicates to customers.</div>
+<h2>1. Nature of the Service</h2>
+<p>Sara Bot provides a technology platform for WhatsApp customer service automation using third-party AI models (Anthropic Claude). Responses are based on the Merchant's catalog and configuration but may contain inaccuracies.</p>
+<h2>2. Merchant Responsibility</h2>
+<ul><li>Accuracy and legality of uploaded catalog content.</li><li>Compliance with e-commerce and consumer protection legislation.</li><li>Monitoring bot conversations and correcting incorrect configurations.</li><li>Obtaining Meta authorizations to operate their WhatsApp Business number.</li></ul>
+<h2>3. AI Limitations</h2>
+<ul><li>Responses may not be perfect in all cases.</li><li>The bot may misinterpret ambiguous requests.</li><li>Performance depends on the quality of catalog information.</li></ul>
+<h2>4. Sara Bot Exclusion of Liability</h2>
+<p>Sara Bot assumes no liability for: disputes between the Merchant and their customers, losses from incorrect bot responses, Meta/WhatsApp service outages, Meta policy changes, or misuse of the Service.</p>
+<h2>5. Relationship with Meta and Anthropic</h2>
+<p>Sara Bot has no official affiliation with Meta Platforms Inc. or Anthropic PBC. WhatsApp® is a registered trademark of Meta. The Merchant independently accepts Meta's terms.</p>
+<h2>6. Tacit Acceptance</h2>
+<p>By using Sara Bot, the Merchant confirms they have read and accept this Disclaimer, the <a href="/legal/terms">Terms of Service</a>, and the <a href="/legal/privacy">Privacy Policy</a>.</p>
+<hr><p style="font-size:12px;color:#999">Contact: <a href="mailto:soporte@candidatelens.com">soporte@candidatelens.com</a></p>
+</div>
 
-<h2>2. Responsabilidad del Merchant</h2>
-<p>El Merchant es exclusivamente responsable de:</p>
-<ul>
-  <li>La veracidad, exactitud y legalidad de la información cargada en el catálogo.</li>
-  <li>Los precios, disponibilidad y características de los productos o servicios ofrecidos.</li>
-  <li>Cumplir con la legislación aplicable en materia de comercio electrónico, defensa del consumidor y publicidad en su jurisdicción.</li>
-  <li>Supervisar las conversaciones de su bot y corregir configuraciones que generen respuestas incorrectas.</li>
-  <li>Obtener las autorizaciones necesarias de Meta Platforms para operar su número de WhatsApp Business.</li>
-  <li>El cumplimiento de las Políticas de Uso de WhatsApp Business.</li>
-</ul>
+<!-- ═══ IT ═══ -->
+<div data-lang="it">
+<h1>Disclaimer e Limitazione di Responsabilità</h1>
+<p class="meta">Ultimo aggiornamento: Giugno 2025 · Sara Bot</p>
+<div class="box">⚠️ Sara Bot è uno strumento di automazione basato sull'IA. Le risposte del bot sono indicative e possono contenere errori. Il Merchant è l'unico responsabile del contenuto che il suo bot comunica ai clienti.</div>
+<h2>1. Natura del Servizio</h2>
+<p>Sara Bot fornisce una piattaforma tecnologica per l'automazione del servizio clienti via WhatsApp, utilizzando modelli di IA di terze parti (Anthropic Claude). Le risposte si basano sul catalogo e la configurazione del Merchant, ma possono contenere imprecisioni.</p>
+<h2>2. Responsabilità del Merchant</h2>
+<ul><li>Veridicità e legalità del catalogo caricato.</li><li>Conformità alla legislazione sul commercio elettronico e tutela dei consumatori.</li><li>Supervisione delle conversazioni del bot e correzione di configurazioni errate.</li><li>Ottenimento delle autorizzazioni Meta per operare il proprio numero WhatsApp Business.</li></ul>
+<h2>3. Limitazioni dell'IA</h2>
+<ul><li>Le risposte potrebbero non essere perfette in tutti i casi.</li><li>Il bot potrebbe interpretare erroneamente richieste ambigue.</li><li>Le prestazioni dipendono dalla qualità delle informazioni nel catalogo.</li></ul>
+<h2>4. Esclusione di Responsabilità di Sara Bot</h2>
+<p>Sara Bot non si assume responsabilità per: controversie tra il Merchant e i suoi clienti, perdite da risposte errate del bot, interruzioni del servizio Meta/WhatsApp, modifiche alle politiche Meta, o uso improprio del Servizio.</p>
+<h2>5. Rapporto con Meta e Anthropic</h2>
+<p>Sara Bot non ha affiliazione ufficiale con Meta Platforms Inc. né con Anthropic PBC. WhatsApp® è marchio registrato di Meta. Il Merchant accetta i termini di Meta in modo indipendente.</p>
+<h2>6. Accettazione Tacita</h2>
+<p>Utilizzando Sara Bot, il Merchant conferma di aver letto e di accettare questo Disclaimer, i <a href="/legal/terms">Termini di Servizio</a> e l'<a href="/legal/privacy">Informativa sulla Privacy</a>.</p>
+<hr><p style="font-size:12px;color:#999">Contatto: <a href="mailto:soporte@candidatelens.com">soporte@candidatelens.com</a></p>
+</div>
 
-<h2>3. Limitaciones de la Inteligencia Artificial</h2>
-<p>El bot funciona mediante inteligencia artificial generativa, lo cual implica que:</p>
-<ul>
-  <li>Las respuestas se generan de forma automática y pueden no ser perfectas en todos los casos.</li>
-  <li>El bot puede interpretar incorrectamente solicitudes ambiguas o inusuales.</li>
-  <li>No se garantiza que el bot siga al pie de la letra instrucciones muy complejas o contradictorias.</li>
-  <li>El rendimiento puede variar según la calidad y detalle de la información proporcionada en el catálogo.</li>
-</ul>
+<!-- ═══ DE ═══ -->
+<div data-lang="de">
+<h1>Haftungsausschluss und Haftungsbeschränkung</h1>
+<p class="meta">Letzte Aktualisierung: Juni 2025 · Sara Bot</p>
+<div class="box">⚠️ Sara Bot ist ein KI-basiertes Automatisierungswerkzeug. Bot-Antworten sind richtungsweisend und können Fehler enthalten. Der Händler ist allein verantwortlich für den Inhalt, den sein Bot den Kunden mitteilt.</div>
+<h2>1. Art des Dienstes</h2>
+<p>Sara Bot stellt eine Technologieplattform für die WhatsApp-Kundendienstautomatisierung bereit, die KI-Modelle von Drittanbietern (Anthropic Claude) verwendet. Antworten basieren auf dem Katalog und der Konfiguration des Händlers, können jedoch Ungenauigkeiten enthalten.</p>
+<h2>2. Verantwortung des Händlers</h2>
+<ul><li>Richtigkeit und Rechtmäßigkeit des hochgeladenen Katalogs.</li><li>Einhaltung der E-Commerce- und Verbraucherschutzgesetzgebung.</li><li>Überwachung von Bot-Gesprächen und Korrektur falscher Konfigurationen.</li><li>Einholung der Meta-Genehmigungen für den Betrieb der WhatsApp Business-Nummer.</li></ul>
+<h2>3. KI-Einschränkungen</h2>
+<ul><li>Antworten sind möglicherweise nicht in allen Fällen perfekt.</li><li>Der Bot kann mehrdeutige Anfragen falsch interpretieren.</li><li>Die Leistung hängt von der Qualität der Kataloginformationen ab.</li></ul>
+<h2>4. Haftungsausschluss von Sara Bot</h2>
+<p>Sara Bot übernimmt keine Haftung für: Streitigkeiten zwischen dem Händler und seinen Kunden, Verluste durch falsche Bot-Antworten, Meta/WhatsApp-Dienstunterbrechungen, Meta-Richtlinienänderungen oder missbräuchliche Nutzung des Dienstes.</p>
+<h2>5. Verhältnis zu Meta und Anthropic</h2>
+<p>Sara Bot hat keine offizielle Verbindung zu Meta Platforms Inc. oder Anthropic PBC. WhatsApp® ist eine eingetragene Marke von Meta. Der Händler akzeptiert Metas Bedingungen unabhängig.</p>
+<h2>6. Stillschweigende Annahme</h2>
+<p>Durch die Nutzung von Sara Bot bestätigt der Händler, diesen Haftungsausschluss, die <a href="/legal/terms">Nutzungsbedingungen</a> und die <a href="/legal/privacy">Datenschutzrichtlinie</a> gelesen und akzeptiert zu haben.</p>
+<hr><p style="font-size:12px;color:#999">Kontakt: <a href="mailto:soporte@candidatelens.com">soporte@candidatelens.com</a></p>
+</div>
 
-<h2>4. Exclusión de Responsabilidad de Sara Bot</h2>
-<p>Sara Bot no asume responsabilidad por:</p>
-<ul>
-  <li>Disputas comerciales entre el Merchant y sus clientes finales.</li>
-  <li>Pérdidas económicas derivadas de respuestas incorrectas del bot.</li>
-  <li>Interrupciones del servicio de WhatsApp/Meta fuera de nuestro control.</li>
-  <li>Cambios en las políticas de Meta que afecten la operativa del bot.</li>
-  <li>Uso indebido del Servicio por parte del Merchant o terceros.</li>
-  <li>Daños indirectos, incidentales o consecuentes de cualquier naturaleza.</li>
-</ul>
+<!-- ═══ FR ═══ -->
+<div data-lang="fr">
+<h1>Avertissement et Limitation de Responsabilité</h1>
+<p class="meta">Dernière mise à jour : Juin 2025 · Sara Bot</p>
+<div class="box">⚠️ Sara Bot est un outil d'automatisation basé sur l'IA. Les réponses du bot sont indicatives et peuvent contenir des erreurs. Le Marchand est seul responsable du contenu que son bot communique à ses clients.</div>
+<h2>1. Nature du Service</h2>
+<p>Sara Bot fournit une plateforme technologique pour l'automatisation du service client WhatsApp, utilisant des modèles d'IA tiers (Anthropic Claude). Les réponses sont basées sur le catalogue et la configuration du Marchand, mais peuvent contenir des inexactitudes.</p>
+<h2>2. Responsabilité du Marchand</h2>
+<ul><li>Exactitude et légalité du catalogue téléchargé.</li><li>Conformité à la législation sur le commerce électronique et la protection des consommateurs.</li><li>Surveillance des conversations du bot et correction des configurations incorrectes.</li><li>Obtention des autorisations Meta pour exploiter son numéro WhatsApp Business.</li></ul>
+<h2>3. Limites de l'IA</h2>
+<ul><li>Les réponses peuvent ne pas être parfaites dans tous les cas.</li><li>Le bot peut mal interpréter des demandes ambiguës.</li><li>Les performances dépendent de la qualité des informations du catalogue.</li></ul>
+<h2>4. Exclusion de Responsabilité de Sara Bot</h2>
+<p>Sara Bot n'assume aucune responsabilité pour : les litiges entre le Marchand et ses clients, les pertes dues à des réponses incorrectes du bot, les interruptions de service Meta/WhatsApp, les modifications des politiques Meta, ou l'utilisation abusive du Service.</p>
+<h2>5. Relation avec Meta et Anthropic</h2>
+<p>Sara Bot n'a aucune affiliation officielle avec Meta Platforms Inc. ni Anthropic PBC. WhatsApp® est une marque déposée de Meta. Le Marchand accepte les conditions de Meta de façon indépendante.</p>
+<h2>6. Acceptation Tacite</h2>
+<p>En utilisant Sara Bot, le Marchand confirme avoir lu et accepté cet Avertissement, les <a href="/legal/terms">Conditions d'Utilisation</a> et la <a href="/legal/privacy">Politique de Confidentialité</a>.</p>
+<hr><p style="font-size:12px;color:#999">Contact : <a href="mailto:soporte@candidatelens.com">soporte@candidatelens.com</a></p>
+</div>
 
-<h2>5. Relación con Meta / WhatsApp</h2>
-<p>Sara Bot no tiene ninguna afiliación oficial con Meta Platforms Inc. o WhatsApp LLC. WhatsApp® es una marca registrada de Meta Platforms Inc. El uso de la API de WhatsApp Business está sujeto a los términos y condiciones de Meta, que el Merchant acepta de forma independiente.</p>
-
-<h2>6. Relación con Anthropic</h2>
-<p>La generación de respuestas mediante inteligencia artificial es provista por Anthropic PBC a través de su API. Sara Bot actúa como intermediario tecnológico. Anthropic tiene sus propios términos de uso y políticas que aplican al procesamiento de los mensajes.</p>
-
-<h2>7. Indemnización</h2>
-<p>El Merchant acepta indemnizar y mantener indemne a Sara Bot y sus operadores frente a cualquier reclamación, daño, pérdida o gasto (incluyendo honorarios legales razonables) que surja del uso del Servicio en violación de estos términos o de la legislación aplicable.</p>
-
-<h2>8. Aceptación Tácita</h2>
-<p>Al activar y utilizar el bot de Sara Bot, el Merchant confirma que ha leído, comprendido y acepta este Disclaimer, los <a href="/legal/terms">Términos de Servicio</a> y la <a href="/legal/privacy">Política de Privacidad</a>.</p>
-
-<hr>
-<p style="font-size:13px;color:#888;">Contacto: <a href="mailto:soporte@candidatelens.com">soporte@candidatelens.com</a></p>
-
+</div>
+<script>
+const LANGS=['es','en','it','de','fr'];
+function setLang(l){localStorage.setItem('legal_lang',l);LANGS.forEach(x=>{document.querySelectorAll('[data-lang="'+x+'"]').forEach(el=>el.classList.toggle('visible',x===l));document.getElementById('btn-'+x).classList.toggle('active',x===l)});document.documentElement.lang=l}
+(function(){const s=localStorage.getItem('legal_lang')||localStorage.getItem('sara_lang')||navigator.language.slice(0,2);setLang(LANGS.includes(s)?s:'es')})();
+</script>
 </body>
 </html>
