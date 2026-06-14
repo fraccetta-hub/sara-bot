@@ -206,6 +206,7 @@
       <button class="py-2 px-1 sm:px-0 whitespace-nowrap flex-shrink-0" id="tabOrders" onclick="switchTab('orders')">🛒 Pedidos</button>
       <button class="py-2 px-1 sm:px-0 whitespace-nowrap flex-shrink-0" id="tabAppointments" onclick="switchTab('appointments')">📅 Turnos</button>
       <button class="py-2 px-1 sm:px-0 whitespace-nowrap flex-shrink-0" id="tabSettings" onclick="switchTab('settings')">⚙️ Ajustes</button>
+      <button class="py-2 px-1 sm:px-0 whitespace-nowrap flex-shrink-0" id="tabPlan" onclick="switchTab('plan')">💳 Plan</button>
       <button class="py-2 px-1 sm:px-0 whitespace-nowrap flex-shrink-0" id="tabHelp" onclick="switchTab('help')">❓ Ayuda</button>
       <button class="py-2 px-1 sm:px-0 whitespace-nowrap flex-shrink-0 relative" id="tabSupport" onclick="switchTab('support')">💬 Soporte<span id="supportUnreadBadge" class="hidden absolute -top-0.5 -right-1 w-4 h-4 bg-red-500 rounded-full text-white text-[9px] font-bold flex items-center justify-center">!</span></button>
     </div>
@@ -769,58 +770,6 @@
         <p class="text-xs text-gray-400 mt-3" data-i18n="settings.legal.note">Al usar este servicio aceptás los términos y condiciones.</p>
       </div>
 
-      <!-- ── Plan & Pagos ── -->
-      <div class="bg-white rounded-xl shadow-sm p-6">
-        <h3 data-i18n="settings.plan.title" class="font-medium text-gray-800 mb-1">💳 Plan y pagos</h3>
-        <p class="text-xs text-gray-400 mb-4" data-i18n="settings.plan.subtitle">Tu suscripción activa a Sara Bot.</p>
-
-        <div class="grid grid-cols-1 gap-3 sm:grid-cols-3 mb-4">
-          <!-- Starter -->
-          <div class="rounded-xl border-2 border-gray-100 p-4 text-center">
-            <div class="text-2xl mb-1">🌱</div>
-            <div class="font-bold text-gray-800 text-sm" data-i18n="settings.plan.starter">Starter</div>
-            <div class="text-lg font-bold text-green-600 my-1">$29<span class="text-xs font-normal text-gray-400">/mes</span></div>
-            <ul class="text-xs text-gray-500 space-y-1 text-left mt-2">
-              <li>✓ <span data-i18n="settings.plan.f1">1 número WhatsApp</span></li>
-              <li>✓ <span data-i18n="settings.plan.f2">Catálogo ilimitado</span></li>
-              <li>✓ <span data-i18n="settings.plan.f3">1.000 conv./mes</span></li>
-              <li>✓ <span data-i18n="settings.plan.f4">Soporte por email</span></li>
-            </ul>
-          </div>
-          <!-- Pro -->
-          <div class="rounded-xl border-2 border-green-400 bg-green-50 p-4 text-center relative">
-            <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-green-500 text-white text-xs font-bold px-3 py-0.5 rounded-full" data-i18n="settings.plan.popular">Popular</div>
-            <div class="text-2xl mb-1">🚀</div>
-            <div class="font-bold text-gray-800 text-sm" data-i18n="settings.plan.pro">Pro</div>
-            <div class="text-lg font-bold text-green-600 my-1">$59<span class="text-xs font-normal text-gray-400">/mes</span></div>
-            <ul class="text-xs text-gray-500 space-y-1 text-left mt-2">
-              <li>✓ <span data-i18n="settings.plan.f1">1 número WhatsApp</span></li>
-              <li>✓ <span data-i18n="settings.plan.f2">Catálogo ilimitado</span></li>
-              <li>✓ <span data-i18n="settings.plan.f5">5.000 conv./mes</span></li>
-              <li>✓ <span data-i18n="settings.plan.f6">Agenda de turnos</span></li>
-              <li>✓ <span data-i18n="settings.plan.f7">Soporte prioritario</span></li>
-            </ul>
-          </div>
-          <!-- Enterprise -->
-          <div class="rounded-xl border-2 border-gray-100 p-4 text-center">
-            <div class="text-2xl mb-1">🏢</div>
-            <div class="font-bold text-gray-800 text-sm" data-i18n="settings.plan.enterprise">Enterprise</div>
-            <div class="text-lg font-bold text-gray-700 my-1" data-i18n="settings.plan.custom">A consultar</div>
-            <ul class="text-xs text-gray-500 space-y-1 text-left mt-2">
-              <li>✓ <span data-i18n="settings.plan.f8">Multi-número</span></li>
-              <li>✓ <span data-i18n="settings.plan.f9">Conversaciones ilimitadas</span></li>
-              <li>✓ <span data-i18n="settings.plan.f10">Integraciones a medida</span></li>
-              <li>✓ <span data-i18n="settings.plan.f11">SLA garantizado</span></li>
-            </ul>
-          </div>
-        </div>
-
-        <div class="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm text-amber-800 flex items-center gap-2">
-          <span>ℹ️</span>
-          <span data-i18n="settings.plan.contact">Para contratar o cambiar de plan, contactanos en <a href="mailto:soporte@candidatelens.com" class="underline font-medium">soporte@candidatelens.com</a></span>
-        </div>
-      </div>
-
       <!-- ── Danger zone ── -->
       <div class="bg-white rounded-xl shadow-sm p-6 border border-red-100">
         <h3 data-i18n="settings.danger.title" class="font-medium text-red-700 mb-1">🗑 Eliminar cuenta</h3>
@@ -834,6 +783,72 @@
           data-i18n="settings.danger.btn">
           Eliminar mi cuenta permanentemente
         </button>
+      </div>
+
+    </div>
+
+    <!-- ════ PLAN & PAGOS ════ -->
+    <div id="sectionPlan" class="hidden max-w-xl space-y-5">
+
+      <!-- Estado actual -->
+      <div class="bg-white rounded-xl shadow-sm p-6">
+        <h3 class="font-medium text-gray-800 mb-4">📋 Estado de tu suscripción</h3>
+        <div id="planStatusBox" class="rounded-xl px-5 py-4 flex items-center gap-4">
+          <div id="planStatusIcon" class="text-3xl"></div>
+          <div>
+            <div id="planStatusTitle" class="font-semibold text-base"></div>
+            <div id="planStatusSub" class="text-sm mt-0.5"></div>
+          </div>
+        </div>
+        <button onclick="switchTab('support')"
+          class="mt-4 w-full py-2 rounded-lg text-sm font-semibold bg-green-50 text-green-700 border border-green-200 hover:bg-green-100 transition">
+          💬 Contactar soporte para renovar
+        </button>
+      </div>
+
+      <!-- Planes disponibles -->
+      <div class="bg-white rounded-xl shadow-sm p-6">
+        <h3 class="font-medium text-gray-800 mb-4">🚀 Planes disponibles</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <!-- Starter -->
+          <div class="rounded-xl border-2 border-gray-100 p-4 text-center">
+            <div class="text-2xl mb-1">🌱</div>
+            <div class="font-bold text-gray-800 text-sm">Starter</div>
+            <div class="text-lg font-bold text-green-600 my-1">$29<span class="text-xs font-normal text-gray-400">/mes</span></div>
+            <ul class="text-xs text-gray-500 space-y-1 text-left mt-2">
+              <li>✓ 1 número WhatsApp</li>
+              <li>✓ Catálogo ilimitado</li>
+              <li>✓ 1.000 conv./mes</li>
+              <li>✓ Soporte por chat</li>
+            </ul>
+          </div>
+          <!-- Pro -->
+          <div class="rounded-xl border-2 border-green-400 bg-green-50 p-4 text-center relative">
+            <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-green-500 text-white text-xs font-bold px-3 py-0.5 rounded-full">Popular</div>
+            <div class="text-2xl mb-1">🚀</div>
+            <div class="font-bold text-gray-800 text-sm">Pro</div>
+            <div class="text-lg font-bold text-green-600 my-1">$59<span class="text-xs font-normal text-gray-400">/mes</span></div>
+            <ul class="text-xs text-gray-500 space-y-1 text-left mt-2">
+              <li>✓ 1 número WhatsApp</li>
+              <li>✓ Catálogo ilimitado</li>
+              <li>✓ 5.000 conv./mes</li>
+              <li>✓ Agenda de turnos</li>
+              <li>✓ Soporte prioritario</li>
+            </ul>
+          </div>
+          <!-- Enterprise -->
+          <div class="rounded-xl border-2 border-gray-100 p-4 text-center">
+            <div class="text-2xl mb-1">🏢</div>
+            <div class="font-bold text-gray-800 text-sm">Enterprise</div>
+            <div class="text-lg font-bold text-gray-700 my-1">A consultar</div>
+            <ul class="text-xs text-gray-500 space-y-1 text-left mt-2">
+              <li>✓ Multi-número</li>
+              <li>✓ Conversaciones ilimitadas</li>
+              <li>✓ Integraciones a medida</li>
+              <li>✓ SLA garantizado</li>
+            </ul>
+          </div>
+        </div>
       </div>
 
     </div>
@@ -2374,7 +2389,7 @@ function applyTabVisibility(productsEnabled, servicesEnabled, appointmentsEnable
 
 // ── Tab switching ──────────────────────────────────────────────────────────────
 function switchTab(tab) {
-  ['chats','products','services','orders','appointments','settings','help','support'].forEach(t => {
+  ['chats','products','services','orders','appointments','settings','plan','help','support'].forEach(t => {
     document.getElementById('section' + cap(t)).classList.toggle('hidden', t !== tab);
     document.getElementById('tab'     + cap(t)).classList.toggle('tab-active', t === tab);
   });
@@ -2393,6 +2408,7 @@ function switchTab(tab) {
   }
   if (tab === 'orders')       loadOrders();
   if (tab === 'settings')     loadSettings();
+  if (tab === 'plan')         loadPlan();
   if (tab === 'services')     loadServices();
   if (tab === 'appointments') initCalendar();
   if (tab === 'support')      { loadSupportMessages(); startSupportPoll(); }
@@ -2932,6 +2948,53 @@ function getSelectedPersonality() {
     return document.getElementById('sPersonalityCustom').value.trim() || null;
   }
   return preset?.value || null;
+}
+
+async function loadPlan() {
+  try {
+    const s = await api('/admin/settings');
+    const box   = document.getElementById('planStatusBox');
+    const icon  = document.getElementById('planStatusIcon');
+    const title = document.getElementById('planStatusTitle');
+    const sub   = document.getElementById('planStatusSub');
+
+    const active  = s.active !== false;
+    const expires = s.plan_expires ? new Date(s.plan_expires) : null;
+    const now     = new Date();
+    const diffDays = expires ? Math.ceil((expires - now) / 86400000) : null;
+
+    if (!active) {
+      box.className   = 'rounded-xl px-5 py-4 flex items-center gap-4 bg-red-50 border border-red-200';
+      icon.textContent  = '🔴';
+      title.textContent = 'Cuenta desactivada';
+      title.className   = 'font-semibold text-base text-red-700';
+      sub.textContent   = 'Tu cuenta fue desactivada. Contactá al soporte.';
+      sub.className     = 'text-sm mt-0.5 text-red-500';
+    } else if (!expires || diffDays > 7) {
+      box.className   = 'rounded-xl px-5 py-4 flex items-center gap-4 bg-green-50 border border-green-200';
+      icon.textContent  = '✅';
+      title.textContent = 'Suscripción activa';
+      title.className   = 'font-semibold text-base text-green-700';
+      sub.textContent   = expires
+        ? `Vence el ${expires.toLocaleDateString('es-PY', { day:'2-digit', month:'long', year:'numeric' })} (${diffDays} días restantes)`
+        : 'Sin fecha de vencimiento configurada';
+      sub.className     = 'text-sm mt-0.5 text-green-600';
+    } else if (diffDays > 0) {
+      box.className   = 'rounded-xl px-5 py-4 flex items-center gap-4 bg-amber-50 border border-amber-200';
+      icon.textContent  = '⚠️';
+      title.textContent = 'Suscripción por vencer';
+      title.className   = 'font-semibold text-base text-amber-700';
+      sub.textContent   = `Vence el ${expires.toLocaleDateString('es-PY', { day:'2-digit', month:'long', year:'numeric' })} — te quedan ${diffDays} días`;
+      sub.className     = 'text-sm mt-0.5 text-amber-600';
+    } else {
+      box.className   = 'rounded-xl px-5 py-4 flex items-center gap-4 bg-red-50 border border-red-200';
+      icon.textContent  = '❌';
+      title.textContent = 'Suscripción vencida';
+      title.className   = 'font-semibold text-base text-red-700';
+      sub.textContent   = `Venció el ${expires.toLocaleDateString('es-PY', { day:'2-digit', month:'long', year:'numeric' })}. Renová para seguir usando el bot.`;
+      sub.className     = 'text-sm mt-0.5 text-red-500';
+    }
+  } catch(e) { /* ignore */ }
 }
 
 async function loadSettings() {

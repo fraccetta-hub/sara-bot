@@ -163,7 +163,8 @@ router.get('/settings', requireAuth, async (req, res) => {
              delivery_enabled, location_address, location_lat, location_lng,
              delivery_type, delivery_base_fee, delivery_zone_km,
              delivery_zone_outer_fee, delivery_per_km,
-             delivery_min_order, delivery_disabled_dates`)
+             delivery_min_order, delivery_disabled_dates,
+             active, plan_expires`)
     .eq('id', req.tenant.tenantId)
     .single();
   if (error) return res.status(500).json({ error: error.message });
