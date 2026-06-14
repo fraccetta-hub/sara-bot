@@ -792,7 +792,7 @@
 
       <!-- Estado actual -->
       <div class="bg-white rounded-xl shadow-sm p-6">
-        <h3 class="font-medium text-gray-800 mb-4">📋 Estado de tu suscripción</h3>
+        <h3 data-i18n="plan.status.title" class="font-medium text-gray-800 mb-4">📋 Estado de tu suscripción</h3>
         <div id="planStatusBox" class="rounded-xl px-5 py-4 flex items-center gap-4">
           <div id="planStatusIcon" class="text-3xl"></div>
           <div>
@@ -801,51 +801,52 @@
           </div>
         </div>
         <button onclick="switchTab('support')"
-          class="mt-4 w-full py-2 rounded-lg text-sm font-semibold bg-green-50 text-green-700 border border-green-200 hover:bg-green-100 transition">
+          class="mt-4 w-full py-2 rounded-lg text-sm font-semibold bg-green-50 text-green-700 border border-green-200 hover:bg-green-100 transition"
+          data-i18n="plan.status.renew">
           💬 Contactar soporte para renovar
         </button>
       </div>
 
       <!-- Planes disponibles -->
       <div class="bg-white rounded-xl shadow-sm p-6">
-        <h3 class="font-medium text-gray-800 mb-4">🚀 Planes disponibles</h3>
+        <h3 data-i18n="plan.plans.title" class="font-medium text-gray-800 mb-4">🚀 Planes disponibles</h3>
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <!-- Starter -->
           <div class="rounded-xl border-2 border-gray-100 p-4 text-center">
             <div class="text-2xl mb-1">🌱</div>
-            <div class="font-bold text-gray-800 text-sm">Starter</div>
-            <div class="text-lg font-bold text-green-600 my-1">$29<span class="text-xs font-normal text-gray-400">/mes</span></div>
+            <div class="font-bold text-gray-800 text-sm" data-i18n="settings.plan.starter">Starter</div>
+            <div class="text-lg font-bold text-green-600 my-1">$29<span class="text-xs font-normal text-gray-400" data-i18n="plan.month">/mes</span></div>
             <ul class="text-xs text-gray-500 space-y-1 text-left mt-2">
-              <li>✓ 1 número WhatsApp</li>
-              <li>✓ Catálogo ilimitado</li>
-              <li>✓ 1.000 conv./mes</li>
-              <li>✓ Soporte por chat</li>
+              <li>✓ <span data-i18n="settings.plan.f1">1 número WhatsApp</span></li>
+              <li>✓ <span data-i18n="settings.plan.f2">Catálogo ilimitado</span></li>
+              <li>✓ <span data-i18n="settings.plan.f3">1.000 conv./mes</span></li>
+              <li>✓ <span data-i18n="plan.plans.chat_support">Soporte por chat</span></li>
             </ul>
           </div>
           <!-- Pro -->
           <div class="rounded-xl border-2 border-green-400 bg-green-50 p-4 text-center relative">
-            <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-green-500 text-white text-xs font-bold px-3 py-0.5 rounded-full">Popular</div>
+            <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-green-500 text-white text-xs font-bold px-3 py-0.5 rounded-full" data-i18n="settings.plan.popular">Popular</div>
             <div class="text-2xl mb-1">🚀</div>
-            <div class="font-bold text-gray-800 text-sm">Pro</div>
-            <div class="text-lg font-bold text-green-600 my-1">$59<span class="text-xs font-normal text-gray-400">/mes</span></div>
+            <div class="font-bold text-gray-800 text-sm" data-i18n="settings.plan.pro">Pro</div>
+            <div class="text-lg font-bold text-green-600 my-1">$59<span class="text-xs font-normal text-gray-400" data-i18n="plan.month">/mes</span></div>
             <ul class="text-xs text-gray-500 space-y-1 text-left mt-2">
-              <li>✓ 1 número WhatsApp</li>
-              <li>✓ Catálogo ilimitado</li>
-              <li>✓ 5.000 conv./mes</li>
-              <li>✓ Agenda de turnos</li>
-              <li>✓ Soporte prioritario</li>
+              <li>✓ <span data-i18n="settings.plan.f1">1 número WhatsApp</span></li>
+              <li>✓ <span data-i18n="settings.plan.f2">Catálogo ilimitado</span></li>
+              <li>✓ <span data-i18n="settings.plan.f5">5.000 conv./mes</span></li>
+              <li>✓ <span data-i18n="settings.plan.f6">Agenda de turnos</span></li>
+              <li>✓ <span data-i18n="settings.plan.f7">Soporte prioritario</span></li>
             </ul>
           </div>
           <!-- Enterprise -->
           <div class="rounded-xl border-2 border-gray-100 p-4 text-center">
             <div class="text-2xl mb-1">🏢</div>
-            <div class="font-bold text-gray-800 text-sm">Enterprise</div>
-            <div class="text-lg font-bold text-gray-700 my-1">A consultar</div>
+            <div class="font-bold text-gray-800 text-sm" data-i18n="settings.plan.enterprise">Enterprise</div>
+            <div class="text-lg font-bold text-gray-700 my-1" data-i18n="settings.plan.custom">A consultar</div>
             <ul class="text-xs text-gray-500 space-y-1 text-left mt-2">
-              <li>✓ Multi-número</li>
-              <li>✓ Conversaciones ilimitadas</li>
-              <li>✓ Integraciones a medida</li>
-              <li>✓ SLA garantizado</li>
+              <li>✓ <span data-i18n="settings.plan.f8">Multi-número</span></li>
+              <li>✓ <span data-i18n="settings.plan.f9">Conversaciones ilimitadas</span></li>
+              <li>✓ <span data-i18n="settings.plan.f10">Integraciones a medida</span></li>
+              <li>✓ <span data-i18n="settings.plan.f11">SLA garantizado</span></li>
             </ul>
           </div>
         </div>
@@ -1277,6 +1278,15 @@ es:{
 'services.active':'Activo','services.inactive':'Inactivo','services.edit':'✏️ Editar','services.delete':'🗑 Eliminar','services.perHour':'/hora','services.confirm':'¿Eliminar este servicio?',
 'orders.title':'Pedidos recientes','orders.refresh':'↻ Actualizar','orders.export':'⬇ Exportar CSV','orders.loading':'Cargando...','orders.empty':'Todavía no hay pedidos.','orders.delivery':'+envío',
 'support.title':'Soporte técnico','support.subtitle':'Envianos tu consulta y te respondemos a la brevedad.','support.empty':'Aún no hay mensajes. ¡Escribinos!','support.placeholder':'Escribí tu consulta aquí...','support.send':'Enviar','support.loading':'Cargando...',
+'tab.plan':'💳 Plan',
+'plan.month':'/mes','plan.plans.chat_support':'Soporte por chat',
+'plan.status.title':'📋 Estado de tu suscripción','plan.status.renew':'💬 Contactar soporte para renovar','plan.plans.title':'🚀 Planes disponibles',
+'plan.status.active':'Suscripción activa','plan.status.no_expiry':'Sin fecha de vencimiento configurada',
+'plan.status.expires_on':'Vence el {date} ({days} días restantes)',
+'plan.status.expiring':'Suscripción por vencer','plan.status.expiring.sub':'Vence el {date} — te quedan {days} días',
+'plan.status.expired':'Suscripción vencida','plan.status.expired.sub':'Venció el {date}. Renová para seguir usando el bot.',
+'plan.status.suspended':'Cuenta desactivada','plan.status.suspended.sub':'Tu cuenta fue desactivada. Contactá al soporte.',
+'plan.banner.suspended':'Tu cuenta está suspendida.','plan.banner.expired':'Tu plan venció. El bot está pausado.','plan.banner.contact':'Contactar soporte','plan.banner.view':'Ver opciones',
 'settings.danger.title':'🗑 Eliminar cuenta','settings.danger.desc':'Eliminá permanentemente tu cuenta y todos tus datos. Esta acción es irreversible.','settings.danger.btn':'Eliminar mi cuenta permanentemente','settings.danger.confirm1':'¿Estás seguro de que querés eliminar tu cuenta? Esta acción borrará TODOS tus datos (catálogo, pedidos, conversaciones) de forma permanente.','settings.danger.confirm2':'Para confirmar, escribí exactamente: ELIMINAR','settings.danger.aborted':'Eliminación cancelada.','settings.danger.deleted':'Cuenta eliminada. Hasta pronto.',
 'orders.status.pending':'Pendiente','orders.status.confirmed':'Confirmado','orders.status.preparing':'Preparando','orders.status.delivering':'En camino','orders.status.delivered':'Entregado','orders.status.cancelled':'Cancelado',
 'orders.name.placeholder':'Nombre del cliente','orders.name.save':'Guardar',
@@ -1415,6 +1425,15 @@ en:{
 'services.active':'Active','services.inactive':'Inactive','services.edit':'✏️ Edit','services.delete':'🗑 Delete','services.perHour':'/hr','services.confirm':'Delete this service?',
 'orders.title':'Recent orders','orders.refresh':'↻ Refresh','orders.export':'⬇ Export CSV','orders.loading':'Loading...','orders.empty':'No orders yet.','orders.delivery':'+delivery',
 'support.title':'Technical support','support.subtitle':'Send us your question and we\'ll reply shortly.','support.empty':'No messages yet. Write to us!','support.placeholder':'Type your question here...','support.send':'Send','support.loading':'Loading...',
+'tab.plan':'💳 Plan',
+'plan.month':'/mo','plan.plans.chat_support':'Chat support',
+'plan.status.title':'📋 Subscription status','plan.status.renew':'💬 Contact support to renew','plan.plans.title':'🚀 Available plans',
+'plan.status.active':'Active subscription','plan.status.no_expiry':'No expiry date configured',
+'plan.status.expires_on':'Expires on {date} ({days} days remaining)',
+'plan.status.expiring':'Subscription expiring soon','plan.status.expiring.sub':'Expires on {date} — {days} days left',
+'plan.status.expired':'Subscription expired','plan.status.expired.sub':'Expired on {date}. Renew to keep using the bot.',
+'plan.status.suspended':'Account deactivated','plan.status.suspended.sub':'Your account has been deactivated. Contact support.',
+'plan.banner.suspended':'Your account is suspended.','plan.banner.expired':'Your plan has expired. The bot is paused.','plan.banner.contact':'Contact support','plan.banner.view':'View options',
 'settings.danger.title':'🗑 Delete account','settings.danger.desc':'Permanently delete your account and all your data. This action is irreversible.','settings.danger.btn':'Permanently delete my account','settings.danger.confirm1':'Are you sure you want to delete your account? This will permanently erase ALL your data (catalog, orders, conversations).','settings.danger.confirm2':'To confirm, type exactly: DELETE','settings.danger.aborted':'Deletion cancelled.','settings.danger.deleted':'Account deleted. Goodbye!',
 'orders.status.pending':'Pending','orders.status.confirmed':'Confirmed','orders.status.preparing':'Preparing','orders.status.delivering':'On the way','orders.status.delivered':'Delivered','orders.status.cancelled':'Cancelled',
 'orders.name.placeholder':'Customer name','orders.name.save':'Save',
@@ -1553,6 +1572,15 @@ it:{
 'services.active':'Attivo','services.inactive':'Non attivo','services.edit':'✏️ Modifica','services.delete':'🗑 Elimina','services.perHour':'/ora','services.confirm':'Eliminare questo servizio?',
 'orders.title':'Ordini recenti','orders.refresh':'↻ Aggiorna','orders.export':'⬇ Esporta CSV','orders.loading':'Caricamento...','orders.empty':'Ancora nessun ordine.','orders.delivery':'+consegna',
 'support.title':'Supporto tecnico','support.subtitle':'Inviaci la tua richiesta e ti risponderemo al più presto.','support.empty':'Ancora nessun messaggio. Scrivici!','support.placeholder':'Scrivi qui la tua domanda...','support.send':'Invia','support.loading':'Caricamento...',
+'tab.plan':'💳 Piano',
+'plan.month':'/mese','plan.plans.chat_support':'Supporto via chat',
+'plan.status.title':'📋 Stato abbonamento','plan.status.renew':'💬 Contatta il supporto per rinnovare','plan.plans.title':'🚀 Piani disponibili',
+'plan.status.active':'Abbonamento attivo','plan.status.no_expiry':'Nessuna data di scadenza configurata',
+'plan.status.expires_on':'Scade il {date} ({days} giorni rimanenti)',
+'plan.status.expiring':'Abbonamento in scadenza','plan.status.expiring.sub':'Scade il {date} — rimangono {days} giorni',
+'plan.status.expired':'Abbonamento scaduto','plan.status.expired.sub':'Scaduto il {date}. Rinnova per continuare a usare il bot.',
+'plan.status.suspended':'Account disattivato','plan.status.suspended.sub':'Il tuo account è stato disattivato. Contatta il supporto.',
+'plan.banner.suspended':'Il tuo account è sospeso.','plan.banner.expired':'Il tuo piano è scaduto. Il bot è in pausa.','plan.banner.contact':'Contatta il supporto','plan.banner.view':'Vedi opzioni',
 'settings.danger.title':'🗑 Elimina account','settings.danger.desc':'Elimina permanentemente il tuo account e tutti i tuoi dati. Questa azione è irreversibile.','settings.danger.btn':'Elimina definitivamente il mio account','settings.danger.confirm1':'Sei sicuro di voler eliminare il tuo account? Questo cancellerà TUTTI i tuoi dati (catalogo, ordini, conversazioni) in modo permanente.','settings.danger.confirm2':'Per confermare, scrivi esattamente: ELIMINA','settings.danger.aborted':'Eliminazione annullata.','settings.danger.deleted':'Account eliminato. Arrivederci!',
 'orders.status.pending':'In attesa','orders.status.confirmed':'Confermato','orders.status.preparing':'In preparazione','orders.status.delivering':'In consegna','orders.status.delivered':'Consegnato','orders.status.cancelled':'Annullato',
 'orders.name.placeholder':'Nome cliente','orders.name.save':'Salva',
@@ -1690,6 +1718,15 @@ de:{
 'services.active':'Aktiv','services.inactive':'Inaktiv','services.edit':'✏️ Bearbeiten','services.delete':'🗑 Löschen','services.perHour':'/Std.','services.confirm':'Diesen Service löschen?',
 'orders.title':'Letzte Bestellungen','orders.refresh':'↻ Aktualisieren','orders.export':'⬇ CSV exportieren','orders.loading':'Wird geladen...','orders.empty':'Noch keine Bestellungen.','orders.delivery':'+Lieferung',
 'support.title':'Technischer Support','support.subtitle':'Sende uns deine Anfrage und wir antworten dir schnellstmöglich.','support.empty':'Noch keine Nachrichten. Schreib uns!','support.placeholder':'Schreib deine Frage hier...','support.send':'Senden','support.loading':'Wird geladen...',
+'tab.plan':'💳 Tarif',
+'plan.month':'/Monat','plan.plans.chat_support':'Chat-Support',
+'plan.status.title':'📋 Abonnementstatus','plan.status.renew':'💬 Support kontaktieren zum Verlängern','plan.plans.title':'🚀 Verfügbare Tarife',
+'plan.status.active':'Abonnement aktiv','plan.status.no_expiry':'Kein Ablaufdatum konfiguriert',
+'plan.status.expires_on':'Läuft ab am {date} (noch {days} Tage)',
+'plan.status.expiring':'Abonnement läuft bald ab','plan.status.expiring.sub':'Läuft ab am {date} — noch {days} Tage',
+'plan.status.expired':'Abonnement abgelaufen','plan.status.expired.sub':'Abgelaufen am {date}. Verlängere, um den Bot weiter zu nutzen.',
+'plan.status.suspended':'Konto deaktiviert','plan.status.suspended.sub':'Dein Konto wurde deaktiviert. Kontaktiere den Support.',
+'plan.banner.suspended':'Dein Konto ist gesperrt.','plan.banner.expired':'Dein Tarif ist abgelaufen. Der Bot ist pausiert.','plan.banner.contact':'Support kontaktieren','plan.banner.view':'Optionen anzeigen',
 'settings.danger.title':'🗑 Konto löschen','settings.danger.desc':'Lösche dauerhaft dein Konto und alle deine Daten. Diese Aktion ist unwiderruflich.','settings.danger.btn':'Mein Konto dauerhaft löschen','settings.danger.confirm1':'Bist du sicher, dass du dein Konto löschen möchtest? Alle deine Daten (Katalog, Bestellungen, Gespräche) werden dauerhaft gelöscht.','settings.danger.confirm2':'Zur Bestätigung, schreib genau: LÖSCHEN','settings.danger.aborted':'Löschung abgebrochen.','settings.danger.deleted':'Konto gelöscht. Auf Wiedersehen!',
 'orders.status.pending':'Ausstehend','orders.status.confirmed':'Bestätigt','orders.status.preparing':'In Vorbereitung','orders.status.delivering':'Unterwegs','orders.status.delivered':'Geliefert','orders.status.cancelled':'Storniert',
 'orders.name.placeholder':'Kundenname','orders.name.save':'Speichern',
@@ -1827,6 +1864,15 @@ fr:{
 'services.active':'Actif','services.inactive':'Inactif','services.edit':'✏️ Modifier','services.delete':'🗑 Supprimer','services.perHour':'/h','services.confirm':'Supprimer ce service ?',
 'orders.title':'Commandes récentes','orders.refresh':'↻ Actualiser','orders.export':'⬇ Exporter CSV','orders.loading':'Chargement...','orders.empty':'Aucune commande pour l\'instant.','orders.delivery':'+livraison',
 'support.title':'Support technique','support.subtitle':'Envoyez-nous votre question et nous vous répondrons rapidement.','support.empty':'Pas encore de messages. Écrivez-nous !','support.placeholder':'Écrivez votre question ici...','support.send':'Envoyer','support.loading':'Chargement...',
+'tab.plan':'💳 Abonnement',
+'plan.month':'/mois','plan.plans.chat_support':'Support par chat',
+'plan.status.title':'📋 État de l\'abonnement','plan.status.renew':'💬 Contacter le support pour renouveler','plan.plans.title':'🚀 Plans disponibles',
+'plan.status.active':'Abonnement actif','plan.status.no_expiry':'Aucune date d\'expiration configurée',
+'plan.status.expires_on':'Expire le {date} ({days} jours restants)',
+'plan.status.expiring':'Abonnement bientôt expiré','plan.status.expiring.sub':'Expire le {date} — il reste {days} jours',
+'plan.status.expired':'Abonnement expiré','plan.status.expired.sub':'Expiré le {date}. Renouvelez pour continuer à utiliser le bot.',
+'plan.status.suspended':'Compte désactivé','plan.status.suspended.sub':'Votre compte a été désactivé. Contactez le support.',
+'plan.banner.suspended':'Votre compte est suspendu.','plan.banner.expired':'Votre plan a expiré. Le bot est en pause.','plan.banner.contact':'Contacter le support','plan.banner.view':'Voir les options',
 'settings.danger.title':'🗑 Supprimer le compte','settings.danger.desc':'Supprimez définitivement votre compte et toutes vos données. Cette action est irréversible.','settings.danger.btn':'Supprimer définitivement mon compte','settings.danger.confirm1':'Êtes-vous sûr de vouloir supprimer votre compte ? Toutes vos données (catalogue, commandes, conversations) seront effacées définitivement.','settings.danger.confirm2':'Pour confirmer, tapez exactement : SUPPRIMER','settings.danger.aborted':'Suppression annulée.','settings.danger.deleted':'Compte supprimé. Au revoir !',
 'orders.status.pending':'En attente','orders.status.confirmed':'Confirmé','orders.status.preparing':'En préparation','orders.status.delivering':'En route','orders.status.delivered':'Livré','orders.status.cancelled':'Annulé',
 'orders.name.placeholder':'Nom du client','orders.name.save':'Enregistrer',
@@ -2963,35 +3009,37 @@ async function loadPlan() {
     const now     = new Date();
     const diffDays = expires ? Math.ceil((expires - now) / 86400000) : null;
 
+    const fmtDate = d => d.toLocaleDateString(undefined, { day:'2-digit', month:'long', year:'numeric' });
+
     if (!active) {
-      box.className   = 'rounded-xl px-5 py-4 flex items-center gap-4 bg-red-50 border border-red-200';
+      box.className     = 'rounded-xl px-5 py-4 flex items-center gap-4 bg-red-50 border border-red-200';
       icon.textContent  = '🔴';
-      title.textContent = 'Cuenta desactivada';
+      title.textContent = t('plan.status.suspended');
       title.className   = 'font-semibold text-base text-red-700';
-      sub.textContent   = 'Tu cuenta fue desactivada. Contactá al soporte.';
+      sub.textContent   = t('plan.status.suspended.sub');
       sub.className     = 'text-sm mt-0.5 text-red-500';
     } else if (!expires || diffDays > 7) {
-      box.className   = 'rounded-xl px-5 py-4 flex items-center gap-4 bg-green-50 border border-green-200';
+      box.className     = 'rounded-xl px-5 py-4 flex items-center gap-4 bg-green-50 border border-green-200';
       icon.textContent  = '✅';
-      title.textContent = 'Suscripción activa';
+      title.textContent = t('plan.status.active');
       title.className   = 'font-semibold text-base text-green-700';
       sub.textContent   = expires
-        ? `Vence el ${expires.toLocaleDateString('es-PY', { day:'2-digit', month:'long', year:'numeric' })} (${diffDays} días restantes)`
-        : 'Sin fecha de vencimiento configurada';
+        ? t('plan.status.expires_on').replace('{date}', fmtDate(expires)).replace('{days}', diffDays)
+        : t('plan.status.no_expiry');
       sub.className     = 'text-sm mt-0.5 text-green-600';
     } else if (diffDays > 0) {
-      box.className   = 'rounded-xl px-5 py-4 flex items-center gap-4 bg-amber-50 border border-amber-200';
+      box.className     = 'rounded-xl px-5 py-4 flex items-center gap-4 bg-amber-50 border border-amber-200';
       icon.textContent  = '⚠️';
-      title.textContent = 'Suscripción por vencer';
+      title.textContent = t('plan.status.expiring');
       title.className   = 'font-semibold text-base text-amber-700';
-      sub.textContent   = `Vence el ${expires.toLocaleDateString('es-PY', { day:'2-digit', month:'long', year:'numeric' })} — te quedan ${diffDays} días`;
+      sub.textContent   = t('plan.status.expiring.sub').replace('{date}', fmtDate(expires)).replace('{days}', diffDays);
       sub.className     = 'text-sm mt-0.5 text-amber-600';
     } else {
-      box.className   = 'rounded-xl px-5 py-4 flex items-center gap-4 bg-red-50 border border-red-200';
+      box.className     = 'rounded-xl px-5 py-4 flex items-center gap-4 bg-red-50 border border-red-200';
       icon.textContent  = '❌';
-      title.textContent = 'Suscripción vencida';
+      title.textContent = t('plan.status.expired');
       title.className   = 'font-semibold text-base text-red-700';
-      sub.textContent   = `Venció el ${expires.toLocaleDateString('es-PY', { day:'2-digit', month:'long', year:'numeric' })}. Renová para seguir usando el bot.`;
+      sub.textContent   = t('plan.status.expired.sub').replace('{date}', fmtDate(expires));
       sub.className     = 'text-sm mt-0.5 text-red-500';
     }
   } catch(e) { /* ignore */ }
@@ -3255,10 +3303,10 @@ function showAccountBanner(type) {
   }
   if (type === 'suspended') {
     banner.className += ' bg-red-600 text-white';
-    banner.innerHTML = '🔴 Tu cuenta está suspendida. <button onclick="switchTab(\'support\')" class="underline ml-2">Contactar soporte</button>';
+    banner.innerHTML = `🔴 ${t('plan.banner.suspended')} <button onclick="switchTab('support')" class="underline ml-2">${t('plan.banner.contact')}</button>`;
   } else {
     banner.className += ' bg-amber-500 text-white';
-    banner.innerHTML = '⚠️ Tu plan venció. El bot está pausado. <button onclick="switchTab(\'plan\')" class="underline ml-2">Ver opciones</button> · <button onclick="switchTab(\'support\')" class="underline">Contactar soporte</button>';
+    banner.innerHTML = `⚠️ ${t('plan.banner.expired')} <button onclick="switchTab('plan')" class="underline ml-2">${t('plan.banner.view')}</button> · <button onclick="switchTab('support')" class="underline">${t('plan.banner.contact')}</button>`;
   }
 }
 
