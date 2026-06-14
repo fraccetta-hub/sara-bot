@@ -418,11 +418,6 @@ function switchEditTab(tab) {
   document.getElementById('editConfig').classList.toggle('hidden', tab !== 'config');
   document.getElementById('editProducts').classList.toggle('hidden', tab !== 'products');
   document.getElementById('editImport').classList.toggle('hidden', tab !== 'import');
-  document.getElementById('etabConfig').className   = tab === 'config'   ? 'py-2 border-b-2 border-purple-600 text-purple-600 font-semibold' : 'py-2 text-gray-500';
-  document.getElementById('etabProducts').className = tab === 'products' ? 'py-2 border-b-2 border-purple-600 text-purple-600 font-semibold' : 'py-2 text-gray-500';
-  document.getElementById('etabImport').className   = tab === 'import'   ? 'py-2 border-b-2 border-purple-600 text-purple-600 font-semibold' : 'py-2 text-gray-500';
-  if (tab === 'products') loadEditProducts();
-  if (tab === 'import') resetImportTab();
 }
 
 function resetImportTab() {
