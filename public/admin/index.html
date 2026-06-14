@@ -396,11 +396,11 @@
           <button onclick="calPrev()" class="px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 text-sm">‹</button>
           <span id="calWeekLabel" class="text-sm font-semibold text-gray-800 min-w-[160px] text-center"></span>
           <button onclick="calNext()" class="px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 text-sm">›</button>
-          <button onclick="calGoToday()" class="px-3 py-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 text-xs">Hoy</button>
+          <button onclick="calGoToday()" data-i18n="appt.today" class="px-3 py-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 text-xs">Hoy</button>
         </div>
         <div class="flex gap-2">
-          <button onclick="openBlockModal()" class="px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 text-sm">🚫 Agregar bloqueo</button>
-          <button onclick="openApptModal(null)" class="btn-green px-4 py-1.5 rounded-lg text-sm font-semibold">+ Turno</button>
+          <button onclick="openBlockModal()" data-i18n="appt.addBlock" class="px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 text-sm">🚫 Agregar bloqueo</button>
+          <button onclick="openApptModal(null)" data-i18n="appt.newAppt" class="btn-green px-4 py-1.5 rounded-lg text-sm font-semibold">+ Turno</button>
         </div>
       </div>
 
@@ -415,12 +415,12 @@
       </div>
 
       <!-- Legend -->
-      <div class="flex gap-4 mt-3 text-xs text-gray-500">
-        <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-green-100 inline-block border border-green-300"></span> Libre</span>
-        <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-blue-400 inline-block"></span> Confirmado</span>
-        <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-yellow-400 inline-block"></span> Pendiente</span>
-        <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-red-300 inline-block"></span> Bloqueado</span>
-        <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-gray-200 inline-block"></span> Fuera de horario</span>
+      <div class="flex gap-4 mt-3 text-xs text-gray-500 flex-wrap">
+        <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-green-100 inline-block border border-green-300"></span> <span data-i18n="appt.legend.free">Libre</span></span>
+        <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-blue-400 inline-block"></span> <span data-i18n="appt.legend.confirmed">Confirmado</span></span>
+        <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-yellow-400 inline-block"></span> <span data-i18n="appt.legend.pending">Pendiente</span></span>
+        <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-red-300 inline-block"></span> <span data-i18n="appt.legend.blocked">Bloqueado</span></span>
+        <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-gray-200 inline-block"></span> <span data-i18n="appt.legend.outside">Fuera de horario</span></span>
       </div>
     </div>
 
@@ -768,47 +768,47 @@
 <div id="apptModal" class="hidden fixed inset-0 modal-bg flex items-center justify-center z-50 px-4">
   <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
     <div class="flex items-center justify-between mb-4">
-      <h3 id="apptModalTitle" class="text-base font-semibold text-gray-800">Nuevo turno</h3>
+      <h3 id="apptModalTitle" data-i18n="appt.modal.new" class="text-base font-semibold text-gray-800">Nuevo turno</h3>
       <button onclick="closeApptModal()" class="text-gray-400 hover:text-gray-600 text-xl leading-none">✕</button>
     </div>
     <div id="apptError" class="hidden bg-red-50 text-red-700 text-sm rounded-lg px-4 py-2 mb-3"></div>
     <div class="space-y-3">
       <div class="grid grid-cols-2 gap-3">
         <div>
-          <label class="block text-xs font-medium text-gray-500 mb-1">Fecha</label>
+          <label data-i18n="appt.modal.date" class="block text-xs font-medium text-gray-500 mb-1">Fecha</label>
           <input type="date" id="apptDate" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" onchange="loadApptSlots()"/>
         </div>
         <div>
-          <label class="block text-xs font-medium text-gray-500 mb-1">Servicio</label>
+          <label data-i18n="appt.modal.service" class="block text-xs font-medium text-gray-500 mb-1">Servicio</label>
           <select id="apptService" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" onchange="loadApptSlots()">
-            <option value="">— Sin servicio —</option>
+            <option value="" data-i18n="appt.modal.noService">— Sin servicio —</option>
           </select>
         </div>
       </div>
       <div>
-        <label class="block text-xs font-medium text-gray-500 mb-1">Hora disponible</label>
+        <label data-i18n="appt.modal.slot" class="block text-xs font-medium text-gray-500 mb-1">Hora disponible</label>
         <select id="apptSlot" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
-          <option value="">Elegí fecha primero</option>
+          <option value="" data-i18n="appt.modal.slotHint">Elegí fecha primero</option>
         </select>
       </div>
       <div class="grid grid-cols-2 gap-3">
         <div>
-          <label class="block text-xs font-medium text-gray-500 mb-1">Cliente (nombre)</label>
+          <label data-i18n="appt.modal.customer" class="block text-xs font-medium text-gray-500 mb-1">Cliente (nombre)</label>
           <input type="text" id="apptName" placeholder="María García" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
         </div>
         <div>
-          <label class="block text-xs font-medium text-gray-500 mb-1">Teléfono</label>
+          <label data-i18n="appt.modal.phone" class="block text-xs font-medium text-gray-500 mb-1">Teléfono</label>
           <input type="text" id="apptPhone" placeholder="595981..." class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
         </div>
       </div>
       <div>
-        <label class="block text-xs font-medium text-gray-500 mb-1">Notas</label>
-        <textarea id="apptNotes" rows="2" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm resize-none" placeholder="Observaciones opcionales..."></textarea>
+        <label data-i18n="appt.modal.notes" class="block text-xs font-medium text-gray-500 mb-1">Notas</label>
+        <textarea id="apptNotes" rows="2" data-i18n-ph="appt.modal.notesPh" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm resize-none" placeholder="Observaciones opcionales..."></textarea>
       </div>
     </div>
     <div class="flex gap-3 mt-5">
-      <button onclick="closeApptModal()" class="flex-1 border border-gray-200 text-gray-600 py-2 rounded-lg text-sm hover:bg-gray-50">Cancelar</button>
-      <button onclick="saveAppt()" id="apptSaveBtn" class="btn-green flex-1 py-2 rounded-lg text-sm font-semibold">Guardar</button>
+      <button onclick="closeApptModal()" data-i18n="appt.modal.cancel" class="flex-1 border border-gray-200 text-gray-600 py-2 rounded-lg text-sm hover:bg-gray-50">Cancelar</button>
+      <button onclick="saveAppt()" id="apptSaveBtn" data-i18n="appt.modal.save" class="btn-green flex-1 py-2 rounded-lg text-sm font-semibold">Guardar</button>
     </div>
   </div>
 </div>
@@ -817,29 +817,29 @@
 <div id="blockModal" class="hidden fixed inset-0 modal-bg flex items-center justify-center z-50 px-4">
   <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
     <div class="flex items-center justify-between mb-4">
-      <h3 class="text-base font-semibold text-gray-800">🚫 Agregar bloqueo</h3>
+      <h3 data-i18n="appt.block.title" class="text-base font-semibold text-gray-800">🚫 Agregar bloqueo</h3>
       <button onclick="closeBlockModal()" class="text-gray-400 hover:text-gray-600 text-xl leading-none">✕</button>
     </div>
     <div id="blockError" class="hidden bg-red-50 text-red-700 text-sm rounded-lg px-4 py-2 mb-3"></div>
     <div class="space-y-3">
       <div>
-        <label class="block text-xs font-medium text-gray-500 mb-1">Motivo (opcional)</label>
-        <input type="text" id="blockReason" placeholder="Almuerzo, Feriado, Reunión..." class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
+        <label data-i18n="appt.block.reason" class="block text-xs font-medium text-gray-500 mb-1">Motivo (opcional)</label>
+        <input type="text" id="blockReason" data-i18n-ph="appt.block.reasonPh" placeholder="Almuerzo, Feriado, Reunión..." class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
       </div>
       <div class="grid grid-cols-2 gap-3">
         <div>
-          <label class="block text-xs font-medium text-gray-500 mb-1">Inicio</label>
+          <label data-i18n="appt.block.start" class="block text-xs font-medium text-gray-500 mb-1">Inicio</label>
           <input type="datetime-local" id="blockStart" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
         </div>
         <div>
-          <label class="block text-xs font-medium text-gray-500 mb-1">Fin</label>
+          <label data-i18n="appt.block.end" class="block text-xs font-medium text-gray-500 mb-1">Fin</label>
           <input type="datetime-local" id="blockEnd" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
         </div>
       </div>
     </div>
     <div class="flex gap-3 mt-5">
-      <button onclick="closeBlockModal()" class="flex-1 border border-gray-200 text-gray-600 py-2 rounded-lg text-sm hover:bg-gray-50">Cancelar</button>
-      <button onclick="saveBlock()" id="blockSaveBtn" class="btn-green flex-1 py-2 rounded-lg text-sm font-semibold">Guardar</button>
+      <button onclick="closeBlockModal()" data-i18n="appt.modal.cancel" class="flex-1 border border-gray-200 text-gray-600 py-2 rounded-lg text-sm hover:bg-gray-50">Cancelar</button>
+      <button onclick="saveBlock()" id="blockSaveBtn" data-i18n="appt.modal.save" class="btn-green flex-1 py-2 rounded-lg text-sm font-semibold">Guardar</button>
     </div>
   </div>
 </div>
@@ -848,15 +848,15 @@
 <div id="apptDetailModal" class="hidden fixed inset-0 modal-bg flex items-center justify-center z-50 px-4">
   <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
     <div class="flex items-center justify-between mb-4">
-      <h3 class="text-base font-semibold text-gray-800">Detalle del turno</h3>
+      <h3 data-i18n="appt.detail.title" class="text-base font-semibold text-gray-800">Detalle del turno</h3>
       <button onclick="closeApptDetail()" class="text-gray-400 hover:text-gray-600 text-xl leading-none">✕</button>
     </div>
     <div id="apptDetailBody" class="space-y-2 text-sm text-gray-700"></div>
     <div class="flex gap-2 mt-5 flex-wrap">
-      <button onclick="confirmAppt()" id="apptDetailConfirm" class="flex-1 bg-green-50 text-green-700 hover:bg-green-100 py-2 rounded-lg text-xs font-semibold transition">✅ Confirmar</button>
-      <button onclick="completeAppt()" id="apptDetailComplete" class="flex-1 bg-blue-50 text-blue-700 hover:bg-blue-100 py-2 rounded-lg text-xs font-semibold transition">✔ Completar</button>
-      <button onclick="cancelAppt()" id="apptDetailCancel" class="flex-1 bg-red-50 text-red-700 hover:bg-red-100 py-2 rounded-lg text-xs font-semibold transition">✕ Cancelar</button>
-      <button onclick="deleteAppt()" class="flex-1 bg-gray-50 text-gray-500 hover:bg-gray-100 py-2 rounded-lg text-xs font-semibold transition">🗑 Eliminar</button>
+      <button onclick="confirmAppt()" id="apptDetailConfirm" data-i18n="appt.detail.confirm" class="flex-1 bg-green-50 text-green-700 hover:bg-green-100 py-2 rounded-lg text-xs font-semibold transition">✅ Confirmar</button>
+      <button onclick="completeAppt()" id="apptDetailComplete" data-i18n="appt.detail.complete" class="flex-1 bg-blue-50 text-blue-700 hover:bg-blue-100 py-2 rounded-lg text-xs font-semibold transition">✔ Completar</button>
+      <button onclick="cancelAppt()" id="apptDetailCancel" data-i18n="appt.detail.cancel" class="flex-1 bg-red-50 text-red-700 hover:bg-red-100 py-2 rounded-lg text-xs font-semibold transition">✕ Cancelar</button>
+      <button onclick="deleteAppt()" data-i18n="appt.detail.delete" class="flex-1 bg-gray-50 text-gray-500 hover:bg-gray-100 py-2 rounded-lg text-xs font-semibold transition">🗑 Eliminar</button>
     </div>
   </div>
 </div>
@@ -1144,6 +1144,20 @@ es:{
 'help.chatpanel.colors':'<b>Colores de los mensajes en el panel:</b><br>⬜ Blanco (izquierda) = mensajes del cliente<br>🟩 Verde (derecha) = respuestas automáticas de Sara<br>🟦 Azul (derecha) = mensajes enviados por vos manualmente',
 'help.other.title':'ℹ️ Otros comandos WhatsApp','help.other.ayuda':'Ver todos los comandos disponibles directamente en WhatsApp',
 'help.other.hint':'💡 Los comandos no distinguen mayúsculas/minúsculas. Podés escribir "catalogo", "CATALOGO" o "Catalogo".',
+'tab.appointments':'📅 Turnos',
+'appt.today':'Hoy','appt.addBlock':'🚫 Agregar bloqueo','appt.newAppt':'+ Turno',
+'appt.legend.free':'Libre','appt.legend.confirmed':'Confirmado','appt.legend.pending':'Pendiente','appt.legend.blocked':'Bloqueado','appt.legend.outside':'Fuera de horario',
+'appt.modal.new':'Nuevo turno','appt.modal.edit':'Editar turno',
+'appt.modal.date':'Fecha','appt.modal.service':'Servicio','appt.modal.noService':'— Sin servicio —',
+'appt.modal.slot':'Hora disponible','appt.modal.slotHint':'Elegí fecha primero',
+'appt.modal.customer':'Cliente (nombre)','appt.modal.phone':'Teléfono',
+'appt.modal.notes':'Notas','appt.modal.notesPh':'Observaciones opcionales...',
+'appt.modal.cancel':'Cancelar','appt.modal.save':'Guardar',
+'appt.block.title':'🚫 Agregar bloqueo','appt.block.reason':'Motivo (opcional)','appt.block.reasonPh':'Almuerzo, Feriado, Reunión...',
+'appt.block.start':'Inicio','appt.block.end':'Fin',
+'appt.detail.title':'Detalle del turno','appt.detail.confirm':'✅ Confirmar','appt.detail.complete':'✔ Completar','appt.detail.cancel':'✕ Cancelar','appt.detail.delete':'🗑 Eliminar',
+'appt.bh.closed':'Cerrado',
+'day.sun':'Domingo','day.mon':'Lunes','day.tue':'Martes','day.wed':'Miércoles','day.thu':'Jueves','day.fri':'Viernes','day.sat':'Sábado',
 },
 en:{
 'login.user':'Username','login.password':'Password','login.submit':'Sign in','login.hint':'First time: password <b>sara1234</b>',
@@ -1245,6 +1259,20 @@ en:{
 'help.chatpanel.colors':'<b>Message colours in the panel:</b><br>⬜ White (left) = customer messages<br>🟩 Green (right) = Sara\'s automatic replies<br>🟦 Blue (right) = messages sent by you manually',
 'help.other.title':'ℹ️ Other WhatsApp commands','help.other.ayuda':'View all available commands directly in WhatsApp',
 'help.other.hint':'💡 Commands are case-insensitive.',
+'tab.appointments':'📅 Appointments',
+'appt.today':'Today','appt.addBlock':'🚫 Add block','appt.newAppt':'+ Appointment',
+'appt.legend.free':'Free','appt.legend.confirmed':'Confirmed','appt.legend.pending':'Pending','appt.legend.blocked':'Blocked','appt.legend.outside':'Outside hours',
+'appt.modal.new':'New appointment','appt.modal.edit':'Edit appointment',
+'appt.modal.date':'Date','appt.modal.service':'Service','appt.modal.noService':'— No service —',
+'appt.modal.slot':'Available time','appt.modal.slotHint':'Pick a date first',
+'appt.modal.customer':'Customer (name)','appt.modal.phone':'Phone',
+'appt.modal.notes':'Notes','appt.modal.notesPh':'Optional notes...',
+'appt.modal.cancel':'Cancel','appt.modal.save':'Save',
+'appt.block.title':'🚫 Add block','appt.block.reason':'Reason (optional)','appt.block.reasonPh':'Lunch, Holiday, Meeting...',
+'appt.block.start':'Start','appt.block.end':'End',
+'appt.detail.title':'Appointment detail','appt.detail.confirm':'✅ Confirm','appt.detail.complete':'✔ Complete','appt.detail.cancel':'✕ Cancel','appt.detail.delete':'🗑 Delete',
+'appt.bh.closed':'Closed',
+'day.sun':'Sunday','day.mon':'Monday','day.tue':'Tuesday','day.wed':'Wednesday','day.thu':'Thursday','day.fri':'Friday','day.sat':'Saturday',
 },
 it:{
 'login.user':'Utente','login.password':'Password','login.submit':'Accedi','login.hint':'Prima volta: password <b>sara1234</b>',
@@ -1345,6 +1373,20 @@ it:{
 'help.chatpanel.colors':'<b>Colori dei messaggi:</b><br>⬜ Bianco (sinistra) = messaggi del cliente<br>🟩 Verde (destra) = risposte automatiche di Sara<br>🟦 Blu (destra) = messaggi inviati da te',
 'help.other.title':'ℹ️ Altri comandi WhatsApp','help.other.ayuda':'Visualizza tutti i comandi disponibili direttamente in WhatsApp',
 'help.other.hint':'💡 I comandi non distinguono maiuscole/minuscole.',
+'tab.appointments':'📅 Appuntamenti',
+'appt.today':'Oggi','appt.addBlock':'🚫 Aggiungi blocco','appt.newAppt':'+ Appuntamento',
+'appt.legend.free':'Libero','appt.legend.confirmed':'Confermato','appt.legend.pending':'In attesa','appt.legend.blocked':'Bloccato','appt.legend.outside':'Fuori orario',
+'appt.modal.new':'Nuovo appuntamento','appt.modal.edit':'Modifica appuntamento',
+'appt.modal.date':'Data','appt.modal.service':'Servizio','appt.modal.noService':'— Nessun servizio —',
+'appt.modal.slot':'Orario disponibile','appt.modal.slotHint':'Prima scegli una data',
+'appt.modal.customer':'Cliente (nome)','appt.modal.phone':'Telefono',
+'appt.modal.notes':'Note','appt.modal.notesPh':'Note opzionali...',
+'appt.modal.cancel':'Annulla','appt.modal.save':'Salva',
+'appt.block.title':'🚫 Aggiungi blocco','appt.block.reason':'Motivo (opzionale)','appt.block.reasonPh':'Pranzo, Festa, Riunione...',
+'appt.block.start':'Inizio','appt.block.end':'Fine',
+'appt.detail.title':'Dettaglio appuntamento','appt.detail.confirm':'✅ Conferma','appt.detail.complete':'✔ Completato','appt.detail.cancel':'✕ Annulla','appt.detail.delete':'🗑 Elimina',
+'appt.bh.closed':'Chiuso',
+'day.sun':'Domenica','day.mon':'Lunedì','day.tue':'Martedì','day.wed':'Mercoledì','day.thu':'Giovedì','day.fri':'Venerdì','day.sat':'Sabato',
 },
 de:{
 'login.user':'Benutzername','login.password':'Passwort','login.submit':'Anmelden','login.hint':'Erstmalig: Passwort <b>sara1234</b>',
@@ -1445,6 +1487,20 @@ de:{
 'help.chatpanel.colors':'<b>Nachrichtenfarben:</b><br>⬜ Weiß (links) = Kundennachrichten<br>🟩 Grün (rechts) = Saras Antworten<br>🟦 Blau (rechts) = deine manuellen Nachrichten',
 'help.other.title':'ℹ️ Weitere WhatsApp-Befehle','help.other.ayuda':'Alle verfügbaren Befehle direkt in WhatsApp anzeigen',
 'help.other.hint':'💡 Befehle sind nicht case-sensitiv.',
+'tab.appointments':'📅 Termine',
+'appt.today':'Heute','appt.addBlock':'🚫 Blockierung','appt.newAppt':'+ Termin',
+'appt.legend.free':'Frei','appt.legend.confirmed':'Bestätigt','appt.legend.pending':'Ausstehend','appt.legend.blocked':'Blockiert','appt.legend.outside':'Außerhalb',
+'appt.modal.new':'Neuer Termin','appt.modal.edit':'Termin bearbeiten',
+'appt.modal.date':'Datum','appt.modal.service':'Leistung','appt.modal.noService':'— Keine Leistung —',
+'appt.modal.slot':'Verfügbare Zeit','appt.modal.slotHint':'Zuerst Datum wählen',
+'appt.modal.customer':'Kunde (Name)','appt.modal.phone':'Telefon',
+'appt.modal.notes':'Notizen','appt.modal.notesPh':'Optionale Notizen...',
+'appt.modal.cancel':'Abbrechen','appt.modal.save':'Speichern',
+'appt.block.title':'🚫 Blockierung hinzufügen','appt.block.reason':'Grund (optional)','appt.block.reasonPh':'Mittagspause, Feiertag, Meeting...',
+'appt.block.start':'Beginn','appt.block.end':'Ende',
+'appt.detail.title':'Termindetails','appt.detail.confirm':'✅ Bestätigen','appt.detail.complete':'✔ Abgeschlossen','appt.detail.cancel':'✕ Stornieren','appt.detail.delete':'🗑 Löschen',
+'appt.bh.closed':'Geschlossen',
+'day.sun':'Sonntag','day.mon':'Montag','day.tue':'Dienstag','day.wed':'Mittwoch','day.thu':'Donnerstag','day.fri':'Freitag','day.sat':'Samstag',
 },
 fr:{
 'login.user':'Utilisateur','login.password':'Mot de passe','login.submit':'Se connecter','login.hint':'Première fois : mot de passe <b>sara1234</b>',
@@ -1545,6 +1601,20 @@ fr:{
 'help.chatpanel.colors':'<b>Couleurs des messages :</b><br>⬜ Blanc (gauche) = messages du client<br>🟩 Vert (droite) = réponses automatiques de Sara<br>🟦 Bleu (droite) = messages envoyés manuellement',
 'help.other.title':'ℹ️ Autres commandes WhatsApp','help.other.ayuda':'Voir toutes les commandes disponibles directement dans WhatsApp',
 'help.other.hint':'💡 Les commandes ne sont pas sensibles à la casse.',
+'tab.appointments':'📅 Rendez-vous',
+'appt.today':'Aujourd\'hui','appt.addBlock':'🚫 Ajouter blocage','appt.newAppt':'+ Rendez-vous',
+'appt.legend.free':'Libre','appt.legend.confirmed':'Confirmé','appt.legend.pending':'En attente','appt.legend.blocked':'Bloqué','appt.legend.outside':'Hors horaires',
+'appt.modal.new':'Nouveau rendez-vous','appt.modal.edit':'Modifier le rendez-vous',
+'appt.modal.date':'Date','appt.modal.service':'Service','appt.modal.noService':'— Sans service —',
+'appt.modal.slot':'Heure disponible','appt.modal.slotHint':'Choisissez d\'abord une date',
+'appt.modal.customer':'Client (nom)','appt.modal.phone':'Téléphone',
+'appt.modal.notes':'Notes','appt.modal.notesPh':'Notes optionnelles...',
+'appt.modal.cancel':'Annuler','appt.modal.save':'Enregistrer',
+'appt.block.title':'🚫 Ajouter un blocage','appt.block.reason':'Motif (optionnel)','appt.block.reasonPh':'Déjeuner, Férié, Réunion...',
+'appt.block.start':'Début','appt.block.end':'Fin',
+'appt.detail.title':'Détail du rendez-vous','appt.detail.confirm':'✅ Confirmer','appt.detail.complete':'✔ Terminer','appt.detail.cancel':'✕ Annuler','appt.detail.delete':'🗑 Supprimer',
+'appt.bh.closed':'Fermé',
+'day.sun':'Dimanche','day.mon':'Lundi','day.tue':'Mardi','day.wed':'Mercredi','day.thu':'Jeudi','day.fri':'Vendredi','day.sat':'Samedi',
 }
 };
 
@@ -1574,7 +1644,7 @@ function applyTranslations() {
     if (val !== undefined) el.placeholder = val;
   });
   // Tabs (have IDs already)
-  ['chats','products','services','orders','settings','help'].forEach(tab => {
+  ['chats','products','services','orders','appointments','settings','help'].forEach(tab => {
     const el = document.getElementById('tab' + cap(tab));
     if (el) el.textContent = t('tab.' + tab);
   });
@@ -3593,7 +3663,7 @@ async function deleteBlockFromCell(id) {
 
 // ── Business hours (Settings) ────────────────────────────────────────────────
 
-const BH_DAYS = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+function getBhDays() { return [t('day.sun'),t('day.mon'),t('day.tue'),t('day.wed'),t('day.thu'),t('day.fri'),t('day.sat')]; }
 
 function renderBusinessHoursForm(data) {
   const container = document.getElementById('businessHoursForm');
@@ -3602,7 +3672,7 @@ function renderBusinessHoursForm(data) {
   const map = {};
   (data || []).forEach(r => { map[r.day_of_week] = r; });
 
-  container.innerHTML = BH_DAYS.map((name, i) => {
+  container.innerHTML = getBhDays().map((name, i) => {
     const row = map[i] || {};
     const closed = row.is_closed !== false && !row.open_time;
     return `
@@ -3610,7 +3680,7 @@ function renderBusinessHoursForm(data) {
       <span class="w-24 text-gray-600 font-medium flex-shrink-0">${name}</span>
       <label class="flex items-center gap-1 text-xs text-gray-500 flex-shrink-0">
         <input type="checkbox" id="bhClosed_${i}" ${closed ? 'checked' : ''} onchange="toggleBhDay(${i})" class="accent-red-400"/>
-        Cerrado
+        ${t('appt.bh.closed')}
       </label>
       <div id="bhTimes_${i}" class="${closed ? 'hidden' : ''} flex items-center gap-2">
         <input type="time" id="bhOpen_${i}" value="${row.open_time || '09:00'}" class="border border-gray-200 rounded px-2 py-1 text-xs"/>
