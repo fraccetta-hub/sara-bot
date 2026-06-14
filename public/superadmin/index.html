@@ -8,6 +8,7 @@
   <style>
     .status-active   { background:#D1FAE5; color:#065F46; }
     .status-inactive { background:#FEE2E2; color:#991B1B; }
+    .status-overdue  { background:#FEF3C7; color:#92400E; }
     .badge { font-size:.72rem; padding:2px 8px; border-radius:999px; font-weight:600; }
     .tab-active { border-bottom:3px solid #7C3AED; color:#7C3AED; font-weight:600; }
     input:focus,select:focus,textarea:focus { outline:2px solid #7C3AED; outline-offset:1px; }
@@ -386,11 +387,22 @@ function renderTenants(list) {
     tbody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-gray-400">No hay clientes.</td></tr>';
     return;
   }
-  tbody.innerHTML = list.map(t => `
+  const now = new Date();
+  tbody.innerHTML = list.map(t => {
+    const expired = t.active && t.plan_expires && new Date(t.plan_expires) < now;
+    const statusClass = !t.active ? 'status-inactive' : expired ? 'status-overdue' : 'status-active';
+    const statusLabel = !t.active ? '🔴 Inactivo' : expired ? '🟠 Moroso' : '✅ Activo';
+    const expiryHint  = t.plan_expires
+      ? `<div class="text-xs ${expired ? 'text-orange-500 font-medium' : 'text-gray-300'} mt-0.5">
+           ${expired ? '⚠️ Venció' : 'Vence'} ${new Date(t.plan_expires).toLocaleDateString('es-PY')}
+         </div>`
+      : '';
+    return `
     <tr class="hover:bg-gray-50 transition border-t border-gray-50">
       <td class="px-4 py-3">
         <div class="font-medium text-gray-800">${t.name}</div>
         <div class="text-xs text-gray-400">${t.bot_name || 'Sara'} · desde ${new Date(t.created_at).toLocaleDateString('es-PY')}</div>
+        ${expiryHint}
       </td>
       <td class="px-4 py-3 text-gray-400 text-xs hidden md:table-cell font-mono">${t.phone_number_id}</td>
       <td class="px-4 py-3 text-center hidden sm:table-cell">
@@ -399,15 +411,16 @@ function renderTenants(list) {
       </td>
       <td class="px-4 py-3 text-center">
         <button onclick="toggleTenant('${t.id}')"
-          class="badge ${t.active ? 'status-active' : 'status-inactive'} cursor-pointer hover:opacity-75 transition">
-          ${t.active ? '✅ Activo' : '🔴 Inactivo'}
+          class="badge ${statusClass} cursor-pointer hover:opacity-75 transition">
+          ${statusLabel}
         </button>
       </td>
       <td class="px-4 py-3 text-center">
         <button onclick="openEditModal('${t.id}')"
           class="text-purple-500 hover:text-purple-700 text-sm font-medium">✏️ Editar</button>
       </td>
-    </tr>`).join('');
+    </tr>`;
+  }).join('');
 }
 
 // ── Toggle active ──────────────────────────────────────────────────────────────
