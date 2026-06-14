@@ -106,7 +106,7 @@
             <label class="block text-sm font-medium text-gray-700 mb-1">Usuario (login) *</label>
             <input id="nSlug" type="text" placeholder="Ej: lasorquideas"
               class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
-            <p class="text-xs text-gray-400 mt-1">El comerciante usará este nombre para entrar al panel. Sin espacios.</p>
+            <p class="text-xs text-gray-400 mt-1">Sin espacios. El merchant lo usará para entrar.</p>
           </div>
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Phone Number ID (Meta) *</label>
@@ -114,35 +114,9 @@
               class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
             <p class="text-xs text-gray-400 mt-1">Meta Developer Portal → WhatsApp → Phone Numbers</p>
           </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Nombre del bot</label>
-            <input id="nBotName" type="text" placeholder="Sara" value="Sara"
-              class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
-          </div>
-          <div>
+          <div class="sm:col-span-2">
             <label class="block text-sm font-medium text-gray-700 mb-1">Número WhatsApp del merchant</label>
             <input id="nMerchant" type="text" placeholder="595981000001"
-              class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
-          </div>
-          <div class="sm:col-span-2">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Personalidad del bot</label>
-            <input id="nPersonality" type="text" placeholder="cálida, profesional y entusiasta"
-              class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
-          </div>
-          <div class="sm:col-span-2">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Instrucciones de pago</label>
-            <textarea id="nPayment" rows="2"
-              placeholder="Ej: Pagá por Billetera Personal al 0981-000-001..."
-              class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm resize-none"></textarea>
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Cargo base envío (Gs)</label>
-            <input id="nDeliveryBase" type="number" value="5000"
-              class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Cargo por km (Gs)</label>
-            <input id="nDeliveryKm" type="number" value="1000"
               class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
           </div>
         </div>
@@ -676,15 +650,10 @@ async function createTenant() {
   try {
     const slug = document.getElementById('nSlug').value.trim().toLowerCase().replace(/\s+/g,'');
     const t = await api('/superadmin/tenants', 'POST', {
-      name:                 document.getElementById('nName').value.trim(),
-      login_slug:           slug || null,
-      phone_number_id:      document.getElementById('nPhoneId').value.trim(),
-      bot_name:             document.getElementById('nBotName').value.trim() || 'Sara',
-      bot_personality:      document.getElementById('nPersonality').value.trim() || null,
-      merchant_phone:       document.getElementById('nMerchant').value.trim() || null,
-      payment_instructions: document.getElementById('nPayment').value.trim() || null,
-      delivery_base_fee:    parseInt(document.getElementById('nDeliveryBase').value) || 5000,
-      delivery_per_km:      parseInt(document.getElementById('nDeliveryKm').value)   || 1000,
+      name:            document.getElementById('nName').value.trim(),
+      login_slug:      slug || null,
+      phone_number_id: document.getElementById('nPhoneId').value.trim(),
+      merchant_phone:  document.getElementById('nMerchant').value.trim() || null,
     });
 
     succEl.innerHTML = `
@@ -696,10 +665,7 @@ async function createTenant() {
     succEl.classList.remove('hidden');
 
     // Clear form
-    ['nName','nSlug','nPhoneId','nMerchant','nPersonality','nPayment'].forEach(id => document.getElementById(id).value = '');
-    document.getElementById('nBotName').value      = 'Sara';
-    document.getElementById('nDeliveryBase').value = '5000';
-    document.getElementById('nDeliveryKm').value   = '1000';
+    ['nName','nSlug','nPhoneId','nMerchant'].forEach(id => document.getElementById(id).value = '');
 
     await loadTenants();
     switchTab('tenants');
