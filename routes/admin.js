@@ -25,15 +25,32 @@ const JWT_SECRET = process.env.ADMIN_JWT_SECRET || 'sara-bot-secret-change-me';
 
 // ─── Auth middleware ──────────────────────────────────────────────────────────
 
-function requireAuth(req, res, next) {
+// Routes accessible even when account is suspended (so merchant can contact support / see status)
+const ALWAYS_ALLOWED = ['/admin/support', '/admin/settings'];
+
+async function requireAuth(req, res, next) {
   const auth = req.headers.authorization;
   if (!auth?.startsWith('Bearer ')) return res.status(401).json({ error: 'No autorizado' });
   try {
     req.tenant = jwt.verify(auth.slice(7), JWT_SECRET);
-    next();
   } catch {
-    res.status(401).json({ error: 'Token inválido o expirado' });
+    return res.status(401).json({ error: 'Token inválido o expirado' });
   }
+
+  // Always-allowed routes skip the active/expiry check
+  if (ALWAYS_ALLOWED.some(p => req.originalUrl.startsWith(p))) return next();
+
+  // Check active flag and plan expiry on every authenticated request
+  const { data: tenant } = await supabase
+    .from('tenants').select('active, plan_expires').eq('id', req.tenant.tenantId).single();
+
+  if (!tenant || !tenant.active)
+    return res.status(403).json({ error: 'Cuenta suspendida. Contactá a soporte.', suspended: true });
+
+  if (tenant.plan_expires && new Date(tenant.plan_expires) < new Date())
+    return res.status(403).json({ error: 'Plan vencido. Renovalo para continuar.', expired: true });
+
+  next();
 }
 
 // ─── Smart rate limiting (progressive delays, no hard lockout) ────────────────

@@ -64,8 +64,12 @@ async function processIncoming(body) {
 
   const token = tenant.whatsapp_token || process.env.WHATSAPP_TOKEN;
 
-  // 2. Kill switch
+  // 2. Kill switch — inactive or expired plan
   if (!tenant.active) {
+    await sendMessage(senderPhone, 'Servicio momentáneamente no disponible. Disculpe las molestias 🙏', phoneNumberId, token);
+    return;
+  }
+  if (tenant.plan_expires && new Date(tenant.plan_expires) < new Date()) {
     await sendMessage(senderPhone, 'Servicio momentáneamente no disponible. Disculpe las molestias 🙏', phoneNumberId, token);
     return;
   }

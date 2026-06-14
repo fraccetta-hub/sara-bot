@@ -3228,12 +3228,38 @@ async function api(path, method = 'GET', body = null, auth = true) {
   const res  = await fetch(path, opts);
   const data = await res.json();
   if (!res.ok) {
+    if (res.status === 403 && data.suspended) {
+      showAccountBanner('suspended');
+      const err = new Error(data.error); err.status = 403; throw err;
+    }
+    if (res.status === 403 && data.expired) {
+      showAccountBanner('expired');
+      const err = new Error(data.error); err.status = 403; throw err;
+    }
+    if (res.status === 401) { logout(); return; }
     const err = new Error(data.error || 'Error desconocido');
     err.status = res.status;
     if (data.retryAfter) err.retryAfter = data.retryAfter;
     throw err;
   }
   return data;
+}
+
+function showAccountBanner(type) {
+  let banner = document.getElementById('accountBanner');
+  if (!banner) {
+    banner = document.createElement('div');
+    banner.id = 'accountBanner';
+    banner.className = 'fixed top-0 inset-x-0 z-50 px-4 py-3 text-sm font-semibold text-center flex items-center justify-center gap-3 shadow-lg';
+    document.body.prepend(banner);
+  }
+  if (type === 'suspended') {
+    banner.className += ' bg-red-600 text-white';
+    banner.innerHTML = '🔴 Tu cuenta está suspendida. <button onclick="switchTab(\'support\')" class="underline ml-2">Contactar soporte</button>';
+  } else {
+    banner.className += ' bg-amber-500 text-white';
+    banner.innerHTML = '⚠️ Tu plan venció. El bot está pausado. <button onclick="switchTab(\'plan\')" class="underline ml-2">Ver opciones</button> · <button onclick="switchTab(\'support\')" class="underline">Contactar soporte</button>';
+  }
 }
 
 function formatGs(n) { return (n || 0).toLocaleString('es-PY') + ' Gs'; }
