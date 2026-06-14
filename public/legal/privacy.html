@@ -51,17 +51,21 @@
 <h2>2. Datos que Recopilamos</h2>
 <h3>Datos del Merchant</h3>
 <table><tr><th>Dato</th><th>Finalidad</th><th>Conservación</th></tr>
-<tr><td>Nombre del negocio</td><td>Identificación de cuenta</td><td>Contrato + 90 días</td></tr>
-<tr><td>Número de WhatsApp</td><td>Conexión API Meta</td><td>Contrato + 90 días</td></tr>
-<tr><td>Contraseña (hash)</td><td>Autenticación</td><td>Contrato + 90 días</td></tr>
-<tr><td>Catálogo y configuración</td><td>Funcionamiento del bot</td><td>Contrato + 90 días</td></tr></table>
+<tr><td>Nombre del negocio</td><td>Identificación de cuenta</td><td>Hasta cancelación de cuenta</td></tr>
+<tr><td>Número de WhatsApp Business</td><td>Conexión API Meta</td><td>Hasta cancelación de cuenta</td></tr>
+<tr><td>Contraseña (hash bcrypt, no reversible)</td><td>Autenticación</td><td>Hasta cancelación de cuenta</td></tr>
+<tr><td>Catálogo de productos/servicios</td><td>Funcionamiento del bot</td><td>Hasta cancelación de cuenta</td></tr>
+<tr><td>Configuración del bot (nombre, personalidad, instrucciones)</td><td>Personalización del asistente</td><td>Hasta cancelación de cuenta</td></tr>
+<tr><td>Configuración de envíos y horarios</td><td>Cálculo de delivery y agenda</td><td>Hasta cancelación de cuenta</td></tr></table>
 <h3>Datos de Clientes Finales</h3>
 <p>Sara Bot procesa estos datos como <strong>encargado del tratamiento</strong>; el Merchant es el responsable frente a sus clientes.</p>
 <table><tr><th>Dato</th><th>Finalidad</th><th>Conservación</th></tr>
 <tr><td>Número de teléfono</td><td>Identificación de conversación</td><td>90 días (eliminación automática)</td></tr>
-<tr><td>Nombre de perfil WhatsApp</td><td>Personalización</td><td>90 días (eliminación automática)</td></tr>
-<tr><td>Historial de conversación</td><td>Contexto para la IA</td><td>90 días (eliminación automática)</td></tr>
-<tr><td>Pedidos</td><td>Gestión comercial</td><td>Hasta cancelación de cuenta. Exportable en CSV desde el panel.</td></tr></table>
+<tr><td>Nombre de perfil WhatsApp</td><td>Personalización de respuestas</td><td>90 días (eliminación automática)</td></tr>
+<tr><td>Mensajes de texto de la conversación</td><td>Contexto para la IA</td><td>90 días (eliminación automática)</td></tr>
+<tr><td>Transcripción de mensajes de voz</td><td>Procesamiento por IA (el audio no se almacena)</td><td>90 días (eliminación automática)</td></tr>
+<tr><td>Imágenes enviadas por el cliente</td><td>Análisis puntual por IA (no se almacenan en base de datos)</td><td>No se conservan. Se procesan en tiempo real por Anthropic.</td></tr>
+<tr><td>Pedidos</td><td>Gestión comercial del Merchant</td><td>Hasta cancelación de cuenta. Exportable en CSV desde el panel.</td></tr></table>
 <h2>3. Proveedores Terceros</h2>
 <ul><li><strong>Meta Platforms Inc.</strong> — API de WhatsApp Business</li><li><strong>Anthropic PBC</strong> — IA generativa (Claude)</li><li><strong>Supabase Inc.</strong> — Base de datos en la nube</li><li><strong>Render Inc.</strong> — Infraestructura de servidor</li></ul>
 <h2>4. Seguridad</h2>
@@ -73,8 +77,8 @@
   <li><strong>Eliminar cuenta y todos los datos:</strong> sección Ajustes → "Eliminar cuenta". La eliminación es inmediata e irreversible.</li>
   <li><strong>Otras consultas:</strong> <a href="mailto:soporte@candidatelens.com">soporte@candidatelens.com</a>.</li>
 </ul>
-<h2>6. Cookies</h2>
-<p>Solo se utilizan cookies esenciales para el funcionamiento del panel. No se usan cookies de rastreo sin consentimiento previo.</p>
+<h2>6. Almacenamiento local (localStorage)</h2>
+<p>El panel de administración utiliza <strong>localStorage</strong> del navegador (no cookies HTTP) para conservar la sesión del Merchant (token JWT) y preferencias de idioma. No se utilizan cookies de seguimiento ni tecnologías de rastreo de terceros. El banner de cookies del sitio permite gestionar las preferencias.</p>
 <h2>7. Cambios en esta Política</h2>
 <p>Los cambios significativos serán notificados mediante aviso en la plataforma con al menos 15 días de anticipación. El uso continuado implica aceptación.</p>
 <hr><p style="font-size:12px;color:#999">Contacto: <a href="mailto:soporte@candidatelens.com">soporte@candidatelens.com</a></p>
@@ -90,17 +94,21 @@
 <h2>2. Data We Collect</h2>
 <h3>Merchant Data</h3>
 <table><tr><th>Data</th><th>Purpose</th><th>Retention</th></tr>
-<tr><td>Business name</td><td>Account identification</td><td>Contract + 90 days</td></tr>
-<tr><td>WhatsApp number</td><td>Meta API connection</td><td>Contract + 90 days</td></tr>
-<tr><td>Password (hash)</td><td>Authentication</td><td>Contract + 90 days</td></tr>
-<tr><td>Catalog and settings</td><td>Bot operation</td><td>Contract + 90 days</td></tr></table>
+<tr><td>Business name</td><td>Account identification</td><td>Until account deletion</td></tr>
+<tr><td>WhatsApp Business number</td><td>Meta API connection</td><td>Until account deletion</td></tr>
+<tr><td>Password (bcrypt hash, not reversible)</td><td>Authentication</td><td>Until account deletion</td></tr>
+<tr><td>Product/service catalog</td><td>Bot operation</td><td>Until account deletion</td></tr>
+<tr><td>Bot configuration (name, personality, instructions)</td><td>Assistant personalisation</td><td>Until account deletion</td></tr>
+<tr><td>Delivery and business hours settings</td><td>Delivery calculation and scheduling</td><td>Until account deletion</td></tr></table>
 <h3>End Customer Data</h3>
 <p>Sara Bot processes this data as a <strong>data processor</strong>; the Merchant is the controller towards their customers.</p>
 <table><tr><th>Data</th><th>Purpose</th><th>Retention</th></tr>
 <tr><td>Phone number</td><td>Conversation identification</td><td>90 days (auto-deleted)</td></tr>
-<tr><td>WhatsApp profile name</td><td>Personalization</td><td>90 days (auto-deleted)</td></tr>
-<tr><td>Conversation history</td><td>AI context</td><td>90 days (auto-deleted)</td></tr>
-<tr><td>Orders</td><td>Commerce management</td><td>Until account deletion. Exportable as CSV from the panel.</td></tr></table>
+<tr><td>WhatsApp profile name</td><td>Response personalisation</td><td>90 days (auto-deleted)</td></tr>
+<tr><td>Text conversation history</td><td>AI context</td><td>90 days (auto-deleted)</td></tr>
+<tr><td>Voice message transcription</td><td>AI processing (audio file not stored)</td><td>90 days (auto-deleted)</td></tr>
+<tr><td>Images sent by customer</td><td>Real-time AI analysis (not stored in database)</td><td>Not retained. Processed in real time by Anthropic.</td></tr>
+<tr><td>Orders</td><td>Merchant commerce management</td><td>Until account deletion. Exportable as CSV from the panel.</td></tr></table>
 <h2>3. Third-Party Providers</h2>
 <ul><li><strong>Meta Platforms Inc.</strong> — WhatsApp Business API</li><li><strong>Anthropic PBC</strong> — Generative AI (Claude)</li><li><strong>Supabase Inc.</strong> — Cloud database</li><li><strong>Render Inc.</strong> — Server infrastructure</li></ul>
 <h2>4. Security</h2>
@@ -112,8 +120,8 @@
   <li><strong>Delete account and all data:</strong> Settings section → "Delete account". Deletion is immediate and irreversible.</li>
   <li><strong>Other enquiries:</strong> <a href="mailto:soporte@candidatelens.com">soporte@candidatelens.com</a>.</li>
 </ul>
-<h2>6. Cookies</h2>
-<p>Only essential cookies are used for panel operation. No tracking cookies without prior consent.</p>
+<h2>6. Local Storage</h2>
+<p>The admin panel uses the browser's <strong>localStorage</strong> (not HTTP cookies) to maintain the Merchant's session (JWT token) and language preferences. No tracking cookies or third-party tracking technologies are used. The site's cookie banner allows managing preferences.</p>
 <h2>7. Changes to this Policy</h2>
 <p>Significant changes will be announced on the platform at least 15 days in advance. Continued use implies acceptance.</p>
 <hr><p style="font-size:12px;color:#999">Contact: <a href="mailto:soporte@candidatelens.com">soporte@candidatelens.com</a></p>
@@ -129,17 +137,21 @@
 <h2>2. Dati che Raccogliamo</h2>
 <h3>Dati del Merchant</h3>
 <table><tr><th>Dato</th><th>Finalità</th><th>Conservazione</th></tr>
-<tr><td>Nome del negozio</td><td>Identificazione account</td><td>Contratto + 90 giorni</td></tr>
-<tr><td>Numero WhatsApp</td><td>Connessione API Meta</td><td>Contratto + 90 giorni</td></tr>
-<tr><td>Password (hash)</td><td>Autenticazione</td><td>Contratto + 90 giorni</td></tr>
-<tr><td>Catalogo e configurazione</td><td>Funzionamento del bot</td><td>Contratto + 90 giorni</td></tr></table>
+<tr><td>Nome del negozio</td><td>Identificazione account</td><td>Fino alla cancellazione dell'account</td></tr>
+<tr><td>Numero WhatsApp Business</td><td>Connessione API Meta</td><td>Fino alla cancellazione dell'account</td></tr>
+<tr><td>Password (hash bcrypt, non reversibile)</td><td>Autenticazione</td><td>Fino alla cancellazione dell'account</td></tr>
+<tr><td>Catalogo prodotti/servizi</td><td>Funzionamento del bot</td><td>Fino alla cancellazione dell'account</td></tr>
+<tr><td>Configurazione bot (nome, personalità, istruzioni)</td><td>Personalizzazione dell'assistente</td><td>Fino alla cancellazione dell'account</td></tr>
+<tr><td>Impostazioni consegne e orari</td><td>Calcolo delivery e agenda</td><td>Fino alla cancellazione dell'account</td></tr></table>
 <h3>Dati dei Clienti Finali</h3>
 <p>Sara Bot tratta questi dati come <strong>responsabile del trattamento</strong>; il Merchant è il titolare nei confronti dei propri clienti.</p>
 <table><tr><th>Dato</th><th>Finalità</th><th>Conservazione</th></tr>
 <tr><td>Numero di telefono</td><td>Identificazione conversazione</td><td>90 giorni (eliminazione automatica)</td></tr>
-<tr><td>Nome profilo WhatsApp</td><td>Personalizzazione</td><td>90 giorni (eliminazione automatica)</td></tr>
-<tr><td>Cronologia conversazione</td><td>Contesto per l'IA</td><td>90 giorni (eliminazione automatica)</td></tr>
-<tr><td>Ordini</td><td>Gestione commerciale</td><td>Fino alla cancellazione dell'account. Esportabili in CSV dal pannello.</td></tr></table>
+<tr><td>Nome profilo WhatsApp</td><td>Personalizzazione delle risposte</td><td>90 giorni (eliminazione automatica)</td></tr>
+<tr><td>Testo della conversazione</td><td>Contesto per l'IA</td><td>90 giorni (eliminazione automatica)</td></tr>
+<tr><td>Trascrizione messaggi vocali</td><td>Elaborazione IA (il file audio non viene conservato)</td><td>90 giorni (eliminazione automatica)</td></tr>
+<tr><td>Immagini inviate dal cliente</td><td>Analisi in tempo reale dall'IA (non salvate nel database)</td><td>Non conservate. Elaborate in tempo reale da Anthropic.</td></tr>
+<tr><td>Ordini</td><td>Gestione commerciale del Merchant</td><td>Fino alla cancellazione dell'account. Esportabili in CSV dal pannello.</td></tr></table>
 <h2>3. Fornitori Terzi</h2>
 <ul><li><strong>Meta Platforms Inc.</strong> — API WhatsApp Business</li><li><strong>Anthropic PBC</strong> — IA generativa (Claude)</li><li><strong>Supabase Inc.</strong> — Database cloud</li><li><strong>Render Inc.</strong> — Infrastruttura server</li></ul>
 <h2>4. Sicurezza</h2>
@@ -151,8 +163,8 @@
   <li><strong>Eliminare l'account e tutti i dati:</strong> sezione Impostazioni → "Elimina account". L'eliminazione è immediata e irreversibile.</li>
   <li><strong>Altre richieste:</strong> <a href="mailto:soporte@candidatelens.com">soporte@candidatelens.com</a>.</li>
 </ul>
-<h2>6. Cookie</h2>
-<p>Vengono utilizzati solo cookie essenziali per il funzionamento del pannello. Nessun cookie di tracciamento senza consenso preventivo.</p>
+<h2>6. Archiviazione locale (localStorage)</h2>
+<p>Il pannello di amministrazione utilizza il <strong>localStorage</strong> del browser (non cookie HTTP) per mantenere la sessione del Merchant (token JWT) e le preferenze di lingua. Non vengono utilizzati cookie di tracciamento né tecnologie di profilazione di terze parti. Il banner del sito consente di gestire le preferenze.</p>
 <h2>7. Modifiche a questa Informativa</h2>
 <p>Le modifiche significative saranno comunicate tramite avviso nella piattaforma con almeno 15 giorni di anticipo. L'uso continuato implica accettazione.</p>
 <hr><p style="font-size:12px;color:#999">Contatto: <a href="mailto:soporte@candidatelens.com">soporte@candidatelens.com</a></p>
@@ -168,17 +180,21 @@
 <h2>2. Erhobene Daten</h2>
 <h3>Händlerdaten</h3>
 <table><tr><th>Datum</th><th>Zweck</th><th>Aufbewahrung</th></tr>
-<tr><td>Unternehmensname</td><td>Kontoidentifikation</td><td>Vertrag + 90 Tage</td></tr>
-<tr><td>WhatsApp-Nummer</td><td>Meta API-Verbindung</td><td>Vertrag + 90 Tage</td></tr>
-<tr><td>Passwort (Hash)</td><td>Authentifizierung</td><td>Vertrag + 90 Tage</td></tr>
-<tr><td>Katalog und Einstellungen</td><td>Bot-Betrieb</td><td>Vertrag + 90 Tage</td></tr></table>
+<tr><td>Unternehmensname</td><td>Kontoidentifikation</td><td>Bis zur Kontoschließung</td></tr>
+<tr><td>WhatsApp Business-Nummer</td><td>Meta API-Verbindung</td><td>Bis zur Kontoschließung</td></tr>
+<tr><td>Passwort (bcrypt-Hash, nicht umkehrbar)</td><td>Authentifizierung</td><td>Bis zur Kontoschließung</td></tr>
+<tr><td>Produkt-/Dienstkatalog</td><td>Bot-Betrieb</td><td>Bis zur Kontoschließung</td></tr>
+<tr><td>Bot-Konfiguration (Name, Persönlichkeit, Anweisungen)</td><td>Assistenten-Personalisierung</td><td>Bis zur Kontoschließung</td></tr>
+<tr><td>Liefer- und Geschäftszeiteneinstellungen</td><td>Lieferberechnung und Terminplanung</td><td>Bis zur Kontoschließung</td></tr></table>
 <h3>Daten von Endkunden</h3>
 <p>Sara Bot verarbeitet diese Daten als <strong>Auftragsverarbeiter</strong>; der Händler ist gegenüber seinen Kunden der Verantwortliche.</p>
 <table><tr><th>Datum</th><th>Zweck</th><th>Aufbewahrung</th></tr>
 <tr><td>Telefonnummer</td><td>Gesprächsidentifikation</td><td>90 Tage (automatische Löschung)</td></tr>
-<tr><td>WhatsApp-Profilname</td><td>Personalisierung</td><td>90 Tage (automatische Löschung)</td></tr>
-<tr><td>Gesprächsverlauf</td><td>KI-Kontext</td><td>90 Tage (automatische Löschung)</td></tr>
-<tr><td>Bestellungen</td><td>Handelsverwaltung</td><td>Bis zur Kontoschließung. Als CSV aus dem Panel exportierbar.</td></tr></table>
+<tr><td>WhatsApp-Profilname</td><td>Antwort-Personalisierung</td><td>90 Tage (automatische Löschung)</td></tr>
+<tr><td>Gesprächstext</td><td>KI-Kontext</td><td>90 Tage (automatische Löschung)</td></tr>
+<tr><td>Sprachnachricht-Transkription</td><td>KI-Verarbeitung (Audiodatei wird nicht gespeichert)</td><td>90 Tage (automatische Löschung)</td></tr>
+<tr><td>Vom Kunden gesendete Bilder</td><td>Echtzeit-KI-Analyse (nicht in Datenbank gespeichert)</td><td>Nicht aufbewahrt. Echtzeit-Verarbeitung durch Anthropic.</td></tr>
+<tr><td>Bestellungen</td><td>Handelsverwaltung des Händlers</td><td>Bis zur Kontoschließung. Als CSV aus dem Panel exportierbar.</td></tr></table>
 <h2>3. Drittanbieter</h2>
 <ul><li><strong>Meta Platforms Inc.</strong> — WhatsApp Business API</li><li><strong>Anthropic PBC</strong> — Generative KI (Claude)</li><li><strong>Supabase Inc.</strong> — Cloud-Datenbank</li><li><strong>Render Inc.</strong> — Serverinfrastruktur</li></ul>
 <h2>4. Sicherheit</h2>
@@ -190,8 +206,8 @@
   <li><strong>Konto und alle Daten löschen:</strong> Bereich Einstellungen → "Konto löschen". Die Löschung ist sofort und unwiderruflich.</li>
   <li><strong>Sonstige Anfragen:</strong> <a href="mailto:soporte@candidatelens.com">soporte@candidatelens.com</a>.</li>
 </ul>
-<h2>6. Cookies</h2>
-<p>Es werden nur technisch notwendige Cookies für den Panelbetrieb verwendet. Keine Tracking-Cookies ohne vorherige Einwilligung.</p>
+<h2>6. Lokaler Speicher (localStorage)</h2>
+<p>Das Admin-Panel verwendet den <strong>localStorage</strong> des Browsers (keine HTTP-Cookies), um die Sitzung des Händlers (JWT-Token) und Spracheinstellungen zu speichern. Es werden keine Tracking-Cookies oder Drittanbieter-Tracking-Technologien verwendet. Das Cookie-Banner der Website ermöglicht die Verwaltung der Einstellungen.</p>
 <h2>7. Änderungen dieser Richtlinie</h2>
 <p>Wesentliche Änderungen werden mindestens 15 Tage im Voraus über die Plattform angekündigt. Die fortgesetzte Nutzung gilt als Zustimmung.</p>
 <hr><p style="font-size:12px;color:#999">Kontakt: <a href="mailto:soporte@candidatelens.com">soporte@candidatelens.com</a></p>
@@ -207,17 +223,21 @@
 <h2>2. Données Collectées</h2>
 <h3>Données du Marchand</h3>
 <table><tr><th>Donnée</th><th>Finalité</th><th>Conservation</th></tr>
-<tr><td>Nom du commerce</td><td>Identification du compte</td><td>Contrat + 90 jours</td></tr>
-<tr><td>Numéro WhatsApp</td><td>Connexion API Meta</td><td>Contrat + 90 jours</td></tr>
-<tr><td>Mot de passe (hash)</td><td>Authentification</td><td>Contrat + 90 jours</td></tr>
-<tr><td>Catalogue et configuration</td><td>Fonctionnement du bot</td><td>Contrat + 90 jours</td></tr></table>
+<tr><td>Nom du commerce</td><td>Identification du compte</td><td>Jusqu'à suppression du compte</td></tr>
+<tr><td>Numéro WhatsApp Business</td><td>Connexion API Meta</td><td>Jusqu'à suppression du compte</td></tr>
+<tr><td>Mot de passe (hash bcrypt, non réversible)</td><td>Authentification</td><td>Jusqu'à suppression du compte</td></tr>
+<tr><td>Catalogue produits/services</td><td>Fonctionnement du bot</td><td>Jusqu'à suppression du compte</td></tr>
+<tr><td>Configuration du bot (nom, personnalité, instructions)</td><td>Personnalisation de l'assistant</td><td>Jusqu'à suppression du compte</td></tr>
+<tr><td>Paramètres de livraison et horaires</td><td>Calcul de livraison et agenda</td><td>Jusqu'à suppression du compte</td></tr></table>
 <h3>Données des Clients Finaux</h3>
 <p>Sara Bot traite ces données en tant que <strong>sous-traitant</strong> ; le Marchand est le responsable vis-à-vis de ses clients.</p>
 <table><tr><th>Donnée</th><th>Finalité</th><th>Conservation</th></tr>
 <tr><td>Numéro de téléphone</td><td>Identification de conversation</td><td>90 jours (suppression automatique)</td></tr>
-<tr><td>Nom de profil WhatsApp</td><td>Personnalisation</td><td>90 jours (suppression automatique)</td></tr>
-<tr><td>Historique de conversation</td><td>Contexte IA</td><td>90 jours (suppression automatique)</td></tr>
-<tr><td>Commandes</td><td>Gestion commerciale</td><td>Jusqu'à suppression du compte. Exportables en CSV depuis le panel.</td></tr></table>
+<tr><td>Nom de profil WhatsApp</td><td>Personnalisation des réponses</td><td>90 jours (suppression automatique)</td></tr>
+<tr><td>Texte de la conversation</td><td>Contexte IA</td><td>90 jours (suppression automatique)</td></tr>
+<tr><td>Transcription des messages vocaux</td><td>Traitement IA (fichier audio non conservé)</td><td>90 jours (suppression automatique)</td></tr>
+<tr><td>Images envoyées par le client</td><td>Analyse IA en temps réel (non stockées en base de données)</td><td>Non conservées. Traitées en temps réel par Anthropic.</td></tr>
+<tr><td>Commandes</td><td>Gestion commerciale du Marchand</td><td>Jusqu'à suppression du compte. Exportables en CSV depuis le panel.</td></tr></table>
 <h2>3. Prestataires Tiers</h2>
 <ul><li><strong>Meta Platforms Inc.</strong> — API WhatsApp Business</li><li><strong>Anthropic PBC</strong> — IA générative (Claude)</li><li><strong>Supabase Inc.</strong> — Base de données cloud</li><li><strong>Render Inc.</strong> — Infrastructure serveur</li></ul>
 <h2>4. Sécurité</h2>
@@ -229,8 +249,8 @@
   <li><strong>Supprimer le compte et toutes les données :</strong> section Paramètres → "Supprimer le compte". La suppression est immédiate et irréversible.</li>
   <li><strong>Autres demandes :</strong> <a href="mailto:soporte@candidatelens.com">soporte@candidatelens.com</a>.</li>
 </ul>
-<h2>6. Cookies</h2>
-<p>Seuls des cookies essentiels au fonctionnement du panel sont utilisés. Aucun cookie de suivi sans consentement préalable.</p>
+<h2>6. Stockage local (localStorage)</h2>
+<p>Le panel d'administration utilise le <strong>localStorage</strong> du navigateur (pas de cookies HTTP) pour conserver la session du Marchand (token JWT) et les préférences de langue. Aucun cookie de suivi ni technologie de traçage tiers n'est utilisé. La bannière du site permet de gérer les préférences.</p>
 <h2>7. Modifications de cette Politique</h2>
 <p>Les modifications importantes seront annoncées sur la plateforme au moins 15 jours à l'avance. L'utilisation continue vaut acceptation.</p>
 <hr><p style="font-size:12px;color:#999">Contact : <a href="mailto:soporte@candidatelens.com">soporte@candidatelens.com</a></p>
