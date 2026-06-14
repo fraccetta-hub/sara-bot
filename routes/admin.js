@@ -9,7 +9,7 @@ const { uploadImageBuffer } = require('../services/storage');
 const { sendMessage, sendImage } = require('../services/whatsapp');
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-const uploadCatalog = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024, files: 6 } });
+const uploadCatalog = multer({ storage: multer.memoryStorage(), limits: { fileSize: 4 * 1024 * 1024, files: 6 } });
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -39,6 +39,27 @@ function requireAuth(req, res, next) {
 // ─── Smart rate limiting (progressive delays, no hard lockout) ────────────────
 // Tracks failed attempts per IP: { ip -> { count, nextAllowedAt } }
 const loginAttempts = new Map();
+
+// ─── Support chat rate limiter — max 10 messages per minute per tenant ────────
+const supportMsgCounts = new Map(); // tenantId -> { count, windowStart }
+
+function checkSupportRateLimit(tenantId) {
+  const now = Date.now();
+  const entry = supportMsgCounts.get(tenantId);
+  if (!entry || now - entry.windowStart > 60_000) {
+    supportMsgCounts.set(tenantId, { count: 1, windowStart: now });
+    return true;
+  }
+  entry.count++;
+  return entry.count <= 10;
+}
+
+setInterval(() => {
+  const now = Date.now();
+  for (const [id, e] of supportMsgCounts) {
+    if (now - e.windowStart > 60_000) supportMsgCounts.delete(id);
+  }
+}, 60_000);
 
 // Clean up old entries every 10 minutes to avoid memory leaks
 setInterval(() => {
@@ -1149,6 +1170,9 @@ router.get('/support', requireAuth, async (req, res) => {
 
 // ─── POST /admin/support — merchant sends a support message ──────────────────
 router.post('/support', requireAuth, async (req, res) => {
+  if (!checkSupportRateLimit(req.tenant.tenantId))
+    return res.status(429).json({ error: 'Demasiados mensajes. Esperá un momento.' });
+
   const { content } = req.body;
   if (!content?.trim()) return res.status(400).json({ error: 'Mensaje vacío' });
 
