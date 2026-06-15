@@ -49,7 +49,7 @@
 <div id="heroBlock" class="text-center py-8 px-4">
   <div class="text-4xl mb-3">🚀</div>
   <h1 class="text-2xl font-bold text-gray-800 mb-2">Activá tu asistente WhatsApp en 3 minutos</h1>
-  <p class="text-gray-500 text-sm max-w-md mx-auto">7 días gratis, sin tarjeta de crédito. Después elegís el plan que más te conviene.</p>
+  <p class="text-gray-500 text-sm max-w-md mx-auto">Ingresás tu tarjeta ahora — <strong>no se cobra nada por 7 días</strong>. Cancelás antes del día 8 y no pagás nada.</p>
   <!-- Social proof -->
   <div class="flex items-center justify-center gap-4 mt-4 flex-wrap">
     <span class="text-xs text-gray-400 flex items-center gap-1">✅ Sin contrato</span>
@@ -237,16 +237,17 @@
         </div>
       </div>
 
-      <p class="text-xs text-gray-400 text-center mb-4">
-        💡 Empezás con 7 días gratis. Al terminar la prueba recibirás un link de pago.
-      </p>
+      <div class="bg-gray-50 border border-gray-200 rounded-xl p-3 mb-4 text-xs text-gray-600 leading-relaxed">
+        🔒 <strong>Paso siguiente:</strong> ingresás los datos de tu tarjeta en la página segura de Stripe.
+        <strong>No se cobra nada por 7 días.</strong> Si cancelás antes del día 8 → sin cargo. Después se renueva automáticamente mes a mes.
+      </div>
 
       <div id="step4Err" class="text-red-500 text-sm mb-3 hidden"></div>
       <div class="flex gap-2">
         <button onclick="goStep(3)" class="flex-1 py-3 border border-gray-200 text-gray-600 font-medium rounded-xl text-sm hover:bg-gray-50 transition">← Atrás</button>
         <button onclick="submitRegistration()" id="submitBtn"
           class="flex-1 py-3 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-xl transition text-sm">
-          🚀 Crear mi cuenta gratis
+          💳 Continuar al pago →
         </button>
       </div>
 
@@ -575,11 +576,12 @@ async function submitRegistration() {
 
   const btn = document.getElementById('submitBtn');
   btn.disabled = true;
-  btn.textContent = 'Creando tu cuenta...';
+  btn.textContent = 'Preparando pago seguro...';
   clearErr('step4Err');
 
   try {
-    const res = await fetch('/register', {
+    // Step 1: Create tenant (pending_payment)
+    const regRes = await fetch('/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -592,38 +594,56 @@ async function submitRegistration() {
         plan:          formData.plan,
       })
     });
-    const data = await res.json();
-
-    if (!res.ok) {
-      showErr('step4Err', data.error || 'Error al crear la cuenta. Intentá de nuevo.');
+    const regData = await regRes.json();
+    if (!regRes.ok) {
+      showErr('step4Err', regData.error || 'Error al crear la cuenta. Intentá de nuevo.');
       return;
     }
 
-    // Save token for auto-login
-    authToken = data.token;
-    localStorage.setItem('sara_token', data.token);
-    localStorage.setItem('sara_tenant_name', data.business_name);
+    // Step 2: Create Stripe Checkout session
+    const checkoutRes = await fetch('/billing/create-checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        tenantId: regData.tenant_id,
+        plan:     regData.plan,
+        email:    regData.email,
+      })
+    });
+    const checkoutData = await checkoutRes.json();
+    if (!checkoutRes.ok) {
+      showErr('step4Err', checkoutData.error || 'Error al iniciar el pago. Intentá de nuevo.');
+      return;
+    }
 
-    // Show credentials on step 5
-    document.getElementById('credEmail').textContent = data.username;
-    document.getElementById('credPass').textContent  = data.password;
-    const trialDate = new Date(data.trial_ends);
-    document.getElementById('credTrial').textContent = trialDate.toLocaleDateString('es', { day:'numeric', month:'long', year:'numeric' });
-
-    // Go to success step
-    document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
-    document.getElementById('step5').classList.add('active');
-    document.getElementById('heroBlock').classList.add('hidden');
-    document.getElementById('progressContainer').classList.add('hidden');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // Step 3: Redirect to Stripe Checkout
+    window.location.href = checkoutData.url;
 
   } catch(e) {
     showErr('step4Err', 'Error de conexión. Verificá tu internet e intentá de nuevo.');
-  } finally {
     btn.disabled = false;
-    btn.textContent = '🚀 Crear mi cuenta gratis';
+    btn.textContent = '💳 Continuar al pago →';
   }
 }
+
+// ── Handle return from Stripe (cancelled) ─────────────────────────────────────
+(function handleStripeReturn() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('cancelled') === '1') {
+    // Show step 4 with a cancellation message
+    document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+    document.getElementById('step4').classList.add('active');
+    document.getElementById('heroBlock').classList.add('hidden');
+    document.getElementById('progressContainer').classList.remove('hidden');
+    document.getElementById('progressBar').style.width = '100%';
+    document.getElementById('stepLabel').textContent = 'Paso 4 de 4';
+    document.getElementById('stepPct').textContent = '100%';
+    showErr('step4Err', '⚠️ Pago cancelado. Podés volver a intentarlo cuando quieras — tu información fue guardada.');
+  }
+  if (params.get('error') === '1') {
+    showErr('step4Err', 'Ocurrió un error inesperado. Por favor intentá de nuevo o contactá soporte.');
+  }
+})();
 
 // ── Copy password ─────────────────────────────────────────────────────────────
 function copyPass() {

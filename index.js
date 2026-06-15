@@ -8,6 +8,7 @@ const superadminRoutes   = require('./routes/superadmin');
 const { router: telegramRouter, notifyTokenError } = require('./routes/telegram');
 const paymentsRouter  = require('./routes/payments');
 const registerRouter  = require('./routes/register');
+const billingRouter   = require('./routes/billing');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -22,6 +23,9 @@ app.use((req, res, next) => {
   next();
 });
 
+// ── Stripe webhook needs raw body — must be registered BEFORE express.json() ──
+app.use('/billing/webhook', express.raw({ type: 'application/json' }));
+
 // ── Limit JSON body size to prevent payload attacks ───────────────────────────
 app.use(express.json({ limit: '512kb' }));
 app.use(express.static(path.join(__dirname, 'public')));
@@ -32,6 +36,7 @@ app.use('/superadmin',       superadminRoutes);
 app.use('/telegram-webhook', telegramRouter);
 app.use('/payments',         paymentsRouter);
 app.use('/register',         registerRouter);
+app.use('/billing',          billingRouter);
 
 // Serve admin panel at /admin
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'index.html')));

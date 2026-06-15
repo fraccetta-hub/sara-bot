@@ -72,12 +72,15 @@ router.post('/', async (req, res) => {
     custom_instructions:  `${instructions}\n\n${owner_name ? `Propietario: ${owner_name}` : ''}`.trim(),
     merchant_phone:       phone,
     admin_password_hash:  passHash,
-    active:               true,
+    temp_password:        tempPass,   // stored plaintext, shown once after Stripe, then cleared
+    active:               false,      // activated after Stripe payment confirmed
+    plan_status:          'pending_payment',
+    plan:                 plan || 'starter',
     plan_expires:         trialExpiry(),
     plan_currency:        currency,
     products_enabled:     true,
-    services_enabled:     false,
-    appointments_enabled: false,
+    services_enabled:     plan === 'pro',
+    appointments_enabled: plan === 'pro',
   };
 
   const { data: tenant, error } = await supabase
@@ -88,21 +91,11 @@ router.post('/', async (req, res) => {
     return res.status(500).json({ error: 'Error al crear la cuenta. Intentá de nuevo.' });
   }
 
-  // ── Issue JWT (same format as admin login) ──────────────────────────────────
-  const token = jwt.sign(
-    { tenantId: tenant.id, name: tenant.name },
-    JWT_SECRET,
-    { expiresIn: '90d' }
-  );
-
+  // Return tenantId only — credentials shown AFTER Stripe payment is confirmed
   res.status(201).json({
-    token,
-    tenant_id:     tenant.id,
-    business_name: tenant.name,
-    username:      email,
-    password:      tempPass,  // shown once to the user
-    trial_ends:    tenant.plan_expires,
-    currency,
+    tenant_id: tenant.id,
+    email,
+    plan: plan || 'starter',
   });
 });
 
