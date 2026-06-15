@@ -48,8 +48,14 @@ router.post('/', async (req, res) => {
   const { data: existing } = await supabase
     .from('tenants').select('id, plan_status, plan').eq('login_slug', email).maybeSingle();
   if (existing) {
-    // If account was abandoned at Stripe step, allow resuming checkout
+    // Account abandoned at Stripe step — allow resuming checkout with updated password
     if (existing.plan_status === 'pending_payment') {
+      if (password) {
+        const newHash = await bcrypt.hash(password, 10);
+        await supabase.from('tenants')
+          .update({ admin_password_hash: newHash })
+          .eq('id', existing.id);
+      }
       return res.status(200).json({
         tenant_id: existing.id,
         email,
