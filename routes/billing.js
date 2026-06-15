@@ -37,7 +37,7 @@ router.post('/create-checkout', async (req, res) => {
         metadata: { tenantId, plan },
       },
       line_items: [{ price: priceId, quantity: 1 }],
-      success_url: `${process.env.APP_URL}/billing/success?session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${process.env.APP_URL}/billing/success?session_id={CHECKOUT_SESSION_ID}&lang=${req.body.lang || 'es'}`,
       cancel_url:  `${process.env.APP_URL}/register/index.html?cancelled=1`,
       metadata: { tenantId, plan },
       // Allow card saving for future charges
@@ -128,8 +128,18 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
 // ── GET /billing/success ──────────────────────────────────────────────────────
 // Stripe redirects here after successful checkout. Activates tenant + shows credentials.
 router.get('/success', async (req, res) => {
-  const { session_id } = req.query;
+  const { session_id, lang = 'es' } = req.query;
   if (!session_id) return res.redirect('/register/index.html');
+
+  const T = {
+    es: { title:'¡Tu cuenta está lista!', sub:'Guardá estos datos — los necesitarás para entrar al panel.', cred:'Tus credenciales de acceso', user:'Usuario (email)', pass:'Contraseña temporal', warn:'⚠️ Copiá la contraseña ahora — no la volverás a ver en esta página.', copy:'Copiar', copied:'¡Copiado!', trial:'🎁 Período de prueba gratuito activo', trial_text:'Tu tarjeta <strong>no se cobra hasta el {date}</strong>. Si cancelás antes desde el panel → sin cargo. Después se renueva automáticamente cada mes.', s1t:'Entrá al panel con tus credenciales', s1d:'Usá el email y contraseña de arriba para iniciar sesión.', s2t:'Conectá tu WhatsApp Business', s2d:'El asistente de configuración te guía paso a paso.', s3t:'Sara empieza a atender', s3d:'Tus clientes escriben a tu número y Sara responde 24/7.', btn:'Ir al panel de administración →', change:'Podés cambiar tu contraseña desde Configuración → Seguridad.' },
+    en: { title:'Your account is ready!', sub:'Save these details — you\'ll need them to access the panel.', cred:'Your access credentials', user:'Username (email)', pass:'Temporary password', warn:'⚠️ Copy your password now — you won\'t see it again on this page.', copy:'Copy', copied:'Copied!', trial:'🎁 Free trial active', trial_text:'Your card <strong>won\'t be charged until {date}</strong>. Cancel before then from the panel → no charge. After that the plan renews automatically each month.', s1t:'Sign in with your credentials', s1d:'Use the email and password above to log in.', s2t:'Connect your WhatsApp Business', s2d:'The setup wizard guides you step by step.', s3t:'Sara starts answering', s3d:'Your customers write to your number and Sara replies 24/7.', btn:'Go to admin panel →', change:'You can change your password from Settings → Security.' },
+    it: { title:'Il tuo account è pronto!', sub:'Salva questi dati — ti serviranno per accedere al pannello.', cred:'Le tue credenziali di accesso', user:'Utente (email)', pass:'Password temporanea', warn:'⚠️ Copia la password ora — non la vedrai più su questa pagina.', copy:'Copia', copied:'Copiato!', trial:'🎁 Periodo di prova gratuito attivo', trial_text:'La tua carta <strong>non verrà addebitata fino al {date}</strong>. Se cancelli prima dal pannello → nessun addebito. Dopo il piano si rinnova automaticamente ogni mese.', s1t:'Accedi con le tue credenziali', s1d:'Usa email e password qui sopra per accedere.', s2t:'Collega il tuo WhatsApp Business', s2d:'L\'assistente di configurazione ti guida passo dopo passo.', s3t:'Sara inizia a rispondere', s3d:'I tuoi clienti scrivono al tuo numero e Sara risponde 24/7.', btn:'Vai al pannello di amministrazione →', change:'Puoi cambiare la password da Impostazioni → Sicurezza.' },
+    de: { title:'Dein Konto ist bereit!', sub:'Speichere diese Daten — du brauchst sie für den Zugang.', cred:'Deine Zugangsdaten', user:'Benutzername (E-Mail)', pass:'Temporäres Passwort', warn:'⚠️ Kopiere dein Passwort jetzt — du wirst es auf dieser Seite nicht mehr sehen.', copy:'Kopieren', copied:'Kopiert!', trial:'🎁 Kostenlose Testphase aktiv', trial_text:'Deine Karte <strong>wird erst ab {date} belastet</strong>. Vorher kündigen → keine Kosten. Danach verlängert sich der Plan automatisch jeden Monat.', s1t:'Mit deinen Zugangsdaten anmelden', s1d:'Verwende die obige E-Mail und das Passwort zum Anmelden.', s2t:'WhatsApp Business verbinden', s2d:'Der Setup-Assistent führt dich Schritt für Schritt.', s3t:'Sara fängt an zu antworten', s3d:'Deine Kunden schreiben an deine Nummer und Sara antwortet 24/7.', btn:'Zum Admin-Panel →', change:'Du kannst dein Passwort unter Einstellungen → Sicherheit ändern.' },
+    fr: { title:'Votre compte est prêt !', sub:'Sauvegardez ces informations — vous en aurez besoin pour accéder au panneau.', cred:'Vos identifiants de connexion', user:'Identifiant (email)', pass:'Mot de passe temporaire', warn:'⚠️ Copiez votre mot de passe maintenant — vous ne le reverrez plus.', copy:'Copier', copied:'Copié !', trial:'🎁 Période d\'essai gratuite active', trial_text:'Votre carte <strong>ne sera pas débitée avant le {date}</strong>. Annulez avant depuis le panneau → aucun frais. Ensuite le plan se renouvelle automatiquement chaque mois.', s1t:'Connectez-vous avec vos identifiants', s1d:'Utilisez l\'email et le mot de passe ci-dessus.', s2t:'Connectez votre WhatsApp Business', s2d:'L\'assistant de configuration vous guide étape par étape.', s3t:'Sara commence à répondre', s3d:'Vos clients écrivent à votre numéro et Sara répond 24h/24.', btn:'Aller au panneau d\'administration →', change:'Vous pouvez changer votre mot de passe dans Paramètres → Sécurité.' },
+    pt: { title:'Sua conta está pronta!', sub:'Salve esses dados — você vai precisar deles para acessar o painel.', cred:'Suas credenciais de acesso', user:'Usuário (email)', pass:'Senha temporária', warn:'⚠️ Copie a senha agora — você não a verá novamente nesta página.', copy:'Copiar', copied:'Copiado!', trial:'🎁 Período de teste gratuito ativo', trial_text:'Seu cartão <strong>não será cobrado até {date}</strong>. Cancele antes pelo painel → sem cobrança. Depois o plano renova automaticamente todo mês.', s1t:'Entre com suas credenciais', s1d:'Use o email e a senha acima para fazer login.', s2t:'Conecte seu WhatsApp Business', s2d:'O assistente de configuração te guia passo a passo.', s3t:'Sara começa a atender', s3d:'Seus clientes escrevem para seu número e Sara responde 24/7.', btn:'Ir para o painel de administração →', change:'Você pode alterar sua senha em Configurações → Segurança.' },
+  };
+  const t = T[lang] || T.es;
 
   try {
     const session = await stripe.checkout.sessions.retrieve(session_id, {
@@ -156,11 +166,13 @@ router.get('/success', async (req, res) => {
 
     if (!tenant) return res.redirect('/register/index.html?error=1');
 
+    const locale = lang === 'pt' ? 'pt-BR' : lang === 'de' ? 'de' : lang === 'fr' ? 'fr' : lang === 'it' ? 'it' : lang === 'en' ? 'en' : 'es';
     const trialEnd = tenant.plan_expires
-      ? new Date(tenant.plan_expires).toLocaleDateString('es', {
+      ? new Date(tenant.plan_expires).toLocaleDateString(locale, {
           day: 'numeric', month: 'long', year: 'numeric',
         })
       : '7 días';
+    const trialText = t.trial_text.replace('{date}', trialEnd);
 
     // Issue JWT now that payment is confirmed
     const token = jwt.sign(
@@ -170,11 +182,11 @@ router.get('/success', async (req, res) => {
     );
 
     res.send(`<!DOCTYPE html>
-<html lang="es">
+<html lang="${h(lang)}">
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>¡Cuenta activada! — Sara Bot</title>
+<title>${h(t.title)} — Sara Bot</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
   body { background: linear-gradient(135deg,#f0fdf4 0%,#ecfdf5 50%,#f0f9ff 100%); }
@@ -185,72 +197,69 @@ router.get('/success', async (req, res) => {
 <body class="min-h-screen flex items-center justify-center p-4">
 <div class="max-w-md w-full fade-in">
   <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-
     <div class="text-center mb-6">
       <div class="text-5xl mb-4">🎉</div>
-      <h1 class="text-xl font-bold text-gray-800 mb-2">¡Tu cuenta está lista!</h1>
-      <p class="text-sm text-gray-500">Guardá estos datos — los necesitarás para entrar al panel.</p>
+      <h1 class="text-xl font-bold text-gray-800 mb-2">${h(t.title)}</h1>
+      <p class="text-sm text-gray-500">${h(t.sub)}</p>
     </div>
-
     <!-- Credentials -->
-    <div class="bg-green-50 border border-green-200 rounded-xl p-4 mb-4">
-      <p class="text-xs font-semibold text-green-800 mb-3 uppercase tracking-wide">Tus credenciales de acceso</p>
+    <div class="bg-green-50 border border-green-200 rounded-xl p-4 mb-3">
+      <p class="text-xs font-semibold text-green-800 mb-3 uppercase tracking-wide">${h(t.cred)}</p>
       <div class="space-y-2">
         <div class="flex items-center justify-between">
-          <span class="text-xs text-gray-500">Usuario (email)</span>
+          <span class="text-xs text-gray-500">${h(t.user)}</span>
           <span class="text-sm font-mono font-bold text-gray-800">${h(tenant.login_slug)}</span>
         </div>
-        <div class="flex items-center justify-between">
-          <span class="text-xs text-gray-500">Contraseña temporal</span>
-          <span class="text-sm font-mono font-bold text-gray-800 select-all">${h(tenant.temp_password || '(ver email)')}</span>
+        <div class="flex items-center justify-between gap-3">
+          <span class="text-xs text-gray-500 flex-shrink-0">${h(t.pass)}</span>
+          <div class="flex items-center gap-2">
+            <span id="passText" class="text-sm font-mono font-bold text-gray-800 select-all">${h(tenant.temp_password || '')}</span>
+            <button onclick="copyPass()" id="copyBtn" class="text-xs bg-green-100 hover:bg-green-200 text-green-700 font-semibold px-2 py-1 rounded-lg transition flex-shrink-0">${h(t.copy)}</button>
+          </div>
         </div>
       </div>
     </div>
-
+    <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-4">
+      <p class="text-xs text-amber-800 font-medium">${h(t.warn)}</p>
+    </div>
     <!-- Trial info -->
     <div class="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-5">
-      <p class="text-xs font-semibold text-blue-800 mb-1">🎁 Período de prueba gratuito activo</p>
-      <p class="text-xs text-blue-700 leading-relaxed">
-        Tu tarjeta <strong>no se cobra hasta el ${h(trialEnd)}</strong>.
-        Si cancelás antes de esa fecha desde el panel → sin cargo. Después, el plan se renueva automáticamente cada mes.
-      </p>
+      <p class="text-xs font-semibold text-blue-800 mb-1">${h(t.trial)}</p>
+      <p class="text-xs text-blue-700 leading-relaxed">${trialText}</p>
     </div>
-
     <!-- Steps -->
     <div class="space-y-3 mb-6">
       <div class="flex items-start gap-3">
         <div class="w-6 h-6 rounded-full bg-green-500 text-white text-xs flex items-center justify-center font-bold flex-shrink-0 mt-0.5">1</div>
-        <div>
-          <p class="text-sm font-medium text-gray-800">Entrá al panel con tus credenciales</p>
-          <p class="text-xs text-gray-500">Usá el email y contraseña de arriba para iniciar sesión.</p>
-        </div>
+        <div><p class="text-sm font-medium text-gray-800">${h(t.s1t)}</p><p class="text-xs text-gray-500">${h(t.s1d)}</p></div>
       </div>
       <div class="flex items-start gap-3">
         <div class="w-6 h-6 rounded-full bg-green-500 text-white text-xs flex items-center justify-center font-bold flex-shrink-0 mt-0.5">2</div>
-        <div>
-          <p class="text-sm font-medium text-gray-800">Conectá tu WhatsApp Business</p>
-          <p class="text-xs text-gray-500">El asistente de configuración te guía paso a paso.</p>
-        </div>
+        <div><p class="text-sm font-medium text-gray-800">${h(t.s2t)}</p><p class="text-xs text-gray-500">${h(t.s2d)}</p></div>
       </div>
       <div class="flex items-start gap-3">
         <div class="w-6 h-6 rounded-full bg-green-500 text-white text-xs flex items-center justify-center font-bold flex-shrink-0 mt-0.5">3</div>
-        <div>
-          <p class="text-sm font-medium text-gray-800">Sara empieza a atender</p>
-          <p class="text-xs text-gray-500">Tus clientes escriben a tu número y Sara responde 24/7.</p>
-        </div>
+        <div><p class="text-sm font-medium text-gray-800">${h(t.s3t)}</p><p class="text-xs text-gray-500">${h(t.s3d)}</p></div>
       </div>
     </div>
-
     <button onclick="goPanel()" class="block w-full py-3 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-xl text-center transition text-sm cursor-pointer">
-      Ir al panel de administración →
+      ${h(t.btn)}
     </button>
-    <p class="text-xs text-gray-400 text-center mt-3">Podés cambiar tu contraseña desde Configuración → Seguridad.</p>
+    <p class="text-xs text-gray-400 text-center mt-3">${h(t.change)}</p>
   </div>
 </div>
 <script>
-  // Save token to localStorage so admin panel auto-logs in
   localStorage.setItem('sara_token', ${JSON.stringify(token)});
   function goPanel() { window.location.href = '/admin/index.html'; }
+  function copyPass() {
+    const pass = document.getElementById('passText').textContent;
+    navigator.clipboard.writeText(pass).then(() => {
+      const btn = document.getElementById('copyBtn');
+      const orig = btn.textContent;
+      btn.textContent = '${h(t.copied)}';
+      setTimeout(() => { btn.textContent = orig; }, 2000);
+    });
+  }
 </script>
 </body>
 </html>`);
