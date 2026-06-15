@@ -3,6 +3,7 @@ const router   = express.Router();
 const Stripe   = require('stripe');
 const jwt      = require('jsonwebtoken');
 const { createClient } = require('@supabase/supabase-js');
+const { sendWelcome } = require('../services/mailer');
 
 const stripe   = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder');
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
@@ -34,7 +35,7 @@ router.post('/create-checkout', async (req, res) => {
       customer_email: email,
       subscription_data: {
         trial_period_days: 7,
-        metadata: { tenantId, plan },
+        metadata: { tenantId, plan, lang: req.body.lang || 'es' },
       },
       line_items: [{ price: priceId, quantity: 1 }],
       success_url: `${process.env.APP_URL}/billing/success?session_id={CHECKOUT_SESSION_ID}&lang=${req.body.lang || 'es'}`,
@@ -86,6 +87,20 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
             ? new Date(obj.current_period_end * 1000).toISOString()
             : null,
         }).eq('id', tenantId);
+
+        // Send welcome email only on first activation (trialing)
+        if (event.type === 'customer.subscription.created' && obj.status === 'trialing') {
+          const lang = obj.metadata?.lang || 'es';
+          const { data: tenant } = await supabase
+            .from('tenants').select('name, login_slug').eq('id', tenantId).single();
+          if (tenant) {
+            await sendWelcome({
+              email:        tenant.login_slug,
+              businessName: tenant.name,
+              lang,
+            });
+          }
+        }
 
         console.log(`[billing] subscription ${obj.status} → tenant ${tenantId}`);
         break;

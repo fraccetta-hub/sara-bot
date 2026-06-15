@@ -72,7 +72,13 @@
 
 <!-- ════ ONBOARDING WIZARD ════ -->
 <div id="onboardingPage" class="hidden min-h-screen flex items-center justify-center px-4 bg-gray-50">
-  <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg p-8">
+  <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg p-8 relative">
+
+    <!-- Skip button -->
+    <button onclick="skipWizard()" id="wizSkipBtn" data-i18n="wiz.skip"
+      class="absolute top-4 right-4 text-xs text-gray-400 hover:text-gray-600 underline">
+      Configurar después
+    </button>
 
     <!-- Step indicator -->
     <div class="flex items-center gap-2 mb-6">
@@ -244,6 +250,20 @@
       <button class="py-2 px-1 sm:px-0 whitespace-nowrap flex-shrink-0 relative" id="tabSupport" onclick="switchTab('support')">💬 Soporte<span id="supportUnreadBadge" class="hidden absolute -top-0.5 -right-1 w-4 h-4 bg-red-500 rounded-full text-white text-[9px] font-bold flex items-center justify-center">!</span></button>
     </div>
   </nav>
+
+  <!-- WhatsApp not connected banner -->
+  <div id="waBanner" class="hidden bg-amber-50 border-b border-amber-200 px-4 py-3">
+    <div class="max-w-6xl mx-auto flex items-center justify-between gap-3 flex-wrap">
+      <div class="flex items-center gap-2 text-sm text-amber-800">
+        <span class="text-lg">⚠️</span>
+        <span data-i18n="banner.wa.text">Conectá tu WhatsApp Business para activar todas las funciones.</span>
+      </div>
+      <button onclick="openWizard()" data-i18n="banner.wa.btn"
+        class="flex-shrink-0 bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold px-4 py-1.5 rounded-full transition">
+        Conectar ahora →
+      </button>
+    </div>
+  </div>
 
   <div id="mainWrap" class="max-w-6xl mx-auto px-4 py-6">
 
@@ -1422,8 +1442,10 @@
 // ══ i18n ══════════════════════════════════════════════════════════════════════
 const TR = {
 es:{
-'login.user':'Usuario','login.password':'Contraseña','login.submit':'Ingresar','login.hint':'Primera vez: contraseña <b>sara1234</b>',
+'login.user':'Usuario','login.password':'Contraseña','login.submit':'Ingresar','login.hint':'Usá el email y contraseña que elegiste al registrarte.',
 'nav.logout':'Salir',
+'banner.wa.text':'Conectá tu WhatsApp Business para activar todas las funciones.','banner.wa.btn':'Conectar ahora →',
+'wiz.skip':'Configurar después',
 'tab.chats':'💬 Chats','tab.products':'📦 Productos','tab.services':'🛠 Servicios','tab.orders':'🛒 Pedidos','tab.settings':'⚙️ Ajustes','tab.help':'❓ Ayuda',
 'stat.today':'Pedidos hoy','stat.pending':'Pendientes','stat.revenue':'Ingresos hoy','stat.products':'Productos activos',
 'products.title':'Catálogo de productos','products.new':'+ Nuevo producto',
@@ -1596,8 +1618,10 @@ es:{
 'notif.new_order':'Nuevo pedido','notif.view':'Ver pedido',
 },
 en:{
-'login.user':'Username','login.password':'Password','login.submit':'Sign in','login.hint':'First time: password <b>sara1234</b>',
+'login.user':'Username','login.password':'Password','login.submit':'Sign in','login.hint':'Use the email and password you chose at registration.',
 'nav.logout':'Sign out',
+'banner.wa.text':'Connect your WhatsApp Business to unlock all features.','banner.wa.btn':'Connect now →',
+'wiz.skip':'Set up later',
 'tab.chats':'💬 Chats','tab.products':'📦 Products','tab.services':'🛠 Services','tab.orders':'🛒 Orders','tab.settings':'⚙️ Settings','tab.help':'❓ Help',
 'stat.today':'Orders today','stat.pending':'Pending','stat.revenue':'Revenue today','stat.products':'Active products',
 'products.title':'Product catalog','products.new':'+ New product',
@@ -1770,8 +1794,10 @@ en:{
 'notif.new_order':'New order','notif.view':'View order',
 },
 it:{
-'login.user':'Utente','login.password':'Password','login.submit':'Accedi','login.hint':'Prima volta: password <b>sara1234</b>',
+'login.user':'Utente','login.password':'Password','login.submit':'Accedi','login.hint':'Usa email e password che hai scelto alla registrazione.',
 'nav.logout':'Esci',
+'banner.wa.text':'Collega il tuo WhatsApp Business per attivare tutte le funzioni.','banner.wa.btn':'Collega ora →',
+'wiz.skip':'Configura dopo',
 'tab.chats':'💬 Chat','tab.products':'📦 Prodotti','tab.services':'🛠 Servizi','tab.orders':'🛒 Ordini','tab.settings':'⚙️ Impostazioni','tab.help':'❓ Aiuto',
 'stat.today':'Ordini oggi','stat.pending':'In attesa','stat.revenue':'Incasso oggi','stat.products':'Prodotti attivi',
 'products.title':'Catalogo prodotti','products.new':'+ Nuovo prodotto',
@@ -1943,8 +1969,10 @@ it:{
 'notif.new_order':'Nuovo ordine','notif.view':'Vedi ordine',
 },
 de:{
-'login.user':'Benutzername','login.password':'Passwort','login.submit':'Anmelden','login.hint':'Erstmalig: Passwort <b>sara1234</b>',
+'login.user':'Benutzername','login.password':'Passwort','login.submit':'Anmelden','login.hint':'Nutze die E-Mail und das Passwort, das du bei der Registrierung gewählt hast.',
 'nav.logout':'Abmelden',
+'banner.wa.text':'Verbinde dein WhatsApp Business, um alle Funktionen freizuschalten.','banner.wa.btn':'Jetzt verbinden →',
+'wiz.skip':'Später einrichten',
 'tab.chats':'💬 Chats','tab.products':'📦 Produkte','tab.services':'🛠 Services','tab.orders':'🛒 Bestellungen','tab.settings':'⚙️ Einstellungen','tab.help':'❓ Hilfe',
 'stat.today':'Bestellungen heute','stat.pending':'Ausstehend','stat.revenue':'Einnahmen heute','stat.products':'Aktive Produkte',
 'products.title':'Produktkatalog','products.new':'+ Neues Produkt',
@@ -2116,8 +2144,10 @@ de:{
 'notif.new_order':'Neue Bestellung','notif.view':'Bestellung ansehen',
 },
 fr:{
-'login.user':'Utilisateur','login.password':'Mot de passe','login.submit':'Se connecter','login.hint':'Première fois : mot de passe <b>sara1234</b>',
+'login.user':'Utilisateur','login.password':'Mot de passe','login.submit':'Se connecter','login.hint':'Utilisez l\'email et le mot de passe choisis lors de l\'inscription.',
 'nav.logout':'Se déconnecter',
+'banner.wa.text':'Connectez votre WhatsApp Business pour activer toutes les fonctions.','banner.wa.btn':'Connecter maintenant →',
+'wiz.skip':'Configurer plus tard',
 'tab.chats':'💬 Chats','tab.products':'📦 Produits','tab.services':'🛠 Services','tab.orders':'🛒 Commandes','tab.settings':'⚙️ Paramètres','tab.help':'❓ Aide',
 'stat.today':'Commandes aujourd\'hui','stat.pending':'En attente','stat.revenue':'Revenus aujourd\'hui','stat.products':'Produits actifs',
 'products.title':'Catalogue de produits','products.new':'+ Nouveau produit',
@@ -2289,8 +2319,10 @@ fr:{
 'notif.new_order':'Nouvelle commande','notif.view':'Voir la commande',
 },
 pt:{
-'login.user':'Usuário','login.password':'Senha','login.submit':'Entrar','login.hint':'Primeira vez: senha <b>sara1234</b>',
+'login.user':'Usuário','login.password':'Senha','login.submit':'Entrar','login.hint':'Use o email e a senha que escolheu no cadastro.',
 'nav.logout':'Sair',
+'banner.wa.text':'Conecte seu WhatsApp Business para ativar todas as funções.','banner.wa.btn':'Conectar agora →',
+'wiz.skip':'Configurar depois',
 'tab.chats':'💬 Chats','tab.products':'📦 Produtos','tab.services':'🛠 Serviços','tab.orders':'🛒 Pedidos','tab.settings':'⚙️ Configurações','tab.help':'❓ Ajuda','tab.plan':'💳 Plano','tab.analytics':'📊 Analytics','tab.appointments':'📅 Agendamentos',
 'stat.today':'Pedidos hoje','stat.pending':'Pendentes','stat.revenue':'Receita hoje','stat.products':'Produtos ativos',
 'products.title':'Catálogo de produtos','products.new':'+ Novo produto',
@@ -2587,6 +2619,28 @@ const META_CONFIG_ID = '%%META_CONFIG_ID%%'; // Embedded Signup config ID
 
 let wizConnectedPhoneId = null;
 
+let waConnected = false; // set after settings load
+
+function skipWizard() {
+  window.removeEventListener('message', handleMetaMessage);
+  localStorage.setItem('sara_wizard_dismissed', '1');
+  document.getElementById('onboardingPage').classList.add('hidden');
+  showDashboard();
+}
+
+function openWizard() {
+  document.getElementById('dashPage').classList.add('hidden');
+  document.getElementById('onboardingPage').classList.remove('hidden');
+  if (!document.getElementById('fb-sdk')) {
+    const s = document.createElement('script');
+    s.id  = 'fb-sdk';
+    s.src = 'https://connect.facebook.net/en_US/sdk.js';
+    s.onload = () => { FB.init({ appId: META_APP_ID, cookie: true, xfbml: false, version: 'v19.0' }); };
+    document.head.appendChild(s);
+  }
+  window.addEventListener('message', handleMetaMessage);
+}
+
 function showOnboarding() {
   document.getElementById('loginPage').classList.add('hidden');
   document.getElementById('dashPage').classList.add('hidden');
@@ -2740,8 +2794,32 @@ async function saveMerchantPhone() {
 
 function finishOnboarding() {
   window.removeEventListener('message', handleMetaMessage);
+  localStorage.removeItem('sara_wizard_dismissed');
+  waConnected = true;
   document.getElementById('onboardingPage').classList.add('hidden');
+  document.getElementById('waBanner').classList.add('hidden');
+  applyTabGating();
   showDashboard();
+}
+
+// ── Tab gating — locked when WhatsApp not connected ───────────────────────────
+const LOCKED_TABS = ['chats','products','services','orders','appointments','analytics','support','help'];
+const FREE_TABS   = ['plan','settings'];
+
+function applyTabGating() {
+  LOCKED_TABS.forEach(tab => {
+    const btn = document.getElementById('tab' + cap(tab));
+    if (!btn) return;
+    if (!waConnected) {
+      btn.classList.add('opacity-40');
+      btn.title = '⚠️ Conectá WhatsApp Business para usar esta sección';
+    } else {
+      btn.classList.remove('opacity-40');
+      btn.title = '';
+    }
+  });
+  // If currently on a locked tab and WA not connected, redirect to plan
+  if (!waConnected) switchTab('plan');
 }
 
 // ── State ──────────────────────────────────────────────────────────────────────
@@ -2860,18 +2938,23 @@ function logout() {
 
 // ── Dashboard ──────────────────────────────────────────────────────────────────
 async function showDashboard() {
-  // Guard: if WhatsApp not yet connected, force wizard
+  // Check WhatsApp connection — show wizard on first login, locked dashboard if dismissed
   try {
     const settings = await api('/admin/settings');
-    if (!settings.phone_number_id) {
+    waConnected = !!settings.phone_number_id;
+    if (!waConnected && !localStorage.getItem('sara_wizard_dismissed')) {
       showOnboarding();
       return;
     }
-  } catch(e) { /* let it fall through to normal error handling */ }
+  } catch(e) { /* fall through */ }
 
   document.getElementById('loginPage').classList.add('hidden');
   document.getElementById('onboardingPage').classList.add('hidden');
   document.getElementById('dashPage').classList.remove('hidden');
+
+  document.getElementById('waBanner').classList.toggle('hidden', waConnected);
+  applyTabGating();
+
   applyTranslations();
   startOrderNotifications();
   try {
@@ -2950,6 +3033,15 @@ function applyTabVisibility(productsEnabled, servicesEnabled, appointmentsEnable
 
 // ── Tab switching ──────────────────────────────────────────────────────────────
 function switchTab(tab) {
+  if (!waConnected && LOCKED_TABS.includes(tab)) {
+    // Flash the banner to draw attention
+    const banner = document.getElementById('waBanner');
+    banner.classList.remove('hidden');
+    banner.style.transition = 'opacity .15s';
+    banner.style.opacity = '0.3';
+    setTimeout(() => { banner.style.opacity = '1'; }, 150);
+    return;
+  }
   ['chats','products','services','orders','appointments','settings','analytics','plan','help','support'].forEach(t => {
     document.getElementById('section' + cap(t)).classList.toggle('hidden', t !== tab);
     document.getElementById('tab'     + cap(t)).classList.toggle('tab-active', t === tab);
