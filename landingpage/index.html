@@ -485,16 +485,16 @@ footer a:hover { color: var(--dark); }
 <!-- USE CASES -->
 <section class="bg-light">
   <div class="container center">
-    <div class="section-label">Para tu negocio</div>
-    <h2 class="section-title">Funciona para cualquier negocio que vende</h2>
-    <p class="section-sub" style="margin:0 auto 36px">Desde la pizzería del sábado a la noche hasta el técnico de lamparas. Si tenés clientes que escriben por WhatsApp, Sara Bot es para vos.</p>
+    <div class="section-label" data-i18n="sectors.label">Para tu negocio</div>
+    <h2 class="section-title" data-i18n="sectors.h2">Funciona para cualquier negocio que vende</h2>
+    <p class="section-sub" style="margin:0 auto 36px" data-i18n="sectors.sub">Desde la pizzería del sábado a la noche hasta el técnico de lamparas. Si tenés clientes que escriben por WhatsApp, Sara Bot es para vos.</p>
 
     <div class="sectors-wrap">
-      <button class="sector-tab active" onclick="showSector('pizzeria', this)">🍕 Restaurante</button>
-      <button class="sector-tab" onclick="showSector('floreria', this)">🌸 Florería</button>
-      <button class="sector-tab" onclick="showSector('estetica', this)">💆 Estética</button>
-      <button class="sector-tab" onclick="showSector('electro', this)">💡 Electro / Repuestos</button>
-      <button class="sector-tab" onclick="showSector('pasteleria', this)">🍰 Pastelería</button>
+      <button class="sector-tab active" onclick="showSector('pizzeria', this)" data-i18n="sectors.tab1">🍕 Restaurante</button>
+      <button class="sector-tab" onclick="showSector('floreria', this)" data-i18n="sectors.tab2">🌸 Florería</button>
+      <button class="sector-tab" onclick="showSector('estetica', this)" data-i18n="sectors.tab3">💆 Estética</button>
+      <button class="sector-tab" onclick="showSector('electro', this)" data-i18n="sectors.tab4">💡 Electro / Repuestos</button>
+      <button class="sector-tab" onclick="showSector('pasteleria', this)" data-i18n="sectors.tab5">🍰 Pastelería</button>
     </div>
 
     <!-- Pizzería -->
@@ -652,44 +652,44 @@ footer a:hover { color: var(--dark); }
 <section id="faq">
   <div class="container">
     <div class="center">
-      <div class="section-label">Preguntas frecuentes</div>
-      <h2 class="section-title" style="margin-bottom:48px">Todo lo que necesitás saber</h2>
+      <div class="section-label" data-i18n="faq.label">Preguntas frecuentes</div>
+      <h2 class="section-title" style="margin-bottom:48px" data-i18n="faq.h2">Todo lo que necesitás saber</h2>
     </div>
     <div class="faq-list">
 
       <div class="faq-item">
-        <button class="faq-q" onclick="toggleFaq(this)">¿Necesito saber programar para configurarlo? <span class="faq-arrow">▾</span></button>
-        <div class="faq-a">No. Todo se configura desde un panel web con formularios y botones. El asistente de activación te guía paso a paso desde el registro hasta el primer pedido, sin ningún conocimiento técnico.</div>
+        <button class="faq-q" onclick="toggleFaq(this)"><span data-i18n="faq1.q">¿Necesito saber programar para configurarlo?</span> <span class="faq-arrow">▾</span></button>
+        <div class="faq-a" data-i18n="faq1.a">No. Todo se configura desde un panel web con formularios y botones. El asistente de activación te guía paso a paso desde el registro hasta el primer pedido, sin ningún conocimiento técnico.</div>
       </div>
 
       <div class="faq-item">
-        <button class="faq-q" onclick="toggleFaq(this)">¿El bot maneja los pagos de mis clientes? <span class="faq-arrow">▾</span></button>
-        <div class="faq-a">No, y a propósito. Sara Bot no toca el dinero de tus clientes — eso es tuyo. Vos configurás cómo querés cobrar (transferencia, efectivo, QR, link de pago de tu propia cuenta, etc.) y el bot envía esas instrucciones automáticamente después de cada pedido confirmado. Cero comisiones, cero intermediarios, cero complicaciones legales.</div>
+        <button class="faq-q" onclick="toggleFaq(this)"><span data-i18n="faq2.q">¿El bot maneja los pagos de mis clientes?</span> <span class="faq-arrow">▾</span></button>
+        <div class="faq-a" data-i18n="faq2.a">No, y a propósito. Sara Bot no toca el dinero de tus clientes — eso es tuyo. Vos configurás cómo querés cobrar (transferencia, efectivo, QR, link de pago de tu propia cuenta, etc.) y el bot envía esas instrucciones automáticamente después de cada pedido confirmado. Cero comisiones, cero intermediarios, cero complicaciones legales.</div>
       </div>
 
       <div class="faq-item">
-        <button class="faq-q" onclick="toggleFaq(this)">¿Qué pasa si quiero hablarle al cliente yo mismo? <span class="faq-arrow">▾</span></button>
-        <div class="faq-a">Desde el panel de Chats podés escribirle a cualquier cliente directamente. Cuando lo hacés, el bot se detiene automáticamente en esa conversación — "modo manual". Cuando terminás, apretás un botón y Sara retoma. También podés hacerlo desde tu WhatsApp personal con el comando CHAT.</div>
+        <button class="faq-q" onclick="toggleFaq(this)"><span data-i18n="faq3.q">¿Qué pasa si quiero hablarle al cliente yo mismo?</span> <span class="faq-arrow">▾</span></button>
+        <div class="faq-a" data-i18n="faq3.a">Desde el panel de Chats podés escribirle a cualquier cliente directamente. Cuando lo hacés, el bot se detiene automáticamente en esa conversación — "modo manual". Cuando terminás, apretás un botón y Sara retoma. También podés hacerlo desde tu WhatsApp personal con el comando CHAT.</div>
       </div>
 
       <div class="faq-item">
-        <button class="faq-q" onclick="toggleFaq(this)">¿Funciona con mi número de WhatsApp actual? <span class="faq-arrow">▾</span></button>
-        <div class="faq-a">Sí, siempre que lo conviertas en número WhatsApp Business oficial a través de la API de Meta. El proceso es gratuito y el asistente de configuración te guía. Tu número no cambia — tus clientes siguen escribiendo al mismo lugar.</div>
+        <button class="faq-q" onclick="toggleFaq(this)"><span data-i18n="faq4.q">¿Funciona con mi número de WhatsApp actual?</span> <span class="faq-arrow">▾</span></button>
+        <div class="faq-a" data-i18n="faq4.a">Sí, siempre que lo conviertas en número WhatsApp Business oficial a través de la API de Meta. El proceso es gratuito y el asistente de configuración te guía. Tu número no cambia — tus clientes siguen escribiendo al mismo lugar.</div>
       </div>
 
       <div class="faq-item">
-        <button class="faq-q" onclick="toggleFaq(this)">¿Puedo usarlo para servicios con turno y también para vender productos? <span class="faq-arrow">▾</span></button>
-        <div class="faq-a">Sí. Con el plan Pro podés tener ambas cosas activas: catálogo de productos con pedidos Y agenda de turnos para servicios. El bot entiende cuándo el cliente quiere comprar algo y cuándo quiere reservar un turno, y responde de forma diferente en cada caso.</div>
+        <button class="faq-q" onclick="toggleFaq(this)"><span data-i18n="faq5.q">¿Puedo usarlo para servicios con turno y también para vender productos?</span> <span class="faq-arrow">▾</span></button>
+        <div class="faq-a" data-i18n="faq5.a">Sí. Con el plan Pro podés tener ambas cosas activas: catálogo de productos con pedidos Y agenda de turnos para servicios. El bot entiende cuándo el cliente quiere comprar algo y cuándo quiere reservar un turno, y responde de forma diferente en cada caso.</div>
       </div>
 
       <div class="faq-item">
-        <button class="faq-q" onclick="toggleFaq(this)">¿Qué idiomas entiende el bot? <span class="faq-arrow">▾</span></button>
-        <div class="faq-a">El bot responde en el idioma que use el cliente automáticamente: español, inglés, portugués, italiano, alemán, francés. Si estás en Paraguay también entiende jopará (mezcla español-guaraní). No hay que configurar nada.</div>
+        <button class="faq-q" onclick="toggleFaq(this)"><span data-i18n="faq6.q">¿Qué idiomas entiende el bot?</span> <span class="faq-arrow">▾</span></button>
+        <div class="faq-a" data-i18n="faq6.a">El bot responde en el idioma que use el cliente automáticamente: español, inglés, portugués, italiano, alemán, francés. Si estás en Paraguay también entiende jopará (mezcla español-guaraní). No hay que configurar nada.</div>
       </div>
 
       <div class="faq-item">
-        <button class="faq-q" onclick="toggleFaq(this)">¿Qué pasa después de los 7 días de prueba? <span class="faq-arrow">▾</span></button>
-        <div class="faq-a">El bot se pausa y recibís un link de pago para activar el plan que elegiste. No se te cobra automáticamente nada. Si decidís no continuar, simplemente no pagás — sin cargos ocultos, sin contratos.</div>
+        <button class="faq-q" onclick="toggleFaq(this)"><span data-i18n="faq7.q">¿Qué pasa después de los 7 días de prueba?</span> <span class="faq-arrow">▾</span></button>
+        <div class="faq-a" data-i18n="faq7.a">Ingresás la tarjeta al registrarte — no se cobra nada por 7 días. Al octavo día se cobra el plan automáticamente. Si cancelás antes desde el panel, no pagás nada. Sin contratos, sin cargos ocultos.</div>
       </div>
 
     </div>
@@ -788,6 +788,24 @@ const TR = {
     'cta.sub':'Probalo 7 días gratis. Sin tarjeta, sin compromisos.','cta.btn':'🚀 Crear mi cuenta gratis →',
     'cta.badge1':'✓ Sin tarjeta de crédito','cta.badge2':'✓ Activo en menos de una hora','cta.badge3':'✓ Cancelás cuando querés','cta.badge4':'✓ Soporte incluido',
     'footer.terms':'Términos de servicio','footer.privacy':'Privacidad','footer.legal':'Aviso legal','footer.start':'Empezar gratis','footer.login':'Entrar al panel','footer.copy':'© 2025 Sara Bot',
+    'sectors.label':'Para tu negocio','sectors.h2':'Funciona para cualquier negocio que vende',
+    'sectors.sub':'Desde la pizzería del sábado a la noche hasta el técnico de lamparas. Si tenés clientes que escriben por WhatsApp, Sara Bot es para vos.',
+    'sectors.tab1':'🍕 Restaurante','sectors.tab2':'🌸 Florería','sectors.tab3':'💆 Estética','sectors.tab4':'💡 Electro / Repuestos','sectors.tab5':'🍰 Pastelería',
+    'faq.label':'Preguntas frecuentes','faq.h2':'Todo lo que necesitás saber',
+    'faq1.q':'¿Necesito saber programar para configurarlo?',
+    'faq1.a':'No. Todo se configura desde un panel web con formularios y botones. El asistente de activación te guía paso a paso desde el registro hasta el primer pedido, sin ningún conocimiento técnico.',
+    'faq2.q':'¿El bot maneja los pagos de mis clientes?',
+    'faq2.a':'No, y a propósito. Sara Bot no toca el dinero de tus clientes — eso es tuyo. Vos configurás cómo querés cobrar (transferencia, efectivo, QR, link de pago de tu propia cuenta, etc.) y el bot envía esas instrucciones automáticamente después de cada pedido confirmado. Cero comisiones, cero intermediarios, cero complicaciones legales.',
+    'faq3.q':'¿Qué pasa si quiero hablarle al cliente yo mismo?',
+    'faq3.a':'Desde el panel de Chats podés escribirle a cualquier cliente directamente. Cuando lo hacés, el bot se detiene automáticamente en esa conversación — "modo manual". Cuando terminás, apretás un botón y Sara retoma.',
+    'faq4.q':'¿Funciona con mi número de WhatsApp actual?',
+    'faq4.a':'Sí, siempre que lo conviertas en número WhatsApp Business oficial a través de la API de Meta. El proceso es gratuito y el asistente de configuración te guía. Tu número no cambia — tus clientes siguen escribiendo al mismo lugar.',
+    'faq5.q':'¿Puedo usarlo para servicios con turno y también para vender productos?',
+    'faq5.a':'Sí. Con el plan Pro podés tener ambas cosas activas: catálogo de productos con pedidos Y agenda de turnos para servicios. El bot entiende cuándo el cliente quiere comprar algo y cuándo quiere reservar un turno.',
+    'faq6.q':'¿Qué idiomas entiende el bot?',
+    'faq6.a':'El bot responde en el idioma que use el cliente automáticamente: español, inglés, portugués, italiano, alemán, francés. Si estás en Paraguay también entiende jopará (mezcla español-guaraní). No hay que configurar nada.',
+    'faq7.q':'¿Qué pasa después de los 7 días de prueba?',
+    'faq7.a':'Ingresás la tarjeta al registrarte — no se cobra nada por 7 días. Al octavo día se cobra el plan automáticamente. Si cancelás antes desde el panel, no pagás nada. Sin contratos, sin cargos ocultos.',
   },
   en: {
     'nav.features':'Features','nav.how':'How it works','nav.pricing':'Plans','nav.login':'Sign in','nav.cta':'Start free →',
@@ -837,6 +855,24 @@ const TR = {
     'cta.sub':'Try it free for 7 days. No card, no commitment.','cta.btn':'🚀 Create my free account →',
     'cta.badge1':'✓ No credit card','cta.badge2':'✓ Live in under an hour','cta.badge3':'✓ Cancel anytime','cta.badge4':'✓ Support included',
     'footer.terms':'Terms of service','footer.privacy':'Privacy','footer.legal':'Legal notice','footer.start':'Start free','footer.login':'Sign in to panel','footer.copy':'© 2025 Sara Bot',
+    'sectors.label':'For your business','sectors.h2':'Works for any business that sells',
+    'sectors.sub':'From the Saturday night pizzeria to the spare parts technician. If you have customers writing on WhatsApp, Sara Bot is for you.',
+    'sectors.tab1':'🍕 Restaurant','sectors.tab2':'🌸 Florist','sectors.tab3':'💆 Beauty salon','sectors.tab4':'💡 Electronics / Parts','sectors.tab5':'🍰 Bakery',
+    'faq.label':'Frequently asked questions','faq.h2':'Everything you need to know',
+    'faq1.q':'Do I need to know how to code to set it up?',
+    'faq1.a':'No. Everything is configured from a web panel with forms and buttons. The setup wizard guides you step by step from registration to the first order, with no technical knowledge required.',
+    'faq2.q':'Does the bot handle my customers\' payments?',
+    'faq2.a':'No, and intentionally so. Sara Bot never touches your customers\' money — that\'s yours. You set up how you want to get paid (bank transfer, cash, QR code, your own payment link, etc.) and the bot sends those instructions automatically after each confirmed order. Zero commissions, zero middlemen.',
+    'faq3.q':'What if I want to talk to a customer myself?',
+    'faq3.a':'From the Chats panel you can write to any customer directly. When you do, the bot automatically pauses in that conversation — "manual mode". When you\'re done, press a button and Sara resumes.',
+    'faq4.q':'Does it work with my current WhatsApp number?',
+    'faq4.a':'Yes, as long as you convert it to an official WhatsApp Business number via the Meta API. The process is free and the setup wizard guides you. Your number doesn\'t change — your customers keep writing to the same place.',
+    'faq5.q':'Can I use it for appointment services and also sell products?',
+    'faq5.a':'Yes. With the Pro plan you can have both active: product catalog with orders AND appointment calendar for services. The bot understands when a customer wants to buy something vs. book an appointment.',
+    'faq6.q':'What languages does the bot understand?',
+    'faq6.a':'The bot replies in whatever language the customer uses automatically: Spanish, English, Portuguese, Italian, German, French. No configuration needed.',
+    'faq7.q':'What happens after the 7-day trial?',
+    'faq7.a':'You enter your card at signup — nothing is charged for 7 days. On day 8 the plan renews automatically. If you cancel before then from the panel, you pay nothing. No contracts, no hidden fees.',
   },
   it: {
     'nav.features':'Funzionalità','nav.how':'Come funziona','nav.pricing':'Piani','nav.login':'Accedi','nav.cta':'Inizia gratis →',
@@ -886,6 +922,24 @@ const TR = {
     'cta.sub':'Provalo 7 giorni gratis. Nessuna carta, nessun impegno.','cta.btn':'🚀 Crea il mio account gratis →',
     'cta.badge1':'✓ Nessuna carta di credito','cta.badge2':'✓ Operativo in meno di un\'ora','cta.badge3':'✓ Disdici quando vuoi','cta.badge4':'✓ Supporto incluso',
     'footer.terms':'Termini di servizio','footer.privacy':'Privacy','footer.legal':'Note legali','footer.start':'Inizia gratis','footer.login':'Accedi al pannello','footer.copy':'© 2025 Sara Bot',
+    'sectors.label':'Per la tua attività','sectors.h2':'Funziona per qualsiasi attività che vende',
+    'sectors.sub':'Dalla pizzeria del sabato sera al tecnico di ricambi. Se hai clienti che scrivono su WhatsApp, Sara Bot è per te.',
+    'sectors.tab1':'🍕 Ristorante','sectors.tab2':'🌸 Fioreria','sectors.tab3':'💆 Centro estetico','sectors.tab4':'💡 Elettronica / Ricambi','sectors.tab5':'🍰 Pasticceria',
+    'faq.label':'Domande frequenti','faq.h2':'Tutto quello che devi sapere',
+    'faq1.q':'Devo saper programmare per configurarlo?',
+    'faq1.a':'No. Tutto si configura da un pannello web con moduli e pulsanti. L\'assistente di attivazione ti guida passo dopo passo dalla registrazione al primo ordine, senza alcuna conoscenza tecnica.',
+    'faq2.q':'Il bot gestisce i pagamenti dei miei clienti?',
+    'faq2.a':'No, e volutamente. Sara Bot non tocca i soldi dei tuoi clienti — sono tuoi. Tu imposti come vuoi essere pagato (bonifico, contanti, QR, link di pagamento del tuo conto, ecc.) e il bot invia quelle istruzioni automaticamente dopo ogni ordine confermato. Zero commissioni, zero intermediari.',
+    'faq3.q':'Cosa succede se voglio parlare io stesso con il cliente?',
+    'faq3.a':'Dal pannello Chat puoi scrivere a qualsiasi cliente direttamente. Quando lo fai, il bot si mette in pausa in quella conversazione — "modalità manuale". Quando hai finito, premi un pulsante e Sara riprende.',
+    'faq4.q':'Funziona con il mio numero WhatsApp attuale?',
+    'faq4.a':'Sì, a condizione che tu lo converta in numero WhatsApp Business ufficiale tramite l\'API di Meta. Il processo è gratuito e l\'assistente di configurazione ti guida. Il numero non cambia — i tuoi clienti continuano a scrivere nello stesso posto.',
+    'faq5.q':'Posso usarlo per servizi con appuntamento e anche per vendere prodotti?',
+    'faq5.a':'Sì. Con il piano Pro puoi avere entrambe le cose attive: catalogo prodotti con ordini E agenda appuntamenti per servizi. Il bot capisce quando il cliente vuole comprare qualcosa e quando vuole prenotare.',
+    'faq6.q':'Quali lingue capisce il bot?',
+    'faq6.a':'Il bot risponde nella lingua usata dal cliente automaticamente: spagnolo, inglese, portoghese, italiano, tedesco, francese. Nessuna configurazione necessaria.',
+    'faq7.q':'Cosa succede dopo i 7 giorni di prova?',
+    'faq7.a':'Inserisci la carta al momento della registrazione — non viene addebitato nulla per 7 giorni. All\'ottavo giorno il piano si rinnova automaticamente. Se cancelli prima dal pannello, non paghi nulla. Nessun contratto, nessun costo nascosto.',
   },
   de: {
     'nav.features':'Funktionen','nav.how':'So funktioniert\'s','nav.pricing':'Pläne','nav.login':'Anmelden','nav.cta':'Kostenlos starten →',
@@ -935,6 +989,24 @@ const TR = {
     'cta.sub':'7 Tage kostenlos testen. Keine Karte, kein Engagement.','cta.btn':'🚀 Mein Konto kostenlos erstellen →',
     'cta.badge1':'✓ Keine Kreditkarte','cta.badge2':'✓ In weniger als einer Stunde live','cta.badge3':'✓ Jederzeit kündbar','cta.badge4':'✓ Support inklusive',
     'footer.terms':'Nutzungsbedingungen','footer.privacy':'Datenschutz','footer.legal':'Impressum','footer.start':'Kostenlos starten','footer.login':'Zum Panel','footer.copy':'© 2025 Sara Bot',
+    'sectors.label':'Für dein Unternehmen','sectors.h2':'Funktioniert für jedes Unternehmen, das verkauft',
+    'sectors.sub':'Vom Samstagabend-Pizzeria bis zum Ersatzteil-Techniker. Wenn du Kunden hast, die auf WhatsApp schreiben, ist Sara Bot für dich.',
+    'sectors.tab1':'🍕 Restaurant','sectors.tab2':'🌸 Blumengeschäft','sectors.tab3':'💆 Beautysalon','sectors.tab4':'💡 Elektronik / Ersatzteile','sectors.tab5':'🍰 Bäckerei',
+    'faq.label':'Häufige Fragen','faq.h2':'Alles, was du wissen musst',
+    'faq1.q':'Muss ich programmieren können, um es einzurichten?',
+    'faq1.a':'Nein. Alles wird über ein Web-Panel mit Formularen und Schaltflächen konfiguriert. Der Setup-Assistent führt dich Schritt für Schritt von der Registrierung bis zur ersten Bestellung, ohne technische Kenntnisse.',
+    'faq2.q':'Verwaltet der Bot die Zahlungen meiner Kunden?',
+    'faq2.a':'Nein, und das ist Absicht. Sara Bot berührt nie das Geld deiner Kunden — das gehört dir. Du legst fest, wie du bezahlt werden möchtest, und der Bot sendet diese Anweisungen automatisch nach jeder bestätigten Bestellung. Null Provisionen, null Mittelsleute.',
+    'faq3.q':'Was passiert, wenn ich selbst mit einem Kunden sprechen möchte?',
+    'faq3.a':'Im Chat-Panel kannst du jedem Kunden direkt schreiben. Wenn du das tust, pausiert der Bot automatisch in diesem Gespräch — "manueller Modus". Wenn du fertig bist, drückst du einen Knopf und Sara übernimmt wieder.',
+    'faq4.q':'Funktioniert es mit meiner aktuellen WhatsApp-Nummer?',
+    'faq4.a':'Ja, sofern du sie über die Meta-API in eine offizielle WhatsApp Business-Nummer umwandelst. Der Prozess ist kostenlos und der Setup-Assistent führt dich. Deine Nummer ändert sich nicht.',
+    'faq5.q':'Kann ich es für Terminservices und auch für den Produktverkauf nutzen?',
+    'faq5.a':'Ja. Mit dem Pro-Plan kannst du beides aktiv haben: Produktkatalog mit Bestellungen UND Terminkalender für Dienstleistungen. Der Bot versteht, wann ein Kunde kaufen oder buchen möchte.',
+    'faq6.q':'Welche Sprachen versteht der Bot?',
+    'faq6.a':'Der Bot antwortet automatisch in der Sprache des Kunden: Spanisch, Englisch, Portugiesisch, Italienisch, Deutsch, Französisch. Keine Konfiguration erforderlich.',
+    'faq7.q':'Was passiert nach den 7 Testtagen?',
+    'faq7.a':'Du gibst deine Karte bei der Anmeldung an — es wird 7 Tage lang nichts berechnet. Am achten Tag wird der Plan automatisch verlängert. Wenn du vorher über das Panel kündigst, zahlst du nichts. Keine Verträge, keine versteckten Kosten.',
   },
   fr: {
     'nav.features':'Fonctionnalités','nav.how':'Comment ça marche','nav.pricing':'Plans','nav.login':'Connexion','nav.cta':'Commencer gratis →',
@@ -984,6 +1056,24 @@ const TR = {
     'cta.sub':'Essayez-le gratuitement pendant 7 jours. Sans carte, sans engagement.','cta.btn':'🚀 Créer mon compte gratuit →',
     'cta.badge1':'✓ Sans carte bancaire','cta.badge2':'✓ En ligne en moins d\'une heure','cta.badge3':'✓ Résiliez quand vous voulez','cta.badge4':'✓ Support inclus',
     'footer.terms':'Conditions d\'utilisation','footer.privacy':'Confidentialité','footer.legal':'Mentions légales','footer.start':'Commencer gratis','footer.login':'Accéder au panneau','footer.copy':'© 2025 Sara Bot',
+    'sectors.label':'Pour votre entreprise','sectors.h2':'Fonctionne pour tout commerce qui vend',
+    'sectors.sub':'De la pizzeria du samedi soir au technicien en pièces détachées. Si vous avez des clients qui écrivent sur WhatsApp, Sara Bot est fait pour vous.',
+    'sectors.tab1':'🍕 Restaurant','sectors.tab2':'🌸 Fleuriste','sectors.tab3':'💆 Institut de beauté','sectors.tab4':'💡 Électronique / Pièces','sectors.tab5':'🍰 Pâtisserie',
+    'faq.label':'Questions fréquentes','faq.h2':'Tout ce que vous devez savoir',
+    'faq1.q':'Faut-il savoir programmer pour le configurer ?',
+    'faq1.a':'Non. Tout se configure depuis un panneau web avec des formulaires et des boutons. L\'assistant d\'activation vous guide étape par étape de l\'inscription jusqu\'à la première commande, sans aucune connaissance technique.',
+    'faq2.q':'Le bot gère-t-il les paiements de mes clients ?',
+    'faq2.a':'Non, et c\'est intentionnel. Sara Bot ne touche jamais l\'argent de vos clients — c\'est le vôtre. Vous configurez comment vous souhaitez être payé et le bot envoie ces instructions automatiquement après chaque commande confirmée. Zéro commission, zéro intermédiaire.',
+    'faq3.q':'Que se passe-t-il si je veux parler moi-même au client ?',
+    'faq3.a':'Depuis le panneau Chats, vous pouvez écrire directement à n\'importe quel client. Quand vous le faites, le bot s\'arrête automatiquement dans cette conversation — "mode manuel". Quand vous avez terminé, appuyez sur un bouton et Sara reprend.',
+    'faq4.q':'Fonctionne-t-il avec mon numéro WhatsApp actuel ?',
+    'faq4.a':'Oui, à condition de le convertir en numéro WhatsApp Business officiel via l\'API Meta. Le processus est gratuit et l\'assistant vous guide. Votre numéro ne change pas — vos clients continuent d\'écrire au même endroit.',
+    'faq5.q':'Puis-je l\'utiliser pour des services sur rendez-vous et aussi vendre des produits ?',
+    'faq5.a':'Oui. Avec le plan Pro, vous pouvez avoir les deux actifs : catalogue produits avec commandes ET agenda de rendez-vous pour les services. Le bot comprend quand un client veut acheter ou réserver.',
+    'faq6.q':'Quelles langues le bot comprend-il ?',
+    'faq6.a':'Le bot répond automatiquement dans la langue du client : espagnol, anglais, portugais, italien, allemand, français. Aucune configuration nécessaire.',
+    'faq7.q':'Que se passe-t-il après les 7 jours d\'essai ?',
+    'faq7.a':'Vous entrez votre carte à l\'inscription — rien n\'est débité pendant 7 jours. Le huitième jour, le plan se renouvelle automatiquement. Si vous annulez avant depuis le panneau, vous ne payez rien. Sans contrat, sans frais cachés.',
   },
   pt: {
     'nav.features':'Funcionalidades','nav.how':'Como funciona','nav.pricing':'Planos','nav.login':'Entrar','nav.cta':'Começar grátis →',
@@ -1033,6 +1123,24 @@ const TR = {
     'cta.sub':'Experimente grátis por 7 dias. Sem cartão, sem compromisso.','cta.btn':'🚀 Criar minha conta grátis →',
     'cta.badge1':'✓ Sem cartão de crédito','cta.badge2':'✓ Ativo em menos de uma hora','cta.badge3':'✓ Cancele quando quiser','cta.badge4':'✓ Suporte incluído',
     'footer.terms':'Termos de serviço','footer.privacy':'Privacidade','footer.legal':'Aviso legal','footer.start':'Começar grátis','footer.login':'Entrar no painel','footer.copy':'© 2025 Sara Bot',
+    'sectors.label':'Para o seu negócio','sectors.h2':'Funciona para qualquer negócio que vende',
+    'sectors.sub':'Da pizzaria da noite de sábado ao técnico de peças. Se você tem clientes que escrevem no WhatsApp, Sara Bot é para você.',
+    'sectors.tab1':'🍕 Restaurante','sectors.tab2':'🌸 Floricultura','sectors.tab3':'💆 Salão de beleza','sectors.tab4':'💡 Eletrônica / Peças','sectors.tab5':'🍰 Confeitaria',
+    'faq.label':'Perguntas frequentes','faq.h2':'Tudo o que você precisa saber',
+    'faq1.q':'Preciso saber programar para configurar?',
+    'faq1.a':'Não. Tudo é configurado por um painel web com formulários e botões. O assistente de ativação te guia passo a passo do cadastro até o primeiro pedido, sem nenhum conhecimento técnico.',
+    'faq2.q':'O bot gerencia os pagamentos dos meus clientes?',
+    'faq2.a':'Não, e intencionalmente. Sara Bot nunca toca o dinheiro dos seus clientes — é seu. Você configura como quer receber (transferência, dinheiro, PIX, link de pagamento, etc.) e o bot envia essas instruções automaticamente após cada pedido confirmado. Zero comissões, zero intermediários.',
+    'faq3.q':'E se eu quiser falar com o cliente eu mesmo?',
+    'faq3.a':'No painel de Chats você pode escrever para qualquer cliente diretamente. Quando faz isso, o bot pausa automaticamente nessa conversa — "modo manual". Quando terminar, aperte um botão e Sara retoma.',
+    'faq4.q':'Funciona com meu número de WhatsApp atual?',
+    'faq4.a':'Sim, desde que você o converta em número WhatsApp Business oficial pela API do Meta. O processo é gratuito e o assistente te guia. Seu número não muda — seus clientes continuam escrevendo no mesmo lugar.',
+    'faq5.q':'Posso usar para serviços com agendamento e também vender produtos?',
+    'faq5.a':'Sim. Com o plano Pro você pode ter os dois ativos: catálogo de produtos com pedidos E agenda de horários para serviços. O bot entende quando o cliente quer comprar ou agendar.',
+    'faq6.q':'Quais idiomas o bot entende?',
+    'faq6.a':'O bot responde automaticamente no idioma do cliente: espanhol, inglês, português, italiano, alemão, francês. Nenhuma configuração necessária.',
+    'faq7.q':'O que acontece depois dos 7 dias de teste?',
+    'faq7.a':'Você informa o cartão no cadastro — nada é cobrado por 7 dias. No oitavo dia o plano renova automaticamente. Se cancelar antes pelo painel, não paga nada. Sem contratos, sem taxas ocultas.',
   }
 };
 
