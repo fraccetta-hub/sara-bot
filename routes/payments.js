@@ -10,7 +10,7 @@
  *   MP_ACCESS_TOKEN_CO       — Colombia (COP)
  *   MP_ACCESS_TOKEN_UY       — Uruguay (UYU)
  *   MP_ACCESS_TOKEN_PE       — Peru (PEN)
- *   APP_URL                  — e.g. https://candidatelens.com
+ *   APP_URL                  — e.g. https://sarabot.pro
  *
  * Optional per-plan pricing (defaults: 29/59 USD):
  *   MP_PRICE_STARTER, MP_PRICE_PRO

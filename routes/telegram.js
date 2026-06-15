@@ -5,7 +5,7 @@
  *  1. Create a bot via @BotFather → get TELEGRAM_BOT_TOKEN
  *  2. Start the bot and send /start → get your chat_id (use @userinfobot)
  *  3. Set TELEGRAM_SUPERADMIN_CHAT_ID to that number
- *  4. Register webhook: https://api.telegram.org/bot<TOKEN>/setWebhook?url=https://candidatelens.com/telegram-webhook
+ *  4. Register webhook: https://api.telegram.org/bot<TOKEN>/setWebhook?url=https://sarabot.pro/telegram-webhook
  */
 
 const express = require('express');

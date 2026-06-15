@@ -1440,7 +1440,7 @@ router.post('/plan/checkout', requireAuth, async (req, res) => {
   try {
     const client = new MercadoPagoConfig({ accessToken: token });
     const pref   = new Preference(client);
-    const BASE   = process.env.APP_URL || 'https://candidatelens.com';
+    const BASE   = process.env.APP_URL || 'https://sarabot.pro';
     const label  = plan === 'starter' ? 'Sara Bot Starter' : 'Sara Bot Pro';
 
     const result = await pref.create({ body: {
