@@ -4,7 +4,7 @@ const { createClient } = require('@supabase/supabase-js');
 const { getTenantConfig, getStock, decrementStock, getServices } = require('../services/stock');
 const { sendMessage, sendImage, notifyMerchant } = require('../services/whatsapp');
 const { chat } = require('../services/claude');
-const { downloadAndStore } = require('../services/storage');
+const { downloadAndStore, uploadImageBuffer } = require('../services/storage');
 const { haversineKm, geocode, calcDeliveryFee } = require('../services/geo');
 const { check: rateCheck, blockMessage } = require('../services/ratelimit');
 const { fetchMedia } = require('../services/media');
@@ -119,8 +119,45 @@ async function processIncoming(body) {
     if (!mediaId) return;
     try {
       const { buffer, mimeType } = await fetchMedia(mediaId, token);
-      const imageData = { base64: buffer.toString('base64'), mimeType };
-      await handleCustomerMessage(tenant, senderPhone, caption, null, imageData, waProfileName, phoneNumberId, token);
+
+      // ── Payment proof detection ──────────────────────────────────────────────
+      // If this customer has a pending order OR placed an order in the last 24h,
+      // treat the image as a payment proof — don't pass to Claude.
+      const { data: convRow } = await supabase
+        .from('conversations')
+        .select('last_pending_order_id, updated_at')
+        .eq('tenant_id', tenant.id)
+        .eq('customer_phone', senderPhone)
+        .maybeSingle();
+
+      const hasPendingOrder = !!convRow?.last_pending_order_id;
+
+      // Check for a confirmed order in the last 24h (customer paid after confirmation)
+      let hasRecentOrder = false;
+      if (!hasPendingOrder) {
+        const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+        const { data: recentOrder } = await supabase
+          .from('orders')
+          .select('id')
+          .eq('tenant_id', tenant.id)
+          .eq('customer_phone', senderPhone)
+          .gte('created_at', since)
+          .limit(1)
+          .maybeSingle();
+        hasRecentOrder = !!recentOrder;
+      }
+
+      // Caption explicitly mentions payment → always treat as proof
+      const captionIsPayment = caption &&
+        /pago|pagu[eé]|comprobante|transferencia|transf\b|recibo|voucher|pagado|pix|yape|culqi/i.test(caption);
+
+      if (hasPendingOrder || hasRecentOrder || captionIsPayment) {
+        await handlePaymentProof(tenant, senderPhone, buffer, mimeType, phoneNumberId, token);
+      } else {
+        // No order context — pass image to Claude normally (product inquiry, etc.)
+        const imageData = { base64: buffer.toString('base64'), mimeType };
+        await handleCustomerMessage(tenant, senderPhone, caption, null, imageData, waProfileName, phoneNumberId, token);
+      }
     } catch (e) {
       console.error('[webhook] Image download error:', e.message);
       await sendMessage(senderPhone,
@@ -274,6 +311,81 @@ async function handleMerchantMessage(tenant, messageText, phoneNumberId, token) 
   } else {
     await sendMessage(tenant.merchant_phone, AYUDA_TEXT, phoneNumberId, token);
   }
+}
+
+// ─── Payment proof handler ────────────────────────────────────────────────────
+// Called when a customer sends an image and has a pending or recent order.
+// Uploads the image to storage, saves it in the chat, and notifies the merchant.
+
+async function handlePaymentProof(tenant, customerPhone, buffer, mimeType, phoneNumberId, token) {
+  const ext = mimeType === 'image/png' ? 'png' : 'jpg';
+  let publicUrl = null;
+  try {
+    publicUrl = await uploadImageBuffer(
+      buffer,
+      `comprobante-${customerPhone}-${Date.now()}.${ext}`,
+      mimeType,
+      tenant.id
+    );
+  } catch (e) {
+    console.error('[payment-proof] Upload error:', e.message);
+  }
+
+  // Acknowledge to customer immediately
+  await sendMessage(
+    customerPhone,
+    '✅ ¡Comprobante recibido! El negocio lo revisará y te confirmará en breve. Gracias 😊',
+    phoneNumberId,
+    token
+  );
+
+  // Save in conversation history with image_url so it shows in admin chat panel
+  const { data: convRow } = await supabase
+    .from('conversations')
+    .select('messages_json')
+    .eq('tenant_id', tenant.id)
+    .eq('customer_phone', customerPhone)
+    .maybeSingle();
+
+  const history = convRow?.messages_json || [];
+  history.push({
+    role: 'user',
+    content: '📎 Comprobante de pago',
+    image_url: publicUrl || null,
+    is_payment_proof: true,
+  });
+
+  await supabase.from('conversations').upsert({
+    tenant_id: tenant.id,
+    customer_phone: customerPhone,
+    messages_json: history,
+    updated_at: new Date().toISOString(),
+  }, { onConflict: 'tenant_id,customer_phone' });
+
+  // Forward image + alert to merchant WhatsApp
+  if (tenant.merchant_phone && publicUrl) {
+    try {
+      // Send text alert first
+      await sendMessage(
+        tenant.merchant_phone,
+        `💳 *Comprobante de pago recibido*\n👤 Cliente: +${customerPhone}\n\nEl cliente envió un comprobante. Verificá el pago y confirmá el pedido.`,
+        phoneNumberId,
+        token
+      );
+      // Then send the actual image
+      await sendImage(
+        tenant.merchant_phone,
+        publicUrl,
+        `Comprobante de +${customerPhone}`,
+        phoneNumberId,
+        token
+      );
+    } catch (e) {
+      console.error('[payment-proof] Forward to merchant error:', e.message);
+    }
+  }
+
+  console.log(`[payment-proof] Processed for tenant ${tenant.id}, customer ${customerPhone}, url: ${publicUrl}`);
 }
 
 // ─── Merchant image handler ───────────────────────────────────────────────────
