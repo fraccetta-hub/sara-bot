@@ -203,24 +203,12 @@ router.get('/success', async (req, res) => {
       <p class="text-sm text-gray-500">${h(t.sub)}</p>
     </div>
     <!-- Credentials -->
-    <div class="bg-green-50 border border-green-200 rounded-xl p-4 mb-3">
+    <div class="bg-green-50 border border-green-200 rounded-xl p-4 mb-4">
       <p class="text-xs font-semibold text-green-800 mb-3 uppercase tracking-wide">${h(t.cred)}</p>
-      <div class="space-y-2">
-        <div class="flex items-center justify-between">
-          <span class="text-xs text-gray-500">${h(t.user)}</span>
-          <span class="text-sm font-mono font-bold text-gray-800">${h(tenant.login_slug)}</span>
-        </div>
-        <div class="flex items-center justify-between gap-3">
-          <span class="text-xs text-gray-500 flex-shrink-0">${h(t.pass)}</span>
-          <div class="flex items-center gap-2">
-            <span id="passText" class="text-sm font-mono font-bold text-gray-800 select-all">${h(tenant.temp_password || '')}</span>
-            <button onclick="copyPass()" id="copyBtn" class="text-xs bg-green-100 hover:bg-green-200 text-green-700 font-semibold px-2 py-1 rounded-lg transition flex-shrink-0">${h(t.copy)}</button>
-          </div>
-        </div>
+      <div class="flex items-center justify-between">
+        <span class="text-xs text-gray-500">${h(t.user)}</span>
+        <span class="text-sm font-mono font-bold text-gray-800">${h(tenant.login_slug)}</span>
       </div>
-    </div>
-    <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-4">
-      <p class="text-xs text-amber-800 font-medium">${h(t.warn)}</p>
     </div>
     <!-- Trial info -->
     <div class="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-5">
@@ -251,15 +239,6 @@ router.get('/success', async (req, res) => {
 <script>
   localStorage.setItem('sara_token', ${JSON.stringify(token)});
   function goPanel() { window.location.href = '/admin/index.html'; }
-  function copyPass() {
-    const pass = document.getElementById('passText').textContent;
-    navigator.clipboard.writeText(pass).then(() => {
-      const btn = document.getElementById('copyBtn');
-      const orig = btn.textContent;
-      btn.textContent = '${h(t.copied)}';
-      setTimeout(() => { btn.textContent = orig; }, 2000);
-    });
-  }
 </script>
 </body>
 </html>`);

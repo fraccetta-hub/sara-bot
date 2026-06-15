@@ -26,6 +26,49 @@
 </head>
 <body class="font-sans">
 
+<!-- ══ Disclaimer modal (before Stripe) ══════════════════════════════════ -->
+<div id="disclaimerModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 hidden">
+  <div class="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 fade-in">
+    <div class="text-center mb-5">
+      <div class="text-4xl mb-3">⚠️</div>
+      <h2 class="text-lg font-bold text-gray-800 mb-1">Antes de continuar al pago</h2>
+      <p class="text-sm text-gray-500">Asegurate de tener esto listo para activar tu bot:</p>
+    </div>
+    <div class="space-y-3 mb-5">
+      <div class="flex items-start gap-3 bg-blue-50 border border-blue-100 rounded-xl p-3">
+        <span class="text-xl flex-shrink-0">📘</span>
+        <div>
+          <p class="text-sm font-semibold text-gray-800">Cuenta de Facebook Business</p>
+          <p class="text-xs text-gray-500 mt-0.5">Necesitás una cuenta de Facebook para conectar el número WhatsApp Business a través de la API de Meta. Si no la tenés, creala en <strong>business.facebook.com</strong> antes de continuar.</p>
+        </div>
+      </div>
+      <div class="flex items-start gap-3 bg-amber-50 border border-amber-100 rounded-xl p-3">
+        <span class="text-xl flex-shrink-0">📱</span>
+        <div>
+          <p class="text-sm font-semibold text-gray-800">Número dedicado para el negocio</p>
+          <p class="text-xs text-gray-500 mt-0.5">Idealmente usá un número que <strong>no esté en uso con WhatsApp</strong> (ni personal ni Business). Si migrás tu número actual, <strong>perdés el acceso a la app de WhatsApp y todas tus conversaciones anteriores</strong>.</p>
+        </div>
+      </div>
+      <div class="flex items-start gap-3 bg-green-50 border border-green-100 rounded-xl p-3">
+        <span class="text-xl flex-shrink-0">💳</span>
+        <div>
+          <p class="text-sm font-semibold text-gray-800">Tarjeta de crédito/débito</p>
+          <p class="text-xs text-gray-500 mt-0.5">Se guarda ahora para el cobro automático al día 8. Los primeros 7 días son completamente gratis.</p>
+        </div>
+      </div>
+    </div>
+    <p class="text-xs text-gray-400 text-center mb-4">Podés pagar ahora y conectar WhatsApp después — el panel ya está disponible desde el día 1.</p>
+    <div class="flex gap-3">
+      <button onclick="document.getElementById('disclaimerModal').classList.add('hidden')" class="flex-1 py-2.5 border border-gray-200 text-gray-600 font-semibold rounded-xl text-sm hover:bg-gray-50 transition">
+        ← Volver
+      </button>
+      <button onclick="proceedToStripe()" class="flex-1 py-2.5 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-xl text-sm transition">
+        Entendido, pagar →
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- ══ Header ══════════════════════════════════════════════════════════════ -->
 <header class="bg-white border-b border-gray-100 px-4 py-3 flex items-center justify-between sticky top-0 z-20 shadow-sm">
   <div class="flex items-center gap-2">
@@ -183,6 +226,16 @@
             class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm"/>
           <p class="text-xs text-gray-400 mt-1">Sara te avisará aquí cuando llegue un pedido. Este número NO es el número del bot.</p>
         </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Contraseña *</label>
+          <input id="passwordInput" type="password" placeholder="Mínimo 8 caracteres"
+            class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm"/>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Confirmá la contraseña *</label>
+          <input id="passwordConfirmInput" type="password" placeholder="Repetí tu contraseña"
+            class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm"/>
+        </div>
       </div>
 
       <div id="step3Err" class="text-red-500 text-sm mt-3 hidden"></div>
@@ -245,7 +298,7 @@
       <div id="step4Err" class="text-red-500 text-sm mb-3 hidden"></div>
       <div class="flex gap-2">
         <button onclick="goStep(3)" class="flex-1 py-3 border border-gray-200 text-gray-600 font-medium rounded-xl text-sm hover:bg-gray-50 transition">← Atrás</button>
-        <button onclick="submitRegistration()" id="submitBtn"
+        <button onclick="showDisclaimer()" id="submitBtn"
           class="flex-1 py-3 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-xl transition text-sm">
           💳 Continuar al pago →
         </button>
@@ -480,8 +533,13 @@ function validateStep(n) {
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showErr('step3Err', 'Ingresá un email válido.'); return false; }
     if (!emailAvailable) { showErr('step3Err', 'Ese email ya está registrado. ¿Ya tenés cuenta?'); return false; }
     if (!phone || phone.length < 8) { showErr('step3Err', 'Ingresá tu número de WhatsApp con código de país.'); return false; }
+    const pwd = document.getElementById('passwordInput').value;
+    const pwd2 = document.getElementById('passwordConfirmInput').value;
+    if (!pwd || pwd.length < 8) { showErr('step3Err', 'La contraseña debe tener al menos 8 caracteres.'); return false; }
+    if (pwd !== pwd2) { showErr('step3Err', 'Las contraseñas no coinciden.'); return false; }
     formData.email = email;
     formData.phone = phone;
+    formData.password = pwd;
     clearErr('step3Err'); return true;
   }
   return true;
@@ -570,10 +628,19 @@ async function checkEmail(input) {
   }, 500);
 }
 
+// ── Disclaimer → Stripe ───────────────────────────────────────────────────────
+function showDisclaimer() {
+  if (!validateStep(3) || !validateStep(4)) return;
+  document.getElementById('disclaimerModal').classList.remove('hidden');
+}
+
+async function proceedToStripe() {
+  document.getElementById('disclaimerModal').classList.add('hidden');
+  await submitRegistration();
+}
+
 // ── Submit ────────────────────────────────────────────────────────────────────
 async function submitRegistration() {
-  if (!validateStep(3) || !validateStep(4)) return;
-
   const btn = document.getElementById('submitBtn');
   btn.disabled = true;
   btn.textContent = 'Preparando pago seguro...';
@@ -592,6 +659,7 @@ async function submitRegistration() {
         email:         formData.email,
         phone:         formData.phone,
         plan:          formData.plan,
+        password:      formData.password,
       })
     });
     const regData = await regRes.json();
@@ -608,6 +676,7 @@ async function submitRegistration() {
         tenantId: regData.tenant_id,
         plan:     regData.plan,
         email:    regData.email,
+        lang:     localStorage.getItem('sara_lang') || 'es',
       })
     });
     const checkoutData = await checkoutRes.json();

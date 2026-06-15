@@ -11,11 +11,6 @@ const TRIAL_DAYS = 7;
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function generatePassword(len = 10) {
-  const chars = 'abcdefghjkmnpqrstuvwxyz23456789';
-  return Array.from({ length: len }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
-}
-
 function slugify(str) {
   return str.toLowerCase()
     .normalize('NFD').replace(/[̀-ͯ]/g, '')
@@ -34,7 +29,7 @@ function trialExpiry() {
 router.post('/', async (req, res) => {
   const {
     business_name, sector, country, language,
-    owner_name, email, phone,
+    owner_name, email, phone, password,
     plan,          // 'starter' | 'pro'
   } = req.body;
 
@@ -42,22 +37,33 @@ router.post('/', async (req, res) => {
   if (!business_name || !email || !phone) {
     return res.status(400).json({ error: 'business_name, email y phone son obligatorios.' });
   }
+  if (!password || password.length < 8) {
+    return res.status(400).json({ error: 'La contraseña debe tener al menos 8 caracteres.' });
+  }
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return res.status(400).json({ error: 'Email inválido.' });
   }
 
   // ── Check email uniqueness ──────────────────────────────────────────────────
   const { data: existing } = await supabase
-    .from('tenants').select('id').eq('login_slug', email).maybeSingle();
+    .from('tenants').select('id, plan_status, plan').eq('login_slug', email).maybeSingle();
   if (existing) {
-    return res.status(409).json({ error: 'Ya existe una cuenta con ese email.' });
+    // If account was abandoned at Stripe step, allow resuming checkout
+    if (existing.plan_status === 'pending_payment') {
+      return res.status(200).json({
+        tenant_id: existing.id,
+        email,
+        plan: existing.plan || 'starter',
+        resumed: true,
+      });
+    }
+    return res.status(409).json({ error: 'Ya existe una cuenta con ese email. ¿Querés iniciar sesión?' });
   }
 
   // ── Sector prompt ───────────────────────────────────────────────────────────
   const { personality, instructions } = getSectorPrompt(sector || 'otro');
   const currency   = getCurrencyForCountry(country || '');
-  const tempPass   = generatePassword();
-  const passHash   = await bcrypt.hash(tempPass, 10);
+  const passHash   = await bcrypt.hash(password, 10);
   const baseSlug   = slugify(business_name);
 
   // Ensure unique login_slug if business name collides
@@ -72,7 +78,6 @@ router.post('/', async (req, res) => {
     custom_instructions:  `${instructions}\n\n${owner_name ? `Propietario: ${owner_name}` : ''}`.trim(),
     merchant_phone:       phone,
     admin_password_hash:  passHash,
-    temp_password:        tempPass,   // stored plaintext, shown once after Stripe, then cleared
     active:               false,      // activated after Stripe payment confirmed
     plan_status:          'pending_payment',
     plan:                 plan || 'starter',
