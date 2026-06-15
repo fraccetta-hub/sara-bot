@@ -77,8 +77,7 @@ function buildHtml(t, businessName, panelUrl) {
 <body style="margin:0;padding:0;background:#f0fdf4;font-family:sans-serif;">
 <div style="max-width:520px;margin:32px auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.06);">
   <div style="background:#22c55e;padding:28px 32px;text-align:center;">
-    <div style="font-size:40px;margin-bottom:8px;">🌸</div>
-    <div style="color:#fff;font-size:22px;font-weight:700;">Sara Bot</div>
+    <img src="https://sarabot.pro/images/logosarabot.webp" alt="Sara Bot" style="height:44px;">
   </div>
   <div style="padding:32px;">
     <p style="font-size:18px;font-weight:700;color:#111;margin:0 0 16px;">${t.greeting(businessName)}</p>

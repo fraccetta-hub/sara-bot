@@ -29,6 +29,7 @@ app.use('/billing/webhook', express.raw({ type: 'application/json' }));
 // ── Limit JSON body size to prevent payload attacks ───────────────────────────
 app.use(express.json({ limit: '512kb' }));
 app.use(express.static(path.join(__dirname, 'public')));
+app.use('/images', express.static(path.join(__dirname, 'images')));
 
 app.use('/webhook',          webhookRoutes);
 app.use('/admin',            adminRoutes);

@@ -4,6 +4,7 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Sara Bot — Panel de administración</title>
+  <link rel="icon" type="image/webp" href="/images/logo.webp"/>
   <link rel="manifest" href="/manifest.json"/>
   <meta name="theme-color" content="#22c55e"/>
   <meta name="apple-mobile-web-app-capable" content="yes"/>
@@ -35,8 +36,7 @@
 <div id="loginPage" class="min-h-screen flex items-center justify-center px-4">
   <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm p-8">
     <div class="text-center mb-5">
-      <div class="text-5xl mb-2">🌸</div>
-      <h1 class="text-2xl font-bold text-gray-800">Sara Bot</h1>
+      <img src="/images/logosarabot.webp" alt="Sara Bot" class="mx-auto mb-2" style="height:48px;">
     </div>
 
     <div id="loginError" class="hidden bg-red-50 text-red-700 text-sm rounded-lg px-4 py-2 mb-4"></div>
@@ -94,7 +94,7 @@
     <!-- Step 1: Welcome -->
     <div id="wizStep1">
       <div class="text-center mb-6">
-        <div class="text-5xl mb-3">🌸</div>
+        <img src="/images/logo.webp" alt="Sara Bot" class="mx-auto mb-3" style="width:56px;height:56px;border-radius:14px;">
         <h2 data-i18n="wiz.s1.title" class="text-xl font-bold text-gray-800 mb-2">¡Bienvenido a Sara Bot!</h2>
         <p data-i18n="wiz.s1.subtitle" class="text-gray-500 text-sm">En 3 pasos vas a tener tu asistente de WhatsApp funcionando. Empecemos.</p>
       </div>
@@ -228,7 +228,7 @@
   <nav class="bg-white border-b border-gray-100 sticky top-0 z-10 shadow-sm">
     <div class="max-w-6xl mx-auto px-4 flex items-center justify-between h-14">
       <div class="flex items-center gap-2.5">
-        <span class="text-2xl">🌸</span>
+        <img src="/images/logo.webp" alt="Sara Bot" style="width:32px;height:32px;border-radius:8px;flex-shrink:0;">
         <div class="flex flex-col leading-tight">
           <span class="font-bold text-gray-900 text-base leading-tight" id="navTenant">Sara Bot</span>
           <span class="text-xs text-gray-400 leading-tight" id="navTitle"></span>
@@ -3625,7 +3625,7 @@ async function checkNewOrders() {
 
       // Browser notification
       if (_notifPermission) {
-        const n = new Notification(title, { body, icon: '/favicon.ico', tag: order.id });
+        const n = new Notification(title, { body, icon: '/images/logo.webp', tag: order.id });
         n.onclick = () => { window.focus(); switchTab('orders'); n.close(); };
       }
 
