@@ -1,821 +1,722 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Sara Bot — Tu asistente de ventas en WhatsApp</title>
-  <meta name="description" content="Sara Bot gestiona pedidos, responde clientes y actualiza tu catálogo en WhatsApp automáticamente, 24/7. Para florerías, pastelerías, repuestos y cualquier negocio con catálogo."/>
-  <link rel="preconnect" href="https://fonts.googleapis.com"/>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
-  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Sara Bot — Gestionate tu negocio. El bot atiende a tus clientes.</title>
+<meta name="description" content="Panel de gestión para negocios con bot de IA integrado en WhatsApp. Pedidos, turnos, catálogo, clientes — todo en un lugar. Para cualquier negocio que vende productos o servicios."/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    :root {
-      --green:      #25D366;
-      --green-dark: #128C7E;
-      --dark:       #0e1512;
-      --gray:       #5a6472;
-      --gray-light: #f5f5f3;
-      --white:      #ffffff;
-      --border:     #e0e0da;
-      --radius:     12px;
-    }
+:root {
+  --green:      #22c55e;
+  --green-dark: #16a34a;
+  --green-light:#f0fdf4;
+  --dark:       #0f172a;
+  --gray:       #64748b;
+  --gray-light: #f8fafc;
+  --border:     #e2e8f0;
+  --white:      #ffffff;
+  --radius:     14px;
+}
 
-    html { scroll-behavior: smooth; }
+html { scroll-behavior: smooth; }
+body { font-family: 'Inter', sans-serif; background: var(--white); color: var(--dark); line-height: 1.6; overflow-x: hidden; }
 
-    body {
-      font-family: 'Inter', sans-serif;
-      background: var(--white);
-      color: var(--dark);
-      line-height: 1.6;
-      overflow-x: hidden;
-    }
+/* ── NAV ── */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 5%; height: 62px;
+  background: rgba(255,255,255,.96);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(8px);
+}
+.logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+.logo-icon { width: 34px; height: 34px; border-radius: 10px; background: var(--green); display: grid; place-items: center; font-size: 1.1rem; }
+.logo-text { font-weight: 800; font-size: 1.05rem; color: var(--dark); letter-spacing: -.02em; }
+.logo-text span { color: var(--green); }
+.nav-links { display: flex; align-items: center; gap: 28px; }
+.nav-links a { text-decoration: none; color: var(--gray); font-size: .85rem; font-weight: 500; transition: color .15s; }
+.nav-links a:hover { color: var(--dark); }
+.nav-cta { background: var(--green); color: #fff; border: none; border-radius: 10px; padding: 8px 18px; font-size: .85rem; font-weight: 700; cursor: pointer; text-decoration: none; transition: background .15s; }
+.nav-cta:hover { background: var(--green-dark); }
+.nav-right { display: flex; align-items: center; gap: 16px; }
+@media(max-width:640px){ .nav-links { display:none; } }
 
-    /* ── NAV ── */
-    nav {
-      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 0 5%;
-      height: 60px;
-      background: rgba(255,255,255,.97);
-      border-bottom: 1px solid var(--border);
-    }
-    .nav-logo {
-      display: flex; align-items: center; gap: 9px;
-      font-weight: 800; font-size: 1.1rem; color: var(--dark); text-decoration: none;
-      flex-shrink: 0; letter-spacing: -.02em;
-    }
-    .nav-logo span { color: var(--green); }
-    .nav-logo .rosa-icon {
-      width: 32px; height: 32px; border-radius: 50%;
-      background: var(--green); display: grid; place-items: center; flex-shrink: 0;
-      font-size: 1rem; line-height: 1;
-    }
+/* ── HERO ── */
+.hero {
+  padding: 140px 5% 80px;
+  text-align: center;
+  background: linear-gradient(180deg, #f0fdf4 0%, #fff 80%);
+}
+.hero-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: #dcfce7; color: #15803d;
+  padding: 5px 14px; border-radius: 99px;
+  font-size: .78rem; font-weight: 600; letter-spacing: .02em;
+  margin-bottom: 28px;
+}
+.hero-badge span { font-size: .8rem; }
+h1 {
+  font-size: clamp(2rem, 5vw, 3.4rem);
+  font-weight: 900; line-height: 1.1;
+  letter-spacing: -.03em; color: var(--dark);
+  max-width: 800px; margin: 0 auto 22px;
+}
+h1 em { color: var(--green); font-style: normal; }
+.hero-sub {
+  font-size: clamp(.95rem, 2vw, 1.15rem);
+  color: var(--gray); max-width: 580px; margin: 0 auto 40px;
+  line-height: 1.7;
+}
+.hero-actions { display: flex; align-items: center; justify-content: center; gap: 14px; flex-wrap: wrap; }
+.btn-primary {
+  background: var(--green); color: #fff; border: none; border-radius: 12px;
+  padding: 14px 28px; font-size: .95rem; font-weight: 700;
+  cursor: pointer; text-decoration: none; transition: all .15s;
+  box-shadow: 0 4px 14px rgba(34,197,94,.35);
+}
+.btn-primary:hover { background: var(--green-dark); transform: translateY(-1px); box-shadow: 0 6px 18px rgba(34,197,94,.4); }
+.btn-ghost {
+  background: transparent; color: var(--dark); border: 1.5px solid var(--border);
+  border-radius: 12px; padding: 13px 24px; font-size: .9rem; font-weight: 600;
+  cursor: pointer; text-decoration: none; transition: all .15s;
+}
+.btn-ghost:hover { border-color: var(--green); color: var(--green); }
+.hero-note { margin-top: 16px; font-size: .78rem; color: var(--gray); }
+.hero-note strong { color: var(--dark); }
 
-    .nav-right { display: flex; align-items: center; gap: 20px; }
-    .nav-links { display: flex; align-items: center; gap: 28px; }
-    .nav-links a {
-      text-decoration: none; color: var(--gray); font-size: .85rem;
-      font-weight: 500; transition: color .15s; white-space: nowrap;
-    }
-    .nav-links a:hover { color: var(--dark); }
+/* ── DEMO MOCKUP ── */
+.mockup-wrap {
+  max-width: 1000px; margin: 0 auto;
+  padding: 60px 5% 0;
+}
+.mockup {
+  background: var(--gray-light); border: 1px solid var(--border);
+  border-radius: 20px; overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0,0,0,.08);
+}
+.mockup-bar {
+  background: var(--dark); padding: 12px 20px;
+  display: flex; align-items: center; gap: 8px;
+}
+.mockup-dot { width: 10px; height: 10px; border-radius: 50%; }
+.mockup-inner { display: grid; grid-template-columns: 220px 1fr; min-height: 320px; }
+.mockup-sidebar {
+  background: #fff; border-right: 1px solid var(--border);
+  padding: 16px 0;
+}
+.sidebar-item {
+  padding: 9px 16px; font-size: .78rem; font-weight: 500;
+  display: flex; align-items: center; gap: 8px; color: var(--gray);
+}
+.sidebar-item.active { background: var(--green-light); color: var(--green-dark); font-weight: 600; }
+.mockup-content { padding: 20px; }
+.stat-row { display: flex; gap: 10px; margin-bottom: 16px; }
+.stat-box {
+  flex: 1; background: #fff; border: 1px solid var(--border);
+  border-radius: 10px; padding: 12px;
+}
+.stat-val { font-size: 1.3rem; font-weight: 800; color: var(--dark); }
+.stat-lbl { font-size: .68rem; color: var(--gray); margin-top: 2px; }
+.stat-up { font-size: .68rem; color: #22c55e; font-weight: 600; }
+.order-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 9px 12px; background: #fff; border: 1px solid var(--border);
+  border-radius: 8px; margin-bottom: 6px; font-size: .75rem;
+}
+.badge-green { background: #dcfce7; color: #15803d; padding: 2px 8px; border-radius: 99px; font-size: .65rem; font-weight: 700; }
+.badge-amber { background: #fef3c7; color: #b45309; padding: 2px 8px; border-radius: 99px; font-size: .65rem; font-weight: 700; }
+.badge-blue  { background: #dbeafe; color: #1d4ed8; padding: 2px 8px; border-radius: 99px; font-size: .65rem; font-weight: 700; }
+@media(max-width:640px){
+  .mockup-inner { grid-template-columns: 1fr; }
+  .mockup-sidebar { display: none; }
+}
 
-    .lang-switcher { display: flex; gap: 2px; align-items: center; }
-    .lang-btn {
-      background: none; border: none; cursor: pointer;
-      padding: 4px 7px; font-size: .75rem; font-weight: 600;
-      color: var(--gray); transition: color .15s; line-height: 1;
-      border-bottom: 2px solid transparent;
-    }
-    .lang-btn:hover { color: var(--dark); }
-    .lang-btn.active { color: var(--green); border-bottom-color: var(--green); }
+/* ── SECTIONS COMMON ── */
+section { padding: 80px 5%; }
+.section-label { font-size: .75rem; font-weight: 700; letter-spacing: .08em; color: var(--green); text-transform: uppercase; margin-bottom: 12px; }
+.section-title { font-size: clamp(1.6rem, 3.5vw, 2.4rem); font-weight: 800; letter-spacing: -.025em; line-height: 1.15; margin-bottom: 16px; }
+.section-sub { font-size: 1rem; color: var(--gray); max-width: 520px; line-height: 1.7; margin-bottom: 48px; }
 
-    .btn-login {
-      background: var(--green); color: white; border: none; cursor: pointer;
-      padding: 8px 20px; border-radius: 99px; font-size: .85rem; font-weight: 600;
-      text-decoration: none; transition: background .15s; white-space: nowrap;
-    }
-    .btn-login:hover { background: var(--green-dark); }
+/* ── PROBLEM / BEFORE-AFTER ── */
+.before-after {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 24px; max-width: 860px; margin: 0 auto;
+}
+.ba-col { border-radius: var(--radius); padding: 28px; }
+.ba-col.before { background: #fff1f2; border: 1px solid #fecdd3; }
+.ba-col.after  { background: #f0fdf4; border: 1px solid #bbf7d0; }
+.ba-label { font-size: .75rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; margin-bottom: 16px; }
+.ba-col.before .ba-label { color: #e11d48; }
+.ba-col.after  .ba-label { color: #16a34a; }
+.ba-item { display: flex; gap: 10px; margin-bottom: 12px; font-size: .88rem; line-height: 1.4; align-items: flex-start; }
+.ba-col.before .ba-item::before { content: '✗'; color: #e11d48; font-weight: 700; flex-shrink: 0; }
+.ba-col.after  .ba-item::before { content: '✓'; color: #16a34a; font-weight: 700; flex-shrink: 0; }
+@media(max-width:640px){ .before-after { grid-template-columns: 1fr; } }
 
-    .hamburger {
-      display: none; flex-direction: column; gap: 5px; cursor: pointer;
-      background: none; border: none; padding: 6px;
-    }
-    .hamburger span { display: block; width: 22px; height: 2px; background: var(--dark); transition: all .3s; }
-    .hamburger.open span:nth-child(1) { transform: rotate(45deg) translate(5px,5px); }
-    .hamburger.open span:nth-child(2) { opacity: 0; }
-    .hamburger.open span:nth-child(3) { transform: rotate(-45deg) translate(5px,-5px); }
+/* ── FEATURES ── */
+.features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; }
+.feat-card {
+  background: var(--white); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 26px;
+  transition: box-shadow .2s, transform .2s;
+}
+.feat-card:hover { box-shadow: 0 8px 30px rgba(0,0,0,.07); transform: translateY(-2px); }
+.feat-icon { font-size: 1.8rem; margin-bottom: 14px; }
+.feat-title { font-weight: 700; font-size: .95rem; margin-bottom: 8px; }
+.feat-desc { font-size: .83rem; color: var(--gray); line-height: 1.6; }
 
-    .mobile-menu {
-      display: none; position: fixed; top: 60px; left: 0; right: 0; z-index: 99;
-      background: white; border-bottom: 1px solid var(--border);
-      flex-direction: column; padding: 20px 5% 24px; gap: 0;
-    }
-    .mobile-menu.open { display: flex; }
-    .mobile-menu a {
-      text-decoration: none; color: var(--dark); font-size: .95rem; font-weight: 500;
-      padding: 13px 0; border-bottom: 1px solid var(--border);
-    }
-    .mobile-menu .lang-row { display: flex; gap: 6px; padding: 16px 0 4px; }
-    .mobile-menu .btn-login {
-      text-align: center; width: 100%; margin-top: 14px; padding: 13px;
-      font-size: .9rem;
-    }
+/* ── USE CASES (sectors) ── */
+.sectors-wrap { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; margin-bottom: 40px; }
+.sector-tab {
+  padding: 8px 18px; border: 1.5px solid var(--border); border-radius: 99px;
+  font-size: .82rem; font-weight: 600; cursor: pointer; background: #fff;
+  color: var(--gray); transition: all .15s;
+}
+.sector-tab.active { background: var(--green); color: #fff; border-color: var(--green); }
+.sector-tab:hover:not(.active) { border-color: var(--green); color: var(--green); }
+.sector-story { display: none; max-width: 700px; margin: 0 auto; }
+.sector-story.active { display: block; }
+.story-box {
+  background: var(--gray-light); border: 1px solid var(--border);
+  border-radius: 16px; padding: 28px;
+}
+.story-title { font-weight: 700; font-size: 1.05rem; margin-bottom: 8px; }
+.story-sub { font-size: .88rem; color: var(--gray); margin-bottom: 20px; line-height: 1.6; }
+.chat-bubbles { display: flex; flex-direction: column; gap: 8px; }
+.bubble { padding: 10px 14px; border-radius: 12px; font-size: .82rem; max-width: 80%; line-height: 1.5; }
+.bubble.customer { background: #e9ecef; color: var(--dark); align-self: flex-start; border-bottom-left-radius: 4px; }
+.bubble.bot { background: var(--green); color: #fff; align-self: flex-end; border-bottom-right-radius: 4px; }
+.bubble-who { font-size: .65rem; color: var(--gray); margin-bottom: 2px; }
 
-    /* ── HERO ── */
-    .hero {
-      min-height: 100svh;
-      display: flex; flex-wrap: wrap; align-items: center;
-      padding: 80px 5% 60px;
-      background: var(--dark);
-      position: relative; overflow: hidden; gap: 48px;
-    }
-    /* diagonal accent line */
-    .hero::after {
-      content: '';
-      position: absolute; top: 0; right: 22%; width: 1px; height: 100%;
-      background: rgba(37,211,102,.2);
-      pointer-events: none;
-    }
-    .hero-content { max-width: 580px; position: relative; z-index: 1; flex: 1 1 300px; }
-    .hero-eyebrow {
-      font-size: .72rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase;
-      color: var(--green); margin-bottom: 20px;
-      display: flex; align-items: center; gap: 10px;
-    }
-    .hero-eyebrow::before { content: ''; display: block; width: 32px; height: 2px; background: var(--green); }
-    .hero h1 {
-      font-size: clamp(2.4rem, 6vw, 4.2rem); font-weight: 900;
-      color: white; line-height: 1.05; margin-bottom: 24px;
-      letter-spacing: -.03em;
-    }
-    .hero h1 span { color: var(--green); }
-    .hero p { font-size: clamp(.93rem, 2vw, 1.05rem); color: rgba(255,255,255,.6); margin-bottom: 36px; max-width: 460px; line-height: 1.7; }
-    .hero-cta { display: flex; gap: 12px; flex-wrap: wrap; }
+/* ── HOW IT WORKS ── */
+.steps-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0; }
+.step-item { padding: 28px; position: relative; }
+.step-item:not(:last-child)::after {
+  content: '→'; position: absolute; right: -2px; top: 36px;
+  font-size: 1.4rem; color: var(--border);
+}
+.step-num {
+  width: 42px; height: 42px; border-radius: 12px; background: var(--green);
+  color: #fff; font-weight: 800; font-size: 1.1rem;
+  display: grid; place-items: center; margin-bottom: 16px;
+}
+.step-title { font-weight: 700; font-size: .95rem; margin-bottom: 8px; }
+.step-desc { font-size: .82rem; color: var(--gray); line-height: 1.6; }
+@media(max-width:640px){ .step-item::after { display: none; } }
 
-    .btn-primary {
-      background: var(--green); color: white; border: none; cursor: pointer;
-      padding: 14px 28px; border-radius: 99px; font-size: .95rem; font-weight: 700;
-      text-decoration: none; display: inline-flex; align-items: center; gap: 8px;
-      transition: background .15s, transform .15s, box-shadow .15s;
-      box-shadow: 0 4px 20px rgba(37,211,102,.35);
-    }
-    .btn-primary:hover { background: #1fba56; transform: translateY(-2px); box-shadow: 0 8px 28px rgba(37,211,102,.45); }
-    .btn-secondary {
-      background: transparent; color: rgba(255,255,255,.75); cursor: pointer;
-      padding: 14px 28px; border-radius: 99px; font-size: .95rem; font-weight: 600;
-      text-decoration: none; display: inline-flex; align-items: center; gap: 8px;
-      border: 1.5px solid rgba(255,255,255,.22); transition: border-color .15s, color .15s;
-    }
-    .btn-secondary:hover { border-color: rgba(255,255,255,.55); color: white; }
+/* ── PRICING ── */
+.pricing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; max-width: 800px; margin: 0 auto; }
+.price-card {
+  border: 1.5px solid var(--border); border-radius: 18px; padding: 28px;
+  background: #fff; position: relative;
+}
+.price-card.featured { border-color: var(--green); box-shadow: 0 0 0 4px rgba(34,197,94,.1); }
+.price-popular { position: absolute; top: -13px; left: 50%; transform: translateX(-50%); background: var(--green); color: #fff; font-size: .72rem; font-weight: 700; padding: 3px 14px; border-radius: 99px; white-space: nowrap; }
+.price-name { font-weight: 700; font-size: .9rem; color: var(--gray); margin-bottom: 6px; }
+.price-amount { font-size: 2.4rem; font-weight: 900; letter-spacing: -.04em; color: var(--dark); line-height: 1; }
+.price-period { font-size: .82rem; color: var(--gray); }
+.price-desc { font-size: .8rem; color: var(--gray); margin: 12px 0 20px; line-height: 1.5; }
+.price-features { list-style: none; margin-bottom: 24px; }
+.price-features li { font-size: .82rem; padding: 5px 0; border-bottom: 1px solid var(--border); display: flex; gap: 8px; }
+.price-features li::before { content: '✓'; color: var(--green); font-weight: 700; flex-shrink: 0; }
+.price-btn {
+  display: block; width: 100%; padding: 12px; border-radius: 10px;
+  font-size: .88rem; font-weight: 700; text-align: center; text-decoration: none;
+  cursor: pointer; border: none; transition: all .15s;
+}
+.price-btn.primary { background: var(--green); color: #fff; }
+.price-btn.primary:hover { background: var(--green-dark); }
+.price-btn.outline { background: transparent; border: 1.5px solid var(--border); color: var(--dark); }
+.price-btn.outline:hover { border-color: var(--green); color: var(--green); }
+.pricing-note { text-align: center; font-size: .8rem; color: var(--gray); margin-top: 24px; }
 
-    /* chat mockup */
-    .hero-visual {
-      flex: 0 0 auto; display: flex; justify-content: center; align-items: center;
-      position: relative; z-index: 1;
-    }
-    .chat-mock {
-      width: 272px; background: #e5ddd5;
-      overflow: hidden;
-      box-shadow: 8px 8px 0 rgba(37,211,102,.25), 16px 16px 0 rgba(37,211,102,.1);
-      animation: float 4s ease-in-out infinite;
-    }
-    @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
-    .chat-header {
-      background: var(--green-dark); color: white; padding: 11px 13px;
-      display: flex; align-items: center; gap: 9px; font-size: .8rem; font-weight: 600;
-    }
-    .chat-avatar {
-      width: 32px; height: 32px; background: var(--green);
-      display: grid; place-items: center; font-size: .95rem; flex-shrink: 0;
-    }
-    .chat-body { padding: 10px 8px; display: flex; flex-direction: column; gap: 7px; }
-    .bubble {
-      max-width: 88%; padding: 7px 11px;
-      font-size: .75rem; line-height: 1.45;
-    }
-    .bubble-in  { background: white; align-self: flex-start; }
-    .bubble-out { background: #dcf8c6; align-self: flex-end; }
-    .bubble-time { font-size: .62rem; color: #888; text-align: right; margin-top: 2px; }
+/* ── FAQ ── */
+.faq-list { max-width: 680px; margin: 0 auto; }
+.faq-item { border-bottom: 1px solid var(--border); }
+.faq-q {
+  width: 100%; text-align: left; padding: 18px 0;
+  background: none; border: none; cursor: pointer;
+  font-size: .95rem; font-weight: 600; color: var(--dark);
+  display: flex; justify-content: space-between; align-items: center; gap: 12px;
+}
+.faq-arrow { font-size: .75rem; color: var(--gray); transition: transform .25s; flex-shrink: 0; }
+.faq-a { font-size: .88rem; color: var(--gray); line-height: 1.7; padding-bottom: 18px; display: none; }
+.faq-item.open .faq-a { display: block; }
+.faq-item.open .faq-arrow { transform: rotate(180deg); }
 
-    /* ── SECTION COMMONS ── */
-    section { padding: 88px 5%; }
+/* ── CTA BOTTOM ── */
+.cta-section {
+  background: var(--dark); color: #fff; text-align: center; padding: 80px 5%;
+}
+.cta-section h2 { font-size: clamp(1.6rem, 3vw, 2.4rem); font-weight: 900; letter-spacing: -.025em; margin-bottom: 14px; }
+.cta-section p { font-size: 1rem; color: #94a3b8; margin-bottom: 36px; }
+.cta-badges { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; margin-top: 24px; }
+.cta-badge { font-size: .78rem; color: #94a3b8; }
 
-    .section-label {
-      display: flex; align-items: center; gap: 10px;
-      font-size: .72rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase;
-      color: var(--green); margin-bottom: 18px;
-    }
-    .section-label::before { content: ''; display: block; width: 28px; height: 2px; background: var(--green); flex-shrink: 0; }
+/* ── FOOTER ── */
+footer { padding: 32px 5%; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; font-size: .8rem; color: var(--gray); }
+footer a { color: var(--gray); text-decoration: none; }
+footer a:hover { color: var(--dark); }
+.footer-links { display: flex; gap: 20px; flex-wrap: wrap; }
 
-    h2 {
-      font-size: clamp(1.9rem, 4vw, 3rem); font-weight: 900;
-      line-height: 1.1; margin-bottom: 16px; letter-spacing: -.03em;
-    }
-    .section-sub { font-size: .97rem; color: var(--gray); max-width: 520px; margin-bottom: 52px; line-height: 1.7; }
-    .center { text-align: center; }
-    .center .section-label { justify-content: center; }
-    .center .section-sub { margin-left: auto; margin-right: auto; }
-
-    /* ── STEPS ── */
-    .steps { background: var(--gray-light); }
-    .steps-grid {
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 20px;
-    }
-    .step-card {
-      background: white; border-radius: var(--radius);
-      padding: 32px 26px; position: relative;
-      border-top: 3px solid var(--green);
-      box-shadow: 0 2px 12px rgba(0,0,0,.06);
-    }
-    .step-num {
-      font-size: 3.8rem; font-weight: 900; color: var(--green); line-height: 1;
-      opacity: .12; position: absolute; top: 14px; right: 18px;
-      letter-spacing: -.04em; pointer-events: none;
-    }
-    .step-icon {
-      width: 44px; height: 44px; border-radius: 10px;
-      background: rgba(37,211,102,.1); display: flex; align-items: center; justify-content: center;
-      margin-bottom: 18px; color: var(--green);
-    }
-    .step-icon svg { width: 22px; height: 22px; stroke: var(--green); stroke-width: 1.8; fill: none; }
-    .step-card h3 { font-size: .97rem; font-weight: 700; margin-bottom: 8px; }
-    .step-card p  { font-size: .86rem; color: var(--gray); line-height: 1.65; }
-
-    /* ── FEATURES ── */
-    .features-grid {
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 20px;
-    }
-    .feat-card {
-      border: 1.5px solid var(--border); border-radius: var(--radius); padding: 28px 24px;
-      transition: border-color .2s, box-shadow .2s, transform .2s;
-    }
-    .feat-card:hover { border-color: var(--green); box-shadow: 0 6px 28px rgba(37,211,102,.1); transform: translateY(-3px); }
-    .feat-icon {
-      width: 46px; height: 46px; border-radius: 10px;
-      background: rgba(37,211,102,.09); display: flex; align-items: center; justify-content: center;
-      margin-bottom: 16px;
-    }
-    .feat-icon svg { width: 22px; height: 22px; stroke: var(--green); stroke-width: 1.8; fill: none; }
-    .feat-card h3 { font-size: .95rem; font-weight: 700; margin-bottom: 7px; }
-    .feat-card p  { font-size: .84rem; color: var(--gray); line-height: 1.65; }
-
-    /* ── INDUSTRIES ── */
-    .industries { background: var(--dark); }
-    .industries .section-label { color: var(--green); }
-    .industries .section-label::before { background: var(--green); }
-    .industries h2 { color: white; }
-    .industries .section-sub { color: rgba(255,255,255,.5); }
-    .industries-grid { display: flex; flex-wrap: wrap; gap: 10px; }
-    .ind-tag {
-      display: flex; align-items: center; gap: 8px;
-      border: 1px solid rgba(255,255,255,.14); border-radius: 8px;
-      padding: 10px 16px; font-size: .84rem; font-weight: 500; color: rgba(255,255,255,.75);
-      transition: border-color .15s, color .15s, background .15s; cursor: default;
-    }
-    .ind-tag:hover { border-color: var(--green); color: white; background: rgba(37,211,102,.07); }
-    .ind-tag svg { width: 16px; height: 16px; stroke: currentColor; stroke-width: 1.8; fill: none; flex-shrink: 0; }
-
-    /* ── SUPPORT ── */
-    .support-section { background: var(--gray-light); padding: 88px 5%; }
-    .support-inner {
-      max-width: 640px; margin: 0 auto;
-      text-align: center;
-      background: white; border-radius: 18px; padding: 56px 48px;
-      box-shadow: 0 4px 32px rgba(0,0,0,.08);
-    }
-    .support-inner .section-label { justify-content: center; }
-    .support-text h2 { margin-bottom: 10px; }
-    .support-text p  { color: var(--gray); font-size: .95rem; margin-bottom: 26px; max-width: 420px; line-height: 1.7; margin-left: auto; margin-right: auto; }
-    .btn-wa {
-      display: inline-flex; align-items: center; gap: 10px;
-      background: var(--green); color: white; text-decoration: none;
-      padding: 13px 26px; border-radius: 99px; font-weight: 700; font-size: .92rem;
-      box-shadow: 0 4px 18px rgba(37,211,102,.35);
-      transition: background .15s, transform .15s;
-    }
-    .btn-wa:hover { background: #1fba56; transform: translateY(-2px); }
-
-    /* ── CTA BOTTOM ── */
-    .cta-section {
-      background: var(--dark);
-      text-align: center; padding: 100px 5%;
-      position: relative; overflow: hidden;
-    }
-    .cta-section::before {
-      content: '';
-      position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
-      width: 1px; height: 60px; background: rgba(37,211,102,.4);
-    }
-    .cta-section h2 { color: white; }
-    .cta-section p { color: rgba(255,255,255,.55); font-size: .97rem; max-width: 440px; margin: 18px auto 40px; line-height: 1.7; }
-
-    /* ── FOOTER ── */
-    footer {
-      background: #080d0a; color: rgba(255,255,255,.35);
-      padding: 32px 5%; text-align: center; font-size: .8rem;
-      border-top: 1px solid rgba(255,255,255,.06);
-    }
-    footer a { color: var(--green); text-decoration: none; }
-
-    /* ── RESPONSIVE ── */
-    @media (max-width: 900px) {
-      .hero { padding: 80px 5% 50px; }
-      .hero-visual { display: none; }
-      .hero::after { display: none; }
-    }
-    @media (max-width: 640px) {
-      .nav-links, .lang-switcher, .btn-login { display: none; }
-      .hamburger { display: flex; }
-      section { padding: 64px 5%; }
-      .hero { min-height: 100svh; padding: 72px 5% 50px; }
-      .hero h1 { font-size: 2.3rem; }
-      .hero-cta { flex-direction: column; }
-      .btn-primary, .btn-secondary { text-align: center; justify-content: center; }
-      .steps-grid { grid-template-columns: 1fr; border-left: none; }
-      .step-card { border-left: 1px solid var(--border); }
-      .features-grid { grid-template-columns: 1fr; }
-      .support-inner { padding: 36px 24px; }
-      .btn-wa { width: 100%; justify-content: center; }
-    }
-  </style>
+/* ── UTILS ── */
+.center { text-align: center; }
+.bg-light { background: var(--gray-light); }
+.container { max-width: 1100px; margin: 0 auto; }
+</style>
 </head>
 <body>
 
-<!-- ══════════════ NAV ══════════════ -->
+<!-- NAV -->
 <nav>
-  <a href="#" class="nav-logo">
-    <div class="rosa-icon">🌸</div>
-    Sara<span>Bot</span>
+  <a href="/" class="logo">
+    <div class="logo-icon">🤖</div>
+    <div class="logo-text">Sara<span>Bot</span></div>
   </a>
-
-  <div class="nav-right">
-    <div class="nav-links">
-      <a href="#como-funciona" data-i18n="nav_how">Cómo funciona</a>
-      <a href="#funcionalidades" data-i18n="nav_feat">Funcionalidades</a>
-      <a href="#sectores" data-i18n="nav_sectors">Sectores</a>
-      <a href="#soporte" data-i18n="nav_support">Soporte</a>
-    </div>
-    <div class="lang-switcher">
-      <button class="lang-btn active" onclick="setLang('es')">ES</button>
-      <button class="lang-btn" onclick="setLang('en')">EN</button>
-      <button class="lang-btn" onclick="setLang('de')">DE</button>
-      <button class="lang-btn" onclick="setLang('it')">IT</button>
-    </div>
-    <a href="https://candidatelens.com/admin/index.html" class="btn-login" data-i18n="nav_login">Login</a>
+  <div class="nav-links">
+    <a href="#features">Funcionalidades</a>
+    <a href="#how">Cómo funciona</a>
+    <a href="#pricing">Planes</a>
+    <a href="#faq">FAQ</a>
   </div>
-
-  <button class="hamburger" id="hamburger" onclick="toggleMenu()" aria-label="Menu">
-    <span></span><span></span><span></span>
-  </button>
+  <div class="nav-right">
+    <a href="/admin/index.html" style="font-size:.85rem;font-weight:500;color:var(--gray);text-decoration:none;">Entrar</a>
+    <a href="/register/index.html" class="nav-cta">Empezar gratis →</a>
+  </div>
 </nav>
 
-<!-- mobile menu -->
-<div class="mobile-menu" id="mobileMenu">
-  <a href="#como-funciona" data-i18n="nav_how" onclick="closeMenu()">Cómo funciona</a>
-  <a href="#funcionalidades" data-i18n="nav_feat" onclick="closeMenu()">Funcionalidades</a>
-  <a href="#sectores" data-i18n="nav_sectors" onclick="closeMenu()">Sectores</a>
-  <a href="#soporte" data-i18n="nav_support" onclick="closeMenu()">Soporte</a>
-  <div class="lang-row">
-    <button class="lang-btn active" onclick="setLang('es');closeMenu()">ES</button>
-    <button class="lang-btn" onclick="setLang('en');closeMenu()">EN</button>
-    <button class="lang-btn" onclick="setLang('de');closeMenu()">DE</button>
-    <button class="lang-btn" onclick="setLang('it');closeMenu()">IT</button>
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-badge"><span>🟢</span> Bot de IA + Panel de gestión — todo en uno</div>
+  <h1>Gestioná tu negocio.<br/><em>El bot atiende a tus clientes.</em></h1>
+  <p class="hero-sub">
+    Pedidos, turnos, catálogo, clientes — todo desde un panel.
+    Tu bot de IA en WhatsApp toma pedidos, responde consultas y agenda citas 24/7,
+    sin que tengas que estar pendiente del celular.
+  </p>
+  <div class="hero-actions">
+    <a href="/register/index.html" class="btn-primary">🚀 Empezar 7 días gratis</a>
+    <a href="#how" class="btn-ghost">Ver cómo funciona</a>
   </div>
-  <a href="https://candidatelens.com/admin/index.html" class="btn-login" data-i18n="nav_login">Login</a>
+  <p class="hero-note">Sin tarjeta de crédito · <strong>7 días gratis</strong> · Cancelás cuando querés</p>
+</section>
+
+<!-- MOCKUP -->
+<div class="mockup-wrap container">
+  <div class="mockup">
+    <div class="mockup-bar">
+      <div class="mockup-dot" style="background:#ef4444"></div>
+      <div class="mockup-dot" style="background:#f59e0b"></div>
+      <div class="mockup-dot" style="background:#22c55e"></div>
+      <span style="color:#94a3b8;font-size:.72rem;margin-left:8px;">Sara Bot — Panel de administración</span>
+    </div>
+    <div class="mockup-inner">
+      <div class="mockup-sidebar">
+        <div class="sidebar-item">📊 Dashboard</div>
+        <div class="sidebar-item active">🛒 Pedidos</div>
+        <div class="sidebar-item">📦 Catálogo</div>
+        <div class="sidebar-item">📅 Turnos</div>
+        <div class="sidebar-item">💬 Chats</div>
+        <div class="sidebar-item">⚙️ Configuración</div>
+      </div>
+      <div class="mockup-content">
+        <div class="stat-row">
+          <div class="stat-box">
+            <div class="stat-val">47</div>
+            <div class="stat-lbl">Pedidos hoy</div>
+            <div class="stat-up">↑ 12% vs ayer</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-val">8</div>
+            <div class="stat-lbl">Pendientes</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-val">₲ 4.2M</div>
+            <div class="stat-lbl">Ventas hoy</div>
+            <div class="stat-up">↑ mejor semana</div>
+          </div>
+        </div>
+        <div class="order-row">
+          <span style="font-weight:600">📍 Mesa 4 — Juan P.</span>
+          <span style="color:var(--gray)">2 pizzas + 1 Fanta</span>
+          <span class="badge-amber">Preparando</span>
+        </div>
+        <div class="order-row">
+          <span style="font-weight:600">🚚 Delivery — María G.</span>
+          <span style="color:var(--gray)">Rosas rojas x12</span>
+          <span class="badge-green">Confirmado</span>
+        </div>
+        <div class="order-row">
+          <span style="font-weight:600">📅 Turno 15:30 — Ana L.</span>
+          <span style="color:var(--gray)">Corte + color</span>
+          <span class="badge-blue">En 45 min</span>
+        </div>
+        <div class="order-row">
+          <span style="font-weight:600">📦 Retiro — Carlos M.</span>
+          <span style="color:var(--gray)">Lamparas LED x4</span>
+          <span class="badge-green">Confirmado</span>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
-<!-- ══════════════ HERO ══════════════ -->
-<section class="hero" id="top">
-  <div class="hero-content">
-    <h1 data-i18n="hero_h1">Tu negocio nunca<br/>duerme.<br/><span data-i18n="hero_h1_span">Sara responde.</span></h1>
-    <p data-i18n="hero_p">Sara Bot gestiona pedidos, responde a tus clientes y actualiza el catálogo en WhatsApp de forma automática, 24 horas al día, 7 días a la semana. Sin apps que instalar.</p>
-    <div class="hero-cta">
-      <a href="https://candidatelens.com/admin/index.html" class="btn-primary">
-        ▶ &nbsp;<span data-i18n="hero_cta1">¿Ya vas un paso adelante? Entra</span>
-      </a>
-      <a href="#como-funciona" class="btn-secondary" data-i18n="hero_cta2">Ver cómo funciona</a>
-    </div>
-  </div>
-
-  <div class="hero-visual">
-    <div class="chat-mock">
-      <div class="chat-header">
-        <div class="chat-avatar">🌸</div>
-        <div>
-          <div>Florería Las Orquídeas</div>
-          <div style="font-size:.68rem;opacity:.75;font-weight:400">Sara · en línea</div>
-        </div>
+<!-- BEFORE / AFTER -->
+<section class="bg-light" id="problem">
+  <div class="container center">
+    <div class="section-label">El problema</div>
+    <h2 class="section-title">¿Cuánto tiempo pasás respondiendo mensajes que dicen lo mismo?</h2>
+    <p class="section-sub" style="margin:0 auto 40px">Cada negocio que atiende por WhatsApp tiene el mismo problema: el dueño termina siendo el operador de chat.</p>
+    <div class="before-after">
+      <div class="ba-col before">
+        <div class="ba-label">❌ Antes de Sara Bot</div>
+        <div class="ba-item">Respondés "¿tienen esto?" 30 veces por día</div>
+        <div class="ba-item">Un pedido llega a las 11pm y no te enterás</div>
+        <div class="ba-item">El sábado a la noche el teléfono no para</div>
+        <div class="ba-item">Perdés turnos porque nadie registra las reservas</div>
+        <div class="ba-item">No sabés cuánto vendiste esta semana</div>
+        <div class="ba-item">Cualquier ausencia tuya = el negocio para</div>
       </div>
-      <div class="chat-body">
-        <div class="bubble bubble-in">
-          Hola! Tienen rosas rojas disponibles? 🌹
-          <div class="bubble-time">10:14</div>
-        </div>
-        <div class="bubble bubble-out">
-          ¡Claro! 🌹 Tenemos Rosas Rojas Premium de tallo largo en ramo de 12 o 24. ¡Te mando una foto ahora!
-          <div class="bubble-time">10:14 ✓✓</div>
-        </div>
-        <div class="bubble bubble-in">
-          Perfecto! Quiero 12 para mañana 🙏
-          <div class="bubble-time">10:15</div>
-        </div>
-        <div class="bubble bubble-out">
-          ¡Genial! 🎉 Resumen:<br/>• Rosas Rojas x12<br/>🚚 Entrega mañana<br/><br/>¿Confirmo el pedido?
-          <div class="bubble-time">10:15 ✓✓</div>
-        </div>
-        <div class="bubble bubble-in">
-          Sí, confirmo!
-          <div class="bubble-time">10:16</div>
-        </div>
-        <div class="bubble bubble-out">
-          ✅ ¡Pedido confirmado! El titular recibirá una notificación enseguida. ¡Gracias! 💚
-          <div class="bubble-time">10:16 ✓✓</div>
-        </div>
+      <div class="ba-col after">
+        <div class="ba-label">✅ Con Sara Bot</div>
+        <div class="ba-item">El bot responde, muestra fotos, toma el pedido</div>
+        <div class="ba-item">Recibís una notificación solo cuando hay un pedido nuevo</div>
+        <div class="ba-item">El sábado a la noche el bot maneja solo</div>
+        <div class="ba-item">La agenda de turnos se llena automáticamente</div>
+        <div class="ba-item">Analytics en tiempo real desde el panel</div>
+        <div class="ba-item">El negocio funciona aunque no estés</div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ══════════════ CÓMO FUNCIONA ══════════════ -->
-<section class="steps" id="como-funciona">
-  <div class="center">
-    <div class="section-label" data-i18n="how_tag">Cómo funciona</div>
-    <h2 data-i18n="how_h2">Operativo en minutos</h2>
-    <p class="section-sub" data-i18n="how_sub">Sin apps que instalar para tus clientes. Sara vive directamente en WhatsApp, el canal que ya usan cada día.</p>
-  </div>
-  <div class="steps-grid">
-    <div class="step-card">
-      <div class="step-num">1</div>
-      <div class="step-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></div>
-      <h3 data-i18n="step1_h">Carga tu catálogo</h3>
-      <p data-i18n="step1_p">Añade productos, precios y fotos desde el panel de control. Puedes actualizar todo en tiempo real, también desde el móvil.</p>
+<!-- FEATURES -->
+<section id="features">
+  <div class="container">
+    <div class="center">
+      <div class="section-label">Funcionalidades</div>
+      <h2 class="section-title">Un sistema completo, no solo un chatbot</h2>
+      <p class="section-sub" style="margin:0 auto 48px">Panel de gestión para el dueño + bot de IA para los clientes. Dos herramientas, un precio.</p>
     </div>
-    <div class="step-card">
-      <div class="step-num">2</div>
-      <div class="step-icon"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
-      <h3 data-i18n="step2_h">Sara atiende a los clientes</h3>
-      <p data-i18n="step2_p">Tus clientes escriben en tu número WhatsApp Business. Sara responde, muestra el catálogo, aclara dudas y recoge los pedidos.</p>
-    </div>
-    <div class="step-card">
-      <div class="step-num">3</div>
-      <div class="step-icon"><svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
-      <h3 data-i18n="step3_h">Recibe la notificación</h3>
-      <p data-i18n="step3_p">Cuando llega un pedido, recibes un aviso en WhatsApp con todos los detalles. Confirmas, cancelas o tomas el chat con un solo mensaje.</p>
-    </div>
-    <div class="step-card">
-      <div class="step-num">4</div>
-      <div class="step-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
-      <h3 data-i18n="step4_h">Tú te dedicas a lo tuyo</h3>
-      <p data-i18n="step4_p">Sara gestiona las respuestas repetitivas, tú haces lo que mejor sabes hacer. Cero tiempo perdido en mensajes de siempre.</p>
-    </div>
-  </div>
-</section>
-
-<!-- ══════════════ FUNCIONALIDADES ══════════════ -->
-<section id="funcionalidades">
-  <div class="center">
-    <div class="section-label" data-i18n="feat_tag">Funcionalidades</div>
-    <h2 data-i18n="feat_h2">Todo lo que necesitas,<br/>ya incluido</h2>
-    <p class="section-sub" data-i18n="feat_sub">Sara no es un chatbot simple. Es un asistente inteligente que aprende tu catálogo y gestiona cada conversación como lo haría un vendedor experto.</p>
-  </div>
-  <div class="features-grid">
-    <div class="feat-card">
-      <div class="feat-icon"><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 6v6l4 2"/><circle cx="18" cy="6" r="3" fill="var(--green)" stroke="none"/></svg></div>
-      <h3 data-i18n="f1_h">IA conversacional</h3>
-      <p data-i18n="f1_p">Sara entiende lenguaje natural, gestiona preguntas complejas, sugiere productos y guía al cliente hasta la confirmación del pedido.</p>
-    </div>
-    <div class="feat-card">
-      <div class="feat-icon"><svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></div>
-      <h3 data-i18n="f2_h">Gestión de catálogo</h3>
-      <p data-i18n="f2_p">Añade, modifica o elimina productos desde el panel. Sara conoce siempre el stock actualizado y nunca vende lo que está agotado.</p>
-    </div>
-    <div class="feat-card">
-      <div class="feat-icon"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>
-      <h3 data-i18n="f3_h">Fotos de productos</h3>
-      <p data-i18n="f3_p">Sube las fotos de tus productos. Sara las envía automáticamente cuando el cliente pregunta por un artículo específico.</p>
-    </div>
-    <div class="feat-card">
-      <div class="feat-icon"><svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
-      <h3 data-i18n="f4_h">Notificaciones de pedidos</h3>
-      <p data-i18n="f4_p">Recibe cada pedido en WhatsApp de forma clara. Responde CONFIRMAR, CANCELAR o CHAT para tomar el control directo.</p>
-    </div>
-    <div class="feat-card">
-      <div class="feat-icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
-      <h3 data-i18n="f5_h">Human takeover</h3>
-      <p data-i18n="f5_p">Con un mensaje puedes entrar en cualquier conversación y hablar directamente con el cliente. Sara retoma cuando terminas.</p>
-    </div>
-    <div class="feat-card">
-      <div class="feat-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div>
-      <h3 data-i18n="f6_h">Multiidioma</h3>
-      <p data-i18n="f6_p">Sara responde en el idioma del cliente — español, inglés, alemán, italiano y muchos más, sin configuración adicional.</p>
-    </div>
-    <div class="feat-card">
-      <div class="feat-icon"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></div>
-      <h3 data-i18n="f7_h">Panel de control</h3>
-      <p data-i18n="f7_p">Monitorea pedidos, revisa el historial de conversaciones y actualiza el catálogo desde un único panel web, en cualquier dispositivo.</p>
-    </div>
-    <div class="feat-card">
-      <div class="feat-icon"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
-      <h3 data-i18n="f8_h">Seguro y fiable</h3>
-      <p data-i18n="f8_p">Integración oficial con Meta WhatsApp Cloud API. Los datos de cada negocio están aislados y protegidos en cloud empresarial.</p>
-    </div>
-    <div class="feat-card">
-      <div class="feat-icon"><svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
-      <h3 data-i18n="f9_h">Activo 24/7</h3>
-      <p data-i18n="f9_p">Sara no se enferma, no tiene vacaciones y no toma descansos. Responde en segundos a cualquier hora del día o la noche.</p>
+    <div class="features-grid">
+      <div class="feat-card">
+        <div class="feat-icon">🤖</div>
+        <div class="feat-title">Bot de IA en WhatsApp</div>
+        <div class="feat-desc">Responde consultas, muestra el catálogo con fotos, toma pedidos y agenda turnos — 24/7, sin que estés. Habla con tus clientes como una persona real.</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">🛒</div>
+        <div class="feat-title">Gestión de pedidos</div>
+        <div class="feat-desc">Cada pedido que toma el bot aparece en tu panel en tiempo real. Confirmás, preparás, entregás. Notificaciones al instante en tu WhatsApp personal.</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">📅</div>
+        <div class="feat-title">Agenda de turnos</div>
+        <div class="feat-desc">El bot ofrece horarios disponibles y reserva el turno directamente. Vos ves la agenda del día, podés bloquear horas y gestionar todo desde el panel.</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">📦</div>
+        <div class="feat-title">Catálogo inteligente</div>
+        <div class="feat-desc">Cargá productos o servicios con fotos, precios y stock. El bot solo ofrece lo que tenés disponible. Importá desde Excel, Google Sheets o fotos con IA.</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">💬</div>
+        <div class="feat-title">Panel de chats</div>
+        <div class="feat-desc">Ve todas las conversaciones en tiempo real. Podés escribirle al cliente directamente desde el panel cuando lo necesitás — el bot se hace a un lado.</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">📊</div>
+        <div class="feat-title">Analytics y reportes</div>
+        <div class="feat-desc">Ventas del día, semana y mes. Productos más pedidos, clientes frecuentes, cancelaciones. Exportá todo a CSV para contabilidad.</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">🚚</div>
+        <div class="feat-title">Delivery configurado</div>
+        <div class="feat-desc">El bot pregunta si retira o quiere envío, pide la dirección y calcula el costo automáticamente según tu tarifa (fija, por zona o por km).</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">🎯</div>
+        <div class="feat-title">IA adaptada a tu rubro</div>
+        <div class="feat-desc">El bot se comporta diferente si sos una florería, un restaurante, una estética o un técnico. Desde el primer día habla como alguien del sector.</div>
+      </div>
     </div>
   </div>
 </section>
 
-<!-- ══════════════ SECTORES ══════════════ -->
-<section class="industries" id="sectores">
-  <div class="center">
-    <div class="section-label" data-i18n="sec_tag">Sectores</div>
-    <h2 data-i18n="sec_h2">Para cualquier negocio que recibe<br/>pedidos por WhatsApp</h2>
-    <p class="section-sub" data-i18n="sec_sub">Si tienes un catálogo y tus clientes te escriben por WhatsApp, Sara Bot es para ti.</p>
-  </div>
-  <div class="industries-grid">
-    <!-- Florerías: fiore/sole -->
-    <div class="ind-tag"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg><span data-i18n="s1">Florerías</span></div>
-    <!-- Pastelerías: torta/pastel -->
-    <div class="ind-tag"><svg viewBox="0 0 24 24"><path d="M20 21v-8a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8"/><path d="M4 16s.5-1 2-1 2.5 2 4 2 2.5-2 4-2 2 1 2 1"/><path d="M2 21h20"/><path d="M7 8v3"/><path d="M12 8v3"/><path d="M17 8v3"/><path d="M7 4h.01M12 4h.01M17 4h.01"/></svg><span data-i18n="s2">Pastelerías</span></div>
-    <!-- Autorepuestos: engranaje/tuerca -->
-    <div class="ind-tag"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 19.07a10 10 0 0 1 0-14.14"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2"/></svg><span data-i18n="s3">Autorepuestos</span></div>
-    <!-- Restaurantes: tenedor y cuchillo -->
-    <div class="ind-tag"><svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="8" y2="12"/><path d="M5 6c0 0 0 6 3 6s3-6 3-6"/><line x1="8" y1="12" x2="8" y2="22"/><line x1="16" y1="6" x2="16" y2="22"/><path d="M19 6c0 3.31-1.34 6-3 6V2"/></svg><span data-i18n="s4">Restaurantes</span></div>
-    <!-- Farmacias: cruz médica -->
-    <div class="ind-tag"><svg viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="20" rx="1"/><rect x="2" y="9" width="20" height="6" rx="1"/></svg><span data-i18n="s5">Farmacias</span></div>
-    <!-- Ropa y moda: camiseta -->
-    <div class="ind-tag"><svg viewBox="0 0 24 24"><path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.57a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.57a2 2 0 0 0-1.34-2.23z"/></svg><span data-i18n="s6">Ropa y moda</span></div>
-    <!-- Almacenes: carrito (correcto) -->
-    <div class="ind-tag"><svg viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg><span data-i18n="s7">Almacenes</span></div>
-    <!-- Viveros: hoja/planta -->
-    <div class="ind-tag"><svg viewBox="0 0 24 24"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg><span data-i18n="s8">Viveros</span></div>
-    <!-- Pet Shop: huella de pata -->
-    <div class="ind-tag"><svg viewBox="0 0 24 24"><circle cx="11" cy="4" r="2"/><circle cx="18" cy="8" r="2"/><circle cx="4" cy="8" r="2"/><path d="M9 10a5 5 0 0 1 5 5v3.5a3.5 3.5 0 0 1-6.84 1.05Q6.5 18 4.5 17a3.5 3.5 0 0 1 1-6.97L9 10z"/><circle cx="20" cy="16" r="2"/></svg><span data-i18n="s9">Pet Shop</span></div>
-    <!-- Estética: tijeras -->
-    <div class="ind-tag"><svg viewBox="0 0 24 24"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg><span data-i18n="s10">Estética</span></div>
-    <!-- Librerías: libro (correcto) -->
-    <div class="ind-tag"><svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg><span data-i18n="s11">Librerías</span></div>
-    <!-- Ferreterías: llave inglesa (correcto) -->
-    <div class="ind-tag"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg><span data-i18n="s12">Ferreterías</span></div>
-  </div>
-</section>
+<!-- USE CASES -->
+<section class="bg-light">
+  <div class="container center">
+    <div class="section-label">Para tu negocio</div>
+    <h2 class="section-title">Funciona para cualquier negocio que vende</h2>
+    <p class="section-sub" style="margin:0 auto 36px">Desde la pizzería del sábado a la noche hasta el técnico de lamparas. Si tenés clientes que escriben por WhatsApp, Sara Bot es para vos.</p>
 
-<!-- ══════════════ SOPORTE WHATSAPP ══════════════ -->
-<section class="support-section" id="soporte">
-  <div class="support-inner">
-    <div class="support-text">
-      <div class="section-label" data-i18n="sup_tag">Soporte</div>
-      <h2 data-i18n="sup_h2">¿Preguntas? Escríbenos<br/>por WhatsApp</h2>
-      <p data-i18n="sup_p">Respondemos en minutos. Cuéntanos sobre tu negocio y te mostramos cómo Sara Bot puede ayudarte.</p>
-      <a href="https://wa.me/595992113097" class="btn-wa" id="waLink" target="_blank" rel="noopener">
-        <svg viewBox="0 0 24 24" fill="white" width="20" height="20" style="flex-shrink:0">
-          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
-          <path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.126 1.535 5.861L.057 23.743a.75.75 0 0 0 .92.92l5.882-1.478A11.943 11.943 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22.5A10.453 10.453 0 0 1 6.32 20.87l-.376-.224-3.9.98.999-3.794-.246-.39A10.46 10.46 0 0 1 1.5 12C1.5 6.21 6.21 1.5 12 1.5S22.5 6.21 22.5 12 17.79 22.5 12 22.5z"/>
-        </svg>
-        <span data-i18n="sup_btn">Contactar por WhatsApp</span>
-      </a>
+    <div class="sectors-wrap">
+      <button class="sector-tab active" onclick="showSector('pizzeria', this)">🍕 Restaurante</button>
+      <button class="sector-tab" onclick="showSector('floreria', this)">🌸 Florería</button>
+      <button class="sector-tab" onclick="showSector('estetica', this)">💆 Estética</button>
+      <button class="sector-tab" onclick="showSector('electro', this)">💡 Electro / Repuestos</button>
+      <button class="sector-tab" onclick="showSector('pasteleria', this)">🍰 Pastelería</button>
+    </div>
+
+    <!-- Pizzería -->
+    <div class="sector-story active" id="story-pizzeria">
+      <div class="story-box">
+        <div class="story-title">🍕 Pizzería "Don Mario" — sábado a las 21hs</div>
+        <div class="story-sub">50 mensajes en simultáneo, cocina a full, teléfono sonando sin parar. Con Sara Bot: el bot toma todos los pedidos, vos solo cocinás.</div>
+        <div class="chat-bubbles">
+          <div><div class="bubble-who">Cliente</div><div class="bubble customer">Buenas! Me hacen pizza con extra queso y empanadas de carne? Para llevar</div></div>
+          <div style="align-self:flex-end"><div class="bubble-who" style="text-align:right">Sara Bot 🤖</div><div class="bubble bot">¡Hola! Claro 😊 Tenemos la Especial con doble mozzarella (₲65.000) y empanadas de carne jugosa x6 (₲42.000). ¿Te anoto eso?</div></div>
+          <div><div class="bubble-who">Cliente</div><div class="bubble customer">sí perfecto! son para retirar en 30 min</div></div>
+          <div style="align-self:flex-end"><div class="bubble bot">✅ Pedido confirmado: 1 pizza Especial + 6 empanadas de carne — Total ₲107.000. Retiro en 30 min. Don Mario preparará tu pedido ahora mismo 🍕</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Florería -->
+    <div class="sector-story" id="story-floreria">
+      <div class="story-box">
+        <div class="story-title">🌸 Florería "El Jardín" — pedido de regalo</div>
+        <div class="story-sub">El bot pregunta para qué ocasión, recomienda el arreglo ideal y coordina la entrega sorpresa.</div>
+        <div class="chat-bubbles">
+          <div><div class="bubble-who">Cliente</div><div class="bubble customer">Hola! Quiero mandar flores a mi mamá por su cumple, presupuesto unos 80.000 gs</div></div>
+          <div style="align-self:flex-end"><div class="bubble-who" style="text-align:right">Sara Bot 🤖</div><div class="bubble bot">¡Qué lindo detalle! 🌸 Para cumpleaños te recomiendo nuestro Bouquet de Girasoles y Rosas (₲75.000) — es el más elegido para mamás. ¿Querés verlo?</div></div>
+          <div><div class="bubble-who">Cliente</div><div class="bubble customer">sí mandame foto!</div></div>
+          <div style="align-self:flex-end"><div class="bubble bot">📸 [foto del bouquet] ¿Te gusta? También puedo agregar una tarjeta con mensaje personalizado 💛 ¿Necesitás que lo enviemos a domicilio?</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Estética -->
+    <div class="sector-story" id="story-estetica">
+      <div class="story-box">
+        <div class="story-title">💆 Estética "Glamour" — reserva de turno</div>
+        <div class="story-sub">La agenda se llena sola. Sin llamadas perdidas, sin doble reservas, sin post-its.</div>
+        <div class="chat-bubbles">
+          <div><div class="bubble-who">Cliente</div><div class="bubble customer">Hola! Quiero turno para tintura y corte, ¿tienen para esta semana?</div></div>
+          <div style="align-self:flex-end"><div class="bubble-who" style="text-align:right">Sara Bot 🤖</div><div class="bubble bot">¡Hola! Sí, tengo disponibilidad 😊 El servicio más cercano es mañana jueves a las 10:30hs (2hs aprox, ₲180.000). ¿Te viene bien?</div></div>
+          <div><div class="bubble-who">Cliente</div><div class="bubble customer">Perfecto! Me anoto</div></div>
+          <div style="align-self:flex-end"><div class="bubble bot">✅ Turno reservado: Tintura + corte — Jueves 10:30hs. Te pedimos avisar con 24hs si necesitás cancelar 💆‍♀️ ¡Hasta el jueves!</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Electro -->
+    <div class="sector-story" id="story-electro">
+      <div class="story-box">
+        <div class="story-title">💡 Electro "Luminex" — venta de repuestos</div>
+        <div class="story-sub">El cliente pregunta, el bot revisa el stock, cotiza y confirma el pedido para retiro o envío.</div>
+        <div class="chat-bubbles">
+          <div><div class="bubble-who">Cliente</div><div class="bubble customer">Buen día. Tienen lamparas LED E27 de 9W? Necesito 10 unidades</div></div>
+          <div style="align-self:flex-end"><div class="bubble-who" style="text-align:right">Sara Bot 🤖</div><div class="bubble bot">¡Buenos días! Sí, tenemos Lámpara LED E27 9W luz cálida y luz fría. Precio: ₲18.500/u. Stock disponible. Para 10 unidades: ₲185.000. ¿Las retirás o las enviamos?</div></div>
+          <div><div class="bubble-who">Cliente</div><div class="bubble customer">Las retiro hoy a la tarde</div></div>
+          <div style="align-self:flex-end"><div class="bubble bot">✅ Pedido confirmado: 10x Lámpara LED E27 9W — ₲185.000. Podés pasar a partir de las 14hs. Te esperamos 💡</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pastelería -->
+    <div class="sector-story" id="story-pasteleria">
+      <div class="story-box">
+        <div class="story-title">🍰 Pastelería "Dulce Arte" — torta personalizada</div>
+        <div class="story-sub">El bot recopila todos los datos del pedido especial — sabor, tamaño, fecha, texto — sin que tengas que preguntar nada vos.</div>
+        <div class="chat-bubbles">
+          <div><div class="bubble-who">Cliente</div><div class="bubble customer">Hola! Quiero encargar una torta de cumple para el sábado, son 20 personas</div></div>
+          <div style="align-self:flex-end"><div class="bubble-who" style="text-align:right">Sara Bot 🤖</div><div class="bubble bot">¡Qué emoción! 🎂 Para 20 personas te recomiendo la torta de 30cm (₲220.000). ¿De qué sabor? Tenemos chocolate, vainilla, red velvet y chocovainilla.</div></div>
+          <div><div class="bubble-who">Cliente</div><div class="bubble customer">Chocolate! Y que diga "Feliz cumple María" en rosa</div></div>
+          <div style="align-self:flex-end"><div class="bubble bot">Perfecto! 🍫 Torta de chocolate 30cm con texto "Feliz cumple María" en rosa. ¿Necesitás entrega a domicilio o retirás? Los pedidos personalizados requieren 48hs de anticipación 😊</div></div>
+        </div>
+      </div>
     </div>
   </div>
 </section>
 
-<!-- ══════════════ FOOTER ══════════════ -->
+<!-- HOW IT WORKS -->
+<section id="how">
+  <div class="container">
+    <div class="center">
+      <div class="section-label">Cómo funciona</div>
+      <h2 class="section-title">Estás activo en menos de una hora</h2>
+      <p class="section-sub" style="margin:0 auto 48px">Sin técnicos, sin programación, sin contratos largos.</p>
+    </div>
+    <div class="steps-grid">
+      <div class="step-item">
+        <div class="step-num">1</div>
+        <div class="step-title">Creás tu cuenta</div>
+        <div class="step-desc">Elegís tu rubro, ponés el nombre del negocio y en 3 minutos tenés acceso al panel. Sara ya sabe cómo hablar con clientes de tu sector.</div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">2</div>
+        <div class="step-title">Conectás tu WhatsApp</div>
+        <div class="step-desc">Seguís el asistente de configuración para vincular tu número WhatsApp Business oficial. El bot te guía paso a paso.</div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">3</div>
+        <div class="step-title">Cargás tu catálogo</div>
+        <div class="step-desc">Productos, servicios o ambos — con fotos y precios. Podés importar desde Excel o dejar que la IA extraiga todo de fotos.</div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">4</div>
+        <div class="step-title">Sara atiende sola</div>
+        <div class="step-desc">Tus clientes escriben al número de siempre. Sara responde, toma pedidos, agenda turnos. Vos recibís notificaciones y gestionás desde el panel.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="bg-light" id="pricing">
+  <div class="container">
+    <div class="center">
+      <div class="section-label">Planes</div>
+      <h2 class="section-title">Un precio simple, sin sorpresas</h2>
+      <p class="section-sub" style="margin:0 auto 48px">Sin costo por conversación, sin límite de productos. Pagás el mismo precio cada mes.</p>
+    </div>
+    <div class="pricing-grid">
+      <div class="price-card">
+        <div class="price-name">🌱 STARTER</div>
+        <div style="margin-bottom:4px"><span class="price-amount">$29</span><span class="price-period">/mes</span></div>
+        <div class="price-desc">Para negocios que venden productos o servicios simples — sin agenda de turnos.</div>
+        <ul class="price-features">
+          <li>1 número WhatsApp Business</li>
+          <li>Catálogo ilimitado con fotos</li>
+          <li>1.000 conversaciones/mes</li>
+          <li>Gestión de pedidos en tiempo real</li>
+          <li>Delivery configurado (zona o km)</li>
+          <li>Panel de chats y takeover manual</li>
+          <li>Analytics básico</li>
+          <li>Soporte por chat</li>
+        </ul>
+        <a href="/register/index.html" class="price-btn outline">Empezar gratis →</a>
+      </div>
+      <div class="price-card featured">
+        <div class="price-popular">⭐ Más popular</div>
+        <div class="price-name">🚀 PRO</div>
+        <div style="margin-bottom:4px"><span class="price-amount">$59</span><span class="price-period">/mes</span></div>
+        <div class="price-desc">Para negocios con agenda de turnos o que necesitan mayor volumen de conversaciones.</div>
+        <ul class="price-features">
+          <li>Todo lo del Starter</li>
+          <li>5.000 conversaciones/mes</li>
+          <li>Agenda de turnos automática</li>
+          <li>Servicios con precio por hora</li>
+          <li>Analytics completo + exportación CSV</li>
+          <li>Catálogo de servicios separado</li>
+          <li>Soporte prioritario</li>
+        </ul>
+        <a href="/register/index.html" class="price-btn primary">Empezar gratis →</a>
+      </div>
+    </div>
+    <p class="pricing-note">7 días gratis en cualquier plan · Sin tarjeta · Cancelás cuando querés · Facturación mensual</p>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section id="faq">
+  <div class="container">
+    <div class="center">
+      <div class="section-label">Preguntas frecuentes</div>
+      <h2 class="section-title" style="margin-bottom:48px">Todo lo que necesitás saber</h2>
+    </div>
+    <div class="faq-list">
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">¿Necesito saber programar para configurarlo? <span class="faq-arrow">▾</span></button>
+        <div class="faq-a">No. Todo se configura desde un panel web con formularios y botones. El asistente de activación te guía paso a paso desde el registro hasta el primer pedido, sin ningún conocimiento técnico.</div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">¿El bot maneja los pagos de mis clientes? <span class="faq-arrow">▾</span></button>
+        <div class="faq-a">No, y a propósito. Sara Bot no toca el dinero de tus clientes — eso es tuyo. Vos configurás cómo querés cobrar (transferencia, efectivo, QR, link de pago de tu propia cuenta, etc.) y el bot envía esas instrucciones automáticamente después de cada pedido confirmado. Cero comisiones, cero intermediarios, cero complicaciones legales.</div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">¿Qué pasa si quiero hablarle al cliente yo mismo? <span class="faq-arrow">▾</span></button>
+        <div class="faq-a">Desde el panel de Chats podés escribirle a cualquier cliente directamente. Cuando lo hacés, el bot se detiene automáticamente en esa conversación — "modo manual". Cuando terminás, apretás un botón y Sara retoma. También podés hacerlo desde tu WhatsApp personal con el comando CHAT.</div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">¿Funciona con mi número de WhatsApp actual? <span class="faq-arrow">▾</span></button>
+        <div class="faq-a">Sí, siempre que lo conviertas en número WhatsApp Business oficial a través de la API de Meta. El proceso es gratuito y el asistente de configuración te guía. Tu número no cambia — tus clientes siguen escribiendo al mismo lugar.</div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">¿Puedo usarlo para servicios con turno y también para vender productos? <span class="faq-arrow">▾</span></button>
+        <div class="faq-a">Sí. Con el plan Pro podés tener ambas cosas activas: catálogo de productos con pedidos Y agenda de turnos para servicios. El bot entiende cuándo el cliente quiere comprar algo y cuándo quiere reservar un turno, y responde de forma diferente en cada caso.</div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">¿Qué idiomas entiende el bot? <span class="faq-arrow">▾</span></button>
+        <div class="faq-a">El bot responde en el idioma que use el cliente automáticamente: español, inglés, portugués, italiano, alemán, francés. Si estás en Paraguay también entiende jopará (mezcla español-guaraní). No hay que configurar nada.</div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">¿Qué pasa después de los 7 días de prueba? <span class="faq-arrow">▾</span></button>
+        <div class="faq-a">El bot se pausa y recibís un link de pago para activar el plan que elegiste. No se te cobra automáticamente nada. Si decidís no continuar, simplemente no pagás — sin cargos ocultos, sin contratos.</div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <div class="container">
+    <h2>El sábado a la noche, el bot trabaja.<br/>Vos descansás.</h2>
+    <p>Probalo 7 días gratis. Sin tarjeta, sin compromisos.</p>
+    <a href="/register/index.html" class="btn-primary" style="font-size:1rem;padding:16px 36px;">🚀 Crear mi cuenta gratis →</a>
+    <div class="cta-badges">
+      <span class="cta-badge">✓ Sin tarjeta de crédito</span>
+      <span class="cta-badge">✓ Activo en menos de una hora</span>
+      <span class="cta-badge">✓ Cancelás cuando querés</span>
+      <span class="cta-badge">✓ Soporte incluido</span>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
 <footer>
-  <div>© 2025 Sara Bot · candidatelens.com</div>
+  <a href="/" class="logo">
+    <div class="logo-icon" style="width:28px;height:28px;font-size:.9rem;">🤖</div>
+    <div class="logo-text" style="font-size:.9rem;">Sara<span>Bot</span></div>
+  </a>
+  <div class="footer-links">
+    <a href="/legal/terms.html">Términos de servicio</a>
+    <a href="/legal/privacy.html">Privacidad</a>
+    <a href="/legal/disclaimer.html">Aviso legal</a>
+    <a href="/register/index.html">Empezar gratis</a>
+    <a href="/admin/index.html">Entrar al panel</a>
+  </div>
+  <span>© 2025 Sara Bot</span>
 </footer>
 
-<!-- ══════════════ JS ══════════════ -->
 <script>
-const i18n = {
-  es: {
-    nav_how:"Cómo funciona", nav_feat:"Funcionalidades", nav_sectors:"Sectores", nav_support:"Soporte", nav_login:"Login",
-    hero_badge:"AI WhatsApp Bot",
-    hero_h1:"Tu negocio nunca\nduerme.", hero_h1_span:"Sara responde.",
-    hero_p:"Sara Bot gestiona pedidos, responde a tus clientes y actualiza el catálogo en WhatsApp de forma automática, 24 horas al día, 7 días a la semana. Sin apps que instalar.",
-    hero_cta1:"¿Ya vas un paso adelante? Entra", hero_cta2:"Ver cómo funciona",
-    how_tag:"Cómo funciona", how_h2:"Operativo en minutos",
-    how_sub:"Sin apps que instalar para tus clientes. Sara vive directamente en WhatsApp, el canal que ya usan cada día.",
-    step1_h:"Carga tu catálogo", step1_p:"Añade productos, precios y fotos desde el panel de control. Puedes actualizar todo en tiempo real, también desde el móvil.",
-    step2_h:"Sara atiende a los clientes", step2_p:"Tus clientes escriben en tu número WhatsApp Business. Sara responde, muestra el catálogo, aclara dudas y recoge los pedidos.",
-    step3_h:"Recibe la notificación", step3_p:"Cuando llega un pedido, recibes un aviso en WhatsApp con todos los detalles. Confirmas, cancelas o tomas el chat con un solo mensaje.",
-    step4_h:"Tú te dedicas a lo tuyo", step4_p:"Sara gestiona las respuestas repetitivas, tú haces lo que mejor sabes hacer. Cero tiempo perdido en mensajes de siempre.",
-    feat_tag:"Funcionalidades", feat_h2:"Todo lo que necesitas,\nya incluido",
-    feat_sub:"Sara no es un chatbot simple. Es un asistente inteligente que aprende tu catálogo y gestiona cada conversación como lo haría un vendedor experto.",
-    f1_h:"IA conversacional", f1_p:"Sara entiende lenguaje natural, gestiona preguntas complejas, sugiere productos y guía al cliente hasta la confirmación del pedido.",
-    f2_h:"Gestión de catálogo", f2_p:"Añade, modifica o elimina productos desde el panel. Sara conoce siempre el stock actualizado y nunca vende lo que está agotado.",
-    f3_h:"Fotos de productos", f3_p:"Sube las fotos de tus productos. Sara las envía automáticamente cuando el cliente pregunta por un artículo específico.",
-    f4_h:"Notificaciones de pedidos", f4_p:"Recibe cada pedido en WhatsApp de forma clara. Responde CONFIRMAR, CANCELAR o CHAT para tomar el control directo.",
-    f5_h:"Human takeover", f5_p:"Con un mensaje puedes entrar en cualquier conversación y hablar directamente con el cliente. Sara retoma cuando terminas.",
-    f6_h:"Multiidioma", f6_p:"Sara responde en el idioma del cliente — español, inglés, alemán, italiano y muchos más, sin configuración adicional.",
-    f7_h:"Panel de control", f7_p:"Monitorea pedidos, revisa el historial de conversaciones y actualiza el catálogo desde un único panel web, en cualquier dispositivo.",
-    f8_h:"Seguro y fiable", f8_p:"Integración oficial con Meta WhatsApp Cloud API. Los datos de cada negocio están aislados y protegidos en cloud empresarial.",
-    f9_h:"Activo 24/7", f9_p:"Sara no se enferma, no tiene vacaciones y no toma descansos. Responde en segundos a cualquier hora del día o la noche.",
-    sec_tag:"Sectores", sec_h2:"Para cualquier negocio que recibe\npedidos por WhatsApp",
-    sec_sub:"Si tienes un catálogo y tus clientes te escriben por WhatsApp, Sara Bot es para ti.",
-    s1:"Florerías",s2:"Pastelerías",s3:"Autorepuestos",s4:"Restaurantes",s5:"Farmacias",
-    s6:"Ropa y moda",s7:"Almacenes",s8:"Viveros",s9:"Pet Shop",s10:"Estética",s11:"Librerías",s12:"Ferreterías",
-    test_tag:"Testimonios", test_h2:"Lo que dicen nuestros clientes",
-    test_sub:"Negocios reales que transformaron su gestión de pedidos en WhatsApp con Sara Bot.",
-    t1:'"Antes pasaba horas respondiendo en WhatsApp. Ahora Sara lo gestiona todo: responde, manda las fotos y me avisa solo cuando hay un pedido confirmado. Gané dos horas al día."',
-    t1_role:"Florería El Jardín",
-    t2:'"Los clientes ni se dan cuenta de que hablan con un bot — creen que tienen una vendedora dedicada. Los pedidos de tortas personalizadas llegan completos, sin ir y venir de mensajes."',
-    t2_role:"Pastelería Dulce Casa",
-    t3:'"Con los repuestos las consultas siempre son específicas — código de pieza, marca, año. Sara aprende el catálogo y responde con precisión. Me sorprendió de verdad."',
-    t3_role:"AutoParts Express",
-    sup_tag:"Soporte", sup_h2:"¿Preguntas? Escríbenos\npor WhatsApp",
-    sup_p:"Respondemos en minutos. Cuéntanos sobre tu negocio y te mostramos cómo Sara Bot puede ayudarte.",
-    sup_btn:"Contactar por WhatsApp",
-    cta_tag:"¿Listo para empezar?", cta_h2:"Transforma tu WhatsApp\nen un vendedor siempre activo",
-    cta_p:"Accede al panel, carga tu catálogo y Sara empieza a trabajar para ti de inmediato.",
-    cta_btn:"Acceder al panel"
-  },
-  en: {
-    nav_how:"How it works", nav_feat:"Features", nav_sectors:"Industries", nav_support:"Support", nav_login:"Login",
-    hero_badge:"AI WhatsApp Bot",
-    hero_h1:"Your business never\nsleeps.", hero_h1_span:"Sara responds.",
-    hero_p:"Sara Bot manages orders, answers your customers and updates your catalog on WhatsApp automatically, 24 hours a day, 7 days a week. No apps to install.",
-    hero_cta1:"Already ahead of the game? Log in", hero_cta2:"See how it works",
-    how_tag:"How it works", how_h2:"Up and running in minutes",
-    how_sub:"No apps to install for your customers. Sara lives directly in WhatsApp, the channel they already use every day.",
-    step1_h:"Upload your catalog", step1_p:"Add products, prices and photos from the control panel. You can update everything in real time, even from your phone.",
-    step2_h:"Sara handles customers", step2_p:"Your customers write to your WhatsApp Business number. Sara responds, shows the catalog, answers questions and collects orders.",
-    step3_h:"Get notified", step3_p:"When an order arrives, you get a WhatsApp notification with all the details. Confirm, cancel or take over the chat with a single message.",
-    step4_h:"Focus on your work", step4_p:"Sara handles the repetitive replies, you do what you do best. Zero time wasted on the same messages over and over.",
-    feat_tag:"Features", feat_h2:"Everything you need,\nalready included",
-    feat_sub:"Sara is not a simple chatbot. It's an intelligent assistant that learns your catalog and handles every conversation like an expert salesperson would.",
-    f1_h:"Conversational AI", f1_p:"Sara understands natural language, handles complex questions, suggests products and guides the customer to order confirmation.",
-    f2_h:"Catalog management", f2_p:"Add, edit or remove products from the panel. Sara always knows the current stock and never sells what's out of stock.",
-    f3_h:"Product photos", f3_p:"Upload photos of your products. Sara sends them automatically when a customer asks about a specific item.",
-    f4_h:"Order notifications", f4_p:"Receive every order on WhatsApp in a clear format. Reply CONFIRM, CANCEL or CHAT to take direct control.",
-    f5_h:"Human takeover", f5_p:"With one message you can jump into any conversation and talk directly to the customer. Sara resumes when you're done.",
-    f6_h:"Multilingual", f6_p:"Sara replies in the customer's language — Spanish, English, German, Italian and many more, with no extra setup.",
-    f7_h:"Control panel", f7_p:"Monitor orders, review conversation history and update the catalog from a single web dashboard, on any device.",
-    f8_h:"Secure and reliable", f8_p:"Official integration with Meta WhatsApp Cloud API. Each business's data is isolated and protected on enterprise cloud.",
-    f9_h:"Active 24/7", f9_p:"Sara doesn't get sick, doesn't take vacations and doesn't take breaks. It responds in seconds at any time of day or night.",
-    sec_tag:"Industries", sec_h2:"For any business that receives\norders on WhatsApp",
-    sec_sub:"If you have a catalog and your customers write to you on WhatsApp, Sara Bot is for you.",
-    s1:"Flower shops",s2:"Bakeries",s3:"Auto parts",s4:"Restaurants",s5:"Pharmacies",
-    s6:"Fashion & clothing",s7:"Grocery stores",s8:"Garden centers",s9:"Pet shops",s10:"Beauty & wellness",s11:"Bookshops",s12:"Hardware stores",
-    test_tag:"Testimonials", test_h2:"What our customers say",
-    test_sub:"Real businesses that transformed their WhatsApp order management with Sara Bot.",
-    t1:'"I used to spend hours responding on WhatsApp. Now Sara handles everything: replies, sends photos and only alerts me when an order is confirmed. I gained two hours a day."',
-    t1_role:"El Jardín Flower Shop",
-    t2:'"Customers don\'t even realize they\'re talking to a bot — they think they have a dedicated salesperson. Custom cake orders arrive complete, no back-and-forth messages."',
-    t2_role:"Dulce Casa Bakery",
-    t3:'"With auto parts, queries are always specific — part code, brand, year. Sara learns the catalog and answers precisely. It really surprised me."',
-    t3_role:"AutoParts Express",
-    sup_tag:"Support", sup_h2:"Questions? Write to us\non WhatsApp",
-    sup_p:"We reply in minutes. Tell us about your business and we'll show you how Sara Bot can help.",
-    sup_btn:"Contact us on WhatsApp",
-    cta_tag:"Ready to start?", cta_h2:"Turn your WhatsApp\ninto an always-on salesperson",
-    cta_p:"Access the panel, upload your catalog and Sara starts working for you right away.",
-    cta_btn:"Access the panel"
-  },
-  de: {
-    nav_how:"So funktioniert es", nav_feat:"Funktionen", nav_sectors:"Branchen", nav_support:"Support", nav_login:"Anmelden",
-    hero_badge:"KI WhatsApp Bot",
-    hero_h1:"Dein Geschäft\nschläft nie.", hero_h1_span:"Sara antwortet.",
-    hero_p:"Sara Bot verwaltet Bestellungen, antwortet deinen Kunden und aktualisiert den Katalog auf WhatsApp automatisch – 24 Stunden am Tag, 7 Tage die Woche. Keine App nötig.",
-    hero_cta1:"Schon einen Schritt voraus? Rein", hero_cta2:"So funktioniert es",
-    how_tag:"So funktioniert es", how_h2:"In Minuten einsatzbereit",
-    how_sub:"Keine App für deine Kunden. Sara lebt direkt in WhatsApp, dem Kanal, den sie täglich nutzen.",
-    step1_h:"Katalog hochladen", step1_p:"Füge Produkte, Preise und Fotos im Kontrollpanel hinzu. Alles in Echtzeit aktualisierbar – auch vom Smartphone.",
-    step2_h:"Sara betreut Kunden", step2_p:"Deine Kunden schreiben an deine WhatsApp-Business-Nummer. Sara antwortet, zeigt den Katalog und nimmt Bestellungen auf.",
-    step3_h:"Benachrichtigung erhalten", step3_p:"Wenn eine Bestellung eingeht, erhältst du eine WhatsApp-Nachricht mit allen Details. Bestätige, storniere oder übernimm den Chat.",
-    step4_h:"Konzentriere dich aufs Wesentliche", step4_p:"Sara erledigt die Standardantworten, du machst das, was du am besten kannst. Null Zeit mit immer gleichen Nachrichten.",
-    feat_tag:"Funktionen", feat_h2:"Alles was du brauchst,\nbereits inklusive",
-    feat_sub:"Sara ist kein einfacher Chatbot. Es ist ein intelligenter Assistent, der deinen Katalog lernt und jedes Gespräch wie ein erfahrener Verkäufer führt.",
-    f1_h:"Konversationelle KI", f1_p:"Sara versteht natürliche Sprache, beantwortet komplexe Fragen, schlägt Produkte vor und begleitet den Kunden bis zur Bestellbestätigung.",
-    f2_h:"Katalogverwaltung", f2_p:"Produkte hinzufügen, bearbeiten oder löschen. Sara kennt immer den aktuellen Bestand und verkauft nie ausverkaufte Artikel.",
-    f3_h:"Produktfotos", f3_p:"Lade Produktfotos hoch. Sara sendet sie automatisch, wenn ein Kunde nach einem Artikel fragt.",
-    f4_h:"Bestellbenachrichtigungen", f4_p:"Jede Bestellung kommt klar strukturiert per WhatsApp. Antworte BESTÄTIGEN, STORNIEREN oder CHAT für direkte Kontrolle.",
-    f5_h:"Manuelle Übernahme", f5_p:"Mit einer Nachricht kannst du jederzeit ins Gespräch einsteigen und direkt mit dem Kunden sprechen. Sara übernimmt danach wieder.",
-    f6_h:"Mehrsprachig", f6_p:"Sara antwortet in der Sprache des Kunden – Spanisch, Englisch, Deutsch, Italienisch und viele mehr, ohne Konfigurationsaufwand.",
-    f7_h:"Kontrollpanel", f7_p:"Bestellungen überwachen, Gesprächsverläufe einsehen und Katalog aktualisieren – alles in einem Web-Dashboard, auf jedem Gerät.",
-    f8_h:"Sicher und zuverlässig", f8_p:"Offizielle Integration mit Meta WhatsApp Cloud API. Daten jedes Unternehmens sind isoliert und auf Enterprise-Cloud geschützt.",
-    f9_h:"Rund um die Uhr aktiv", f9_p:"Sara wird nicht krank, macht keinen Urlaub und keine Pausen. Antworten in Sekunden – zu jeder Tages- und Nachtzeit.",
-    sec_tag:"Branchen", sec_h2:"Für jedes Unternehmen, das\nBestellungen per WhatsApp erhält",
-    sec_sub:"Wenn du einen Katalog hast und deine Kunden dir auf WhatsApp schreiben, ist Sara Bot für dich gemacht.",
-    s1:"Blumenläden",s2:"Bäckereien",s3:"Autoteile",s4:"Restaurants",s5:"Apotheken",
-    s6:"Mode & Kleidung",s7:"Lebensmittel",s8:"Gartencenter",s9:"Pet Shops",s10:"Kosmetik",s11:"Buchhandlungen",s12:"Baumärkte",
-    test_tag:"Kundenstimmen", test_h2:"Was unsere Kunden sagen",
-    test_sub:"Echte Unternehmen, die ihr WhatsApp-Bestellmanagement mit Sara Bot transformiert haben.",
-    t1:'"Ich verbrachte früher Stunden damit, auf WhatsApp zu antworten. Jetzt übernimmt Sara alles – antwortet, schickt Fotos und benachrichtigt mich nur bei bestätigten Bestellungen. Zwei Stunden täglich gewonnen."',
-    t1_role:"Blumenladen El Jardín",
-    t2:'"Kunden merken nicht mal, dass sie mit einem Bot sprechen – sie denken, sie hätten eine persönliche Verkäuferin. Individuelle Tortenwünsche kommen vollständig an, ohne hin und her."',
-    t2_role:"Bäckerei Dulce Casa",
-    t3:'"Bei Autoteilen sind Anfragen immer spezifisch – Teilenummer, Marke, Baujahr. Sara lernt den Katalog und antwortet präzise. Hat mich wirklich überrascht."',
-    t3_role:"AutoParts Express",
-    sup_tag:"Support", sup_h2:"Fragen? Schreib uns\nauf WhatsApp",
-    sup_p:"Wir antworten in Minuten. Erzähl uns von deinem Geschäft und wir zeigen dir, wie Sara Bot helfen kann.",
-    sup_btn:"Per WhatsApp kontaktieren",
-    cta_tag:"Bereit loszulegen?", cta_h2:"Verwandle deinen WhatsApp\nin einen dauerhaft aktiven Verkäufer",
-    cta_p:"Melde dich an, lade deinen Katalog hoch und Sara fängt sofort an, für dich zu arbeiten.",
-    cta_btn:"Zum Panel"
-  },
-  it: {
-    nav_how:"Come funziona", nav_feat:"Funzionalità", nav_sectors:"Settori", nav_support:"Supporto", nav_login:"Accedi",
-    hero_badge:"AI WhatsApp Bot",
-    hero_h1:"Il tuo negozio non\ndorme mai.", hero_h1_span:"Sara risponde.",
-    hero_p:"Sara Bot gestisce ordini, risponde ai clienti e aggiorna il catalogo su WhatsApp in automatico, 24 ore su 24, 7 giorni su 7. Zero app da installare.",
-    hero_cta1:"Sei già avanti? Accedi", hero_cta2:"Scopri come funziona",
-    how_tag:"Come funziona", how_h2:"Operativo in pochi minuti",
-    how_sub:"Nessuna app da installare per i tuoi clienti. Sara vive direttamente su WhatsApp, il canale che già usano ogni giorno.",
-    step1_h:"Carica il tuo catalogo", step1_p:"Inserisci prodotti, prezzi e foto nel pannello. Puoi aggiornare tutto in tempo reale, anche dallo smartphone.",
-    step2_h:"Sara gestisce i clienti", step2_p:"I tuoi clienti scrivono sul tuo numero WhatsApp Business. Sara risponde, mostra il catalogo, risponde a domande e raccoglie gli ordini.",
-    step3_h:"Ricevi la notifica", step3_p:"Quando arriva un ordine, ricevi una notifica su WhatsApp con tutti i dettagli. Confermi, annulli o prendi il controllo con un solo messaggio.",
-    step4_h:"Tu ti concentri sul lavoro", step4_p:"Sara si occupa delle risposte ripetitive, tu fai ciò che sai fare meglio. Zero tempo sprecato.",
-    feat_tag:"Funzionalità", feat_h2:"Tutto quello che ti serve,\ngià incluso",
-    feat_sub:"Sara non è un semplice chatbot. È un assistente intelligente che impara il tuo catalogo e gestisce ogni conversazione come farebbe un addetto esperto.",
-    f1_h:"AI conversazionale", f1_p:"Sara capisce il linguaggio naturale, gestisce domande complesse, suggerisce prodotti e guida il cliente fino alla conferma dell'ordine.",
-    f2_h:"Gestione catalogo", f2_p:"Aggiungi, modifica o rimuovi prodotti dal pannello. Sara conosce sempre la disponibilità aggiornata e non vende mai ciò che è esaurito.",
-    f3_h:"Foto prodotti", f3_p:"Carica le foto dei tuoi prodotti. Sara le invia automaticamente quando il cliente chiede di un articolo specifico.",
-    f4_h:"Notifiche ordini", f4_p:"Ricevi ogni ordine su WhatsApp in formato chiaro. Rispondi CONFERMA, ANNULLA o CHAT per prendere il controllo diretto.",
-    f5_h:"Human takeover", f5_p:"Con un messaggio puoi subentrare in qualsiasi conversazione e parlare direttamente con il cliente. Sara riprende quando hai finito.",
-    f6_h:"Multilingua", f6_p:"Sara risponde nella lingua del cliente. Italiano, inglese, spagnolo, tedesco e molte altre — senza configurazioni aggiuntive.",
-    f7_h:"Pannello di controllo", f7_p:"Monitora ordini, visualizza lo storico conversazioni e aggiorna il catalogo da un'unica dashboard web, su qualsiasi dispositivo.",
-    f8_h:"Sicuro e affidabile", f8_p:"Integrazione ufficiale con Meta WhatsApp Cloud API. I dati sono isolati per ogni attività e protetti su cloud enterprise.",
-    f9_h:"Attivo 24/7", f9_p:"Sara non si ammala, non va in ferie e non prende pause. Risponde in pochi secondi a qualsiasi ora.",
-    sec_tag:"Settori", sec_h2:"Per ogni attività che riceve\nordini su WhatsApp",
-    sec_sub:"Se hai un catalogo e i tuoi clienti ti scrivono su WhatsApp, Sara Bot è fatto per te.",
-    s1:"Fiorerie",s2:"Pasticcerie",s3:"Autoricambi",s4:"Ristoranti",s5:"Farmacie",
-    s6:"Abbigliamento",s7:"Alimentari",s8:"Vivai",s9:"Pet Shop",s10:"Estetica",s11:"Librerie",s12:"Ferramenta",
-    test_tag:"Testimonianze", test_h2:"Cosa dicono i nostri clienti",
-    test_sub:"Attività reali che hanno trasformato la gestione degli ordini WhatsApp con Sara Bot.",
-    t1:'"Prima passavo ore a rispondere su WhatsApp. Adesso Sara gestisce tutto: risponde, manda le foto e mi notifica solo quando c\'è un ordine confermato. Ho guadagnato due ore al giorno."',
-    t1_role:"Fioreria Il Giardino",
-    t2:'"I clienti non si rendono neanche conto di parlare con un bot — pensano di avere una commessa dedicata. Gli ordini delle torte arrivano già completi, senza back-and-forth."',
-    t2_role:"Pasticceria Dolce Casa",
-    t3:'"Con il ricambio auto le richieste sono sempre specifiche — codice pezzo, marca, anno. Sara impara il catalogo e risponde con precisione. Mi ha sorpreso davvero."',
-    t3_role:"AutoParts Express",
-    sup_tag:"Supporto", sup_h2:"Domande? Scrivici\nsu WhatsApp",
-    sup_p:"Rispondiamo in pochi minuti. Raccontaci del tuo negozio e ti mostriamo come Sara Bot può aiutarti.",
-    sup_btn:"Contattaci su WhatsApp",
-    cta_tag:"Pronto a iniziare?", cta_h2:"Trasforma il tuo WhatsApp\nin un venditore sempre attivo",
-    cta_p:"Accedi al pannello, carica il tuo catalogo e Sara inizia a lavorare per te da subito.",
-    cta_btn:"Accedi al pannello"
-  }
-};
+// Sector tabs
+function showSector(id, btn) {
+  document.querySelectorAll('.sector-story').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.sector-tab').forEach(b => b.classList.remove('active'));
+  document.getElementById('story-' + id).classList.add('active');
+  btn.classList.add('active');
+}
 
-let currentLang = 'es';
+// FAQ
+function toggleFaq(btn) {
+  const item = btn.closest('.faq-item');
+  const isOpen = item.classList.contains('open');
+  document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+  if (!isOpen) item.classList.add('open');
+}
 
-function setLang(lang) {
-  currentLang = lang;
-  document.documentElement.lang = lang;
-  const t = i18n[lang];
-
-  // update all data-i18n elements
-  document.querySelectorAll('[data-i18n]').forEach(el => {
-    const key = el.getAttribute('data-i18n');
-    if (t[key] !== undefined) {
-      // handle newlines in h2
-      if (el.tagName === 'H2' || el.tagName === 'H1') {
-        el.innerHTML = t[key].replace(/\n/g, '<br/>');
-      } else {
-        el.textContent = t[key];
-      }
-    }
+// Smooth scroll for nav links
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+  a.addEventListener('click', e => {
+    e.preventDefault();
+    const el = document.querySelector(a.getAttribute('href'));
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
-
-  // active button
-  document.querySelectorAll('.lang-btn').forEach(btn => {
-    btn.classList.toggle('active', btn.textContent === lang.toUpperCase());
-  });
-}
-
-function toggleMenu() {
-  const menu = document.getElementById('mobileMenu');
-  const burger = document.getElementById('hamburger');
-  menu.classList.toggle('open');
-  burger.classList.toggle('open');
-}
-
-function closeMenu() {
-  document.getElementById('mobileMenu').classList.remove('open');
-  document.getElementById('hamburger').classList.remove('open');
-}
-
-// close mobile menu on outside click
-document.addEventListener('click', e => {
-  const menu = document.getElementById('mobileMenu');
-  const burger = document.getElementById('hamburger');
-  if (menu.classList.contains('open') && !menu.contains(e.target) && !burger.contains(e.target)) {
-    closeMenu();
-  }
 });
-</script>
-
-<!-- ════ COOKIE BANNER ════ -->
-<div id="cookieBanner" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9999;background:#1a1a1a;color:#fff;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;font-family:'Inter',sans-serif;font-size:14px;box-shadow:0 -2px 16px rgba(0,0,0,0.3);">
-  <p style="margin:0;flex:1;min-width:220px;">
-    🍪 Usamos cookies esenciales para el funcionamiento del sitio.
-    <a href="/legal/privacy" target="_blank" style="color:#25D366;text-decoration:underline;margin-left:4px;">Política de privacidad</a> ·
-    <a href="/legal/terms" target="_blank" style="color:#25D366;text-decoration:underline;margin-left:4px;">Términos de uso</a>
-  </p>
-  <div style="display:flex;gap:10px;flex-shrink:0;">
-    <button onclick="rejectCookies()" style="background:transparent;border:1px solid #555;color:#aaa;padding:8px 18px;border-radius:8px;cursor:pointer;font-size:13px;">Solo esenciales</button>
-    <button onclick="acceptCookies()" style="background:#25D366;border:none;color:#fff;padding:8px 18px;border-radius:8px;cursor:pointer;font-weight:600;font-size:13px;">Aceptar</button>
-  </div>
-</div>
-<script>
-(function() {
-  if (!localStorage.getItem('cookie_consent')) {
-    document.getElementById('cookieBanner').style.display = 'flex';
-  }
-})();
-function acceptCookies() {
-  localStorage.setItem('cookie_consent', 'all');
-  document.getElementById('cookieBanner').style.display = 'none';
-}
-function rejectCookies() {
-  localStorage.setItem('cookie_consent', 'essential');
-  document.getElementById('cookieBanner').style.display = 'none';
-}
 </script>
 </body>
 </html>
