@@ -267,6 +267,23 @@ footer a:hover { color: var(--dark); }
 .center { text-align: center; }
 .bg-light { background: var(--gray-light); }
 .container { max-width: 1100px; margin: 0 auto; }
+
+/* ── LANG SWITCHER ── */
+.lang-switcher { display: flex; gap: 2px; align-items: center; }
+.lang-btn {
+  background: none; border: none; cursor: pointer;
+  font-size: .72rem; font-weight: 600; color: var(--gray);
+  padding: 3px 6px; border-radius: 5px; transition: all .15s;
+}
+.lang-btn:hover { color: var(--dark); background: var(--green-light); }
+.lang-btn.active { color: var(--green-dark); background: var(--green-light); }
+@media(max-width:640px){ .lang-switcher { display: none; } }
+
+/* ── SARA FLOWER LOGO ── */
+.logo-icon { width: 34px; height: 34px; border-radius: 10px; background: var(--green); display: grid; place-items: center; }
+.logo-icon svg { width: 22px; height: 22px; }
+.logo-icon-sm { width: 28px; height: 28px; border-radius: 8px; background: var(--green); display: grid; place-items: center; }
+.logo-icon-sm svg { width: 18px; height: 18px; }
 </style>
 </head>
 <body>
@@ -274,35 +291,53 @@ footer a:hover { color: var(--dark); }
 <!-- NAV -->
 <nav>
   <a href="/" class="logo">
-    <div class="logo-icon">🤖</div>
+    <div class="logo-icon">
+      <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+        <ellipse cx="16" cy="9" rx="4" ry="6" fill="rgba(255,255,255,.9)" transform="rotate(0 16 16)"/>
+        <ellipse cx="16" cy="9" rx="4" ry="6" fill="rgba(255,255,255,.7)" transform="rotate(72 16 16)"/>
+        <ellipse cx="16" cy="9" rx="4" ry="6" fill="rgba(255,255,255,.9)" transform="rotate(144 16 16)"/>
+        <ellipse cx="16" cy="9" rx="4" ry="6" fill="rgba(255,255,255,.7)" transform="rotate(216 16 16)"/>
+        <ellipse cx="16" cy="9" rx="4" ry="6" fill="rgba(255,255,255,.9)" transform="rotate(288 16 16)"/>
+        <circle cx="16" cy="16" r="5.5" fill="#15803d"/>
+        <text x="16" y="20" text-anchor="middle" font-family="Inter,sans-serif" font-weight="900" font-size="9" fill="white">S</text>
+      </svg>
+    </div>
     <div class="logo-text">Sara<span>Bot</span></div>
   </a>
   <div class="nav-links">
-    <a href="#features">Funcionalidades</a>
-    <a href="#how">Cómo funciona</a>
-    <a href="#pricing">Planes</a>
+    <a href="#features" data-i18n="nav.features">Funcionalidades</a>
+    <a href="#how" data-i18n="nav.how">Cómo funciona</a>
+    <a href="#pricing" data-i18n="nav.pricing">Planes</a>
     <a href="#faq">FAQ</a>
   </div>
   <div class="nav-right">
-    <a href="/admin/index.html" style="font-size:.85rem;font-weight:500;color:var(--gray);text-decoration:none;">Entrar</a>
-    <a href="/register/index.html" class="nav-cta">Empezar gratis →</a>
+    <div class="lang-switcher">
+      <button class="lang-btn" onclick="setLang('es')">ES</button>
+      <button class="lang-btn" onclick="setLang('en')">EN</button>
+      <button class="lang-btn" onclick="setLang('it')">IT</button>
+      <button class="lang-btn" onclick="setLang('de')">DE</button>
+      <button class="lang-btn" onclick="setLang('fr')">FR</button>
+      <button class="lang-btn" onclick="setLang('pt')">PT</button>
+    </div>
+    <a href="/admin/index.html" style="font-size:.85rem;font-weight:500;color:var(--gray);text-decoration:none;" data-i18n="nav.login">Entrar</a>
+    <a href="/register/index.html" class="nav-cta" data-i18n="nav.cta">Empezar gratis →</a>
   </div>
 </nav>
 
 <!-- HERO -->
 <section class="hero">
-  <div class="hero-badge"><span>🟢</span> Bot de IA + Panel de gestión — todo en uno</div>
-  <h1>Gestioná tu negocio.<br/><em>El bot atiende a tus clientes.</em></h1>
-  <p class="hero-sub">
+  <div class="hero-badge"><span>🟢</span> <span data-i18n="hero.badge">Bot de IA + Panel de gestión — todo en uno</span></div>
+  <h1 data-i18n="hero.h1">Gestioná tu negocio.<br/><em>El bot atiende a tus clientes.</em></h1>
+  <p class="hero-sub" data-i18n="hero.sub">
     Pedidos, turnos, catálogo, clientes — todo desde un panel.
     Tu bot de IA en WhatsApp toma pedidos, responde consultas y agenda citas 24/7,
     sin que tengas que estar pendiente del celular.
   </p>
   <div class="hero-actions">
-    <a href="/register/index.html" class="btn-primary">🚀 Empezar 7 días gratis</a>
-    <a href="#how" class="btn-ghost">Ver cómo funciona</a>
+    <a href="/register/index.html" class="btn-primary" data-i18n="hero.btn1">🚀 Empezar 7 días gratis</a>
+    <a href="#how" class="btn-ghost" data-i18n="hero.btn2">Ver cómo funciona</a>
   </div>
-  <p class="hero-note">Sin tarjeta de crédito · <strong>7 días gratis</strong> · Cancelás cuando querés</p>
+  <p class="hero-note" data-i18n="hero.note">Sin tarjeta de crédito · <strong>7 días gratis</strong> · Cancelás cuando querés</p>
 </section>
 
 <!-- MOCKUP -->
@@ -368,27 +403,27 @@ footer a:hover { color: var(--dark); }
 <!-- BEFORE / AFTER -->
 <section class="bg-light" id="problem">
   <div class="container center">
-    <div class="section-label">El problema</div>
-    <h2 class="section-title">¿Cuánto tiempo pasás respondiendo mensajes que dicen lo mismo?</h2>
-    <p class="section-sub" style="margin:0 auto 40px">Cada negocio que atiende por WhatsApp tiene el mismo problema: el dueño termina siendo el operador de chat.</p>
+    <div class="section-label" data-i18n="problem.label">El problema</div>
+    <h2 class="section-title" data-i18n="problem.h2">¿Cuánto tiempo pasás respondiendo mensajes que dicen lo mismo?</h2>
+    <p class="section-sub" style="margin:0 auto 40px" data-i18n="problem.sub">Cada negocio que atiende por WhatsApp tiene el mismo problema: el dueño termina siendo el operador de chat.</p>
     <div class="before-after">
       <div class="ba-col before">
-        <div class="ba-label">❌ Antes de Sara Bot</div>
-        <div class="ba-item">Respondés "¿tienen esto?" 30 veces por día</div>
-        <div class="ba-item">Un pedido llega a las 11pm y no te enterás</div>
-        <div class="ba-item">El sábado a la noche el teléfono no para</div>
-        <div class="ba-item">Perdés turnos porque nadie registra las reservas</div>
-        <div class="ba-item">No sabés cuánto vendiste esta semana</div>
-        <div class="ba-item">Cualquier ausencia tuya = el negocio para</div>
+        <div class="ba-label" data-i18n="problem.before_label">❌ Antes de Sara Bot</div>
+        <div class="ba-item" data-i18n="problem.before1">Respondés "¿tienen esto?" 30 veces por día</div>
+        <div class="ba-item" data-i18n="problem.before2">Un pedido llega a las 11pm y no te enterás</div>
+        <div class="ba-item" data-i18n="problem.before3">El sábado a la noche el teléfono no para</div>
+        <div class="ba-item" data-i18n="problem.before4">Perdés turnos porque nadie registra las reservas</div>
+        <div class="ba-item" data-i18n="problem.before5">No sabés cuánto vendiste esta semana</div>
+        <div class="ba-item" data-i18n="problem.before6">Cualquier ausencia tuya = el negocio para</div>
       </div>
       <div class="ba-col after">
-        <div class="ba-label">✅ Con Sara Bot</div>
-        <div class="ba-item">El bot responde, muestra fotos, toma el pedido</div>
-        <div class="ba-item">Recibís una notificación solo cuando hay un pedido nuevo</div>
-        <div class="ba-item">El sábado a la noche el bot maneja solo</div>
-        <div class="ba-item">La agenda de turnos se llena automáticamente</div>
-        <div class="ba-item">Analytics en tiempo real desde el panel</div>
-        <div class="ba-item">El negocio funciona aunque no estés</div>
+        <div class="ba-label" data-i18n="problem.after_label">✅ Con Sara Bot</div>
+        <div class="ba-item" data-i18n="problem.after1">El bot responde, muestra fotos, toma el pedido</div>
+        <div class="ba-item" data-i18n="problem.after2">Recibís una notificación solo cuando hay un pedido nuevo</div>
+        <div class="ba-item" data-i18n="problem.after3">El sábado a la noche el bot maneja solo</div>
+        <div class="ba-item" data-i18n="problem.after4">La agenda de turnos se llena automáticamente</div>
+        <div class="ba-item" data-i18n="problem.after5">Analytics en tiempo real desde el panel</div>
+        <div class="ba-item" data-i18n="problem.after6">El negocio funciona aunque no estés</div>
       </div>
     </div>
   </div>
@@ -398,50 +433,50 @@ footer a:hover { color: var(--dark); }
 <section id="features">
   <div class="container">
     <div class="center">
-      <div class="section-label">Funcionalidades</div>
-      <h2 class="section-title">Un sistema completo, no solo un chatbot</h2>
-      <p class="section-sub" style="margin:0 auto 48px">Panel de gestión para el dueño + bot de IA para los clientes. Dos herramientas, un precio.</p>
+      <div class="section-label" data-i18n="feat.label">Funcionalidades</div>
+      <h2 class="section-title" data-i18n="feat.h2">Un sistema completo, no solo un chatbot</h2>
+      <p class="section-sub" style="margin:0 auto 48px" data-i18n="feat.sub">Panel de gestión para el dueño + bot de IA para los clientes. Dos herramientas, un precio.</p>
     </div>
     <div class="features-grid">
       <div class="feat-card">
-        <div class="feat-icon">🤖</div>
-        <div class="feat-title">Bot de IA en WhatsApp</div>
-        <div class="feat-desc">Responde consultas, muestra el catálogo con fotos, toma pedidos y agenda turnos — 24/7, sin que estés. Habla con tus clientes como una persona real.</div>
+        <div class="feat-icon">🌸</div>
+        <div class="feat-title" data-i18n="feat1.title">Bot de IA en WhatsApp</div>
+        <div class="feat-desc" data-i18n="feat1.desc">Responde consultas, muestra el catálogo con fotos, toma pedidos y agenda turnos — 24/7, sin que estés. Habla con tus clientes como una persona real.</div>
       </div>
       <div class="feat-card">
         <div class="feat-icon">🛒</div>
-        <div class="feat-title">Gestión de pedidos</div>
-        <div class="feat-desc">Cada pedido que toma el bot aparece en tu panel en tiempo real. Confirmás, preparás, entregás. Notificaciones al instante en tu WhatsApp personal.</div>
+        <div class="feat-title" data-i18n="feat2.title">Gestión de pedidos</div>
+        <div class="feat-desc" data-i18n="feat2.desc">Cada pedido que toma el bot aparece en tu panel en tiempo real. Confirmás, preparás, entregás. Notificaciones al instante en tu WhatsApp personal.</div>
       </div>
       <div class="feat-card">
         <div class="feat-icon">📅</div>
-        <div class="feat-title">Agenda de turnos</div>
-        <div class="feat-desc">El bot ofrece horarios disponibles y reserva el turno directamente. Vos ves la agenda del día, podés bloquear horas y gestionar todo desde el panel.</div>
+        <div class="feat-title" data-i18n="feat3.title">Agenda de turnos</div>
+        <div class="feat-desc" data-i18n="feat3.desc">El bot ofrece horarios disponibles y reserva el turno directamente. Vos ves la agenda del día, podés bloquear horas y gestionar todo desde el panel.</div>
       </div>
       <div class="feat-card">
         <div class="feat-icon">📦</div>
-        <div class="feat-title">Catálogo inteligente</div>
-        <div class="feat-desc">Cargá productos o servicios con fotos, precios y stock. El bot solo ofrece lo que tenés disponible. Importá desde Excel, Google Sheets o fotos con IA.</div>
+        <div class="feat-title" data-i18n="feat4.title">Catálogo inteligente</div>
+        <div class="feat-desc" data-i18n="feat4.desc">Cargá productos o servicios con fotos, precios y stock. El bot solo ofrece lo que tenés disponible. Importá desde Excel, Google Sheets o fotos con IA.</div>
       </div>
       <div class="feat-card">
         <div class="feat-icon">💬</div>
-        <div class="feat-title">Panel de chats</div>
-        <div class="feat-desc">Ve todas las conversaciones en tiempo real. Podés escribirle al cliente directamente desde el panel cuando lo necesitás — el bot se hace a un lado.</div>
+        <div class="feat-title" data-i18n="feat5.title">Panel de chats</div>
+        <div class="feat-desc" data-i18n="feat5.desc">Ve todas las conversaciones en tiempo real. Podés escribirle al cliente directamente desde el panel cuando lo necesitás — el bot se hace a un lado.</div>
       </div>
       <div class="feat-card">
         <div class="feat-icon">📊</div>
-        <div class="feat-title">Analytics y reportes</div>
-        <div class="feat-desc">Ventas del día, semana y mes. Productos más pedidos, clientes frecuentes, cancelaciones. Exportá todo a CSV para contabilidad.</div>
+        <div class="feat-title" data-i18n="feat6.title">Analytics y reportes</div>
+        <div class="feat-desc" data-i18n="feat6.desc">Ventas del día, semana y mes. Productos más pedidos, clientes frecuentes, cancelaciones. Exportá todo a CSV para contabilidad.</div>
       </div>
       <div class="feat-card">
         <div class="feat-icon">🚚</div>
-        <div class="feat-title">Delivery configurado</div>
-        <div class="feat-desc">El bot pregunta si retira o quiere envío, pide la dirección y calcula el costo automáticamente según tu tarifa (fija, por zona o por km).</div>
+        <div class="feat-title" data-i18n="feat7.title">Delivery configurado</div>
+        <div class="feat-desc" data-i18n="feat7.desc">El bot pregunta si retira o quiere envío, pide la dirección y calcula el costo automáticamente según tu tarifa (fija, por zona o por km).</div>
       </div>
       <div class="feat-card">
         <div class="feat-icon">🎯</div>
-        <div class="feat-title">IA adaptada a tu rubro</div>
-        <div class="feat-desc">El bot se comporta diferente si sos una florería, un restaurante, una estética o un técnico. Desde el primer día habla como alguien del sector.</div>
+        <div class="feat-title" data-i18n="feat8.title">IA adaptada a tu rubro</div>
+        <div class="feat-desc" data-i18n="feat8.desc">El bot se comporta diferente si sos una florería, un restaurante, una estética o un técnico. Desde el primer día habla como alguien del sector.</div>
       </div>
     </div>
   </div>
@@ -538,30 +573,30 @@ footer a:hover { color: var(--dark); }
 <section id="how">
   <div class="container">
     <div class="center">
-      <div class="section-label">Cómo funciona</div>
-      <h2 class="section-title">Estás activo en menos de una hora</h2>
-      <p class="section-sub" style="margin:0 auto 48px">Sin técnicos, sin programación, sin contratos largos.</p>
+      <div class="section-label" data-i18n="how.label">Cómo funciona</div>
+      <h2 class="section-title" data-i18n="how.h2">Estás activo en menos de una hora</h2>
+      <p class="section-sub" style="margin:0 auto 48px" data-i18n="how.sub">Sin técnicos, sin programación, sin contratos largos.</p>
     </div>
     <div class="steps-grid">
       <div class="step-item">
         <div class="step-num">1</div>
-        <div class="step-title">Creás tu cuenta</div>
-        <div class="step-desc">Elegís tu rubro, ponés el nombre del negocio y en 3 minutos tenés acceso al panel. Sara ya sabe cómo hablar con clientes de tu sector.</div>
+        <div class="step-title" data-i18n="how.step1.title">Creás tu cuenta</div>
+        <div class="step-desc" data-i18n="how.step1.desc">Elegís tu rubro, ponés el nombre del negocio y en 3 minutos tenés acceso al panel. Sara ya sabe cómo hablar con clientes de tu sector.</div>
       </div>
       <div class="step-item">
         <div class="step-num">2</div>
-        <div class="step-title">Conectás tu WhatsApp</div>
-        <div class="step-desc">Seguís el asistente de configuración para vincular tu número WhatsApp Business oficial. El bot te guía paso a paso.</div>
+        <div class="step-title" data-i18n="how.step2.title">Conectás tu WhatsApp</div>
+        <div class="step-desc" data-i18n="how.step2.desc">Seguís el asistente de configuración para vincular tu número WhatsApp Business oficial. El bot te guía paso a paso.</div>
       </div>
       <div class="step-item">
         <div class="step-num">3</div>
-        <div class="step-title">Cargás tu catálogo</div>
-        <div class="step-desc">Productos, servicios o ambos — con fotos y precios. Podés importar desde Excel o dejar que la IA extraiga todo de fotos.</div>
+        <div class="step-title" data-i18n="how.step3.title">Cargás tu catálogo</div>
+        <div class="step-desc" data-i18n="how.step3.desc">Productos, servicios o ambos — con fotos y precios. Podés importar desde Excel o dejar que la IA extraiga todo de fotos.</div>
       </div>
       <div class="step-item">
         <div class="step-num">4</div>
-        <div class="step-title">Sara atiende sola</div>
-        <div class="step-desc">Tus clientes escriben al número de siempre. Sara responde, toma pedidos, agenda turnos. Vos recibís notificaciones y gestionás desde el panel.</div>
+        <div class="step-title" data-i18n="how.step4.title">Sara atiende sola</div>
+        <div class="step-desc" data-i18n="how.step4.desc">Tus clientes escriben al número de siempre. Sara responde, toma pedidos, agenda turnos. Vos recibís notificaciones y gestionás desde el panel.</div>
       </div>
     </div>
   </div>
@@ -571,45 +606,45 @@ footer a:hover { color: var(--dark); }
 <section class="bg-light" id="pricing">
   <div class="container">
     <div class="center">
-      <div class="section-label">Planes</div>
-      <h2 class="section-title">Un precio simple, sin sorpresas</h2>
-      <p class="section-sub" style="margin:0 auto 48px">Sin costo por conversación, sin límite de productos. Pagás el mismo precio cada mes.</p>
+      <div class="section-label" data-i18n="pricing.label">Planes</div>
+      <h2 class="section-title" data-i18n="pricing.h2">Un precio simple, sin sorpresas</h2>
+      <p class="section-sub" style="margin:0 auto 48px" data-i18n="pricing.sub">Sin costo por conversación, sin límite de productos. Pagás el mismo precio cada mes.</p>
     </div>
     <div class="pricing-grid">
       <div class="price-card">
         <div class="price-name">🌱 STARTER</div>
-        <div style="margin-bottom:4px"><span class="price-amount">$29</span><span class="price-period">/mes</span></div>
-        <div class="price-desc">Para negocios que venden productos o servicios simples — sin agenda de turnos.</div>
+        <div style="margin-bottom:4px"><span class="price-amount">$29</span><span class="price-period" data-i18n="pricing.per_month">/mes</span></div>
+        <div class="price-desc" data-i18n="pricing.starter.desc">Para negocios que venden productos o servicios simples — sin agenda de turnos.</div>
         <ul class="price-features">
-          <li>1 número WhatsApp Business</li>
-          <li>Catálogo ilimitado con fotos</li>
-          <li>1.000 conversaciones/mes</li>
-          <li>Gestión de pedidos en tiempo real</li>
-          <li>Delivery configurado (zona o km)</li>
-          <li>Panel de chats y takeover manual</li>
-          <li>Analytics básico</li>
-          <li>Soporte por chat</li>
+          <li data-i18n="pricing.starter.f1">1 número WhatsApp Business</li>
+          <li data-i18n="pricing.starter.f2">Catálogo ilimitado con fotos</li>
+          <li data-i18n="pricing.starter.f3">1.000 conversaciones/mes</li>
+          <li data-i18n="pricing.starter.f4">Gestión de pedidos en tiempo real</li>
+          <li data-i18n="pricing.starter.f5">Delivery configurado (zona o km)</li>
+          <li data-i18n="pricing.starter.f6">Panel de chats y takeover manual</li>
+          <li data-i18n="pricing.starter.f7">Analytics básico</li>
+          <li data-i18n="pricing.starter.f8">Soporte por chat</li>
         </ul>
-        <a href="/register/index.html" class="price-btn outline">Empezar gratis →</a>
+        <a href="/register/index.html" class="price-btn outline" data-i18n="pricing.btn_free">Empezar gratis →</a>
       </div>
       <div class="price-card featured">
-        <div class="price-popular">⭐ Más popular</div>
+        <div class="price-popular" data-i18n="pricing.popular">⭐ Más popular</div>
         <div class="price-name">🚀 PRO</div>
-        <div style="margin-bottom:4px"><span class="price-amount">$59</span><span class="price-period">/mes</span></div>
-        <div class="price-desc">Para negocios con agenda de turnos o que necesitan mayor volumen de conversaciones.</div>
+        <div style="margin-bottom:4px"><span class="price-amount">$59</span><span class="price-period" data-i18n="pricing.per_month">/mes</span></div>
+        <div class="price-desc" data-i18n="pricing.pro.desc">Para negocios con agenda de turnos o que necesitan mayor volumen de conversaciones.</div>
         <ul class="price-features">
-          <li>Todo lo del Starter</li>
-          <li>5.000 conversaciones/mes</li>
-          <li>Agenda de turnos automática</li>
-          <li>Servicios con precio por hora</li>
-          <li>Analytics completo + exportación CSV</li>
-          <li>Catálogo de servicios separado</li>
-          <li>Soporte prioritario</li>
+          <li data-i18n="pricing.pro.f1">Todo lo del Starter</li>
+          <li data-i18n="pricing.pro.f2">5.000 conversaciones/mes</li>
+          <li data-i18n="pricing.pro.f3">Agenda de turnos automática</li>
+          <li data-i18n="pricing.pro.f4">Servicios con precio por hora</li>
+          <li data-i18n="pricing.pro.f5">Analytics completo + exportación CSV</li>
+          <li data-i18n="pricing.pro.f6">Catálogo de servicios separado</li>
+          <li data-i18n="pricing.pro.f7">Soporte prioritario</li>
         </ul>
-        <a href="/register/index.html" class="price-btn primary">Empezar gratis →</a>
+        <a href="/register/index.html" class="price-btn primary" data-i18n="pricing.btn_free">Empezar gratis →</a>
       </div>
     </div>
-    <p class="pricing-note">7 días gratis en cualquier plan · Sin tarjeta · Cancelás cuando querés · Facturación mensual</p>
+    <p class="pricing-note" data-i18n="pricing.note">7 días gratis en cualquier plan · Sin tarjeta · Cancelás cuando querés · Facturación mensual</p>
   </div>
 </section>
 
@@ -664,14 +699,14 @@ footer a:hover { color: var(--dark); }
 <!-- CTA -->
 <section class="cta-section">
   <div class="container">
-    <h2>El sábado a la noche, el bot trabaja.<br/>Vos descansás.</h2>
-    <p>Probalo 7 días gratis. Sin tarjeta, sin compromisos.</p>
-    <a href="/register/index.html" class="btn-primary" style="font-size:1rem;padding:16px 36px;">🚀 Crear mi cuenta gratis →</a>
+    <h2 data-i18n="cta.h2">El sábado a la noche, el bot trabaja.<br/>Vos descansás.</h2>
+    <p data-i18n="cta.sub">Probalo 7 días gratis. Sin tarjeta, sin compromisos.</p>
+    <a href="/register/index.html" class="btn-primary" style="font-size:1rem;padding:16px 36px;" data-i18n="cta.btn">🚀 Crear mi cuenta gratis →</a>
     <div class="cta-badges">
-      <span class="cta-badge">✓ Sin tarjeta de crédito</span>
-      <span class="cta-badge">✓ Activo en menos de una hora</span>
-      <span class="cta-badge">✓ Cancelás cuando querés</span>
-      <span class="cta-badge">✓ Soporte incluido</span>
+      <span class="cta-badge" data-i18n="cta.badge1">✓ Sin tarjeta de crédito</span>
+      <span class="cta-badge" data-i18n="cta.badge2">✓ Activo en menos de una hora</span>
+      <span class="cta-badge" data-i18n="cta.badge3">✓ Cancelás cuando querés</span>
+      <span class="cta-badge" data-i18n="cta.badge4">✓ Soporte incluido</span>
     </div>
   </div>
 </section>
@@ -679,20 +714,350 @@ footer a:hover { color: var(--dark); }
 <!-- FOOTER -->
 <footer>
   <a href="/" class="logo">
-    <div class="logo-icon" style="width:28px;height:28px;font-size:.9rem;">🤖</div>
+    <div class="logo-icon-sm">
+      <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+        <ellipse cx="16" cy="9" rx="4" ry="6" fill="rgba(255,255,255,.9)" transform="rotate(0 16 16)"/>
+        <ellipse cx="16" cy="9" rx="4" ry="6" fill="rgba(255,255,255,.7)" transform="rotate(72 16 16)"/>
+        <ellipse cx="16" cy="9" rx="4" ry="6" fill="rgba(255,255,255,.9)" transform="rotate(144 16 16)"/>
+        <ellipse cx="16" cy="9" rx="4" ry="6" fill="rgba(255,255,255,.7)" transform="rotate(216 16 16)"/>
+        <ellipse cx="16" cy="9" rx="4" ry="6" fill="rgba(255,255,255,.9)" transform="rotate(288 16 16)"/>
+        <circle cx="16" cy="16" r="5.5" fill="#15803d"/>
+        <text x="16" y="20" text-anchor="middle" font-family="Inter,sans-serif" font-weight="900" font-size="9" fill="white">S</text>
+      </svg>
+    </div>
     <div class="logo-text" style="font-size:.9rem;">Sara<span>Bot</span></div>
   </a>
   <div class="footer-links">
-    <a href="/legal/terms.html">Términos de servicio</a>
-    <a href="/legal/privacy.html">Privacidad</a>
-    <a href="/legal/disclaimer.html">Aviso legal</a>
-    <a href="/register/index.html">Empezar gratis</a>
-    <a href="/admin/index.html">Entrar al panel</a>
+    <a href="/legal/terms.html" data-i18n="footer.terms">Términos de servicio</a>
+    <a href="/legal/privacy.html" data-i18n="footer.privacy">Privacidad</a>
+    <a href="/legal/disclaimer.html" data-i18n="footer.legal">Aviso legal</a>
+    <a href="/register/index.html" data-i18n="footer.start">Empezar gratis</a>
+    <a href="/admin/index.html" data-i18n="footer.login">Entrar al panel</a>
   </div>
-  <span>© 2025 Sara Bot</span>
+  <span data-i18n="footer.copy">© 2025 Sara Bot</span>
 </footer>
 
 <script>
+// ── i18n ────────────────────────────────────────────────────────────────────
+const TR = {
+  es: {
+    'nav.features':'Funcionalidades','nav.how':'Cómo funciona','nav.pricing':'Planes','nav.login':'Entrar','nav.cta':'Empezar gratis →',
+    'hero.badge':'Bot de IA + Panel de gestión — todo en uno',
+    'hero.h1':'Gestioná tu negocio.<br/><em>El bot atiende a tus clientes.</em>',
+    'hero.sub':'Pedidos, turnos, catálogo, clientes — todo desde un panel. Tu bot de IA en WhatsApp toma pedidos, responde consultas y agenda citas 24/7, sin que tengas que estar pendiente del celular.',
+    'hero.btn1':'🚀 Empezar 7 días gratis','hero.btn2':'Ver cómo funciona',
+    'hero.note':'Sin tarjeta de crédito · <strong>7 días gratis</strong> · Cancelás cuando querés',
+    'problem.label':'El problema','problem.h2':'¿Cuánto tiempo pasás respondiendo mensajes que dicen lo mismo?',
+    'problem.sub':'Cada negocio que atiende por WhatsApp tiene el mismo problema: el dueño termina siendo el operador de chat.',
+    'problem.before_label':'❌ Antes de Sara Bot',
+    'problem.before1':'Respondés "¿tienen esto?" 30 veces por día','problem.before2':'Un pedido llega a las 11pm y no te enterás',
+    'problem.before3':'El sábado a la noche el teléfono no para','problem.before4':'Perdés turnos porque nadie registra las reservas',
+    'problem.before5':'No sabés cuánto vendiste esta semana','problem.before6':'Cualquier ausencia tuya = el negocio para',
+    'problem.after_label':'✅ Con Sara Bot',
+    'problem.after1':'El bot responde, muestra fotos, toma el pedido','problem.after2':'Recibís una notificación solo cuando hay un pedido nuevo',
+    'problem.after3':'El sábado a la noche el bot maneja solo','problem.after4':'La agenda de turnos se llena automáticamente',
+    'problem.after5':'Analytics en tiempo real desde el panel','problem.after6':'El negocio funciona aunque no estés',
+    'feat.label':'Funcionalidades','feat.h2':'Un sistema completo, no solo un chatbot',
+    'feat.sub':'Panel de gestión para el dueño + bot de IA para los clientes. Dos herramientas, un precio.',
+    'feat1.title':'Bot de IA en WhatsApp','feat1.desc':'Responde consultas, muestra el catálogo con fotos, toma pedidos y agenda turnos — 24/7, sin que estés. Habla con tus clientes como una persona real.',
+    'feat2.title':'Gestión de pedidos','feat2.desc':'Cada pedido que toma el bot aparece en tu panel en tiempo real. Confirmás, preparás, entregás. Notificaciones al instante en tu WhatsApp personal.',
+    'feat3.title':'Agenda de turnos','feat3.desc':'El bot ofrece horarios disponibles y reserva el turno directamente. Vos ves la agenda del día, podés bloquear horas y gestionar todo desde el panel.',
+    'feat4.title':'Catálogo inteligente','feat4.desc':'Cargá productos o servicios con fotos, precios y stock. El bot solo ofrece lo que tenés disponible. Importá desde Excel, Google Sheets o fotos con IA.',
+    'feat5.title':'Panel de chats','feat5.desc':'Ve todas las conversaciones en tiempo real. Podés escribirle al cliente directamente desde el panel cuando lo necesitás — el bot se hace a un lado.',
+    'feat6.title':'Analytics y reportes','feat6.desc':'Ventas del día, semana y mes. Productos más pedidos, clientes frecuentes, cancelaciones. Exportá todo a CSV para contabilidad.',
+    'feat7.title':'Delivery configurado','feat7.desc':'El bot pregunta si retira o quiere envío, pide la dirección y calcula el costo automáticamente según tu tarifa (fija, por zona o por km).',
+    'feat8.title':'IA adaptada a tu rubro','feat8.desc':'El bot se comporta diferente si sos una florería, un restaurante, una estética o un técnico. Desde el primer día habla como alguien del sector.',
+    'how.label':'Cómo funciona','how.h2':'Estás activo en menos de una hora','how.sub':'Sin técnicos, sin programación, sin contratos largos.',
+    'how.step1.title':'Creás tu cuenta','how.step1.desc':'Elegís tu rubro, ponés el nombre del negocio y en 3 minutos tenés acceso al panel. Sara ya sabe cómo hablar con clientes de tu sector.',
+    'how.step2.title':'Conectás tu WhatsApp','how.step2.desc':'Seguís el asistente de configuración para vincular tu número WhatsApp Business oficial. El bot te guía paso a paso.',
+    'how.step3.title':'Cargás tu catálogo','how.step3.desc':'Productos, servicios o ambos — con fotos y precios. Podés importar desde Excel o dejar que la IA extraiga todo de fotos.',
+    'how.step4.title':'Sara atiende sola','how.step4.desc':'Tus clientes escriben al número de siempre. Sara responde, toma pedidos, agenda turnos. Vos recibís notificaciones y gestionás desde el panel.',
+    'pricing.label':'Planes','pricing.h2':'Un precio simple, sin sorpresas',
+    'pricing.sub':'Sin costo por conversación, sin límite de productos. Pagás el mismo precio cada mes.',
+    'pricing.per_month':'/mes','pricing.popular':'⭐ Más popular','pricing.btn_free':'Empezar gratis →',
+    'pricing.starter.desc':'Para negocios que venden productos o servicios simples — sin agenda de turnos.',
+    'pricing.starter.f1':'1 número WhatsApp Business','pricing.starter.f2':'Catálogo ilimitado con fotos','pricing.starter.f3':'1.000 conversaciones/mes',
+    'pricing.starter.f4':'Gestión de pedidos en tiempo real','pricing.starter.f5':'Delivery configurado (zona o km)',
+    'pricing.starter.f6':'Panel de chats y takeover manual','pricing.starter.f7':'Analytics básico','pricing.starter.f8':'Soporte por chat',
+    'pricing.pro.desc':'Para negocios con agenda de turnos o que necesitan mayor volumen de conversaciones.',
+    'pricing.pro.f1':'Todo lo del Starter','pricing.pro.f2':'5.000 conversaciones/mes','pricing.pro.f3':'Agenda de turnos automática',
+    'pricing.pro.f4':'Servicios con precio por hora','pricing.pro.f5':'Analytics completo + exportación CSV',
+    'pricing.pro.f6':'Catálogo de servicios separado','pricing.pro.f7':'Soporte prioritario',
+    'pricing.note':'7 días gratis en cualquier plan · Sin tarjeta · Cancelás cuando querés · Facturación mensual',
+    'cta.h2':'El sábado a la noche, el bot trabaja.<br/>Vos descansás.',
+    'cta.sub':'Probalo 7 días gratis. Sin tarjeta, sin compromisos.','cta.btn':'🚀 Crear mi cuenta gratis →',
+    'cta.badge1':'✓ Sin tarjeta de crédito','cta.badge2':'✓ Activo en menos de una hora','cta.badge3':'✓ Cancelás cuando querés','cta.badge4':'✓ Soporte incluido',
+    'footer.terms':'Términos de servicio','footer.privacy':'Privacidad','footer.legal':'Aviso legal','footer.start':'Empezar gratis','footer.login':'Entrar al panel','footer.copy':'© 2025 Sara Bot',
+  },
+  en: {
+    'nav.features':'Features','nav.how':'How it works','nav.pricing':'Plans','nav.login':'Sign in','nav.cta':'Start free →',
+    'hero.badge':'AI Bot + Management Panel — all in one',
+    'hero.h1':'Manage your business.<br/><em>The bot handles your customers.</em>',
+    'hero.sub':'Orders, appointments, catalog, customers — all from one panel. Your WhatsApp AI bot takes orders, answers questions and books appointments 24/7, so you can put down the phone.',
+    'hero.btn1':'🚀 Start 7 days free','hero.btn2':'See how it works',
+    'hero.note':'No credit card · <strong>7 days free</strong> · Cancel anytime',
+    'problem.label':'The problem','problem.h2':'How much time do you spend answering the same messages over and over?',
+    'problem.sub':'Every business on WhatsApp has the same problem: the owner ends up being the chat operator.',
+    'problem.before_label':'❌ Before Sara Bot',
+    'problem.before1':'You answer "do you have this?" 30 times a day','problem.before2':'An order comes in at 11pm and you miss it',
+    'problem.before3':'Saturday night the phone never stops','problem.before4':'You lose bookings because nobody logs the appointments',
+    'problem.before5':'You don\'t know how much you sold this week','problem.before6':'If you\'re unavailable = business stops',
+    'problem.after_label':'✅ With Sara Bot',
+    'problem.after1':'The bot replies, shows photos, takes the order','problem.after2':'You get a notification only when there\'s a new order',
+    'problem.after3':'Saturday night the bot runs it alone','problem.after4':'The appointment calendar fills up automatically',
+    'problem.after5':'Real-time analytics from the panel','problem.after6':'Business runs even when you\'re not there',
+    'feat.label':'Features','feat.h2':'A complete system, not just a chatbot',
+    'feat.sub':'Management panel for the owner + AI bot for customers. Two tools, one price.',
+    'feat1.title':'AI Bot on WhatsApp','feat1.desc':'Answers questions, shows the catalog with photos, takes orders and books appointments — 24/7, without you. Talks to your customers like a real person.',
+    'feat2.title':'Order management','feat2.desc':'Every order the bot takes appears in your panel in real time. You confirm, prepare, deliver. Instant notifications on your personal WhatsApp.',
+    'feat3.title':'Appointment calendar','feat3.desc':'The bot offers available slots and books the appointment directly. You see the day\'s schedule, can block hours, and manage everything from the panel.',
+    'feat4.title':'Smart catalog','feat4.desc':'Add products or services with photos, prices and stock. The bot only offers what\'s available. Import from Excel, Google Sheets, or photos with AI.',
+    'feat5.title':'Chat panel','feat5.desc':'See all conversations in real time. You can write to the customer directly from the panel whenever you need — the bot steps aside.',
+    'feat6.title':'Analytics & reports','feat6.desc':'Sales for today, week and month. Most ordered products, frequent customers, cancellations. Export everything to CSV for accounting.',
+    'feat7.title':'Delivery setup','feat7.desc':'The bot asks if the customer wants pickup or delivery, requests the address and calculates the cost automatically based on your rate (flat, by zone, or by km).',
+    'feat8.title':'AI tailored to your industry','feat8.desc':'The bot behaves differently if you\'re a florist, restaurant, beauty salon or technician. From day one it speaks like someone from your sector.',
+    'how.label':'How it works','how.h2':'You\'re live in under an hour','how.sub':'No technicians, no coding, no long contracts.',
+    'how.step1.title':'Create your account','how.step1.desc':'Choose your industry, enter your business name and in 3 minutes you\'re in the panel. Sara already knows how to talk to customers in your sector.',
+    'how.step2.title':'Connect your WhatsApp','how.step2.desc':'Follow the setup wizard to link your official WhatsApp Business number. The bot guides you step by step.',
+    'how.step3.title':'Upload your catalog','how.step3.desc':'Products, services or both — with photos and prices. Import from Excel or let AI extract everything from photos.',
+    'how.step4.title':'Sara handles it alone','how.step4.desc':'Your customers message the same number as always. Sara replies, takes orders, books appointments. You get notifications and manage from the panel.',
+    'pricing.label':'Plans','pricing.h2':'Simple pricing, no surprises',
+    'pricing.sub':'No per-conversation charge, no product limit. Same price every month.',
+    'pricing.per_month':'/mo','pricing.popular':'⭐ Most popular','pricing.btn_free':'Start free →',
+    'pricing.starter.desc':'For businesses selling products or simple services — no appointment calendar.',
+    'pricing.starter.f1':'1 WhatsApp Business number','pricing.starter.f2':'Unlimited catalog with photos','pricing.starter.f3':'1,000 conversations/month',
+    'pricing.starter.f4':'Real-time order management','pricing.starter.f5':'Delivery setup (zone or km)',
+    'pricing.starter.f6':'Chat panel & manual takeover','pricing.starter.f7':'Basic analytics','pricing.starter.f8':'Chat support',
+    'pricing.pro.desc':'For businesses with appointment scheduling or higher conversation volume.',
+    'pricing.pro.f1':'Everything in Starter','pricing.pro.f2':'5,000 conversations/month','pricing.pro.f3':'Automatic appointment calendar',
+    'pricing.pro.f4':'Hourly-rate services','pricing.pro.f5':'Full analytics + CSV export',
+    'pricing.pro.f6':'Separate services catalog','pricing.pro.f7':'Priority support',
+    'pricing.note':'7 days free on any plan · No card · Cancel anytime · Monthly billing',
+    'cta.h2':'Saturday night the bot works.<br/>You rest.',
+    'cta.sub':'Try it free for 7 days. No card, no commitment.','cta.btn':'🚀 Create my free account →',
+    'cta.badge1':'✓ No credit card','cta.badge2':'✓ Live in under an hour','cta.badge3':'✓ Cancel anytime','cta.badge4':'✓ Support included',
+    'footer.terms':'Terms of service','footer.privacy':'Privacy','footer.legal':'Legal notice','footer.start':'Start free','footer.login':'Sign in to panel','footer.copy':'© 2025 Sara Bot',
+  },
+  it: {
+    'nav.features':'Funzionalità','nav.how':'Come funziona','nav.pricing':'Piani','nav.login':'Accedi','nav.cta':'Inizia gratis →',
+    'hero.badge':'Bot AI + Pannello di gestione — tutto in uno',
+    'hero.h1':'Gestisci la tua attività.<br/><em>Il bot risponde ai tuoi clienti.</em>',
+    'hero.sub':'Ordini, appuntamenti, catalogo, clienti — tutto da un pannello. Il tuo bot AI su WhatsApp prende ordini, risponde alle domande e prenota appuntamenti 24/7, senza che tu debba stare attaccato al telefono.',
+    'hero.btn1':'🚀 Inizia 7 giorni gratis','hero.btn2':'Scopri come funziona',
+    'hero.note':'Nessuna carta di credito · <strong>7 giorni gratis</strong> · Disdici quando vuoi',
+    'problem.label':'Il problema','problem.h2':'Quanto tempo passi a rispondere agli stessi messaggi ogni giorno?',
+    'problem.sub':'Ogni attività su WhatsApp ha lo stesso problema: il titolare finisce per fare l\'operatore di chat.',
+    'problem.before_label':'❌ Prima di Sara Bot',
+    'problem.before1':'Rispondi "avete questo?" 30 volte al giorno','problem.before2':'Un ordine arriva alle 23 e non te ne accorgi',
+    'problem.before3':'Il sabato sera il telefono non smette di suonare','problem.before4':'Perdi prenotazioni perché nessuno le registra',
+    'problem.before5':'Non sai quanto hai venduto questa settimana','problem.before6':'Se sei assente = l\'attività si ferma',
+    'problem.after_label':'✅ Con Sara Bot',
+    'problem.after1':'Il bot risponde, mostra le foto, prende l\'ordine','problem.after2':'Ricevi una notifica solo quando c\'è un nuovo ordine',
+    'problem.after3':'Il sabato sera il bot gestisce tutto da solo','problem.after4':'L\'agenda degli appuntamenti si riempie automaticamente',
+    'problem.after5':'Analytics in tempo reale dal pannello','problem.after6':'L\'attività funziona anche quando non sei presente',
+    'feat.label':'Funzionalità','feat.h2':'Un sistema completo, non solo un chatbot',
+    'feat.sub':'Pannello di gestione per il titolare + bot AI per i clienti. Due strumenti, un prezzo.',
+    'feat1.title':'Bot AI su WhatsApp','feat1.desc':'Risponde alle domande, mostra il catalogo con foto, prende ordini e prenota appuntamenti — 24/7, senza di te. Parla con i tuoi clienti come una persona reale.',
+    'feat2.title':'Gestione ordini','feat2.desc':'Ogni ordine preso dal bot appare nel tuo pannello in tempo reale. Confermi, prepari, consegni. Notifiche istantanee sul tuo WhatsApp personale.',
+    'feat3.title':'Agenda appuntamenti','feat3.desc':'Il bot propone gli orari disponibili e prenota direttamente. Vedi l\'agenda del giorno, puoi bloccare ore e gestire tutto dal pannello.',
+    'feat4.title':'Catalogo intelligente','feat4.desc':'Carica prodotti o servizi con foto, prezzi e stock. Il bot offre solo ciò che hai disponibile. Importa da Excel, Google Sheets o foto con AI.',
+    'feat5.title':'Pannello chat','feat5.desc':'Vedi tutte le conversazioni in tempo reale. Puoi scrivere al cliente direttamente dal pannello quando serve — il bot si fa da parte.',
+    'feat6.title':'Analytics e report','feat6.desc':'Vendite del giorno, settimana e mese. Prodotti più ordinati, clienti abituali, cancellazioni. Esporta tutto in CSV per la contabilità.',
+    'feat7.title':'Consegne configurate','feat7.desc':'Il bot chiede se il cliente ritira o vuole la consegna, richiede l\'indirizzo e calcola il costo automaticamente in base alla tua tariffa.',
+    'feat8.title':'AI adattata al tuo settore','feat8.desc':'Il bot si comporta diversamente se sei una fioreria, un ristorante, un centro estetico o un tecnico. Dal primo giorno parla come un esperto del settore.',
+    'how.label':'Come funziona','how.h2':'Sei operativo in meno di un\'ora','how.sub':'Nessun tecnico, nessuna programmazione, nessun contratto lungo.',
+    'how.step1.title':'Crea il tuo account','how.step1.desc':'Scegli il settore, inserisci il nome dell\'attività e in 3 minuti hai accesso al pannello. Sara sa già come parlare con i clienti del tuo settore.',
+    'how.step2.title':'Collega il tuo WhatsApp','how.step2.desc':'Segui l\'assistente di configurazione per collegare il tuo numero WhatsApp Business ufficiale. Il bot ti guida passo dopo passo.',
+    'how.step3.title':'Carica il tuo catalogo','how.step3.desc':'Prodotti, servizi o entrambi — con foto e prezzi. Importa da Excel o lascia che l\'AI estragga tutto dalle foto.',
+    'how.step4.title':'Sara risponde da sola','how.step4.desc':'I tuoi clienti scrivono al solito numero. Sara risponde, prende ordini, prenota appuntamenti. Tu ricevi notifiche e gestisci dal pannello.',
+    'pricing.label':'Piani','pricing.h2':'Un prezzo semplice, nessuna sorpresa',
+    'pricing.sub':'Nessun costo per conversazione, nessun limite di prodotti. Stesso prezzo ogni mese.',
+    'pricing.per_month':'/mese','pricing.popular':'⭐ Più popolare','pricing.btn_free':'Inizia gratis →',
+    'pricing.starter.desc':'Per attività che vendono prodotti o servizi semplici — senza agenda appuntamenti.',
+    'pricing.starter.f1':'1 numero WhatsApp Business','pricing.starter.f2':'Catalogo illimitato con foto','pricing.starter.f3':'1.000 conversazioni/mese',
+    'pricing.starter.f4':'Gestione ordini in tempo reale','pricing.starter.f5':'Consegne configurate (zona o km)',
+    'pricing.starter.f6':'Pannello chat e takeover manuale','pricing.starter.f7':'Analytics base','pricing.starter.f8':'Supporto via chat',
+    'pricing.pro.desc':'Per attività con agenda appuntamenti o che necessitano di maggiore volume di conversazioni.',
+    'pricing.pro.f1':'Tutto lo Starter','pricing.pro.f2':'5.000 conversazioni/mese','pricing.pro.f3':'Agenda appuntamenti automatica',
+    'pricing.pro.f4':'Servizi con tariffa oraria','pricing.pro.f5':'Analytics completo + esportazione CSV',
+    'pricing.pro.f6':'Catalogo servizi separato','pricing.pro.f7':'Supporto prioritario',
+    'pricing.note':'7 giorni gratis su qualsiasi piano · Nessuna carta · Disdici quando vuoi · Fatturazione mensile',
+    'cta.h2':'Il sabato sera il bot lavora.<br/>Tu riposi.',
+    'cta.sub':'Provalo 7 giorni gratis. Nessuna carta, nessun impegno.','cta.btn':'🚀 Crea il mio account gratis →',
+    'cta.badge1':'✓ Nessuna carta di credito','cta.badge2':'✓ Operativo in meno di un\'ora','cta.badge3':'✓ Disdici quando vuoi','cta.badge4':'✓ Supporto incluso',
+    'footer.terms':'Termini di servizio','footer.privacy':'Privacy','footer.legal':'Note legali','footer.start':'Inizia gratis','footer.login':'Accedi al pannello','footer.copy':'© 2025 Sara Bot',
+  },
+  de: {
+    'nav.features':'Funktionen','nav.how':'So funktioniert\'s','nav.pricing':'Pläne','nav.login':'Anmelden','nav.cta':'Kostenlos starten →',
+    'hero.badge':'KI-Bot + Verwaltungspanel — alles in einem',
+    'hero.h1':'Verwalte dein Geschäft.<br/><em>Der Bot kümmert sich um deine Kunden.</em>',
+    'hero.sub':'Bestellungen, Termine, Katalog, Kunden — alles in einem Panel. Dein WhatsApp-KI-Bot nimmt Bestellungen an, beantwortet Fragen und bucht Termine 24/7, ohne dass du dein Handy im Blick behalten musst.',
+    'hero.btn1':'🚀 7 Tage kostenlos starten','hero.btn2':'So funktioniert\'s',
+    'hero.note':'Keine Kreditkarte · <strong>7 Tage gratis</strong> · Jederzeit kündbar',
+    'problem.label':'Das Problem','problem.h2':'Wie viel Zeit verbringst du damit, immer wieder dieselben Nachrichten zu beantworten?',
+    'problem.sub':'Jedes Unternehmen auf WhatsApp hat dasselbe Problem: Der Inhaber wird zum Chat-Operator.',
+    'problem.before_label':'❌ Vor Sara Bot',
+    'problem.before1':'Du beantwortest „Habt ihr das?" 30 Mal am Tag','problem.before2':'Eine Bestellung kommt um 23 Uhr und du merkst es nicht',
+    'problem.before3':'Samstagabend hört das Telefon nicht auf zu klingeln','problem.before4':'Du verlierst Buchungen, weil niemand sie aufzeichnet',
+    'problem.before5':'Du weißt nicht, wie viel du diese Woche verkauft hast','problem.before6':'Wenn du weg bist = Geschäft steht still',
+    'problem.after_label':'✅ Mit Sara Bot',
+    'problem.after1':'Der Bot antwortet, zeigt Fotos, nimmt die Bestellung','problem.after2':'Du bekommst nur eine Benachrichtigung bei einer neuen Bestellung',
+    'problem.after3':'Samstagabend läuft der Bot alleine','problem.after4':'Der Terminkalender füllt sich automatisch',
+    'problem.after5':'Echtzeit-Analytics im Panel','problem.after6':'Das Geschäft läuft auch ohne dich',
+    'feat.label':'Funktionen','feat.h2':'Ein vollständiges System, nicht nur ein Chatbot',
+    'feat.sub':'Verwaltungspanel für den Inhaber + KI-Bot für Kunden. Zwei Werkzeuge, ein Preis.',
+    'feat1.title':'KI-Bot auf WhatsApp','feat1.desc':'Beantwortet Fragen, zeigt den Katalog mit Fotos, nimmt Bestellungen auf und bucht Termine — 24/7, ohne dich. Spricht mit deinen Kunden wie ein echter Mensch.',
+    'feat2.title':'Bestellverwaltung','feat2.desc':'Jede Bestellung erscheint in Echtzeit in deinem Panel. Du bestätigst, bereitest vor, lieferst. Sofortige Benachrichtigungen auf deinem persönlichen WhatsApp.',
+    'feat3.title':'Terminkalender','feat3.desc':'Der Bot bietet freie Termine an und bucht direkt. Du siehst den Tagesplan, kannst Stunden blockieren und alles vom Panel aus verwalten.',
+    'feat4.title':'Intelligenter Katalog','feat4.desc':'Lade Produkte oder Dienstleistungen mit Fotos, Preisen und Lagerbestand hoch. Der Bot bietet nur an, was verfügbar ist. Import aus Excel, Google Sheets oder Fotos mit KI.',
+    'feat5.title':'Chat-Panel','feat5.desc':'Sieh alle Gespräche in Echtzeit. Du kannst dem Kunden bei Bedarf direkt aus dem Panel schreiben — der Bot tritt beiseite.',
+    'feat6.title':'Analytics & Berichte','feat6.desc':'Verkäufe für heute, Woche und Monat. Meistbestellte Produkte, Stammkunden, Stornierungen. Alles als CSV für die Buchhaltung exportieren.',
+    'feat7.title':'Lieferung konfiguriert','feat7.desc':'Der Bot fragt, ob der Kunde abholt oder eine Lieferung möchte, fragt die Adresse ab und berechnet die Kosten automatisch.',
+    'feat8.title':'KI für deine Branche','feat8.desc':'Der Bot verhält sich anders, ob du ein Blumenladen, Restaurant, Kosmetikstudio oder Techniker bist. Er spricht vom ersten Tag wie ein Branchenkenner.',
+    'how.label':'So funktioniert\'s','how.h2':'In weniger als einer Stunde live','how.sub':'Keine Techniker, keine Programmierung, keine langen Verträge.',
+    'how.step1.title':'Konto erstellen','how.step1.desc':'Branche wählen, Geschäftsnamen eingeben und in 3 Minuten hast du Zugang zum Panel. Sara weiß bereits, wie sie mit Kunden deiner Branche spricht.',
+    'how.step2.title':'WhatsApp verbinden','how.step2.desc':'Folge dem Einrichtungsassistenten, um deine offizielle WhatsApp Business-Nummer zu verknüpfen. Der Bot führt dich Schritt für Schritt.',
+    'how.step3.title':'Katalog hochladen','how.step3.desc':'Produkte, Dienstleistungen oder beides — mit Fotos und Preisen. Import aus Excel oder lass die KI alles aus Fotos extrahieren.',
+    'how.step4.title':'Sara erledigt den Rest','how.step4.desc':'Deine Kunden schreiben an die gewohnte Nummer. Sara antwortet, nimmt Bestellungen auf, bucht Termine. Du bekommst Benachrichtigungen und verwaltest vom Panel.',
+    'pricing.label':'Pläne','pricing.h2':'Einfache Preise, keine Überraschungen',
+    'pricing.sub':'Kein Preis pro Gespräch, kein Produktlimit. Jeden Monat derselbe Preis.',
+    'pricing.per_month':'/Monat','pricing.popular':'⭐ Am beliebtesten','pricing.btn_free':'Kostenlos starten →',
+    'pricing.starter.desc':'Für Unternehmen, die Produkte oder einfache Dienstleistungen verkaufen — ohne Terminkalender.',
+    'pricing.starter.f1':'1 WhatsApp Business-Nummer','pricing.starter.f2':'Unbegrenzter Katalog mit Fotos','pricing.starter.f3':'1.000 Gespräche/Monat',
+    'pricing.starter.f4':'Echtzeit-Bestellverwaltung','pricing.starter.f5':'Lieferung konfiguriert (Zone oder km)',
+    'pricing.starter.f6':'Chat-Panel & manuelles Takeover','pricing.starter.f7':'Basis-Analytics','pricing.starter.f8':'Chat-Support',
+    'pricing.pro.desc':'Für Unternehmen mit Terminkalender oder höherem Gesprächsvolumen.',
+    'pricing.pro.f1':'Alles aus Starter','pricing.pro.f2':'5.000 Gespräche/Monat','pricing.pro.f3':'Automatischer Terminkalender',
+    'pricing.pro.f4':'Dienstleistungen mit Stundensatz','pricing.pro.f5':'Vollständige Analytics + CSV-Export',
+    'pricing.pro.f6':'Separater Dienstleistungskatalog','pricing.pro.f7':'Prioritäts-Support',
+    'pricing.note':'7 Tage gratis auf jedem Plan · Keine Karte · Jederzeit kündbar · Monatliche Abrechnung',
+    'cta.h2':'Samstagabend arbeitet der Bot.<br/>Du ruhst dich aus.',
+    'cta.sub':'7 Tage kostenlos testen. Keine Karte, kein Engagement.','cta.btn':'🚀 Mein Konto kostenlos erstellen →',
+    'cta.badge1':'✓ Keine Kreditkarte','cta.badge2':'✓ In weniger als einer Stunde live','cta.badge3':'✓ Jederzeit kündbar','cta.badge4':'✓ Support inklusive',
+    'footer.terms':'Nutzungsbedingungen','footer.privacy':'Datenschutz','footer.legal':'Impressum','footer.start':'Kostenlos starten','footer.login':'Zum Panel','footer.copy':'© 2025 Sara Bot',
+  },
+  fr: {
+    'nav.features':'Fonctionnalités','nav.how':'Comment ça marche','nav.pricing':'Plans','nav.login':'Connexion','nav.cta':'Commencer gratis →',
+    'hero.badge':'Bot IA + Panneau de gestion — tout en un',
+    'hero.h1':'Gérez votre activité.<br/><em>Le bot s\'occupe de vos clients.</em>',
+    'hero.sub':'Commandes, rendez-vous, catalogue, clients — tout depuis un panneau. Votre bot IA sur WhatsApp prend les commandes, répond aux questions et planifie des rendez-vous 24h/24, sans que vous ayez à surveiller votre téléphone.',
+    'hero.btn1':'🚀 Commencer 7 jours gratuits','hero.btn2':'Voir comment ça marche',
+    'hero.note':'Sans carte bancaire · <strong>7 jours gratuits</strong> · Résiliez quand vous voulez',
+    'problem.label':'Le problème','problem.h2':'Combien de temps passez-vous à répondre aux mêmes messages ?',
+    'problem.sub':'Chaque entreprise sur WhatsApp a le même problème : le propriétaire finit par être l\'opérateur de chat.',
+    'problem.before_label':'❌ Avant Sara Bot',
+    'problem.before1':'Vous répondez « vous avez ça ? » 30 fois par jour','problem.before2':'Une commande arrive à 23h et vous ne la voyez pas',
+    'problem.before3':'Le samedi soir le téléphone n\'arrête pas','problem.before4':'Vous perdez des réservations parce que personne ne les enregistre',
+    'problem.before5':'Vous ne savez pas combien vous avez vendu cette semaine','problem.before6':'Si vous êtes absent = l\'activité s\'arrête',
+    'problem.after_label':'✅ Avec Sara Bot',
+    'problem.after1':'Le bot répond, montre les photos, prend la commande','problem.after2':'Vous recevez une notification uniquement pour les nouvelles commandes',
+    'problem.after3':'Le samedi soir le bot gère tout seul','problem.after4':'L\'agenda des rendez-vous se remplit automatiquement',
+    'problem.after5':'Analytics en temps réel depuis le panneau','problem.after6':'L\'activité tourne même quand vous n\'êtes pas là',
+    'feat.label':'Fonctionnalités','feat.h2':'Un système complet, pas seulement un chatbot',
+    'feat.sub':'Panneau de gestion pour le propriétaire + bot IA pour les clients. Deux outils, un prix.',
+    'feat1.title':'Bot IA sur WhatsApp','feat1.desc':'Répond aux questions, montre le catalogue avec photos, prend les commandes et planifie les rendez-vous — 24/7, sans vous. Parle à vos clients comme une vraie personne.',
+    'feat2.title':'Gestion des commandes','feat2.desc':'Chaque commande prise par le bot apparaît dans votre panneau en temps réel. Vous confirmez, préparez, livrez. Notifications instantanées sur votre WhatsApp personnel.',
+    'feat3.title':'Agenda des rendez-vous','feat3.desc':'Le bot propose les créneaux disponibles et réserve directement. Vous voyez l\'agenda du jour, pouvez bloquer des heures et tout gérer depuis le panneau.',
+    'feat4.title':'Catalogue intelligent','feat4.desc':'Ajoutez des produits ou services avec photos, prix et stock. Le bot ne propose que ce qui est disponible. Importez depuis Excel, Google Sheets ou des photos avec l\'IA.',
+    'feat5.title':'Panneau de chats','feat5.desc':'Voyez toutes les conversations en temps réel. Vous pouvez écrire au client directement depuis le panneau quand vous en avez besoin — le bot s\'efface.',
+    'feat6.title':'Analytics & rapports','feat6.desc':'Ventes du jour, de la semaine et du mois. Produits les plus commandés, clients fidèles, annulations. Exportez tout en CSV pour la comptabilité.',
+    'feat7.title':'Livraison configurée','feat7.desc':'Le bot demande si le client récupère ou veut une livraison, demande l\'adresse et calcule le coût automatiquement selon votre tarif.',
+    'feat8.title':'IA adaptée à votre secteur','feat8.desc':'Le bot se comporte différemment si vous êtes une fleuriste, un restaurant, un salon de beauté ou un technicien. Dès le premier jour, il parle comme un expert du secteur.',
+    'how.label':'Comment ça marche','how.h2':'Vous êtes en ligne en moins d\'une heure','how.sub':'Sans techniciens, sans programmation, sans longs contrats.',
+    'how.step1.title':'Créez votre compte','how.step1.desc':'Choisissez votre secteur, entrez le nom de votre activité et en 3 minutes vous avez accès au panneau. Sara sait déjà comment parler aux clients de votre secteur.',
+    'how.step2.title':'Connectez votre WhatsApp','how.step2.desc':'Suivez l\'assistant de configuration pour lier votre numéro WhatsApp Business officiel. Le bot vous guide étape par étape.',
+    'how.step3.title':'Chargez votre catalogue','how.step3.desc':'Produits, services ou les deux — avec photos et prix. Importez depuis Excel ou laissez l\'IA tout extraire de photos.',
+    'how.step4.title':'Sara gère seule','how.step4.desc':'Vos clients écrivent au même numéro qu\'avant. Sara répond, prend les commandes, planifie les rendez-vous. Vous recevez des notifications et gérez depuis le panneau.',
+    'pricing.label':'Plans','pricing.h2':'Un prix simple, sans surprises',
+    'pricing.sub':'Aucun coût par conversation, aucune limite de produits. Le même prix chaque mois.',
+    'pricing.per_month':'/mois','pricing.popular':'⭐ Le plus populaire','pricing.btn_free':'Commencer gratis →',
+    'pricing.starter.desc':'Pour les activités qui vendent des produits ou services simples — sans agenda de rendez-vous.',
+    'pricing.starter.f1':'1 numéro WhatsApp Business','pricing.starter.f2':'Catalogue illimité avec photos','pricing.starter.f3':'1 000 conversations/mois',
+    'pricing.starter.f4':'Gestion des commandes en temps réel','pricing.starter.f5':'Livraison configurée (zone ou km)',
+    'pricing.starter.f6':'Panneau de chats & prise en main manuelle','pricing.starter.f7':'Analytics de base','pricing.starter.f8':'Support par chat',
+    'pricing.pro.desc':'Pour les activités avec agenda de rendez-vous ou qui nécessitent un volume plus élevé de conversations.',
+    'pricing.pro.f1':'Tout le Starter','pricing.pro.f2':'5 000 conversations/mois','pricing.pro.f3':'Agenda de rendez-vous automatique',
+    'pricing.pro.f4':'Services au tarif horaire','pricing.pro.f5':'Analytics complet + export CSV',
+    'pricing.pro.f6':'Catalogue de services séparé','pricing.pro.f7':'Support prioritaire',
+    'pricing.note':'7 jours gratuits sur tous les plans · Sans carte · Résiliez quand vous voulez · Facturation mensuelle',
+    'cta.h2':'Le samedi soir le bot travaille.<br/>Vous vous reposez.',
+    'cta.sub':'Essayez-le gratuitement pendant 7 jours. Sans carte, sans engagement.','cta.btn':'🚀 Créer mon compte gratuit →',
+    'cta.badge1':'✓ Sans carte bancaire','cta.badge2':'✓ En ligne en moins d\'une heure','cta.badge3':'✓ Résiliez quand vous voulez','cta.badge4':'✓ Support inclus',
+    'footer.terms':'Conditions d\'utilisation','footer.privacy':'Confidentialité','footer.legal':'Mentions légales','footer.start':'Commencer gratis','footer.login':'Accéder au panneau','footer.copy':'© 2025 Sara Bot',
+  },
+  pt: {
+    'nav.features':'Funcionalidades','nav.how':'Como funciona','nav.pricing':'Planos','nav.login':'Entrar','nav.cta':'Começar grátis →',
+    'hero.badge':'Bot de IA + Painel de gestão — tudo em um',
+    'hero.h1':'Gerencie seu negócio.<br/><em>O bot atende seus clientes.</em>',
+    'hero.sub':'Pedidos, agendamentos, catálogo, clientes — tudo em um painel. Seu bot de IA no WhatsApp recebe pedidos, responde dúvidas e agenda horários 24/7, sem você precisar ficar no celular.',
+    'hero.btn1':'🚀 Começar 7 dias grátis','hero.btn2':'Ver como funciona',
+    'hero.note':'Sem cartão de crédito · <strong>7 dias grátis</strong> · Cancele quando quiser',
+    'problem.label':'O problema','problem.h2':'Quanto tempo você passa respondendo as mesmas mensagens todo dia?',
+    'problem.sub':'Todo negócio no WhatsApp tem o mesmo problema: o dono acaba sendo o operador de chat.',
+    'problem.before_label':'❌ Antes do Sara Bot',
+    'problem.before1':'Você responde "tem isso?" 30 vezes por dia','problem.before2':'Um pedido chega às 23h e você não vê',
+    'problem.before3':'No sábado à noite o celular não para','problem.before4':'Você perde agendamentos porque ninguém os registra',
+    'problem.before5':'Você não sabe quanto vendeu essa semana','problem.before6':'Se você não está = o negócio para',
+    'problem.after_label':'✅ Com Sara Bot',
+    'problem.after1':'O bot responde, mostra fotos, recebe o pedido','problem.after2':'Você recebe notificação só quando há um novo pedido',
+    'problem.after3':'No sábado à noite o bot resolve sozinho','problem.after4':'A agenda de horários se preenche automaticamente',
+    'problem.after5':'Analytics em tempo real no painel','problem.after6':'O negócio funciona mesmo quando você não está',
+    'feat.label':'Funcionalidades','feat.h2':'Um sistema completo, não apenas um chatbot',
+    'feat.sub':'Painel de gestão para o dono + bot de IA para os clientes. Duas ferramentas, um preço.',
+    'feat1.title':'Bot de IA no WhatsApp','feat1.desc':'Responde dúvidas, mostra o catálogo com fotos, recebe pedidos e agenda horários — 24/7, sem você. Conversa com seus clientes como uma pessoa real.',
+    'feat2.title':'Gestão de pedidos','feat2.desc':'Cada pedido que o bot recebe aparece no seu painel em tempo real. Você confirma, prepara, entrega. Notificações instantâneas no seu WhatsApp pessoal.',
+    'feat3.title':'Agenda de horários','feat3.desc':'O bot oferece horários disponíveis e reserva diretamente. Você vê a agenda do dia, pode bloquear horas e gerenciar tudo pelo painel.',
+    'feat4.title':'Catálogo inteligente','feat4.desc':'Adicione produtos ou serviços com fotos, preços e estoque. O bot oferece apenas o que está disponível. Importe do Excel, Google Sheets ou fotos com IA.',
+    'feat5.title':'Painel de chats','feat5.desc':'Veja todas as conversas em tempo real. Você pode escrever ao cliente diretamente pelo painel quando precisar — o bot sai do caminho.',
+    'feat6.title':'Analytics e relatórios','feat6.desc':'Vendas do dia, semana e mês. Produtos mais pedidos, clientes frequentes, cancelamentos. Exporte tudo em CSV para a contabilidade.',
+    'feat7.title':'Entrega configurada','feat7.desc':'O bot pergunta se o cliente vai retirar ou quer entrega, pede o endereço e calcula o custo automaticamente pela sua tarifa.',
+    'feat8.title':'IA adaptada ao seu setor','feat8.desc':'O bot age diferente se você é uma floricultura, restaurante, salão de beleza ou técnico. Desde o primeiro dia fala como alguém do setor.',
+    'how.label':'Como funciona','how.h2':'Você está ativo em menos de uma hora','how.sub':'Sem técnicos, sem programação, sem contratos longos.',
+    'how.step1.title':'Crie sua conta','how.step1.desc':'Escolha seu setor, coloque o nome do negócio e em 3 minutos você tem acesso ao painel. Sara já sabe como falar com clientes do seu setor.',
+    'how.step2.title':'Conecte seu WhatsApp','how.step2.desc':'Siga o assistente de configuração para vincular seu número WhatsApp Business oficial. O bot te guia passo a passo.',
+    'how.step3.title':'Carregue seu catálogo','how.step3.desc':'Produtos, serviços ou ambos — com fotos e preços. Importe do Excel ou deixe a IA extrair tudo de fotos.',
+    'how.step4.title':'Sara atende sozinha','how.step4.desc':'Seus clientes escrevem para o mesmo número. Sara responde, recebe pedidos, agenda horários. Você recebe notificações e gerencia pelo painel.',
+    'pricing.label':'Planos','pricing.h2':'Um preço simples, sem surpresas',
+    'pricing.sub':'Sem custo por conversa, sem limite de produtos. Mesmo preço todo mês.',
+    'pricing.per_month':'/mês','pricing.popular':'⭐ Mais popular','pricing.btn_free':'Começar grátis →',
+    'pricing.starter.desc':'Para negócios que vendem produtos ou serviços simples — sem agenda de horários.',
+    'pricing.starter.f1':'1 número WhatsApp Business','pricing.starter.f2':'Catálogo ilimitado com fotos','pricing.starter.f3':'1.000 conversas/mês',
+    'pricing.starter.f4':'Gestão de pedidos em tempo real','pricing.starter.f5':'Entrega configurada (zona ou km)',
+    'pricing.starter.f6':'Painel de chats e takeover manual','pricing.starter.f7':'Analytics básico','pricing.starter.f8':'Suporte por chat',
+    'pricing.pro.desc':'Para negócios com agenda de horários ou que precisam de maior volume de conversas.',
+    'pricing.pro.f1':'Tudo do Starter','pricing.pro.f2':'5.000 conversas/mês','pricing.pro.f3':'Agenda de horários automática',
+    'pricing.pro.f4':'Serviços com preço por hora','pricing.pro.f5':'Analytics completo + exportação CSV',
+    'pricing.pro.f6':'Catálogo de serviços separado','pricing.pro.f7':'Suporte prioritário',
+    'pricing.note':'7 dias grátis em qualquer plano · Sem cartão · Cancele quando quiser · Cobrança mensal',
+    'cta.h2':'No sábado à noite o bot trabalha.<br/>Você descansa.',
+    'cta.sub':'Experimente grátis por 7 dias. Sem cartão, sem compromisso.','cta.btn':'🚀 Criar minha conta grátis →',
+    'cta.badge1':'✓ Sem cartão de crédito','cta.badge2':'✓ Ativo em menos de uma hora','cta.badge3':'✓ Cancele quando quiser','cta.badge4':'✓ Suporte incluído',
+    'footer.terms':'Termos de serviço','footer.privacy':'Privacidade','footer.legal':'Aviso legal','footer.start':'Começar grátis','footer.login':'Entrar no painel','footer.copy':'© 2025 Sara Bot',
+  }
+};
+
+let currentLang = localStorage.getItem('sara_lang') || 'es';
+
+function applyTranslations() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    const val = TR[currentLang] && TR[currentLang][key];
+    if (val !== undefined) el.innerHTML = val;
+  });
+  document.querySelectorAll('.lang-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.textContent === currentLang.toUpperCase());
+  });
+  document.documentElement.lang = currentLang;
+}
+
+function setLang(lang) {
+  currentLang = lang;
+  localStorage.setItem('sara_lang', lang);
+  applyTranslations();
+}
+
+applyTranslations();
+
 // Sector tabs
 function showSector(id, btn) {
   document.querySelectorAll('.sector-story').forEach(s => s.classList.remove('active'));
