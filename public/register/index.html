@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Crear cuenta — Sara Bot</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body { background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 50%, #f0f9ff 100%); min-height: 100vh; }
+  .step { display: none; }
+  .step.active { display: block; }
+  .plan-card { transition: all .2s; cursor: pointer; border: 2px solid #e5e7eb; }
+  .plan-card.selected { border-color: #22c55e; background: #f0fdf4; }
+  .plan-card:hover { border-color: #86efac; }
+  .sector-btn { transition: all .15s; }
+  .sector-btn.selected { background: #22c55e; color: #fff; border-color: #22c55e; }
+  .progress-bar { transition: width .4s ease; }
+  .fade-in { animation: fadeIn .3s ease; }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+  input:focus, textarea:focus, select:focus { outline: none; border-color: #22c55e; box-shadow: 0 0 0 3px rgba(34,197,94,.15); }
+  .input-err { border-color: #ef4444 !important; }
+  .faq-body { max-height: 0; overflow: hidden; transition: max-height .35s ease; }
+  .faq-body.open { max-height: 400px; }
+  .check-icon { display: inline-block; width: 20px; height: 20px; border-radius: 50%; background: #22c55e; color: #fff; text-align: center; line-height: 20px; font-size: 12px; flex-shrink: 0; }
+</style>
+</head>
+<body class="font-sans">
+
+<!-- ══ Header ══════════════════════════════════════════════════════════════ -->
+<header class="bg-white border-b border-gray-100 px-4 py-3 flex items-center justify-between sticky top-0 z-20 shadow-sm">
+  <div class="flex items-center gap-2">
+    <span class="text-2xl">🤖</span>
+    <span class="font-bold text-gray-800 text-lg">Sara Bot</span>
+  </div>
+  <a href="/admin/index.html" class="text-sm text-gray-500 hover:text-green-600 transition">Ya tengo cuenta →</a>
+</header>
+
+<!-- ══ Hero (solo visible en step 1) ══════════════════════════════════════ -->
+<div id="heroBlock" class="text-center py-8 px-4">
+  <div class="text-4xl mb-3">🚀</div>
+  <h1 class="text-2xl font-bold text-gray-800 mb-2">Activá tu asistente WhatsApp en 3 minutos</h1>
+  <p class="text-gray-500 text-sm max-w-md mx-auto">7 días gratis, sin tarjeta de crédito. Después elegís el plan que más te conviene.</p>
+  <!-- Social proof -->
+  <div class="flex items-center justify-center gap-4 mt-4 flex-wrap">
+    <span class="text-xs text-gray-400 flex items-center gap-1">✅ Sin contrato</span>
+    <span class="text-xs text-gray-400 flex items-center gap-1">✅ Cancelá cuando quieras</span>
+    <span class="text-xs text-gray-400 flex items-center gap-1">✅ Soporte incluido</span>
+  </div>
+</div>
+
+<!-- ══ Progress bar ════════════════════════════════════════════════════════ -->
+<div id="progressContainer" class="max-w-lg mx-auto px-4 mb-2 hidden">
+  <div class="flex justify-between text-xs text-gray-400 mb-1">
+    <span id="stepLabel">Paso 1 de 4</span>
+    <span id="stepPct">25%</span>
+  </div>
+  <div class="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+    <div id="progressBar" class="progress-bar h-full bg-green-400 rounded-full" style="width:25%"></div>
+  </div>
+</div>
+
+<!-- ══ Card container ══════════════════════════════════════════════════════ -->
+<div class="max-w-lg mx-auto px-4 pb-10">
+  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+
+    <!-- ── STEP 1: Tipo de negocio ─────────────────────────────────────────── -->
+    <div class="step active fade-in" id="step1">
+      <h2 class="text-lg font-bold text-gray-800 mb-1">¿Qué tipo de negocio tenés?</h2>
+      <p class="text-sm text-gray-400 mb-5">Sara se adapta automáticamente a tu rubro desde el primer día.</p>
+
+      <div class="grid grid-cols-2 gap-2 mb-6">
+        <button class="sector-btn border-2 border-gray-200 rounded-xl p-3 text-left text-sm font-medium text-gray-700" data-sector="floreria" onclick="selectSector(this)">
+          🌸 Florería
+        </button>
+        <button class="sector-btn border-2 border-gray-200 rounded-xl p-3 text-left text-sm font-medium text-gray-700" data-sector="restaurante" onclick="selectSector(this)">
+          🍕 Restaurante / Delivery
+        </button>
+        <button class="sector-btn border-2 border-gray-200 rounded-xl p-3 text-left text-sm font-medium text-gray-700" data-sector="belleza" onclick="selectSector(this)">
+          💆 Belleza / Estética
+        </button>
+        <button class="sector-btn border-2 border-gray-200 rounded-xl p-3 text-left text-sm font-medium text-gray-700" data-sector="pasteleria" onclick="selectSector(this)">
+          🍰 Pastelería / Catering
+        </button>
+        <button class="sector-btn border-2 border-gray-200 rounded-xl p-3 text-left text-sm font-medium text-gray-700" data-sector="retail" onclick="selectSector(this)">
+          👗 Tienda / Ropa / Retail
+        </button>
+        <button class="sector-btn border-2 border-gray-200 rounded-xl p-3 text-left text-sm font-medium text-gray-700" data-sector="servicios" onclick="selectSector(this)">
+          🔧 Servicios / Técnico
+        </button>
+        <button class="sector-btn border-2 border-gray-200 rounded-xl p-3 text-left text-sm font-medium text-gray-700 col-span-2" data-sector="otro" onclick="selectSector(this)">
+          🏪 Otro tipo de negocio
+        </button>
+      </div>
+
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-700 mb-1">¿En qué país está tu negocio?</label>
+        <select id="countrySelect" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm">
+          <option value="">Seleccioná un país</option>
+          <option value="AR">🇦🇷 Argentina</option>
+          <option value="BR">🇧🇷 Brasil</option>
+          <option value="MX">🇲🇽 México</option>
+          <option value="CL">🇨🇱 Chile</option>
+          <option value="CO">🇨🇴 Colombia</option>
+          <option value="UY">🇺🇾 Uruguay</option>
+          <option value="PE">🇵🇪 Perú</option>
+          <option value="PY">🇵🇾 Paraguay</option>
+          <option value="OTHER">🌎 Otro</option>
+        </select>
+      </div>
+
+      <div id="step1Err" class="text-red-500 text-sm mb-3 hidden"></div>
+      <button onclick="goStep(2)" class="w-full py-3 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-xl transition text-sm">
+        Continuar →
+      </button>
+    </div>
+
+    <!-- ── STEP 2: Info del negocio ────────────────────────────────────────── -->
+    <div class="step fade-in" id="step2">
+      <h2 class="text-lg font-bold text-gray-800 mb-1">Información de tu negocio</h2>
+      <p class="text-sm text-gray-400 mb-5">Sara usará estos datos para presentarse a tus clientes.</p>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Nombre del negocio *</label>
+          <input id="businessName" type="text" placeholder="Ej: Florería El Jardín" maxlength="60"
+            class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm"/>
+          <p class="text-xs text-gray-400 mt-1">Así se presentará Sara: "Hola, soy la asistente de <b id="bizPreview">tu negocio</b> 👋"</p>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Tu nombre (propietario/a)</label>
+          <input id="ownerName" type="text" placeholder="Ej: María González" maxlength="60"
+            class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm"/>
+        </div>
+      </div>
+
+      <div id="step2Err" class="text-red-500 text-sm mt-3 hidden"></div>
+      <div class="flex gap-2 mt-6">
+        <button onclick="goStep(1)" class="flex-1 py-3 border border-gray-200 text-gray-600 font-medium rounded-xl text-sm hover:bg-gray-50 transition">← Atrás</button>
+        <button onclick="goStep(3)" class="flex-2 flex-1 py-3 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-xl transition text-sm">Continuar →</button>
+      </div>
+    </div>
+
+    <!-- ── STEP 3: Contacto y acceso ───────────────────────────────────────── -->
+    <div class="step fade-in" id="step3">
+      <h2 class="text-lg font-bold text-gray-800 mb-1">Tus datos de contacto</h2>
+      <p class="text-sm text-gray-400 mb-5">Usaremos el email como usuario y el WhatsApp para notificaciones de pedidos.</p>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+          <input id="emailInput" type="email" placeholder="hola@minegocio.com"
+            class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm"
+            oninput="checkEmail(this)"/>
+          <p id="emailStatus" class="text-xs mt-1 text-gray-400">Este email será tu usuario para entrar al panel.</p>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">WhatsApp personal (con código de país, sin +) *</label>
+          <input id="phoneInput" type="tel" placeholder="5491123456789"
+            class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm"/>
+          <p class="text-xs text-gray-400 mt-1">Sara te avisará aquí cuando llegue un pedido.</p>
+        </div>
+      </div>
+
+      <div id="step3Err" class="text-red-500 text-sm mt-3 hidden"></div>
+      <div class="flex gap-2 mt-6">
+        <button onclick="goStep(2)" class="flex-1 py-3 border border-gray-200 text-gray-600 font-medium rounded-xl text-sm hover:bg-gray-50 transition">← Atrás</button>
+        <button onclick="goStep(4)" class="flex-1 py-3 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-xl transition text-sm">Continuar →</button>
+      </div>
+    </div>
+
+    <!-- ── STEP 4: Plan ────────────────────────────────────────────────────── -->
+    <div class="step fade-in" id="step4">
+      <h2 class="text-lg font-bold text-gray-800 mb-1">Elegí tu plan</h2>
+      <p class="text-sm text-gray-400 mb-5">7 días gratis en cualquier plan. Sin tarjeta ahora — pagás al terminar el período de prueba.</p>
+
+      <div class="space-y-3 mb-6">
+        <!-- Starter -->
+        <div class="plan-card selected rounded-xl p-4" data-plan="starter" onclick="selectPlan(this)">
+          <div class="flex items-start justify-between">
+            <div>
+              <div class="font-bold text-gray-800 flex items-center gap-2">🌱 Starter <span id="starterBadge" class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">Seleccionado</span></div>
+              <div class="text-green-600 font-bold text-xl mt-1">$29<span class="text-sm font-normal text-gray-400">/mes</span></div>
+            </div>
+          </div>
+          <ul class="mt-3 space-y-1">
+            <li class="text-xs text-gray-500 flex gap-2"><span class="check-icon">✓</span>1 número WhatsApp Business</li>
+            <li class="text-xs text-gray-500 flex gap-2"><span class="check-icon">✓</span>Catálogo ilimitado de productos</li>
+            <li class="text-xs text-gray-500 flex gap-2"><span class="check-icon">✓</span>1.000 conversaciones/mes</li>
+            <li class="text-xs text-gray-500 flex gap-2"><span class="check-icon">✓</span>Pedidos y notificaciones</li>
+            <li class="text-xs text-gray-500 flex gap-2"><span class="check-icon">✓</span>Soporte por chat</li>
+          </ul>
+        </div>
+
+        <!-- Pro -->
+        <div class="plan-card rounded-xl p-4 relative" data-plan="pro" onclick="selectPlan(this)">
+          <div class="absolute -top-2 right-4 bg-green-500 text-white text-xs font-bold px-3 py-0.5 rounded-full">⭐ Más popular</div>
+          <div class="flex items-start justify-between">
+            <div>
+              <div class="font-bold text-gray-800 flex items-center gap-2">🚀 Pro <span id="proBadge" class="hidden text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">Seleccionado</span></div>
+              <div class="text-green-600 font-bold text-xl mt-1">$59<span class="text-sm font-normal text-gray-400">/mes</span></div>
+            </div>
+          </div>
+          <ul class="mt-3 space-y-1">
+            <li class="text-xs text-gray-500 flex gap-2"><span class="check-icon">✓</span>Todo lo del Starter</li>
+            <li class="text-xs text-gray-500 flex gap-2"><span class="check-icon">✓</span>5.000 conversaciones/mes</li>
+            <li class="text-xs text-gray-500 flex gap-2"><span class="check-icon">✓</span>Agenda de turnos integrada</li>
+            <li class="text-xs text-gray-500 flex gap-2"><span class="check-icon">✓</span>Servicios con precio por hora</li>
+            <li class="text-xs text-gray-500 flex gap-2"><span class="check-icon">✓</span>Analytics y exportación CSV</li>
+            <li class="text-xs text-gray-500 flex gap-2"><span class="check-icon">✓</span>Soporte prioritario</li>
+          </ul>
+        </div>
+      </div>
+
+      <p class="text-xs text-gray-400 text-center mb-4">
+        💡 Empezás con 7 días gratis. Al terminar la prueba recibirás un link de pago.
+      </p>
+
+      <div id="step4Err" class="text-red-500 text-sm mb-3 hidden"></div>
+      <div class="flex gap-2">
+        <button onclick="goStep(3)" class="flex-1 py-3 border border-gray-200 text-gray-600 font-medium rounded-xl text-sm hover:bg-gray-50 transition">← Atrás</button>
+        <button onclick="submitRegistration()" id="submitBtn"
+          class="flex-1 py-3 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-xl transition text-sm">
+          🚀 Crear mi cuenta gratis
+        </button>
+      </div>
+
+      <p class="text-xs text-gray-400 text-center mt-3">
+        Al registrarte aceptás los <a href="/terms.html" class="underline hover:text-gray-600">Términos de Servicio</a> y la <a href="/privacy.html" class="underline hover:text-gray-600">Política de Privacidad</a>.
+      </p>
+    </div>
+
+    <!-- ── STEP 5: ¡Listo! ─────────────────────────────────────────────────── -->
+    <div class="step fade-in" id="step5">
+      <div class="text-center mb-6">
+        <div class="text-5xl mb-4">🎉</div>
+        <h2 class="text-xl font-bold text-gray-800 mb-2">¡Tu cuenta está lista!</h2>
+        <p class="text-sm text-gray-500">Guardá estos datos — los necesitarás para entrar al panel.</p>
+      </div>
+
+      <!-- Credentials box -->
+      <div class="bg-green-50 border border-green-200 rounded-xl p-4 mb-5">
+        <p class="text-xs font-semibold text-green-800 mb-3 uppercase tracking-wide">Tus credenciales de acceso</p>
+        <div class="space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs text-gray-500">Usuario (email)</span>
+            <span id="credEmail" class="text-sm font-mono font-bold text-gray-800"></span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-xs text-gray-500">Contraseña temporal</span>
+            <div class="flex items-center gap-2">
+              <span id="credPass" class="text-sm font-mono font-bold text-gray-800"></span>
+              <button onclick="copyPass()" class="text-xs text-green-600 hover:underline">Copiar</button>
+            </div>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-xs text-gray-500">Prueba gratuita hasta</span>
+            <span id="credTrial" class="text-sm font-semibold text-green-700"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Next steps -->
+      <div class="space-y-3 mb-6">
+        <div class="flex items-start gap-3">
+          <span class="check-icon mt-0.5">1</span>
+          <div>
+            <p class="text-sm font-medium text-gray-800">Conectá tu WhatsApp Business</p>
+            <p class="text-xs text-gray-500">El asistente de configuración te guía paso a paso al entrar al panel.</p>
+          </div>
+        </div>
+        <div class="flex items-start gap-3">
+          <span class="check-icon mt-0.5">2</span>
+          <div>
+            <p class="text-sm font-medium text-gray-800">Cargá tu catálogo</p>
+            <p class="text-xs text-gray-500">Podés importar desde Google Sheets, CSV o foto con IA.</p>
+          </div>
+        </div>
+        <div class="flex items-start gap-3">
+          <span class="check-icon mt-0.5">3</span>
+          <div>
+            <p class="text-sm font-medium text-gray-800">Sara empieza a atender</p>
+            <p class="text-xs text-gray-500">Tus clientes escriben a tu número y Sara responde 24/7.</p>
+          </div>
+        </div>
+      </div>
+
+      <a id="goToPanelBtn" href="/admin/index.html"
+        class="block w-full py-3 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-xl text-center transition text-sm">
+        Ir al panel de administración →
+      </a>
+      <p class="text-xs text-gray-400 text-center mt-3">Podés cambiar tu contraseña desde Configuración → Seguridad.</p>
+    </div>
+
+  </div><!-- end card -->
+
+  <!-- ══ FAQ ════════════════════════════════════════════════════════════════ -->
+  <div class="mt-10">
+    <h3 class="text-base font-bold text-gray-700 mb-4 text-center">Preguntas frecuentes</h3>
+    <div class="space-y-2" id="faqList">
+
+      <div class="faq-item bg-white rounded-xl border border-gray-100 overflow-hidden">
+        <button class="faq-toggle w-full text-left px-4 py-3.5 text-sm font-medium text-gray-800 flex justify-between items-center" onclick="toggleFaq(this)">
+          ¿Cómo funciona Sara Bot? <span class="faq-arrow text-gray-400 transition-transform">▾</span>
+        </button>
+        <div class="faq-body px-4 pb-4">
+          <p class="text-sm text-gray-500">Sara es una asistente de ventas con inteligencia artificial que atiende a tus clientes por WhatsApp las 24 horas. Responde consultas, muestra tu catálogo con fotos, toma pedidos y te avisa cuando llega uno. Todo sin que tengas que estar pendiente del celular.</p>
+        </div>
+      </div>
+
+      <div class="faq-item bg-white rounded-xl border border-gray-100 overflow-hidden">
+        <button class="faq-toggle w-full text-left px-4 py-3.5 text-sm font-medium text-gray-800 flex justify-between items-center" onclick="toggleFaq(this)">
+          ¿Necesito una cuenta WhatsApp Business? <span class="faq-arrow text-gray-400 transition-transform">▾</span>
+        </button>
+        <div class="faq-body px-4 pb-4">
+          <p class="text-sm text-gray-500">Sí, Sara funciona con la API oficial de WhatsApp Business de Meta. Usás tu número de negocio existente — no necesitás cambiarlo. El asistente de configuración te guía para conectarlo paso a paso. Si no tenés cuenta Business, te explicamos cómo crearla gratis.</p>
+        </div>
+      </div>
+
+      <div class="faq-item bg-white rounded-xl border border-gray-100 overflow-hidden">
+        <button class="faq-toggle w-full text-left px-4 py-3.5 text-sm font-medium text-gray-800 flex justify-between items-center" onclick="toggleFaq(this)">
+          ¿Qué pasa después de los 7 días gratis? <span class="faq-arrow text-gray-400 transition-transform">▾</span>
+        </button>
+        <div class="faq-body px-4 pb-4">
+          <p class="text-sm text-gray-500">Al terminar el período de prueba, el bot se pausa y recibís un link de pago para activar el plan que elegiste. No se te cobra automáticamente nada. Si decidís no continuar, simplemente no pagás y tu cuenta queda inactiva — sin cargos, sin compromisos.</p>
+        </div>
+      </div>
+
+      <div class="faq-item bg-white rounded-xl border border-gray-100 overflow-hidden">
+        <button class="faq-toggle w-full text-left px-4 py-3.5 text-sm font-medium text-gray-800 flex justify-between items-center" onclick="toggleFaq(this)">
+          ¿Puedo personalizar cómo habla Sara? <span class="faq-arrow text-gray-400 transition-transform">▾</span>
+        </button>
+        <div class="faq-body px-4 pb-4">
+          <p class="text-sm text-gray-500">Sí. Podés cambiar el nombre del bot, su estilo de personalidad, las reglas específicas de tu negocio, las instrucciones de pago y mucho más desde el panel de configuración. Sara aprende las particularidades de tu negocio y las aplica en cada conversación.</p>
+        </div>
+      </div>
+
+      <div class="faq-item bg-white rounded-xl border border-gray-100 overflow-hidden">
+        <button class="faq-toggle w-full text-left px-4 py-3.5 text-sm font-medium text-gray-800 flex justify-between items-center" onclick="toggleFaq(this)">
+          ¿Sara puede tomar turnos y reservas? <span class="faq-arrow text-gray-400 transition-transform">▾</span>
+        </button>
+        <div class="faq-body px-4 pb-4">
+          <p class="text-sm text-gray-500">Sí, con el plan Pro. Sara gestiona una agenda de turnos: muestra horarios disponibles, reserva el turno que el cliente elija y te lo confirma en el panel. Ideal para peluquerías, estéticas, consultorios y cualquier negocio basado en citas.</p>
+        </div>
+      </div>
+
+      <div class="faq-item bg-white rounded-xl border border-gray-100 overflow-hidden">
+        <button class="faq-toggle w-full text-left px-4 py-3.5 text-sm font-medium text-gray-800 flex justify-between items-center" onclick="toggleFaq(this)">
+          ¿Mis datos y los de mis clientes están seguros? <span class="faq-arrow text-gray-400 transition-transform">▾</span>
+        </button>
+        <div class="faq-body px-4 pb-4">
+          <p class="text-sm text-gray-500">Sí. Toda la información se almacena en servidores seguros con cifrado. No vendemos ni compartimos datos con terceros. El sistema solo accede a los mensajes de WhatsApp necesarios para responder a tus clientes. Cumplimos con los estándares de seguridad de la API oficial de Meta.</p>
+        </div>
+      </div>
+
+      <div class="faq-item bg-white rounded-xl border border-gray-100 overflow-hidden">
+        <button class="faq-toggle w-full text-left px-4 py-3.5 text-sm font-medium text-gray-800 flex justify-between items-center" onclick="toggleFaq(this)">
+          ¿Cómo cargo mis productos? <span class="faq-arrow text-gray-400 transition-transform">▾</span>
+        </button>
+        <div class="faq-body px-4 pb-4">
+          <p class="text-sm text-gray-500">Tenés 3 opciones desde el panel: (1) Cargá de a uno con el formulario; (2) Importá desde Google Sheets o CSV si ya tenés una lista; (3) Sacá fotos de tus productos y la IA extrae automáticamente nombre, categoría y precio. La opción más rápida suele ser la importación masiva.</p>
+        </div>
+      </div>
+
+    </div><!-- end faqList -->
+  </div>
+
+  <!-- ══ Soporte ══════════════════════════════════════════════════════════════ -->
+  <div class="mt-8 bg-white rounded-2xl border border-gray-100 shadow-sm p-6 text-center">
+    <div class="text-3xl mb-3">💬</div>
+    <h3 class="font-bold text-gray-800 mb-2">¿Tenés dudas antes de empezar?</h3>
+    <p class="text-sm text-gray-500 mb-4">Nuestro equipo responde en menos de 2 horas en horario de negocio.</p>
+    <div class="flex gap-3 justify-center flex-wrap">
+      <a id="waSupport" href="#"
+        class="inline-flex items-center gap-2 px-4 py-2 bg-green-500 hover:bg-green-600 text-white text-sm font-semibold rounded-xl transition">
+        📱 Escribinos por WhatsApp
+      </a>
+      <a id="emailSupport" href="#"
+        class="inline-flex items-center gap-2 px-4 py-2 border border-gray-200 text-gray-700 text-sm font-semibold rounded-xl hover:bg-gray-50 transition">
+        ✉️ Enviar email
+      </a>
+    </div>
+  </div>
+
+  <p class="text-center text-xs text-gray-400 mt-6">Sara Bot © 2025 — <a href="/terms.html" class="underline">Términos</a> · <a href="/privacy.html" class="underline">Privacidad</a></p>
+
+</div><!-- end container -->
+
+<script>
+// ── State ────────────────────────────────────────────────────────────────────
+let formData = {
+  sector: null, country: null, businessName: '', ownerName: '',
+  email: '', phone: '', plan: 'starter'
+};
+let authToken = null;
+let emailAvailable = true;
+let emailCheckTimer = null;
+
+// ── Support links (filled from meta tags if present) ─────────────────────────
+document.getElementById('waSupport').href   = 'https://wa.me/' + (window._supportWA || '');
+document.getElementById('emailSupport').href = 'mailto:' + (window._supportEmail || 'soporte@sarabot.app');
+
+// ── Step navigation ──────────────────────────────────────────────────────────
+const STEPS = 4;
+function goStep(n) {
+  if (!validateStep(currentStep())) return;
+
+  document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+  document.getElementById('step' + n).classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  const pct = Math.round((n / STEPS) * 100);
+  document.getElementById('progressBar').style.width = pct + '%';
+  document.getElementById('stepLabel').textContent = `Paso ${n} de ${STEPS}`;
+  document.getElementById('stepPct').textContent = pct + '%';
+
+  const hero = document.getElementById('heroBlock');
+  const prog = document.getElementById('progressContainer');
+  if (n === 1) { hero.classList.remove('hidden'); prog.classList.add('hidden'); }
+  else { hero.classList.add('hidden'); prog.classList.remove('hidden'); }
+}
+
+function currentStep() {
+  const active = document.querySelector('.step.active');
+  if (!active) return 1;
+  return parseInt(active.id.replace('step', ''));
+}
+
+// ── Validation ───────────────────────────────────────────────────────────────
+function showErr(id, msg) {
+  const el = document.getElementById(id);
+  el.textContent = msg;
+  el.classList.remove('hidden');
+}
+function clearErr(id) { document.getElementById(id).classList.add('hidden'); }
+
+function validateStep(n) {
+  if (n === 1) {
+    if (!formData.sector) { showErr('step1Err', 'Elegí el tipo de negocio.'); return false; }
+    if (!document.getElementById('countrySelect').value) { showErr('step1Err', 'Elegí tu país.'); return false; }
+    formData.country = document.getElementById('countrySelect').value;
+    clearErr('step1Err'); return true;
+  }
+  if (n === 2) {
+    const biz = document.getElementById('businessName').value.trim();
+    if (!biz) { showErr('step2Err', 'Ingresá el nombre de tu negocio.'); return false; }
+    formData.businessName = biz;
+    formData.ownerName    = document.getElementById('ownerName').value.trim();
+    clearErr('step2Err'); return true;
+  }
+  if (n === 3) {
+    const email = document.getElementById('emailInput').value.trim();
+    const phone = document.getElementById('phoneInput').value.trim();
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showErr('step3Err', 'Ingresá un email válido.'); return false; }
+    if (!emailAvailable) { showErr('step3Err', 'Ese email ya está registrado. ¿Ya tenés cuenta?'); return false; }
+    if (!phone || phone.length < 8) { showErr('step3Err', 'Ingresá tu número de WhatsApp con código de país.'); return false; }
+    formData.email = email;
+    formData.phone = phone;
+    clearErr('step3Err'); return true;
+  }
+  return true;
+}
+
+// ── Sector selection ─────────────────────────────────────────────────────────
+function selectSector(btn) {
+  document.querySelectorAll('.sector-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  formData.sector = btn.dataset.sector;
+  clearErr('step1Err');
+}
+
+// ── Plan selection ───────────────────────────────────────────────────────────
+function selectPlan(card) {
+  document.querySelectorAll('.plan-card').forEach(c => c.classList.remove('selected'));
+  card.classList.add('selected');
+  formData.plan = card.dataset.plan;
+  document.getElementById('starterBadge').classList.toggle('hidden', formData.plan !== 'starter');
+  document.getElementById('proBadge').classList.toggle('hidden', formData.plan !== 'pro');
+}
+
+// ── Business name preview ─────────────────────────────────────────────────────
+document.getElementById('businessName').addEventListener('input', function() {
+  document.getElementById('bizPreview').textContent = this.value || 'tu negocio';
+});
+
+// ── Email availability check ──────────────────────────────────────────────────
+async function checkEmail(input) {
+  const email = input.value.trim();
+  clearTimeout(emailCheckTimer);
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    emailAvailable = true;
+    document.getElementById('emailStatus').textContent = 'Este email será tu usuario para entrar al panel.';
+    document.getElementById('emailStatus').className = 'text-xs mt-1 text-gray-400';
+    return;
+  }
+  emailCheckTimer = setTimeout(async () => {
+    try {
+      const r = await fetch('/register/check-email?email=' + encodeURIComponent(email));
+      const d = await r.json();
+      emailAvailable = d.available;
+      const el = document.getElementById('emailStatus');
+      if (d.available) {
+        el.textContent = '✅ Email disponible.';
+        el.className = 'text-xs mt-1 text-green-600';
+      } else {
+        el.textContent = '❌ Este email ya tiene una cuenta. ¿Querés iniciar sesión?';
+        el.className = 'text-xs mt-1 text-red-500';
+      }
+    } catch(e) { emailAvailable = true; }
+  }, 500);
+}
+
+// ── Submit ────────────────────────────────────────────────────────────────────
+async function submitRegistration() {
+  if (!validateStep(3) || !validateStep(4)) return;
+
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.textContent = 'Creando tu cuenta...';
+  clearErr('step4Err');
+
+  try {
+    const res = await fetch('/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        business_name: formData.businessName,
+        sector:        formData.sector,
+        country:       formData.country,
+        owner_name:    formData.ownerName,
+        email:         formData.email,
+        phone:         formData.phone,
+        plan:          formData.plan,
+      })
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      showErr('step4Err', data.error || 'Error al crear la cuenta. Intentá de nuevo.');
+      return;
+    }
+
+    // Save token for auto-login
+    authToken = data.token;
+    localStorage.setItem('sara_token', data.token);
+    localStorage.setItem('sara_tenant_name', data.business_name);
+
+    // Show credentials on step 5
+    document.getElementById('credEmail').textContent = data.username;
+    document.getElementById('credPass').textContent  = data.password;
+    const trialDate = new Date(data.trial_ends);
+    document.getElementById('credTrial').textContent = trialDate.toLocaleDateString('es', { day:'numeric', month:'long', year:'numeric' });
+
+    // Go to success step
+    document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+    document.getElementById('step5').classList.add('active');
+    document.getElementById('heroBlock').classList.add('hidden');
+    document.getElementById('progressContainer').classList.add('hidden');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  } catch(e) {
+    showErr('step4Err', 'Error de conexión. Verificá tu internet e intentá de nuevo.');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '🚀 Crear mi cuenta gratis';
+  }
+}
+
+// ── Copy password ─────────────────────────────────────────────────────────────
+function copyPass() {
+  const pass = document.getElementById('credPass').textContent;
+  navigator.clipboard.writeText(pass).then(() => {
+    const btn = document.querySelector('[onclick="copyPass()"]');
+    btn.textContent = '¡Copiado!';
+    setTimeout(() => { btn.textContent = 'Copiar'; }, 2000);
+  });
+}
+
+// ── FAQ accordion ─────────────────────────────────────────────────────────────
+function toggleFaq(btn) {
+  const body  = btn.nextElementSibling;
+  const arrow = btn.querySelector('.faq-arrow');
+  const isOpen = body.classList.contains('open');
+  document.querySelectorAll('.faq-body').forEach(b => b.classList.remove('open'));
+  document.querySelectorAll('.faq-arrow').forEach(a => a.style.transform = '');
+  if (!isOpen) {
+    body.classList.add('open');
+    arrow.style.transform = 'rotate(180deg)';
+  }
+}
+</script>
+</body>
+</html>
