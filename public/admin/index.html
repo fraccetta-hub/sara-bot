@@ -15,6 +15,10 @@
     :root { --green: #25D366; }
     .btn-green { background:#25D366; color:#fff; }
     .btn-green:hover { background:#1da851; }
+    .lang-btn { background: none; border: none; cursor: pointer; font-size: .72rem; font-weight: 600; color: #6b7280; padding: 3px 6px; border-radius: 5px; transition: all .15s; }
+    .lang-btn:hover { color: #1f2937; background: #f0fdf4; }
+    .lang-btn.active { color: #16a34a; background: #f0fdf4; }
+    @media (max-width: 640px) { .lang-switcher { display: none; } }
     .status-badge { font-size:.72rem; padding:2px 8px; border-radius:999px; font-weight:600; }
     .order-filter-btn { background:#f9fafb; color:#6b7280; border-color:#e5e7eb; }
     .order-filter-btn:hover { border-color:#22c55e; color:#16a34a; }
@@ -36,10 +40,21 @@
 <div id="loginPage" class="min-h-screen flex flex-col" style="background:linear-gradient(135deg,#f0fdf4 0%,#ecfdf5 60%,#f0f9ff 100%);">
 
   <!-- Header -->
-  <header style="padding:12px 16px;border-bottom:1px solid #e5e7eb;background:rgba(255,255,255,.96);backdrop-filter:blur(8px);">
+  <header style="padding:12px 16px;border-bottom:1px solid #e5e7eb;background:rgba(255,255,255,.96);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:space-between;">
     <a href="/" style="display:inline-block;">
       <img src="/images/logosarabot.webp" alt="Sara Bot" style="height:32px;">
     </a>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div class="lang-switcher" style="display:flex;align-items:center;gap:4px;">
+        <button class="lang-btn" data-lang="es" onclick="setLang('es')">ES</button>
+        <button class="lang-btn" data-lang="en" onclick="setLang('en')">EN</button>
+        <button class="lang-btn" data-lang="it" onclick="setLang('it')">IT</button>
+        <button class="lang-btn" data-lang="de" onclick="setLang('de')">DE</button>
+        <button class="lang-btn" data-lang="fr" onclick="setLang('fr')">FR</button>
+        <button class="lang-btn" data-lang="pt" onclick="setLang('pt')">PT</button>
+      </div>
+      <a href="/register/index.html" style="background:#22c55e;color:#fff;border-radius:10px;padding:8px 18px;font-size:.85rem;font-weight:700;text-decoration:none;transition:background .15s;" onmouseover="this.style.background='#16a34a'" onmouseout="this.style.background='#22c55e'" data-i18n="login.register">¿No tenés cuenta? Empezar gratis →</a>
+    </div>
   </header>
 
   <!-- Card -->
@@ -71,10 +86,6 @@
       </div>
 
       <p class="text-center text-xs text-gray-400 mt-6 leading-relaxed">
-        <a href="/register/index.html" class="font-semibold" style="color:#25D366;" data-i18n="login.register">¿No tenés cuenta? Empezar gratis →</a>
-      </p>
-
-      <p class="text-center text-xs text-gray-400 mt-4 leading-relaxed">
         Al ingresar aceptás nuestros
         <a href="/legal/terms" target="_blank" class="underline hover:text-gray-600">Términos</a>,
         <a href="/legal/privacy" target="_blank" class="underline hover:text-gray-600">Privacidad</a>
@@ -2536,6 +2547,9 @@ function applyTranslations() {
   document.querySelectorAll('[data-i18n-ph]').forEach(el => {
     const val = t(el.dataset.i18nPh);
     if (val !== undefined) el.placeholder = val;
+  });
+  document.querySelectorAll('.lang-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.getAttribute('data-lang') === currentLang);
   });
   // Tabs (have IDs already)
   ['chats','products','services','orders','appointments','settings','help'].forEach(tab => {
