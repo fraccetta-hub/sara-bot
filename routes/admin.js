@@ -773,36 +773,49 @@ router.post('/import-preview', requireAuth, async (req, res) => {
   }
 });
 
-// ─── POST /admin/import-confirm — bulk insert products (append + deduplicate) ──
+// ─── POST /admin/import-confirm — bulk insert products/services (append + deduplicate) ──
 router.post('/import-confirm', requireAuth, async (req, res) => {
   const { rows } = req.body;
+  const target = req.body.target === 'services' ? 'services' : 'products';
   if (!Array.isArray(rows) || !rows.length)
     return res.status(400).json({ error: 'Sin datos para importar' });
 
   try {
-    // Fetch existing product names to avoid duplicates (exact match)
+    // Fetch existing names to avoid duplicates (exact match)
     const { data: existing } = await supabase
-      .from('products').select('name').eq('tenant_id', req.tenant.tenantId);
+      .from(target).select('name').eq('tenant_id', req.tenant.tenantId);
     const existingNames = new Set((existing || []).map(p => p.name.trim().toLowerCase()));
 
-    const toInsert = rows
-      .filter(r => r.name && !existingNames.has(String(r.name).trim().toLowerCase()))
-      .map(r => ({
-        tenant_id:     req.tenant.tenantId,
-        name:          String(r.name).trim(),
-        category:      r.category     || null,
-        description:   r.description  || null,
-        price_guarani: r.price_guarani || 0,
-        price_type:    r.price_type    || 'fixed',
-        duration_min:  r.duration_min  || null,
-        stock_qty:     r.stock_qty     ?? 99,
-        image_url:     r.image_url     || null,
-        is_available:  r.is_available  ?? true,
-      }));
+    const candidates = rows.filter(r => r.name && !existingNames.has(String(r.name).trim().toLowerCase()));
+
+    const toInsert = target === 'services'
+      ? candidates.map(r => ({
+          tenant_id:     req.tenant.tenantId,
+          name:          String(r.name).trim(),
+          category:      r.category     || null,
+          description:   r.description  || null,
+          price_guarani: r.price_guarani || 0,
+          price_type:    r.price_type    || 'fixed',
+          duration_min:  r.duration_min  || null,
+          image_url:     r.image_url     || null,
+          is_available:  r.is_available  ?? true,
+        }))
+      : candidates.map(r => ({
+          tenant_id:     req.tenant.tenantId,
+          name:          String(r.name).trim(),
+          category:      r.category     || null,
+          description:   r.description  || null,
+          price_guarani: r.price_guarani || 0,
+          price_type:    r.price_type    || 'fixed',
+          duration_min:  r.duration_min  || null,
+          stock_qty:     r.stock_qty     ?? 99,
+          image_url:     r.image_url     || null,
+          is_available:  r.is_available  ?? true,
+        }));
 
     const skipped = rows.length - toInsert.length;
     if (toInsert.length > 0) {
-      const { error } = await supabase.from('products').insert(toInsert);
+      const { error } = await supabase.from(target).insert(toInsert);
       if (error) return res.status(500).json({ error: error.message });
     }
 
@@ -1306,6 +1319,36 @@ router.get('/products/export', requireAuth, async (req, res) => {
   const date = new Date().toISOString().slice(0,10);
   res.setHeader('Content-Type', 'text/csv; charset=utf-8');
   res.setHeader('Content-Disposition', `attachment; filename="catalogo_${date}.csv"`);
+  res.send('﻿' + csv);
+});
+
+// ─── GET /admin/services/export — CSV export of all services ─────────────────
+router.get('/services/export', requireAuth, async (req, res) => {
+  const { data, error } = await supabase
+    .from('services')
+    .select('name, category, price_type, price_guarani, duration_min, is_available, description, image_url, created_at')
+    .eq('tenant_id', req.tenant.tenantId)
+    .order('category', { ascending: true });
+  if (error) return res.status(500).json({ error: error.message });
+
+  const escape = v => {
+    if (v == null) return '';
+    const s = String(v);
+    return s.includes(',') || s.includes('"') || s.includes('\n')
+      ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+
+  const headers = ['nombre','categoria','tipo','precio_guarani','duracion_min','activo','descripcion','imagen_url','creado_en'];
+  const rows = (data || []).map(s => [
+    s.name, s.category, s.price_type, s.price_guarani, s.duration_min ?? '',
+    s.is_available ? 'si' : 'no', s.description, s.image_url,
+    s.created_at ? new Date(s.created_at).toISOString().slice(0,19).replace('T',' ') : '',
+  ].map(escape).join(','));
+
+  const csv = [headers.join(','), ...rows].join('\r\n');
+  const date = new Date().toISOString().slice(0,10);
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', `attachment; filename="servicios_${date}.csv"`);
   res.send('﻿' + csv);
 });
 

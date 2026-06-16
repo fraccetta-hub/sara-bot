@@ -135,7 +135,7 @@
         <div class="flex items-start gap-3 bg-blue-50 rounded-xl p-3">
           <span class="text-lg mt-0.5">2️⃣</span>
           <div>
-            <p data-i18n="wiz.s1.i2.title" class="text-sm font-semibold text-gray-800">Configurá tu catálogo</p>
+            <p data-i18n="wiz.s1.i2.title" class="text-sm font-semibold text-gray-800">Configurá tus productos</p>
             <p data-i18n="wiz.s1.i2.desc" class="text-xs text-gray-500">Cargá productos, servicios y horarios desde el panel.</p>
           </div>
         </div>
@@ -232,7 +232,7 @@
       <div class="text-6xl mb-4">🎉</div>
       <h2 data-i18n="wiz.s4.title" class="text-xl font-bold text-gray-800 mb-2">¡Todo listo!</h2>
       <p data-i18n="wiz.s4.subtitle" class="text-gray-500 text-sm mb-2">Tu WhatsApp Business está conectado. Sara ya puede atender a tus clientes.</p>
-      <p data-i18n="wiz.s4.hint" class="text-xs text-gray-400 mb-6">Ahora configurá tu catálogo de productos o servicios para que Sara sepa qué ofrecer.</p>
+      <p data-i18n="wiz.s4.hint" class="text-xs text-gray-400 mb-6">Ahora configurá tus productos o servicios para que Sara sepa qué ofrecer.</p>
       <div class="bg-green-50 rounded-xl p-4 text-left mb-6 space-y-1">
         <p class="text-sm text-green-800">✅ <span data-i18n="wiz.s4.connected">Número conectado:</span> <span id="wizDonePhone" class="font-mono font-semibold"></span></p>
         <p data-i18n="wiz.s4.personal" class="text-sm text-green-700">✅ Tu número personal registrado</p>
@@ -268,6 +268,7 @@
       <button class="py-2 px-1 sm:px-0 whitespace-nowrap flex-shrink-0 tab-active" id="tabProducts" onclick="switchTab('products')">📦 Productos</button>
       <button class="py-2 px-1 sm:px-0 whitespace-nowrap flex-shrink-0" id="tabServices" onclick="switchTab('services')">🛠 Servicios</button>
       <button class="py-2 px-1 sm:px-0 whitespace-nowrap flex-shrink-0" id="tabOrders" onclick="switchTab('orders')">🛒 Pedidos</button>
+      <button class="py-2 px-1 sm:px-0 whitespace-nowrap flex-shrink-0" id="tabCustomers" data-i18n="tab.customers" onclick="switchTab('customers')">👥 Clientes</button>
       <button class="py-2 px-1 sm:px-0 whitespace-nowrap flex-shrink-0" id="tabAppointments" onclick="switchTab('appointments')">📅 Turnos</button>
       <button class="py-2 px-1 sm:px-0 whitespace-nowrap flex-shrink-0" id="tabSettings" onclick="switchTab('settings')">⚙️ Ajustes</button>
       <button class="py-2 px-1 sm:px-0 whitespace-nowrap flex-shrink-0" id="tabAnalytics" data-i18n="tab.analytics" onclick="switchTab('analytics')">📊 Analytics</button>
@@ -410,9 +411,9 @@
         </div>
         <!-- Catalog -->
         <div class="px-5 pt-3 pb-4 flex-1 overflow-y-auto">
-          <p data-i18n="img.catalog" class="text-xs text-gray-500 mb-2 font-medium uppercase tracking-wide">Fotos del catálogo</p>
+          <p data-i18n="img.catalog" class="text-xs text-gray-500 mb-2 font-medium uppercase tracking-wide">Fotos de productos</p>
           <div id="imgPickerGrid" class="grid grid-cols-3 gap-2"></div>
-          <p id="imgPickerEmpty" class="hidden text-sm text-gray-400 text-center py-4">No hay fotos en el catálogo</p>
+          <p id="imgPickerEmpty" class="hidden text-sm text-gray-400 text-center py-4">No hay fotos de productos</p>
         </div>
       </div>
     </div>
@@ -420,11 +421,15 @@
     <!-- ── PRODUCTS TAB ── -->
     <div id="sectionProducts">
       <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
-        <h2 data-i18n="products.title" class="text-lg font-semibold text-gray-800">Catálogo de productos</h2>
+        <h2 data-i18n="products.title" class="text-lg font-semibold text-gray-800">Productos</h2>
         <div class="flex gap-2">
           <button onclick="openImportModal()"
             class="px-4 py-2 rounded-lg text-sm font-semibold border border-gray-200 text-gray-600 hover:bg-gray-50 flex items-center gap-1" data-i18n="import.btn">
-            📥 Importar catálogo
+            📥 Importar productos
+          </button>
+          <button onclick="exportProducts()"
+            class="px-4 py-2 rounded-lg text-sm font-semibold border border-gray-200 text-gray-600 hover:bg-gray-50 flex items-center gap-1" data-i18n="products.export">
+            ⬇ Exportar CSV
           </button>
           <button onclick="openProductModal(null)"
             class="btn-green px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-1" data-i18n="products.new">
@@ -468,9 +473,19 @@
 
     <!-- ── SERVICES TAB ── -->
     <div id="sectionServices" class="hidden">
-      <div class="flex items-center justify-between mb-4">
-        <h2 data-i18n="services.title" class="text-lg font-semibold text-gray-800">Catálogo de servicios</h2>
-        <button onclick="openServiceModal()" data-i18n="services.new" class="btn-green px-4 py-2 rounded-lg text-sm font-semibold">+ Nuevo servicio</button>
+      <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+        <h2 data-i18n="services.title" class="text-lg font-semibold text-gray-800">Servicios</h2>
+        <div class="flex gap-2">
+          <button onclick="openImportModal('services')"
+            class="px-4 py-2 rounded-lg text-sm font-semibold border border-gray-200 text-gray-600 hover:bg-gray-50 flex items-center gap-1" data-i18n="services.import">
+            📥 Importar servicios
+          </button>
+          <button onclick="exportServices()"
+            class="px-4 py-2 rounded-lg text-sm font-semibold border border-gray-200 text-gray-600 hover:bg-gray-50 flex items-center gap-1" data-i18n="services.export">
+            ⬇ Exportar CSV
+          </button>
+          <button onclick="openServiceModal()" data-i18n="services.new" class="btn-green px-4 py-2 rounded-lg text-sm font-semibold">+ Nuevo servicio</button>
+        </div>
       </div>
       <div id="serviceList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
     </div>
@@ -498,6 +513,32 @@
       </div>
       <div class="space-y-3" id="ordersList">
         <div class="text-center py-8 text-gray-400">Cargando...</div>
+      </div>
+    </div>
+
+    <!-- ── CUSTOMERS TAB ── -->
+    <div id="sectionCustomers" class="hidden">
+      <div class="flex items-center justify-between mb-4">
+        <h2 data-i18n="customers.title" class="text-lg font-semibold text-gray-800">Clientes</h2>
+        <button onclick="exportCustomers()" data-i18n="customers.export"
+          class="flex items-center gap-1.5 text-sm text-green-600 border border-green-200 bg-green-50 hover:bg-green-100 px-3 py-1.5 rounded-lg transition font-medium">
+          ⬇ Exportar CSV
+        </button>
+      </div>
+      <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+        <table class="w-full text-sm">
+          <thead class="bg-gray-50 text-gray-500 uppercase text-xs">
+            <tr>
+              <th data-i18n="customers.col.name" class="px-4 py-3 text-left">Nombre</th>
+              <th data-i18n="customers.col.phone" class="px-4 py-3 text-left">Teléfono</th>
+              <th data-i18n="customers.col.lastContact" class="px-4 py-3 text-left">Último contacto</th>
+              <th data-i18n="customers.col.actions" class="px-4 py-3 text-center">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="customersTable" class="divide-y divide-gray-50">
+            <tr><td colspan="4" class="text-center py-8 text-gray-400">Cargando...</td></tr>
+          </tbody>
+        </table>
       </div>
     </div>
 
@@ -594,25 +635,6 @@
         <p data-i18n="analytics.top.title" class="text-sm font-semibold text-gray-700 mb-3">🏆 Productos más pedidos</p>
         <div id="analyticsTopProducts" class="space-y-2">
           <p class="text-sm text-gray-400">—</p>
-        </div>
-      </div>
-
-      <!-- Export buttons -->
-      <div class="bg-white rounded-xl shadow-sm p-5">
-        <p data-i18n="analytics.export.title" class="text-sm font-semibold text-gray-700 mb-3">⬇ Exportar datos</p>
-        <div class="flex flex-wrap gap-3">
-          <button onclick="exportOrders()" data-i18n="analytics.export.orders"
-            class="flex items-center gap-1.5 text-sm text-green-600 border border-green-200 bg-green-50 hover:bg-green-100 px-3 py-2 rounded-lg transition font-medium">
-            🛒 Pedidos CSV
-          </button>
-          <button onclick="exportProducts()" data-i18n="analytics.export.products"
-            class="flex items-center gap-1.5 text-sm text-blue-600 border border-blue-200 bg-blue-50 hover:bg-blue-100 px-3 py-2 rounded-lg transition font-medium">
-            📦 Catálogo CSV
-          </button>
-          <button onclick="exportCustomers()" data-i18n="analytics.export.customers"
-            class="flex items-center gap-1.5 text-sm text-purple-600 border border-purple-200 bg-purple-50 hover:bg-purple-100 px-3 py-2 rounded-lg transition font-medium">
-            👥 Clientes CSV
-          </button>
         </div>
       </div>
 
@@ -969,7 +991,7 @@
       <div class="bg-white rounded-xl shadow-sm p-6 border border-red-100">
         <h3 data-i18n="settings.danger.title" class="font-medium text-red-700 mb-1">🗑 Eliminar cuenta</h3>
         <p data-i18n="settings.danger.desc" class="text-xs text-gray-400 mb-4">
-          Eliminá permanentemente tu cuenta y todos tus datos: catálogo, pedidos, conversaciones y configuración.
+          Eliminá permanentemente tu cuenta y todos tus datos: productos, pedidos, conversaciones y configuración.
           Esta acción es irreversible.
         </p>
         <div id="deleteAccountMsg" class="hidden rounded-lg px-4 py-2 text-sm mb-4"></div>
@@ -1230,7 +1252,7 @@
   <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl p-6 max-h-screen overflow-y-auto">
 
     <div class="flex items-center justify-between mb-4">
-      <h3 class="text-base font-semibold text-gray-800" data-i18n="import.title">📥 Importar catálogo</h3>
+      <h3 class="text-base font-semibold text-gray-800" id="importModalTitle" data-i18n="import.title">📥 Importar productos</h3>
       <button onclick="closeImportModal()" class="text-gray-400 hover:text-gray-600 text-xl leading-none">✕</button>
     </div>
 
@@ -1262,7 +1284,7 @@
           <ol class="text-xs text-blue-700 space-y-1 list-decimal list-inside">
             <li><span data-i18n="import.sheets.s1">Abrí el </span><a id="templateLink" href="#" target="_blank" class="underline font-medium" data-i18n="import.sheets.template">template de Google Sheets →</a></li>
             <li data-i18n="import.sheets.s2">Hacé una copia: <b>Archivo → Hacer una copia</b></li>
-            <li data-i18n="import.sheets.s3">Completá tu catálogo en la copia</li>
+            <li id="importSheetsS3" data-i18n="import.sheets.s3">Completá tus productos en la copia</li>
             <li data-i18n="import.sheets.s4">Compartí como público: <b>Compartir → Cualquiera con el enlace → Lector</b></li>
             <li data-i18n="import.sheets.s5">Pegá el enlace abajo</li>
           </ol>
@@ -1281,7 +1303,7 @@
       <div id="importPanelCsv" class="hidden">
         <div class="bg-blue-50 rounded-xl p-4 mb-4 text-xs text-blue-700">
           <p class="font-semibold text-blue-800 mb-1" data-i18n="import.csv.hint">Columnas esperadas (en cualquier orden):</p>
-          <code class="block mt-1">name, category, price, stock, description</code>
+          <code class="block mt-1" id="importCsvColumnsHint">name, category, price, stock, description</code>
         </div>
         <div id="importCsvError" class="hidden bg-red-50 text-red-700 text-sm rounded-lg px-4 py-2 mb-3"></div>
         <div id="importCsvDrop"
@@ -1299,7 +1321,7 @@
 
       <!-- Photos AI panel -->
       <div id="importPanelPhotos" class="hidden">
-        <p class="text-xs text-gray-500 mb-3" data-i18n="import.photos.hint">Subí fotos del catálogo. Claude extrae los productos automáticamente.</p>
+        <p class="text-xs text-gray-500 mb-3" id="importPhotosHint" data-i18n="import.photos.hint">Subí fotos de tus productos. Claude los extrae automáticamente.</p>
         <div id="importPhotosDrop"
           class="border-2 border-dashed border-gray-200 rounded-xl p-6 text-center cursor-pointer hover:border-purple-300 hover:bg-purple-50 transition mb-3"
           onclick="document.getElementById('importPhotosInput').click()"
@@ -1324,7 +1346,7 @@
     <div id="importPreviewSection" class="hidden">
       <div class="flex items-center justify-between mb-3">
         <p class="text-sm text-gray-600">
-          <span data-i18n="import.preview.found">Productos encontrados:</span>
+          <span id="importPreviewFound" data-i18n="import.preview.found">Productos encontrados:</span>
           <span id="importCount" class="font-bold text-green-600 ml-1"></span>
         </p>
         <button onclick="importBack()" class="text-xs text-gray-400 hover:text-gray-600 underline" data-i18n="import.preview.back">← Cambiar fuente</button>
@@ -1351,7 +1373,7 @@
       <div id="importSuccess" class="hidden bg-green-50 text-green-700 text-sm rounded-lg px-4 py-3 mb-3"></div>
       <button onclick="confirmImport()" id="importConfirmBtn"
         class="btn-green w-full py-2 rounded-lg text-sm font-semibold" data-i18n="import.confirm.btn">
-        ✅ Agregar al catálogo
+        ✅ Agregar productos
       </button>
     </div>
 
@@ -1475,13 +1497,14 @@ es:{
 'login.title':'Iniciar sesión','login.register':'¿No tenés cuenta? Empezar gratis →',
 'tab.chats':'💬 Chats','tab.products':'📦 Productos','tab.services':'🛠 Servicios','tab.orders':'🛒 Pedidos','tab.settings':'⚙️ Ajustes','tab.help':'❓ Ayuda',
 'stat.today':'Pedidos hoy','stat.pending':'Pendientes','stat.revenue':'Ingresos hoy','stat.products':'Productos activos',
-'products.title':'Catálogo de productos','products.new':'+ Nuevo producto',
+'products.title':'Productos','products.new':'+ Nuevo producto',
 'products.col.product':'Producto','products.col.category':'Categoría','products.col.price':'Precio (Gs)','products.col.stock':'Stock','products.col.status':'Estado','products.col.actions':'Acciones',
 'products.loading':'Cargando...','products.empty':'No hay productos en esta categoría.','products.filter.all':'Todos','products.active':'✅ Activo','products.sold':'🔴 Agotado',
-'services.title':'Catálogo de servicios','services.new':'+ Nuevo servicio','services.loading':'Cargando...','services.error':'Error al cargar servicios.',
+'services.title':'Servicios','services.new':'+ Nuevo servicio','services.loading':'Cargando...','services.error':'Error al cargar servicios.','services.import':'📥 Importar servicios',
 'services.empty.title':'Sin servicios todavía','services.empty.hint':'Creá tu primer servicio con el botón de arriba',
 'services.active':'Activo','services.inactive':'Inactivo','services.edit':'✏️ Editar','services.delete':'🗑 Eliminar','services.perHour':'/hora','services.confirm':'¿Eliminar este servicio?',
 'orders.title':'Pedidos recientes','orders.refresh':'↻ Actualizar','orders.export':'⬇ Exportar CSV','orders.loading':'Cargando...','orders.empty':'Todavía no hay pedidos.','orders.delivery':'+envío','orders.filter.all':'Todos',
+'tab.customers':'👥 Clientes','customers.title':'Clientes','customers.export':'⬇ Exportar CSV','customers.col.name':'Nombre','customers.col.phone':'Teléfono','customers.col.lastContact':'Último contacto','customers.col.actions':'Acciones','customers.empty':'Todavía no hay clientes.','customers.noName':'Sin nombre','customers.editName':'Editar nombre','products.export':'⬇ Exportar CSV','services.export':'⬇ Exportar CSV',
 'plan.pay.btn':'💳 Pagar con MercadoPago','plan.pay.processing':'Procesando...','plan.pay.error':'No se pudo iniciar el pago. Contactá soporte.','plan.pay.not_configured':'El pago online no está configurado aún. Contactá soporte.',
 'products.lowstock':'⚠️ {n} producto(s) con stock bajo (≤5 unidades)',
 'support.title':'Soporte técnico','support.subtitle':'Envianos tu consulta y te respondemos a la brevedad.','support.empty':'Aún no hay mensajes. ¡Escribinos!','support.placeholder':'Escribí tu consulta aquí...','support.send':'Enviar','support.loading':'Cargando...',
@@ -1495,7 +1518,7 @@ es:{
 'plan.status.expired':'Suscripción vencida','plan.status.expired.sub':'Venció el {date}. Renová para seguir usando el bot.',
 'plan.status.suspended':'Cuenta desactivada','plan.status.suspended.sub':'Tu cuenta fue desactivada. Contactá al soporte.',
 'plan.banner.suspended':'Tu cuenta está suspendida.','plan.banner.expired':'Tu plan venció. El bot está pausado.','plan.banner.contact':'Contactar soporte','plan.banner.view':'Ver opciones',
-'settings.danger.title':'🗑 Eliminar cuenta','settings.danger.desc':'Eliminá permanentemente tu cuenta y todos tus datos. Esta acción es irreversible.','settings.danger.btn':'Eliminar mi cuenta permanentemente','settings.danger.confirm1':'¿Estás seguro de que querés eliminar tu cuenta? Esta acción borrará TODOS tus datos (catálogo, pedidos, conversaciones) de forma permanente.','settings.danger.confirm2':'Para confirmar, escribí exactamente: ELIMINAR','settings.danger.aborted':'Eliminación cancelada.','settings.danger.deleted':'Cuenta eliminada. Hasta pronto.',
+'settings.danger.title':'🗑 Eliminar cuenta','settings.danger.desc':'Eliminá permanentemente tu cuenta y todos tus datos. Esta acción es irreversible.','settings.danger.btn':'Eliminar mi cuenta permanentemente','settings.danger.confirm1':'¿Estás seguro de que querés eliminar tu cuenta? Esta acción borrará TODOS tus datos (productos, pedidos, conversaciones) de forma permanente.','settings.danger.confirm2':'Para confirmar, escribí exactamente: ELIMINAR','settings.danger.aborted':'Eliminación cancelada.','settings.danger.deleted':'Cuenta eliminada. Hasta pronto.',
 'orders.status.pending':'Pendiente','orders.status.confirmed':'Confirmado','orders.status.preparing':'Preparando','orders.status.delivering':'En camino','orders.status.delivered':'Entregado','orders.status.cancelled':'Cancelado',
 'orders.name.placeholder':'Nombre del cliente','orders.name.save':'Guardar',
 'chat.title':'Conversaciones','chat.search':'Buscar cliente...','chat.empty.title':'Seleccioná una conversación','chat.empty.hint':'Las respuestas llegan al cliente por WhatsApp',
@@ -1504,7 +1527,7 @@ es:{
 'chat.confirm':'✅ Confirmar pedido','chat.cancel':'❌ Cancelar','chat.pendingOrder':'🛒 Pedido pendiente:',
 'chat.you':'👤 Vos','chat.bot':'🤖 Sara','chat.pending':'Pedido',
 'chat.errSend':'Error al enviar: ','chat.errSendImg':'Error al enviar imagen: ','chat.cancelOrder':'¿Cancelar este pedido?',
-'img.title':'Enviar imagen','img.upload':'Subir foto','img.choose':'Elegir imagen del dispositivo','img.catalog':'Fotos del catálogo','img.empty':'No hay fotos en el catálogo','img.loading':'Cargando...','img.errLoad':'Error al cargar',
+'img.title':'Enviar imagen','img.upload':'Subir foto','img.choose':'Elegir imagen del dispositivo','img.catalog':'Fotos de productos','img.empty':'No hay fotos de productos','img.loading':'Cargando...','img.errLoad':'Error al cargar',
 'settings.title':'Ajustes',
 'settings.language.title':'🌐 Idioma del panel','settings.language.desc':'Elegí el idioma de la interfaz de administración.',
 'settings.sections.title':'🗂 Secciones activas','settings.sections.desc':'Activá solo las secciones que usa tu negocio. Sara solo ofrecerá lo que esté habilitado.',
@@ -1537,7 +1560,7 @@ es:{
 'settings.legal.title':'📄 Legal','settings.legal.terms':'📋 Términos de Servicio','settings.legal.privacy':'🔒 Política de Privacidad','settings.legal.disclaimer':'⚠️ Disclaimer','settings.legal.note':'Al usar este servicio aceptás los términos y condiciones.',
 'settings.plan.title':'💳 Plan y pagos','settings.plan.subtitle':'Tu suscripción activa a Sara Bot.',
 'settings.plan.starter':'Starter','settings.plan.pro':'Pro','settings.plan.enterprise':'Enterprise','settings.plan.popular':'Popular','settings.plan.custom':'A consultar',
-'settings.plan.f1':'1 número WhatsApp','settings.plan.f2':'Catálogo ilimitado','settings.plan.f3':'1.000 conv./mes','settings.plan.f4':'Soporte por email','settings.plan.f5':'5.000 conv./mes','settings.plan.f6':'Agenda de turnos','settings.plan.f7':'Soporte prioritario','settings.plan.f8':'Multi-número','settings.plan.f9':'Conversaciones ilimitadas','settings.plan.f10':'Integraciones a medida','settings.plan.f11':'SLA garantizado',
+'settings.plan.f1':'1 número WhatsApp','settings.plan.f2':'Productos ilimitados','settings.plan.f3':'1.000 conv./mes','settings.plan.f4':'Soporte por email','settings.plan.f5':'5.000 conv./mes','settings.plan.f6':'Agenda de turnos','settings.plan.f7':'Soporte prioritario','settings.plan.f8':'Multi-número','settings.plan.f9':'Conversaciones ilimitadas','settings.plan.f10':'Integraciones a medida','settings.plan.f11':'SLA garantizado',
 'settings.plan.contact':'Para contratar o cambiar de plan, contactanos en',
 'modal.product.new':'Nuevo producto','modal.product.edit':'Editar producto',
 'modal.product.name':'Nombre *','modal.product.namePh':'Ej: Ramo de Rosas Rojas (12 unidades)',
@@ -1564,7 +1587,7 @@ es:{
 'preset.custom.label':'Personalizada','preset.custom.desc':'Escribí tu propia descripción',
 'help.title':'❓ Ayuda — Comandos del propietario',
 'help.desc':'Enviá estos mensajes desde tu WhatsApp al número de Sara Bot para gestionar el negocio sin abrir el panel web.',
-'help.catalog.title':'📦 Gestión del catálogo',
+'help.catalog.title':'📦 Gestión de productos',
 'help.catalog.catalogo':'Ver todos los productos con stock y precio actuales',
 'help.catalog.stock':'Actualizar el stock de un producto. Ej: <i>STOCK Rosas Rojas 25</i>',
 'help.catalog.precio':'Cambiar precio en guaraníes. Ej: <i>PRECIO Rosas Rojas 160000</i>',
@@ -1573,7 +1596,7 @@ es:{
 'help.catalog.nuevo':'Crear un producto nuevo. Ej: <i>NUEVO Girasoles|Ramos|80000|10|Girasoles frescos</i>',
 'help.photos.title':'📸 Fotos de productos',
 'help.photos.nombre':'Enviar esta frase + una foto en el mismo mensaje. La foto se guarda y Sara la mostrará a los clientes cuando pregunten por ese producto',
-'help.photos.hint':'💡 También podés subir fotos desde el panel web → Catálogo → editar producto.',
+'help.photos.hint':'💡 También podés subir fotos desde el panel web → Productos → editar producto.',
 'help.orders.title':'🛒 Pedidos y control de chat',
 'help.orders.confirmar':'Confirmar el último pedido pendiente. Sara notifica al cliente',
 'help.orders.cancelar':'Cancelar el último pedido pendiente. Sara notifica al cliente',
@@ -1587,22 +1610,23 @@ es:{
 'help.chatpanel.takeover.title':'👤 Intervenir manualmente en una chat','help.chatpanel.takeover.desc':'Podés escribir directamente al cliente en cualquier momento desde el panel. Al enviar tu primer mensaje, <b>Sara se pausa automáticamente</b> en ese chat — el banner azul "Modo manual activo" confirma que el bot está en pausa.',
 'help.chatpanel.takeover.colors':'Tus mensajes aparecen en <span class="font-semibold">azul</span> para que se distingan de los mensajes automáticos de Sara (en verde).',
 'help.chatpanel.resume.title':'🤖 Reactivar Sara','help.chatpanel.resume.desc':'Cuando terminás de hablar con el cliente, presioná el botón <b>"🤖 Reactivar Sara"</b> en la parte superior del chat. Sara retoma la conversación con todo el contexto, incluyendo lo que vos escribiste.',
-'help.chatpanel.img.title':'🖼 Enviar fotos al cliente','help.chatpanel.img.desc':'Con el botón 🖼 podés enviar una foto del catálogo existente o subir una imagen nueva directamente desde tu dispositivo. La foto llega al cliente por WhatsApp.',
+'help.chatpanel.img.title':'🖼 Enviar fotos al cliente','help.chatpanel.img.desc':'Con el botón 🖼 podés enviar una foto de un producto existente o subir una imagen nueva directamente desde tu dispositivo. La foto llega al cliente por WhatsApp.',
 'help.chatpanel.colors':'<b>Colores de los mensajes en el panel:</b><br>⬜ Blanco (izquierda) = mensajes del cliente<br>🟩 Verde (derecha) = respuestas automáticas de Sara<br>🟦 Azul (derecha) = mensajes enviados por vos manualmente',
 'help.other.title':'ℹ️ Otros comandos WhatsApp','help.other.ayuda':'Ver todos los comandos disponibles directamente en WhatsApp',
 'help.other.hint':'💡 Los comandos no distinguen mayúsculas/minúsculas. Podés escribir "catalogo", "CATALOGO" o "Catalogo".',
-'import.btn':'📥 Importar catálogo','import.title':'📥 Importar catálogo',
+'import.btn':'📥 Importar productos','import.title':'📥 Importar productos',
 'import.tab.sheets':'Google Sheets','import.tab.csv':'CSV','import.tab.photos':'Fotos IA',
 'import.how':'📌 Cómo usar:','import.sheets.s1':'Abrí el ','import.sheets.template':'template de Google Sheets →',
-'import.sheets.s2':'Hacé una copia: <b>Archivo → Hacer una copia</b>','import.sheets.s3':'Completá tu catálogo en la copia',
+'import.sheets.s2':'Hacé una copia: <b>Archivo → Hacer una copia</b>','import.sheets.s3':'Completá tus productos en la copia',
 'import.sheets.s4':'Compartí como público: <b>Compartir → Cualquiera con el enlace → Lector</b>','import.sheets.s5':'Pegá el enlace abajo',
 'import.sheets.urlLabel':'URL de tu Google Sheet','import.sheets.urlPh':'https://docs.google.com/spreadsheets/d/...',
 'import.preview.btn':'Previsualizar →','import.preview.found':'Productos encontrados:','import.preview.back':'← Cambiar fuente',
 'import.preview.note':'Los productos con el mismo nombre exacto no se duplicarán.',
 'import.col.name':'Nombre','import.col.category':'Categoría','import.col.price':'Precio (Gs)','import.col.stock':'Stock',
-'import.confirm.btn':'Agregar al catálogo','import.confirm.done':'productos importados.','import.confirm.skipped':'ya existían y se omitieron.',
+'import.confirm.btn':'Agregar productos','import.confirm.done':'productos importados.','import.confirm.skipped':'ya existían y se omitieron.',
+'import.title.services':'📥 Importar servicios','import.sheets.s3.services':'Completá tus servicios en la copia','import.photos.hint.services':'Subí fotos de tus servicios. Claude los extrae automáticamente.','import.preview.found.services':'Servicios encontrados:','import.confirm.btn.services':'Agregar servicios','import.confirm.done.services':'servicios importados.',
 'import.csv.hint':'Columnas esperadas (en cualquier orden):','import.csv.drop':'Clic o arrastrá tu archivo CSV aquí',
-'import.photos.hint':'Subí fotos del catálogo. Claude extrae los productos automáticamente.',
+'import.photos.hint':'Subí fotos de tus productos. Claude los extrae automáticamente.',
 'import.photos.drop':'Clic o arrastrá las fotos aquí','import.photos.limit':'JPG, PNG — hasta 6 imágenes','import.photos.btn':'🤖 Extraer productos con IA',
 'import.error.noUrl':'Pegá la URL de tu Google Sheet.','import.error.sheet':'Error al leer el Sheet.','import.error.csv':'Error al leer el CSV.','import.error.noProducts':'No se encontraron productos en las imágenes.','import.error.generic':'Error al importar.',
 'tab.appointments':'📅 Turnos',
@@ -1622,7 +1646,7 @@ es:{
 'wiz.start':'Empezar configuración →','wiz.back':'← Atrás','wiz.next':'Continuar →',
 'wiz.s1.title':'¡Bienvenido a Sara Bot!','wiz.s1.subtitle':'En 3 pasos vas a tener tu asistente de WhatsApp funcionando. Empecemos.',
 'wiz.s1.i1.title':'Conectá tu número de WhatsApp Business','wiz.s1.i1.desc':'Usamos la API oficial de Meta — tus clientes escriben a tu número de siempre.',
-'wiz.s1.i2.title':'Configurá tu catálogo','wiz.s1.i2.desc':'Cargá productos, servicios y horarios desde el panel.',
+'wiz.s1.i2.title':'Configurá tus productos','wiz.s1.i2.desc':'Cargá productos, servicios y horarios desde el panel.',
 'wiz.s1.i3.title':'Sara empieza a atender','wiz.s1.i3.desc':'Tu bot responde pedidos y reservas 24/7 automáticamente.',
 'wiz.s2.title':'Conectá tu WhatsApp Business','wiz.s2.subtitle':'Autorizá a Sara Bot a usar tu número oficial de WhatsApp Business.',
 'wiz.s2.success':'WhatsApp conectado correctamente.','wiz.s2.fb_btn':'Conectar con Facebook / Meta',
@@ -1631,7 +1655,7 @@ es:{
 'wiz.s3.title':'Tu número personal de WhatsApp','wiz.s3.subtitle':'Lo usaremos para enviarte notificaciones de pedidos y para que puedas gestionar el bot desde WhatsApp.',
 'wiz.s3.label':'Tu número WhatsApp (con código de país, sin +)','wiz.s3.example':'Ejemplo: 595981234567 (Paraguay), 5491123456789 (Argentina), 393331234567 (Italia)',
 'wiz.s4.title':'¡Todo listo!','wiz.s4.subtitle':'Tu WhatsApp Business está conectado. Sara ya puede atender a tus clientes.',
-'wiz.s4.hint':'Ahora configurá tu catálogo de productos o servicios para que Sara sepa qué ofrecer.',
+'wiz.s4.hint':'Ahora configurá tus productos o servicios para que Sara sepa qué ofrecer.',
 'wiz.s4.connected':'Número conectado:','wiz.s4.personal':'✅ Tu número personal registrado','wiz.s4.active':'✅ Bot activo y listo para responder',
 'wiz.s4.webhook':'✅ Webhook configurado automáticamente','wiz.s4.btn':'Ir al panel de control →',
 'wiz.token_error':'⚠️ Tu conexión de WhatsApp tiene un problema. Reconectá tu cuenta para que Sara siga funcionando.',
@@ -1640,9 +1664,7 @@ es:{
 'analytics.title':'📊 Analytics','analytics.week':'7 días','analytics.month':'30 días',
 'analytics.kpi.orders':'Pedidos','analytics.kpi.revenue':'Ingresos','analytics.kpi.avg':'Ticket promedio',
 'analytics.kpi.customers':'Clientes únicos','analytics.kpi.cancelled':'Cancelados','analytics.kpi.convs':'Conversaciones activas',
-'analytics.chart.title':'Pedidos por día','analytics.top.title':'🏆 Productos más pedidos','analytics.top.empty':'Sin pedidos en este período.',
-'analytics.export.title':'⬇ Exportar datos','analytics.export.orders':'🛒 Pedidos CSV','analytics.export.products':'📦 Catálogo CSV','analytics.export.customers':'👥 Clientes CSV',
-'notif.new_order':'Nuevo pedido','notif.view':'Ver pedido',
+'analytics.chart.title':'Pedidos por día','analytics.top.title':'🏆 Productos más pedidos','analytics.top.empty':'Sin pedidos en este período.','notif.new_order':'Nuevo pedido','notif.view':'Ver pedido',
 },
 en:{
 'login.user':'Username','login.password':'Password','login.submit':'Sign in','login.hint':'Use the email and password you chose at registration.',
@@ -1652,13 +1674,14 @@ en:{
 'login.title':'Sign in','login.register':'No account yet? Start free →',
 'tab.chats':'💬 Chats','tab.products':'📦 Products','tab.services':'🛠 Services','tab.orders':'🛒 Orders','tab.settings':'⚙️ Settings','tab.help':'❓ Help',
 'stat.today':'Orders today','stat.pending':'Pending','stat.revenue':'Revenue today','stat.products':'Active products',
-'products.title':'Product catalog','products.new':'+ New product',
+'products.title':'Products','products.new':'+ New product',
 'products.col.product':'Product','products.col.category':'Category','products.col.price':'Price (Gs)','products.col.stock':'Stock','products.col.status':'Status','products.col.actions':'Actions',
 'products.loading':'Loading...','products.empty':'No products in this category.','products.filter.all':'All','products.active':'✅ Active','products.sold':'🔴 Out of stock',
-'services.title':'Services catalog','services.new':'+ New service','services.loading':'Loading...','services.error':'Error loading services.',
+'services.title':'Services','services.new':'+ New service','services.loading':'Loading...','services.error':'Error loading services.','services.import':'📥 Import services',
 'services.empty.title':'No services yet','services.empty.hint':'Create your first service with the button above',
 'services.active':'Active','services.inactive':'Inactive','services.edit':'✏️ Edit','services.delete':'🗑 Delete','services.perHour':'/hr','services.confirm':'Delete this service?',
 'orders.title':'Recent orders','orders.refresh':'↻ Refresh','orders.export':'⬇ Export CSV','orders.loading':'Loading...','orders.empty':'No orders yet.','orders.delivery':'+delivery','orders.filter.all':'All',
+'tab.customers':'👥 Customers','customers.title':'Customers','customers.export':'⬇ Export CSV','customers.col.name':'Name','customers.col.phone':'Phone','customers.col.lastContact':'Last contact','customers.col.actions':'Actions','customers.empty':'No customers yet.','customers.noName':'No name','customers.editName':'Edit name','products.export':'⬇ Export CSV','services.export':'⬇ Export CSV',
 'plan.pay.btn':'💳 Pay with MercadoPago','plan.pay.processing':'Processing...','plan.pay.error':'Could not start payment. Contact support.','plan.pay.not_configured':'Online payment not configured yet. Contact support.',
 'products.lowstock':'⚠️ {n} product(s) with low stock (≤5 units)',
 'support.title':'Technical support','support.subtitle':'Send us your question and we\'ll reply shortly.','support.empty':'No messages yet. Write to us!','support.placeholder':'Type your question here...','support.send':'Send','support.loading':'Loading...',
@@ -1672,7 +1695,7 @@ en:{
 'plan.status.expired':'Subscription expired','plan.status.expired.sub':'Expired on {date}. Renew to keep using the bot.',
 'plan.status.suspended':'Account deactivated','plan.status.suspended.sub':'Your account has been deactivated. Contact support.',
 'plan.banner.suspended':'Your account is suspended.','plan.banner.expired':'Your plan has expired. The bot is paused.','plan.banner.contact':'Contact support','plan.banner.view':'View options',
-'settings.danger.title':'🗑 Delete account','settings.danger.desc':'Permanently delete your account and all your data. This action is irreversible.','settings.danger.btn':'Permanently delete my account','settings.danger.confirm1':'Are you sure you want to delete your account? This will permanently erase ALL your data (catalog, orders, conversations).','settings.danger.confirm2':'To confirm, type exactly: DELETE','settings.danger.aborted':'Deletion cancelled.','settings.danger.deleted':'Account deleted. Goodbye!',
+'settings.danger.title':'🗑 Delete account','settings.danger.desc':'Permanently delete your account and all your data. This action is irreversible.','settings.danger.btn':'Permanently delete my account','settings.danger.confirm1':'Are you sure you want to delete your account? This will permanently erase ALL your data (products, orders, conversations).','settings.danger.confirm2':'To confirm, type exactly: DELETE','settings.danger.aborted':'Deletion cancelled.','settings.danger.deleted':'Account deleted. Goodbye!',
 'orders.status.pending':'Pending','orders.status.confirmed':'Confirmed','orders.status.preparing':'Preparing','orders.status.delivering':'On the way','orders.status.delivered':'Delivered','orders.status.cancelled':'Cancelled',
 'orders.name.placeholder':'Customer name','orders.name.save':'Save',
 'chat.title':'Conversations','chat.search':'Search customer...','chat.empty.title':'Select a conversation','chat.empty.hint':'Replies reach the customer via WhatsApp',
@@ -1681,7 +1704,7 @@ en:{
 'chat.confirm':'✅ Confirm order','chat.cancel':'❌ Cancel','chat.pendingOrder':'🛒 Pending order:',
 'chat.you':'👤 You','chat.bot':'🤖 Sara','chat.pending':'Order',
 'chat.errSend':'Error sending: ','chat.errSendImg':'Error sending image: ','chat.cancelOrder':'Cancel this order?',
-'img.title':'Send image','img.upload':'Upload photo','img.choose':'Choose image from device','img.catalog':'Catalog photos','img.empty':'No photos in catalog','img.loading':'Loading...','img.errLoad':'Error loading',
+'img.title':'Send image','img.upload':'Upload photo','img.choose':'Choose image from device','img.catalog':'Product photos','img.empty':'No product photos','img.loading':'Loading...','img.errLoad':'Error loading',
 'settings.title':'Settings',
 'settings.language.title':'🌐 Panel language','settings.language.desc':'Choose the language for the admin interface.',
 'settings.sections.title':'🗂 Active sections','settings.sections.desc':'Enable only the sections your business uses. Sara will only offer what is enabled.',
@@ -1714,7 +1737,7 @@ en:{
 'settings.legal.title':'📄 Legal','settings.legal.terms':'📋 Terms of Service','settings.legal.privacy':'🔒 Privacy Policy','settings.legal.disclaimer':'⚠️ Disclaimer','settings.legal.note':'By using this service you accept the terms and conditions.',
 'settings.plan.title':'💳 Plan & billing','settings.plan.subtitle':'Your active Sara Bot subscription.',
 'settings.plan.starter':'Starter','settings.plan.pro':'Pro','settings.plan.enterprise':'Enterprise','settings.plan.popular':'Popular','settings.plan.custom':'Contact us',
-'settings.plan.f1':'1 WhatsApp number','settings.plan.f2':'Unlimited catalog','settings.plan.f3':'1,000 conv./month','settings.plan.f4':'Email support','settings.plan.f5':'5,000 conv./month','settings.plan.f6':'Appointments','settings.plan.f7':'Priority support','settings.plan.f8':'Multi-number','settings.plan.f9':'Unlimited conversations','settings.plan.f10':'Custom integrations','settings.plan.f11':'SLA guaranteed',
+'settings.plan.f1':'1 WhatsApp number','settings.plan.f2':'Unlimited products','settings.plan.f3':'1,000 conv./month','settings.plan.f4':'Email support','settings.plan.f5':'5,000 conv./month','settings.plan.f6':'Appointments','settings.plan.f7':'Priority support','settings.plan.f8':'Multi-number','settings.plan.f9':'Unlimited conversations','settings.plan.f10':'Custom integrations','settings.plan.f11':'SLA guaranteed',
 'settings.plan.contact':'To subscribe or change plan, contact us at',
 'modal.product.new':'New product','modal.product.edit':'Edit product',
 'modal.product.name':'Name *','modal.product.namePh':'E.g.: Red Rose Bouquet (12 units)',
@@ -1741,7 +1764,7 @@ en:{
 'preset.custom.label':'Custom','preset.custom.desc':'Write your own description',
 'help.title':'❓ Help — Owner commands',
 'help.desc':'Send these messages from your WhatsApp to Sara Bot\'s number to manage the business without opening the web panel.',
-'help.catalog.title':'📦 Catalog management',
+'help.catalog.title':'📦 Product management',
 'help.catalog.catalogo':'View all products with current stock and price',
 'help.catalog.stock':'Update a product\'s stock. E.g.: <i>STOCK Red Roses 25</i>',
 'help.catalog.precio':'Change price. E.g.: <i>PRICE Red Roses 160000</i>',
@@ -1750,7 +1773,7 @@ en:{
 'help.catalog.nuevo':'Create a new product. E.g.: <i>NEW Sunflowers|Bouquets|80000|10|Fresh sunflowers</i>',
 'help.photos.title':'📸 Product photos',
 'help.photos.nombre':'Send this phrase + a photo in the same message. The photo is saved and Sara will show it to customers when they ask about that product',
-'help.photos.hint':'💡 You can also upload photos from the web panel → Catalog → edit product.',
+'help.photos.hint':'💡 You can also upload photos from the web panel → Products → edit product.',
 'help.orders.title':'🛒 Orders and chat control',
 'help.orders.confirmar':'Confirm the last pending order. Sara notifies the customer',
 'help.orders.cancelar':'Cancel the last pending order. Sara notifies the customer',
@@ -1764,22 +1787,23 @@ en:{
 'help.chatpanel.takeover.title':'👤 Manually intervene in a chat','help.chatpanel.takeover.desc':'You can write directly to the customer at any time from the panel. When you send your first message, <b>Sara pauses automatically</b> — the blue banner "Manual mode active" confirms the bot is paused.',
 'help.chatpanel.takeover.colors':'Your messages appear in <span class="font-semibold">blue</span> to distinguish them from Sara\'s automatic messages (in green).',
 'help.chatpanel.resume.title':'🤖 Reactivate Sara','help.chatpanel.resume.desc':'When you\'re done talking with the customer, press the <b>"🤖 Reactivate Sara"</b> button at the top of the chat. Sara resumes the conversation with full context.',
-'help.chatpanel.img.title':'🖼 Send photos to the customer','help.chatpanel.img.desc':'With the 🖼 button you can send a catalog photo or upload a new image directly from your device. The photo reaches the customer via WhatsApp.',
+'help.chatpanel.img.title':'🖼 Send photos to the customer','help.chatpanel.img.desc':'With the 🖼 button you can send a product photo or upload a new image directly from your device. The photo reaches the customer via WhatsApp.',
 'help.chatpanel.colors':'<b>Message colours in the panel:</b><br>⬜ White (left) = customer messages<br>🟩 Green (right) = Sara\'s automatic replies<br>🟦 Blue (right) = messages sent by you manually',
 'help.other.title':'ℹ️ Other WhatsApp commands','help.other.ayuda':'View all available commands directly in WhatsApp',
 'help.other.hint':'💡 Commands are case-insensitive.',
-'import.btn':'📥 Import catalog','import.title':'📥 Import catalog',
+'import.btn':'📥 Import products','import.title':'📥 Import products',
 'import.tab.sheets':'Google Sheets','import.tab.csv':'CSV','import.tab.photos':'AI Photos',
 'import.how':'📌 How to use:','import.sheets.s1':'Open the ','import.sheets.template':'Google Sheets template →',
-'import.sheets.s2':'Make a copy: <b>File → Make a copy</b>','import.sheets.s3':'Fill in your catalog in the copy',
+'import.sheets.s2':'Make a copy: <b>File → Make a copy</b>','import.sheets.s3':'Fill in your products in the copy',
 'import.sheets.s4':'Share as public: <b>Share → Anyone with the link → Viewer</b>','import.sheets.s5':'Paste the link below',
 'import.sheets.urlLabel':'Your Google Sheet URL','import.sheets.urlPh':'https://docs.google.com/spreadsheets/d/...',
 'import.preview.btn':'Preview →','import.preview.found':'Products found:','import.preview.back':'← Change source',
 'import.preview.note':'Products with the exact same name will not be duplicated.',
 'import.col.name':'Name','import.col.category':'Category','import.col.price':'Price (Gs)','import.col.stock':'Stock',
-'import.confirm.btn':'Add to catalog','import.confirm.done':'products imported.','import.confirm.skipped':'already existed and were skipped.',
+'import.confirm.btn':'Add products','import.confirm.done':'products imported.','import.confirm.skipped':'already existed and were skipped.',
+'import.title.services':'📥 Import services','import.sheets.s3.services':'Fill in your services in the copy','import.photos.hint.services':'Upload photos of your services. Claude extracts them automatically.','import.preview.found.services':'Services found:','import.confirm.btn.services':'Add services','import.confirm.done.services':'services imported.',
 'import.csv.hint':'Expected columns (any order):','import.csv.drop':'Click or drag your CSV file here',
-'import.photos.hint':'Upload catalog photos. Claude extracts products automatically.',
+'import.photos.hint':'Upload photos of your products. Claude extracts them automatically.',
 'import.photos.drop':'Click or drag photos here','import.photos.limit':'JPG, PNG — up to 6 images','import.photos.btn':'🤖 Extract products with AI',
 'import.error.noUrl':'Paste your Google Sheet URL.','import.error.sheet':'Error reading the Sheet.','import.error.csv':'Error reading the CSV.','import.error.noProducts':'No products found in the images.','import.error.generic':'Import error.',
 'tab.appointments':'📅 Appointments',
@@ -1799,7 +1823,7 @@ en:{
 'wiz.start':'Start setup →','wiz.back':'← Back','wiz.next':'Continue →',
 'wiz.s1.title':'Welcome to Sara Bot!','wiz.s1.subtitle':'In 3 steps your WhatsApp assistant will be up and running.',
 'wiz.s1.i1.title':'Connect your WhatsApp Business number','wiz.s1.i1.desc':'We use the official Meta API — your customers write to your existing number.',
-'wiz.s1.i2.title':'Set up your catalog','wiz.s1.i2.desc':'Add products, services and hours from the panel.',
+'wiz.s1.i2.title':'Set up your products','wiz.s1.i2.desc':'Add products, services and hours from the panel.',
 'wiz.s1.i3.title':'Sara starts attending','wiz.s1.i3.desc':'Your bot handles orders and bookings 24/7 automatically.',
 'wiz.s2.title':'Connect your WhatsApp Business','wiz.s2.subtitle':'Authorize Sara Bot to use your official WhatsApp Business number.',
 'wiz.s2.success':'WhatsApp connected successfully.','wiz.s2.fb_btn':'Connect with Facebook / Meta',
@@ -1808,7 +1832,7 @@ en:{
 'wiz.s3.title':'Your personal WhatsApp number','wiz.s3.subtitle':'We will use it to send you order notifications and so you can manage the bot from WhatsApp.',
 'wiz.s3.label':'Your WhatsApp number (with country code, no +)','wiz.s3.example':'Example: 595981234567 (Paraguay), 5491123456789 (Argentina), 393331234567 (Italy)',
 'wiz.s4.title':'All done!','wiz.s4.subtitle':'Your WhatsApp Business is connected. Sara can now serve your customers.',
-'wiz.s4.hint':'Now set up your product or service catalog so Sara knows what to offer.',
+'wiz.s4.hint':'Now set up your products or services so Sara knows what to offer.',
 'wiz.s4.connected':'Number connected:','wiz.s4.personal':'✅ Your personal number registered','wiz.s4.active':'✅ Bot active and ready to respond',
 'wiz.s4.webhook':'✅ Webhook configured automatically','wiz.s4.btn':'Go to dashboard →',
 'wiz.token_error':'⚠️ Your WhatsApp connection has an issue. Reconnect your account so Sara keeps working.',
@@ -1817,9 +1841,7 @@ en:{
 'analytics.title':'📊 Analytics','analytics.week':'7 days','analytics.month':'30 days',
 'analytics.kpi.orders':'Orders','analytics.kpi.revenue':'Revenue','analytics.kpi.avg':'Avg order value',
 'analytics.kpi.customers':'Unique customers','analytics.kpi.cancelled':'Cancelled','analytics.kpi.convs':'Active conversations',
-'analytics.chart.title':'Orders per day','analytics.top.title':'🏆 Top products','analytics.top.empty':'No orders in this period.',
-'analytics.export.title':'⬇ Export data','analytics.export.orders':'🛒 Orders CSV','analytics.export.products':'📦 Catalog CSV','analytics.export.customers':'👥 Customers CSV',
-'notif.new_order':'New order','notif.view':'View order',
+'analytics.chart.title':'Orders per day','analytics.top.title':'🏆 Top products','analytics.top.empty':'No orders in this period.','notif.new_order':'New order','notif.view':'View order',
 },
 it:{
 'login.user':'Utente','login.password':'Password','login.submit':'Accedi','login.hint':'Usa email e password che hai scelto alla registrazione.',
@@ -1829,13 +1851,14 @@ it:{
 'login.title':'Accedi','login.register':'Non hai un account? Inizia gratis →',
 'tab.chats':'💬 Chat','tab.products':'📦 Prodotti','tab.services':'🛠 Servizi','tab.orders':'🛒 Ordini','tab.settings':'⚙️ Impostazioni','tab.help':'❓ Aiuto',
 'stat.today':'Ordini oggi','stat.pending':'In attesa','stat.revenue':'Incasso oggi','stat.products':'Prodotti attivi',
-'products.title':'Catalogo prodotti','products.new':'+ Nuovo prodotto',
+'products.title':'Prodotti','products.new':'+ Nuovo prodotto',
 'products.col.product':'Prodotto','products.col.category':'Categoria','products.col.price':'Prezzo (Gs)','products.col.stock':'Stock','products.col.status':'Stato','products.col.actions':'Azioni',
 'products.loading':'Caricamento...','products.empty':'Nessun prodotto in questa categoria.','products.filter.all':'Tutti','products.active':'✅ Attivo','products.sold':'🔴 Esaurito',
-'services.title':'Catalogo servizi','services.new':'+ Nuovo servizio','services.loading':'Caricamento...','services.error':'Errore nel caricamento dei servizi.',
+'services.title':'Servizi','services.new':'+ Nuovo servizio','services.loading':'Caricamento...','services.error':'Errore nel caricamento dei servizi.','services.import':'📥 Importa servizi',
 'services.empty.title':'Nessun servizio ancora','services.empty.hint':'Crea il tuo primo servizio con il pulsante in alto',
 'services.active':'Attivo','services.inactive':'Non attivo','services.edit':'✏️ Modifica','services.delete':'🗑 Elimina','services.perHour':'/ora','services.confirm':'Eliminare questo servizio?',
 'orders.title':'Ordini recenti','orders.refresh':'↻ Aggiorna','orders.export':'⬇ Esporta CSV','orders.loading':'Caricamento...','orders.empty':'Ancora nessun ordine.','orders.delivery':'+consegna','orders.filter.all':'Tutti',
+'tab.customers':'👥 Clienti','customers.title':'Clienti','customers.export':'⬇ Esporta CSV','customers.col.name':'Nome','customers.col.phone':'Telefono','customers.col.lastContact':'Ultimo contatto','customers.col.actions':'Azioni','customers.empty':'Ancora nessun cliente.','customers.noName':'Senza nome','customers.editName':'Modifica nome','products.export':'⬇ Esporta CSV','services.export':'⬇ Esporta CSV',
 'plan.pay.btn':'💳 Paga con MercadoPago','plan.pay.processing':'Elaborazione...','plan.pay.error':'Impossibile avviare il pagamento. Contatta il supporto.','plan.pay.not_configured':'Il pagamento online non è ancora configurato. Contatta il supporto.',
 'products.lowstock':'⚠️ {n} prodotto/i con scorte basse (≤5 unità)',
 'support.title':'Supporto tecnico','support.subtitle':'Inviaci la tua richiesta e ti risponderemo al più presto.','support.empty':'Ancora nessun messaggio. Scrivici!','support.placeholder':'Scrivi qui la tua domanda...','support.send':'Invia','support.loading':'Caricamento...',
@@ -1849,7 +1872,7 @@ it:{
 'plan.status.expired':'Abbonamento scaduto','plan.status.expired.sub':'Scaduto il {date}. Rinnova per continuare a usare il bot.',
 'plan.status.suspended':'Account disattivato','plan.status.suspended.sub':'Il tuo account è stato disattivato. Contatta il supporto.',
 'plan.banner.suspended':'Il tuo account è sospeso.','plan.banner.expired':'Il tuo piano è scaduto. Il bot è in pausa.','plan.banner.contact':'Contatta il supporto','plan.banner.view':'Vedi opzioni',
-'settings.danger.title':'🗑 Elimina account','settings.danger.desc':'Elimina permanentemente il tuo account e tutti i tuoi dati. Questa azione è irreversibile.','settings.danger.btn':'Elimina definitivamente il mio account','settings.danger.confirm1':'Sei sicuro di voler eliminare il tuo account? Questo cancellerà TUTTI i tuoi dati (catalogo, ordini, conversazioni) in modo permanente.','settings.danger.confirm2':'Per confermare, scrivi esattamente: ELIMINA','settings.danger.aborted':'Eliminazione annullata.','settings.danger.deleted':'Account eliminato. Arrivederci!',
+'settings.danger.title':'🗑 Elimina account','settings.danger.desc':'Elimina permanentemente il tuo account e tutti i tuoi dati. Questa azione è irreversibile.','settings.danger.btn':'Elimina definitivamente il mio account','settings.danger.confirm1':'Sei sicuro di voler eliminare il tuo account? Questo cancellerà TUTTI i tuoi dati (prodotti, ordini, conversazioni) in modo permanente.','settings.danger.confirm2':'Per confermare, scrivi esattamente: ELIMINA','settings.danger.aborted':'Eliminazione annullata.','settings.danger.deleted':'Account eliminato. Arrivederci!',
 'orders.status.pending':'In attesa','orders.status.confirmed':'Confermato','orders.status.preparing':'In preparazione','orders.status.delivering':'In consegna','orders.status.delivered':'Consegnato','orders.status.cancelled':'Annullato',
 'orders.name.placeholder':'Nome cliente','orders.name.save':'Salva',
 'chat.title':'Conversazioni','chat.search':'Cerca cliente...','chat.empty.title':'Seleziona una conversazione','chat.empty.hint':'Le risposte arrivano al cliente tramite WhatsApp',
@@ -1858,7 +1881,7 @@ it:{
 'chat.confirm':'✅ Conferma ordine','chat.cancel':'❌ Annulla','chat.pendingOrder':'🛒 Ordine in attesa:',
 'chat.you':'👤 Tu','chat.bot':'🤖 Sara','chat.pending':'Ordine',
 'chat.errSend':'Errore invio: ','chat.errSendImg':'Errore invio immagine: ','chat.cancelOrder':'Annullare questo ordine?',
-'img.title':'Invia immagine','img.upload':'Carica foto','img.choose':'Scegli immagine dal dispositivo','img.catalog':'Foto del catalogo','img.empty':'Nessuna foto nel catalogo','img.loading':'Caricamento...','img.errLoad':'Errore nel caricamento',
+'img.title':'Invia immagine','img.upload':'Carica foto','img.choose':'Scegli immagine dal dispositivo','img.catalog':'Foto dei prodotti','img.empty':'Nessuna foto di prodotti','img.loading':'Caricamento...','img.errLoad':'Errore nel caricamento',
 'settings.title':'Impostazioni',
 'settings.language.title':'🌐 Lingua del pannello','settings.language.desc':'Scegli la lingua dell\'interfaccia di amministrazione.',
 'settings.sections.title':'🗂 Sezioni attive','settings.sections.desc':'Attiva solo le sezioni che usa la tua attività. Sara offrirà solo ciò che è abilitato.',
@@ -1891,7 +1914,7 @@ it:{
 'settings.legal.title':'📄 Legale','settings.legal.terms':'📋 Termini di Servizio','settings.legal.privacy':'🔒 Informativa sulla Privacy','settings.legal.disclaimer':'⚠️ Disclaimer','settings.legal.note':'Utilizzando questo servizio accetti i termini e le condizioni.',
 'settings.plan.title':'💳 Piano e pagamenti','settings.plan.subtitle':'Il tuo abbonamento attivo a Sara Bot.',
 'settings.plan.starter':'Starter','settings.plan.pro':'Pro','settings.plan.enterprise':'Enterprise','settings.plan.popular':'Popolare','settings.plan.custom':'Su richiesta',
-'settings.plan.f1':'1 numero WhatsApp','settings.plan.f2':'Catalogo illimitato','settings.plan.f3':'1.000 conv./mese','settings.plan.f4':'Supporto email','settings.plan.f5':'5.000 conv./mese','settings.plan.f6':'Agenda appuntamenti','settings.plan.f7':'Supporto prioritario','settings.plan.f8':'Multi-numero','settings.plan.f9':'Conversazioni illimitate','settings.plan.f10':'Integrazioni su misura','settings.plan.f11':'SLA garantito',
+'settings.plan.f1':'1 numero WhatsApp','settings.plan.f2':'Prodotti illimitati','settings.plan.f3':'1.000 conv./mese','settings.plan.f4':'Supporto email','settings.plan.f5':'5.000 conv./mese','settings.plan.f6':'Agenda appuntamenti','settings.plan.f7':'Supporto prioritario','settings.plan.f8':'Multi-numero','settings.plan.f9':'Conversazioni illimitate','settings.plan.f10':'Integrazioni su misura','settings.plan.f11':'SLA garantito',
 'settings.plan.contact':'Per sottoscrivere o cambiare piano, contattaci a',
 'modal.product.new':'Nuovo prodotto','modal.product.edit':'Modifica prodotto',
 'modal.product.name':'Nome *','modal.product.namePh':'Es: Mazzo di Rose Rosse (12 unità)',
@@ -1918,7 +1941,7 @@ it:{
 'preset.custom.label':'Personalizzata','preset.custom.desc':'Scrivi la tua descrizione',
 'help.title':'❓ Aiuto — Comandi del proprietario',
 'help.desc':'Invia questi messaggi dal tuo WhatsApp al numero di Sara Bot per gestire l\'attività senza aprire il pannello web.',
-'help.catalog.title':'📦 Gestione catalogo','help.catalog.catalogo':'Visualizza tutti i prodotti con stock e prezzo attuali',
+'help.catalog.title':'📦 Gestione prodotti','help.catalog.catalogo':'Visualizza tutti i prodotti con stock e prezzo attuali',
 'help.catalog.stock':'Aggiorna lo stock di un prodotto. Es: <i>STOCK Rose Rosse 25</i>',
 'help.catalog.precio':'Cambia prezzo. Es: <i>PREZZO Rose Rosse 160000</i>',
 'help.catalog.agotado':'Segna un prodotto come esaurito. Sara smetterà di offrirlo',
@@ -1926,7 +1949,7 @@ it:{
 'help.catalog.nuevo':'Crea un nuovo prodotto. Es: <i>NUOVO Girasoli|Mazzi|80000|10|Girasoli freschi</i>',
 'help.photos.title':'📸 Foto dei prodotti',
 'help.photos.nombre':'Invia questa frase + una foto nello stesso messaggio. La foto viene salvata e Sara la mostrerà ai clienti quando chiedono di quel prodotto',
-'help.photos.hint':'💡 Puoi anche caricare foto dal pannello web → Catalogo → modifica prodotto.',
+'help.photos.hint':'💡 Puoi anche caricare foto dal pannello web → Prodotti → modifica prodotto.',
 'help.orders.title':'🛒 Ordini e controllo chat',
 'help.orders.confirmar':'Conferma l\'ultimo ordine in attesa. Sara notifica il cliente',
 'help.orders.cancelar':'Annulla l\'ultimo ordine in attesa. Sara notifica il cliente',
@@ -1940,22 +1963,23 @@ it:{
 'help.chatpanel.takeover.title':'👤 Intervieni manualmente','help.chatpanel.takeover.desc':'Puoi scrivere direttamente al cliente dal pannello. Al primo messaggio <b>Sara si mette in pausa</b> — il banner blu "Modalità manuale attiva" lo conferma.',
 'help.chatpanel.takeover.colors':'I tuoi messaggi appaiono in <span class="font-semibold">blu</span> per distinguerli dai messaggi automatici di Sara (in verde).',
 'help.chatpanel.resume.title':'🤖 Riattiva Sara','help.chatpanel.resume.desc':'Quando hai finito, premi <b>"🤖 Riattiva Sara"</b>. Sara riprende la conversazione con tutto il contesto.',
-'help.chatpanel.img.title':'🖼 Invia foto al cliente','help.chatpanel.img.desc':'Con il pulsante 🖼 puoi inviare una foto del catalogo o caricarne una nuova dal dispositivo.',
+'help.chatpanel.img.title':'🖼 Invia foto al cliente','help.chatpanel.img.desc':'Con il pulsante 🖼 puoi inviare una foto di un prodotto esistente o caricarne una nuova dal dispositivo.',
 'help.chatpanel.colors':'<b>Colori dei messaggi:</b><br>⬜ Bianco (sinistra) = messaggi del cliente<br>🟩 Verde (destra) = risposte automatiche di Sara<br>🟦 Blu (destra) = messaggi inviati da te',
 'help.other.title':'ℹ️ Altri comandi WhatsApp','help.other.ayuda':'Visualizza tutti i comandi disponibili direttamente in WhatsApp',
 'help.other.hint':'💡 I comandi non distinguono maiuscole/minuscole.',
-'import.btn':'📥 Importa catalogo','import.title':'📥 Importa catalogo',
+'import.btn':'📥 Importa prodotti','import.title':'📥 Importa prodotti',
 'import.tab.sheets':'Google Sheets','import.tab.csv':'CSV','import.tab.photos':'Foto IA',
 'import.how':'📌 Come usare:','import.sheets.s1':'Apri il ','import.sheets.template':'template Google Sheets →',
-'import.sheets.s2':'Fai una copia: <b>File → Fai una copia</b>','import.sheets.s3':'Compila il tuo catalogo nella copia',
+'import.sheets.s2':'Fai una copia: <b>File → Fai una copia</b>','import.sheets.s3':'Compila i tuoi prodotti nella copia',
 'import.sheets.s4':'Condividi come pubblico: <b>Condividi → Chiunque abbia il link → Lettore</b>','import.sheets.s5':'Incolla il link qui sotto',
 'import.sheets.urlLabel':'URL del tuo Google Sheet','import.sheets.urlPh':'https://docs.google.com/spreadsheets/d/...',
 'import.preview.btn':'Anteprima →','import.preview.found':'Prodotti trovati:','import.preview.back':'← Cambia fonte',
 'import.preview.note':'I prodotti con lo stesso nome esatto non verranno duplicati.',
 'import.col.name':'Nome','import.col.category':'Categoria','import.col.price':'Prezzo (Gs)','import.col.stock':'Stock',
-'import.confirm.btn':'Aggiungi al catalogo','import.confirm.done':'prodotti importati.','import.confirm.skipped':'già esistenti, omessi.',
+'import.confirm.btn':'Aggiungi prodotti','import.confirm.done':'prodotti importati.','import.confirm.skipped':'già esistenti, omessi.',
+'import.title.services':'📥 Importa servizi','import.sheets.s3.services':'Compila i tuoi servizi nella copia','import.photos.hint.services':'Carica foto dei tuoi servizi. Claude li estrae automaticamente.','import.preview.found.services':'Servizi trovati:','import.confirm.btn.services':'Aggiungi servizi','import.confirm.done.services':'servizi importati.',
 'import.csv.hint':'Colonne attese (in qualsiasi ordine):','import.csv.drop':'Clicca o trascina il file CSV qui',
-'import.photos.hint':'Carica foto del catalogo. Claude estrae i prodotti automaticamente.',
+'import.photos.hint':'Carica foto dei tuoi prodotti. Claude li estrae automaticamente.',
 'import.photos.drop':'Clicca o trascina le foto qui','import.photos.limit':'JPG, PNG — fino a 6 immagini','import.photos.btn':'🤖 Estrai prodotti con IA',
 'import.error.noUrl':'Incolla l\'URL del tuo Google Sheet.','import.error.sheet':'Errore nella lettura del Sheet.','import.error.csv':'Errore nella lettura del CSV.','import.error.noProducts':'Nessun prodotto trovato nelle immagini.','import.error.generic':'Errore durante l\'importazione.',
 'tab.appointments':'📅 Appuntamenti',
@@ -1975,7 +1999,7 @@ it:{
 'wiz.start':'Inizia configurazione →','wiz.back':'← Indietro','wiz.next':'Continua →',
 'wiz.s1.title':'Benvenuto in Sara Bot!','wiz.s1.subtitle':'In 3 passi avrai il tuo assistente WhatsApp operativo.',
 'wiz.s1.i1.title':'Collega il tuo numero WhatsApp Business','wiz.s1.i1.desc':'Usiamo l\'API ufficiale di Meta — i tuoi clienti scrivono al tuo numero abituale.',
-'wiz.s1.i2.title':'Configura il catalogo','wiz.s1.i2.desc':'Carica prodotti, servizi e orari dal pannello.',
+'wiz.s1.i2.title':'Configura i tuoi prodotti','wiz.s1.i2.desc':'Carica prodotti, servizi e orari dal pannello.',
 'wiz.s1.i3.title':'Sara inizia a rispondere','wiz.s1.i3.desc':'Il tuo bot gestisce ordini e prenotazioni 24/7 automaticamente.',
 'wiz.s2.title':'Collega il tuo WhatsApp Business','wiz.s2.subtitle':'Autorizza Sara Bot a usare il tuo numero WhatsApp Business ufficiale.',
 'wiz.s2.success':'WhatsApp collegato correttamente.','wiz.s2.fb_btn':'Collega con Facebook / Meta',
@@ -1984,7 +2008,7 @@ it:{
 'wiz.s3.title':'Il tuo numero WhatsApp personale','wiz.s3.subtitle':'Lo useremo per inviarti notifiche degli ordini e per gestire il bot da WhatsApp.',
 'wiz.s3.label':'Il tuo numero WhatsApp (con prefisso internazionale, senza +)','wiz.s3.example':'Esempio: 393331234567 (Italia), 5491123456789 (Argentina)',
 'wiz.s4.title':'Tutto pronto!','wiz.s4.subtitle':'Il tuo WhatsApp Business è collegato. Sara può ora servire i tuoi clienti.',
-'wiz.s4.hint':'Ora configura il catalogo prodotti o servizi in modo che Sara sappia cosa offrire.',
+'wiz.s4.hint':'Ora configura i tuoi prodotti o servizi in modo che Sara sappia cosa offrire.',
 'wiz.s4.connected':'Numero collegato:','wiz.s4.personal':'✅ Numero personale registrato','wiz.s4.active':'✅ Bot attivo e pronto a rispondere',
 'wiz.s4.webhook':'✅ Webhook configurato automaticamente','wiz.s4.btn':'Vai al pannello →',
 'wiz.token_error':'⚠️ La connessione WhatsApp ha un problema. Ricollega il tuo account affinché Sara continui a funzionare.',
@@ -1993,9 +2017,7 @@ it:{
 'analytics.title':'📊 Analytics','analytics.week':'7 giorni','analytics.month':'30 giorni',
 'analytics.kpi.orders':'Ordini','analytics.kpi.revenue':'Ricavi','analytics.kpi.avg':'Scontrino medio',
 'analytics.kpi.customers':'Clienti unici','analytics.kpi.cancelled':'Annullati','analytics.kpi.convs':'Conversazioni attive',
-'analytics.chart.title':'Ordini al giorno','analytics.top.title':'🏆 Prodotti più ordinati','analytics.top.empty':'Nessun ordine in questo periodo.',
-'analytics.export.title':'⬇ Esporta dati','analytics.export.orders':'🛒 Ordini CSV','analytics.export.products':'📦 Catalogo CSV','analytics.export.customers':'👥 Clienti CSV',
-'notif.new_order':'Nuovo ordine','notif.view':'Vedi ordine',
+'analytics.chart.title':'Ordini al giorno','analytics.top.title':'🏆 Prodotti più ordinati','analytics.top.empty':'Nessun ordine in questo periodo.','notif.new_order':'Nuovo ordine','notif.view':'Vedi ordine',
 },
 de:{
 'login.user':'Benutzername','login.password':'Passwort','login.submit':'Anmelden','login.hint':'Nutze die E-Mail und das Passwort, das du bei der Registrierung gewählt hast.',
@@ -2005,13 +2027,14 @@ de:{
 'login.title':'Anmelden','login.register':'Noch kein Konto? Kostenlos starten →',
 'tab.chats':'💬 Chats','tab.products':'📦 Produkte','tab.services':'🛠 Services','tab.orders':'🛒 Bestellungen','tab.settings':'⚙️ Einstellungen','tab.help':'❓ Hilfe',
 'stat.today':'Bestellungen heute','stat.pending':'Ausstehend','stat.revenue':'Einnahmen heute','stat.products':'Aktive Produkte',
-'products.title':'Produktkatalog','products.new':'+ Neues Produkt',
+'products.title':'Produkte','products.new':'+ Neues Produkt',
 'products.col.product':'Produkt','products.col.category':'Kategorie','products.col.price':'Preis (Gs)','products.col.stock':'Lager','products.col.status':'Status','products.col.actions':'Aktionen',
 'products.loading':'Wird geladen...','products.empty':'Keine Produkte in dieser Kategorie.','products.filter.all':'Alle','products.active':'✅ Aktiv','products.sold':'🔴 Ausverkauft',
-'services.title':'Dienstleistungskatalog','services.new':'+ Neuer Service','services.loading':'Wird geladen...','services.error':'Fehler beim Laden der Services.',
+'services.title':'Dienstleistungen','services.new':'+ Neuer Service','services.loading':'Wird geladen...','services.error':'Fehler beim Laden der Services.','services.import':'📥 Dienstleistungen importieren',
 'services.empty.title':'Noch keine Services','services.empty.hint':'Erstelle deinen ersten Service mit dem Button oben',
 'services.active':'Aktiv','services.inactive':'Inaktiv','services.edit':'✏️ Bearbeiten','services.delete':'🗑 Löschen','services.perHour':'/Std.','services.confirm':'Diesen Service löschen?',
 'orders.title':'Letzte Bestellungen','orders.refresh':'↻ Aktualisieren','orders.export':'⬇ CSV exportieren','orders.loading':'Wird geladen...','orders.empty':'Noch keine Bestellungen.','orders.delivery':'+Lieferung','orders.filter.all':'Alle',
+'tab.customers':'👥 Kunden','customers.title':'Kunden','customers.export':'⬇ CSV exportieren','customers.col.name':'Name','customers.col.phone':'Telefon','customers.col.lastContact':'Letzter Kontakt','customers.col.actions':'Aktionen','customers.empty':'Noch keine Kunden.','customers.noName':'Kein Name','customers.editName':'Name bearbeiten','products.export':'⬇ CSV exportieren','services.export':'⬇ CSV exportieren',
 'plan.pay.btn':'💳 Mit MercadoPago bezahlen','plan.pay.processing':'Verarbeitung...','plan.pay.error':'Zahlung konnte nicht gestartet werden. Support kontaktieren.','plan.pay.not_configured':'Online-Zahlung noch nicht konfiguriert. Support kontaktieren.',
 'products.lowstock':'⚠️ {n} Produkt(e) mit niedrigem Lagerbestand (≤5 Einheiten)',
 'support.title':'Technischer Support','support.subtitle':'Sende uns deine Anfrage und wir antworten dir schnellstmöglich.','support.empty':'Noch keine Nachrichten. Schreib uns!','support.placeholder':'Schreib deine Frage hier...','support.send':'Senden','support.loading':'Wird geladen...',
@@ -2025,7 +2048,7 @@ de:{
 'plan.status.expired':'Abonnement abgelaufen','plan.status.expired.sub':'Abgelaufen am {date}. Verlängere, um den Bot weiter zu nutzen.',
 'plan.status.suspended':'Konto deaktiviert','plan.status.suspended.sub':'Dein Konto wurde deaktiviert. Kontaktiere den Support.',
 'plan.banner.suspended':'Dein Konto ist gesperrt.','plan.banner.expired':'Dein Tarif ist abgelaufen. Der Bot ist pausiert.','plan.banner.contact':'Support kontaktieren','plan.banner.view':'Optionen anzeigen',
-'settings.danger.title':'🗑 Konto löschen','settings.danger.desc':'Lösche dauerhaft dein Konto und alle deine Daten. Diese Aktion ist unwiderruflich.','settings.danger.btn':'Mein Konto dauerhaft löschen','settings.danger.confirm1':'Bist du sicher, dass du dein Konto löschen möchtest? Alle deine Daten (Katalog, Bestellungen, Gespräche) werden dauerhaft gelöscht.','settings.danger.confirm2':'Zur Bestätigung, schreib genau: LÖSCHEN','settings.danger.aborted':'Löschung abgebrochen.','settings.danger.deleted':'Konto gelöscht. Auf Wiedersehen!',
+'settings.danger.title':'🗑 Konto löschen','settings.danger.desc':'Lösche dauerhaft dein Konto und alle deine Daten. Diese Aktion ist unwiderruflich.','settings.danger.btn':'Mein Konto dauerhaft löschen','settings.danger.confirm1':'Bist du sicher, dass du dein Konto löschen möchtest? Alle deine Daten (Produkte, Bestellungen, Gespräche) werden dauerhaft gelöscht.','settings.danger.confirm2':'Zur Bestätigung, schreib genau: LÖSCHEN','settings.danger.aborted':'Löschung abgebrochen.','settings.danger.deleted':'Konto gelöscht. Auf Wiedersehen!',
 'orders.status.pending':'Ausstehend','orders.status.confirmed':'Bestätigt','orders.status.preparing':'In Vorbereitung','orders.status.delivering':'Unterwegs','orders.status.delivered':'Geliefert','orders.status.cancelled':'Storniert',
 'orders.name.placeholder':'Kundenname','orders.name.save':'Speichern',
 'chat.title':'Gespräche','chat.search':'Kunde suchen...','chat.empty.title':'Gespräch auswählen','chat.empty.hint':'Antworten erreichen den Kunden über WhatsApp',
@@ -2034,7 +2057,7 @@ de:{
 'chat.confirm':'✅ Bestellung bestätigen','chat.cancel':'❌ Abbrechen','chat.pendingOrder':'🛒 Ausstehende Bestellung:',
 'chat.you':'👤 Du','chat.bot':'🤖 Sara','chat.pending':'Bestellung',
 'chat.errSend':'Fehler beim Senden: ','chat.errSendImg':'Fehler beim Senden des Bildes: ','chat.cancelOrder':'Diese Bestellung stornieren?',
-'img.title':'Bild senden','img.upload':'Foto hochladen','img.choose':'Bild vom Gerät auswählen','img.catalog':'Katalogfotos','img.empty':'Keine Fotos im Katalog','img.loading':'Wird geladen...','img.errLoad':'Ladefehler',
+'img.title':'Bild senden','img.upload':'Foto hochladen','img.choose':'Bild vom Gerät auswählen','img.catalog':'Produktfotos','img.empty':'Keine Produktfotos','img.loading':'Wird geladen...','img.errLoad':'Ladefehler',
 'settings.title':'Einstellungen',
 'settings.language.title':'🌐 Panelsprache','settings.language.desc':'Wähle die Sprache der Verwaltungsoberfläche.',
 'settings.sections.title':'🗂 Aktive Bereiche','settings.sections.desc':'Aktiviere nur die Bereiche, die dein Unternehmen nutzt. Sara bietet nur an, was aktiviert ist.',
@@ -2067,7 +2090,7 @@ de:{
 'settings.legal.title':'📄 Rechtliches','settings.legal.terms':'📋 Nutzungsbedingungen','settings.legal.privacy':'🔒 Datenschutzrichtlinie','settings.legal.disclaimer':'⚠️ Haftungsausschluss','settings.legal.note':'Durch die Nutzung dieses Dienstes akzeptieren Sie die Nutzungsbedingungen.',
 'settings.plan.title':'💳 Tarif & Zahlung','settings.plan.subtitle':'Dein aktives Sara Bot Abonnement.',
 'settings.plan.starter':'Starter','settings.plan.pro':'Pro','settings.plan.enterprise':'Enterprise','settings.plan.popular':'Beliebt','settings.plan.custom':'Auf Anfrage',
-'settings.plan.f1':'1 WhatsApp-Nummer','settings.plan.f2':'Unbegrenzter Katalog','settings.plan.f3':'1.000 Gespräche/Monat','settings.plan.f4':'E-Mail-Support','settings.plan.f5':'5.000 Gespräche/Monat','settings.plan.f6':'Terminkalender','settings.plan.f7':'Prioritäts-Support','settings.plan.f8':'Multi-Nummer','settings.plan.f9':'Unbegrenzte Gespräche','settings.plan.f10':'Individuelle Integrationen','settings.plan.f11':'SLA-Garantie',
+'settings.plan.f1':'1 WhatsApp-Nummer','settings.plan.f2':'Unbegrenzte Produkte','settings.plan.f3':'1.000 Gespräche/Monat','settings.plan.f4':'E-Mail-Support','settings.plan.f5':'5.000 Gespräche/Monat','settings.plan.f6':'Terminkalender','settings.plan.f7':'Prioritäts-Support','settings.plan.f8':'Multi-Nummer','settings.plan.f9':'Unbegrenzte Gespräche','settings.plan.f10':'Individuelle Integrationen','settings.plan.f11':'SLA-Garantie',
 'settings.plan.contact':'Für Abonnements oder Planänderungen kontaktiere uns unter',
 'modal.product.new':'Neues Produkt','modal.product.edit':'Produkt bearbeiten',
 'modal.product.name':'Name *','modal.product.namePh':'Z.B.: Rosenstrauß Rot (12 Stück)',
@@ -2094,7 +2117,7 @@ de:{
 'preset.custom.label':'Benutzerdefiniert','preset.custom.desc':'Schreibe deine eigene Beschreibung',
 'help.title':'❓ Hilfe — Inhaberbefehle',
 'help.desc':'Sende diese Nachrichten von deinem WhatsApp an Sara Bot, um das Geschäft ohne das Webpanel zu verwalten.',
-'help.catalog.title':'📦 Katalogverwaltung','help.catalog.catalogo':'Alle Produkte mit aktuellem Bestand und Preis anzeigen',
+'help.catalog.title':'📦 Produktverwaltung','help.catalog.catalogo':'Alle Produkte mit aktuellem Bestand und Preis anzeigen',
 'help.catalog.stock':'Bestand aktualisieren. Z.B.: <i>STOCK Rote Rosen 25</i>',
 'help.catalog.precio':'Preis ändern. Z.B.: <i>PREIS Rote Rosen 160000</i>',
 'help.catalog.agotado':'Produkt als ausverkauft markieren. Sara bietet es nicht mehr an',
@@ -2102,7 +2125,7 @@ de:{
 'help.catalog.nuevo':'Neues Produkt erstellen. Z.B.: <i>NEU Sonnenblumen|Sträuße|80000|10|Frische Sonnenblumen</i>',
 'help.photos.title':'📸 Produktfotos',
 'help.photos.nombre':'Diese Phrase + ein Foto in derselben Nachricht senden. Das Foto wird gespeichert und Sara zeigt es Kunden, wenn sie nach dem Produkt fragen',
-'help.photos.hint':'💡 Du kannst Fotos auch über das Webpanel hochladen → Katalog → Produkt bearbeiten.',
+'help.photos.hint':'💡 Du kannst Fotos auch über das Webpanel hochladen → Produkte → Produkt bearbeiten.',
 'help.orders.title':'🛒 Bestellungen und Chat-Kontrolle',
 'help.orders.confirmar':'Letzte Bestellung bestätigen. Sara benachrichtigt den Kunden',
 'help.orders.cancelar':'Letzte Bestellung stornieren. Sara benachrichtigt den Kunden',
@@ -2116,22 +2139,23 @@ de:{
 'help.chatpanel.takeover.title':'👤 Manuell eingreifen','help.chatpanel.takeover.desc':'Du kannst jederzeit direkt schreiben. Beim ersten Senden <b>pausiert Sara automatisch</b> — das blaue Banner bestätigt es.',
 'help.chatpanel.takeover.colors':'Deine Nachrichten erscheinen in <span class="font-semibold">Blau</span>, Saras Nachrichten in Grün.',
 'help.chatpanel.resume.title':'🤖 Sara reaktivieren','help.chatpanel.resume.desc':'Drücke <b>"🤖 Sara reaktivieren"</b>. Sara setzt das Gespräch mit vollem Kontext fort.',
-'help.chatpanel.img.title':'🖼 Fotos an Kunden senden','help.chatpanel.img.desc':'Mit dem 🖼 Button kannst du ein Katalogfoto senden oder ein neues Bild hochladen.',
+'help.chatpanel.img.title':'🖼 Fotos an Kunden senden','help.chatpanel.img.desc':'Mit dem 🖼 Button kannst du ein Produktfoto senden oder ein neues Bild hochladen.',
 'help.chatpanel.colors':'<b>Nachrichtenfarben:</b><br>⬜ Weiß (links) = Kundennachrichten<br>🟩 Grün (rechts) = Saras Antworten<br>🟦 Blau (rechts) = deine manuellen Nachrichten',
 'help.other.title':'ℹ️ Weitere WhatsApp-Befehle','help.other.ayuda':'Alle verfügbaren Befehle direkt in WhatsApp anzeigen',
 'help.other.hint':'💡 Befehle sind nicht case-sensitiv.',
-'import.btn':'📥 Katalog importieren','import.title':'📥 Katalog importieren',
+'import.btn':'📥 Produkte importieren','import.title':'📥 Produkte importieren',
 'import.tab.sheets':'Google Sheets','import.tab.csv':'CSV','import.tab.photos':'KI-Fotos',
 'import.how':'📌 Anleitung:','import.sheets.s1':'Öffne die ','import.sheets.template':'Google Sheets Vorlage →',
-'import.sheets.s2':'Kopieren: <b>Datei → Kopie erstellen</b>','import.sheets.s3':'Füll deinen Katalog in der Kopie aus',
+'import.sheets.s2':'Kopieren: <b>Datei → Kopie erstellen</b>','import.sheets.s3':'Füll deine Produkte in der Kopie aus',
 'import.sheets.s4':'Öffentlich teilen: <b>Teilen → Jeder mit dem Link → Betrachter</b>','import.sheets.s5':'Link unten einfügen',
 'import.sheets.urlLabel':'URL deines Google Sheets','import.sheets.urlPh':'https://docs.google.com/spreadsheets/d/...',
 'import.preview.btn':'Vorschau →','import.preview.found':'Gefundene Produkte:','import.preview.back':'← Quelle ändern',
 'import.preview.note':'Produkte mit demselben genauen Namen werden nicht dupliziert.',
 'import.col.name':'Name','import.col.category':'Kategorie','import.col.price':'Preis (Gs)','import.col.stock':'Bestand',
-'import.confirm.btn':'Zum Katalog hinzufügen','import.confirm.done':'Produkte importiert.','import.confirm.skipped':'bereits vorhanden, übersprungen.',
+'import.confirm.btn':'Produkte hinzufügen','import.confirm.done':'Produkte importiert.','import.confirm.skipped':'bereits vorhanden, übersprungen.',
+'import.title.services':'📥 Dienstleistungen importieren','import.sheets.s3.services':'Füll deine Dienstleistungen in der Kopie aus','import.photos.hint.services':'Lade Fotos deiner Dienstleistungen hoch. Claude extrahiert sie automatisch.','import.preview.found.services':'Gefundene Dienstleistungen:','import.confirm.btn.services':'Dienstleistungen hinzufügen','import.confirm.done.services':'Dienstleistungen importiert.',
 'import.csv.hint':'Erwartete Spalten (beliebige Reihenfolge):','import.csv.drop':'CSV-Datei hier klicken oder ablegen',
-'import.photos.hint':'Lade Katalogfotos hoch. Claude extrahiert Produkte automatisch.',
+'import.photos.hint':'Lade Fotos deiner Produkte hoch. Claude extrahiert sie automatisch.',
 'import.photos.drop':'Fotos hier klicken oder ablegen','import.photos.limit':'JPG, PNG — bis zu 6 Bilder','import.photos.btn':'🤖 Produkte mit KI extrahieren',
 'import.error.noUrl':'Füge deine Google Sheet URL ein.','import.error.sheet':'Fehler beim Lesen des Sheets.','import.error.csv':'Fehler beim Lesen der CSV.','import.error.noProducts':'Keine Produkte in den Bildern gefunden.','import.error.generic':'Importfehler.',
 'tab.appointments':'📅 Termine',
@@ -2151,7 +2175,7 @@ de:{
 'wiz.start':'Einrichtung starten →','wiz.back':'← Zurück','wiz.next':'Weiter →',
 'wiz.s1.title':'Willkommen bei Sara Bot!','wiz.s1.subtitle':'In 3 Schritten ist dein WhatsApp-Assistent einsatzbereit.',
 'wiz.s1.i1.title':'Verbinde deine WhatsApp Business-Nummer','wiz.s1.i1.desc':'Wir nutzen die offizielle Meta API — deine Kunden schreiben an deine gewohnte Nummer.',
-'wiz.s1.i2.title':'Katalog einrichten','wiz.s1.i2.desc':'Lade Produkte, Dienstleistungen und Öffnungszeiten im Panel hoch.',
+'wiz.s1.i2.title':'Richte deine Produkte ein','wiz.s1.i2.desc':'Lade Produkte, Dienstleistungen und Öffnungszeiten im Panel hoch.',
 'wiz.s1.i3.title':'Sara beginnt zu antworten','wiz.s1.i3.desc':'Dein Bot bearbeitet Bestellungen und Buchungen 24/7 automatisch.',
 'wiz.s2.title':'WhatsApp Business verbinden','wiz.s2.subtitle':'Autorisiere Sara Bot, deine offizielle WhatsApp Business-Nummer zu verwenden.',
 'wiz.s2.success':'WhatsApp erfolgreich verbunden.','wiz.s2.fb_btn':'Mit Facebook / Meta verbinden',
@@ -2160,7 +2184,7 @@ de:{
 'wiz.s3.title':'Deine persönliche WhatsApp-Nummer','wiz.s3.subtitle':'Wir nutzen sie, um dir Bestellbenachrichtigungen zu senden und damit du den Bot über WhatsApp verwalten kannst.',
 'wiz.s3.label':'Deine WhatsApp-Nummer (mit Ländervorwahl, ohne +)','wiz.s3.example':'Beispiel: 4917612345678 (Deutschland), 393331234567 (Italien)',
 'wiz.s4.title':'Alles bereit!','wiz.s4.subtitle':'Dein WhatsApp Business ist verbunden. Sara kann jetzt deine Kunden bedienen.',
-'wiz.s4.hint':'Richte jetzt deinen Produkt- oder Dienstleistungskatalog ein, damit Sara weiß, was sie anbieten soll.',
+'wiz.s4.hint':'Richte jetzt deine Produkte oder Dienstleistungen ein, damit Sara weiß, was sie anbieten soll.',
 'wiz.s4.connected':'Verbundene Nummer:','wiz.s4.personal':'✅ Persönliche Nummer registriert','wiz.s4.active':'✅ Bot aktiv und bereit zu antworten',
 'wiz.s4.webhook':'✅ Webhook automatisch konfiguriert','wiz.s4.btn':'Zum Dashboard →',
 'wiz.token_error':'⚠️ Deine WhatsApp-Verbindung hat ein Problem. Verbinde dein Konto erneut, damit Sara weiterarbeiten kann.',
@@ -2169,9 +2193,7 @@ de:{
 'analytics.title':'📊 Analytics','analytics.week':'7 Tage','analytics.month':'30 Tage',
 'analytics.kpi.orders':'Bestellungen','analytics.kpi.revenue':'Einnahmen','analytics.kpi.avg':'Ø Bestellwert',
 'analytics.kpi.customers':'Unique Kunden','analytics.kpi.cancelled':'Storniert','analytics.kpi.convs':'Aktive Gespräche',
-'analytics.chart.title':'Bestellungen pro Tag','analytics.top.title':'🏆 Meistbestellte Produkte','analytics.top.empty':'Keine Bestellungen in diesem Zeitraum.',
-'analytics.export.title':'⬇ Daten exportieren','analytics.export.orders':'🛒 Bestellungen CSV','analytics.export.products':'📦 Katalog CSV','analytics.export.customers':'👥 Kunden CSV',
-'notif.new_order':'Neue Bestellung','notif.view':'Bestellung ansehen',
+'analytics.chart.title':'Bestellungen pro Tag','analytics.top.title':'🏆 Meistbestellte Produkte','analytics.top.empty':'Keine Bestellungen in diesem Zeitraum.','notif.new_order':'Neue Bestellung','notif.view':'Bestellung ansehen',
 },
 fr:{
 'login.user':'Utilisateur','login.password':'Mot de passe','login.submit':'Se connecter','login.hint':'Utilisez l\'email et le mot de passe choisis lors de l\'inscription.',
@@ -2181,13 +2203,14 @@ fr:{
 'login.title':'Se connecter','login.register':'Pas encore de compte ? Commencer gratuitement →',
 'tab.chats':'💬 Chats','tab.products':'📦 Produits','tab.services':'🛠 Services','tab.orders':'🛒 Commandes','tab.settings':'⚙️ Paramètres','tab.help':'❓ Aide',
 'stat.today':'Commandes aujourd\'hui','stat.pending':'En attente','stat.revenue':'Revenus aujourd\'hui','stat.products':'Produits actifs',
-'products.title':'Catalogue de produits','products.new':'+ Nouveau produit',
+'products.title':'Produits','products.new':'+ Nouveau produit',
 'products.col.product':'Produit','products.col.category':'Catégorie','products.col.price':'Prix (Gs)','products.col.stock':'Stock','products.col.status':'Statut','products.col.actions':'Actions',
 'products.loading':'Chargement...','products.empty':'Aucun produit dans cette catégorie.','products.filter.all':'Tous','products.active':'✅ Actif','products.sold':'🔴 Épuisé',
-'services.title':'Catalogue de services','services.new':'+ Nouveau service','services.loading':'Chargement...','services.error':'Erreur de chargement des services.',
+'services.title':'Services','services.new':'+ Nouveau service','services.loading':'Chargement...','services.error':'Erreur de chargement des services.','services.import':'📥 Importer des services',
 'services.empty.title':'Aucun service encore','services.empty.hint':'Créez votre premier service avec le bouton ci-dessus',
 'services.active':'Actif','services.inactive':'Inactif','services.edit':'✏️ Modifier','services.delete':'🗑 Supprimer','services.perHour':'/h','services.confirm':'Supprimer ce service ?',
 'orders.title':'Commandes récentes','orders.refresh':'↻ Actualiser','orders.export':'⬇ Exporter CSV','orders.loading':'Chargement...','orders.empty':'Aucune commande pour l\'instant.','orders.delivery':'+livraison','orders.filter.all':'Tous',
+'tab.customers':'👥 Clients','customers.title':'Clients','customers.export':'⬇ Exporter CSV','customers.col.name':'Nom','customers.col.phone':'Téléphone','customers.col.lastContact':'Dernier contact','customers.col.actions':'Actions','customers.empty':'Aucun client pour l\'instant.','customers.noName':'Sans nom','customers.editName':'Modifier le nom','products.export':'⬇ Exporter CSV','services.export':'⬇ Exporter CSV',
 'plan.pay.btn':'💳 Payer avec MercadoPago','plan.pay.processing':'Traitement...','plan.pay.error':'Impossible de démarrer le paiement. Contactez le support.','plan.pay.not_configured':'Le paiement en ligne n\'est pas encore configuré. Contactez le support.',
 'products.lowstock':'⚠️ {n} produit(s) avec stock faible (≤5 unités)',
 'support.title':'Support technique','support.subtitle':'Envoyez-nous votre question et nous vous répondrons rapidement.','support.empty':'Pas encore de messages. Écrivez-nous !','support.placeholder':'Écrivez votre question ici...','support.send':'Envoyer','support.loading':'Chargement...',
@@ -2201,7 +2224,7 @@ fr:{
 'plan.status.expired':'Abonnement expiré','plan.status.expired.sub':'Expiré le {date}. Renouvelez pour continuer à utiliser le bot.',
 'plan.status.suspended':'Compte désactivé','plan.status.suspended.sub':'Votre compte a été désactivé. Contactez le support.',
 'plan.banner.suspended':'Votre compte est suspendu.','plan.banner.expired':'Votre plan a expiré. Le bot est en pause.','plan.banner.contact':'Contacter le support','plan.banner.view':'Voir les options',
-'settings.danger.title':'🗑 Supprimer le compte','settings.danger.desc':'Supprimez définitivement votre compte et toutes vos données. Cette action est irréversible.','settings.danger.btn':'Supprimer définitivement mon compte','settings.danger.confirm1':'Êtes-vous sûr de vouloir supprimer votre compte ? Toutes vos données (catalogue, commandes, conversations) seront effacées définitivement.','settings.danger.confirm2':'Pour confirmer, tapez exactement : SUPPRIMER','settings.danger.aborted':'Suppression annulée.','settings.danger.deleted':'Compte supprimé. Au revoir !',
+'settings.danger.title':'🗑 Supprimer le compte','settings.danger.desc':'Supprimez définitivement votre compte et toutes vos données. Cette action est irréversible.','settings.danger.btn':'Supprimer définitivement mon compte','settings.danger.confirm1':'Êtes-vous sûr de vouloir supprimer votre compte ? Toutes vos données (produits, commandes, conversations) seront effacées définitivement.','settings.danger.confirm2':'Pour confirmer, tapez exactement : SUPPRIMER','settings.danger.aborted':'Suppression annulée.','settings.danger.deleted':'Compte supprimé. Au revoir !',
 'orders.status.pending':'En attente','orders.status.confirmed':'Confirmé','orders.status.preparing':'En préparation','orders.status.delivering':'En route','orders.status.delivered':'Livré','orders.status.cancelled':'Annulé',
 'orders.name.placeholder':'Nom du client','orders.name.save':'Enregistrer',
 'chat.title':'Conversations','chat.search':'Rechercher un client...','chat.empty.title':'Sélectionnez une conversation','chat.empty.hint':'Les réponses parviennent au client via WhatsApp',
@@ -2210,7 +2233,7 @@ fr:{
 'chat.confirm':'✅ Confirmer la commande','chat.cancel':'❌ Annuler','chat.pendingOrder':'🛒 Commande en attente :',
 'chat.you':'👤 Vous','chat.bot':'🤖 Sara','chat.pending':'Commande',
 'chat.errSend':'Erreur d\'envoi : ','chat.errSendImg':'Erreur d\'envoi de l\'image : ','chat.cancelOrder':'Annuler cette commande ?',
-'img.title':'Envoyer une image','img.upload':'Télécharger une photo','img.choose':'Choisir une image depuis l\'appareil','img.catalog':'Photos du catalogue','img.empty':'Aucune photo dans le catalogue','img.loading':'Chargement...','img.errLoad':'Erreur de chargement',
+'img.title':'Envoyer une image','img.upload':'Télécharger une photo','img.choose':'Choisir une image depuis l\'appareil','img.catalog':'Photos de produits','img.empty':'Aucune photo de produit','img.loading':'Chargement...','img.errLoad':'Erreur de chargement',
 'settings.title':'Paramètres',
 'settings.language.title':'🌐 Langue du panneau','settings.language.desc':'Choisissez la langue de l\'interface d\'administration.',
 'settings.sections.title':'🗂 Sections actives','settings.sections.desc':'Activez uniquement les sections que votre entreprise utilise. Sara n\'offrira que ce qui est activé.',
@@ -2243,7 +2266,7 @@ fr:{
 'settings.legal.title':'📄 Mentions légales','settings.legal.terms':'📋 Conditions d\'utilisation','settings.legal.privacy':'🔒 Politique de confidentialité','settings.legal.disclaimer':'⚠️ Avertissement','settings.legal.note':'En utilisant ce service vous acceptez les conditions générales.',
 'settings.plan.title':'💳 Abonnement et paiements','settings.plan.subtitle':'Votre abonnement Sara Bot actif.',
 'settings.plan.starter':'Starter','settings.plan.pro':'Pro','settings.plan.enterprise':'Enterprise','settings.plan.popular':'Populaire','settings.plan.custom':'Sur devis',
-'settings.plan.f1':'1 numéro WhatsApp','settings.plan.f2':'Catalogue illimité','settings.plan.f3':'1 000 conv./mois','settings.plan.f4':'Support par email','settings.plan.f5':'5 000 conv./mois','settings.plan.f6':'Agenda de rendez-vous','settings.plan.f7':'Support prioritaire','settings.plan.f8':'Multi-numéro','settings.plan.f9':'Conversations illimitées','settings.plan.f10':'Intégrations sur mesure','settings.plan.f11':'SLA garanti',
+'settings.plan.f1':'1 numéro WhatsApp','settings.plan.f2':'Produits illimités','settings.plan.f3':'1 000 conv./mois','settings.plan.f4':'Support par email','settings.plan.f5':'5 000 conv./mois','settings.plan.f6':'Agenda de rendez-vous','settings.plan.f7':'Support prioritaire','settings.plan.f8':'Multi-numéro','settings.plan.f9':'Conversations illimitées','settings.plan.f10':'Intégrations sur mesure','settings.plan.f11':'SLA garanti',
 'settings.plan.contact':'Pour souscrire ou changer de plan, contactez-nous à',
 'modal.product.new':'Nouveau produit','modal.product.edit':'Modifier le produit',
 'modal.product.name':'Nom *','modal.product.namePh':'Ex : Bouquet de Roses Rouges (12 unités)',
@@ -2270,7 +2293,7 @@ fr:{
 'preset.custom.label':'Personnalisée','preset.custom.desc':'Écrivez votre propre description',
 'help.title':'❓ Aide — Commandes du propriétaire',
 'help.desc':'Envoyez ces messages depuis votre WhatsApp au numéro de Sara Bot pour gérer l\'activité sans ouvrir le panneau web.',
-'help.catalog.title':'📦 Gestion du catalogue','help.catalog.catalogo':'Voir tous les produits avec le stock et le prix actuels',
+'help.catalog.title':'📦 Gestion des produits','help.catalog.catalogo':'Voir tous les produits avec le stock et le prix actuels',
 'help.catalog.stock':'Mettre à jour le stock. Ex : <i>STOCK Roses Rouges 25</i>',
 'help.catalog.precio':'Changer le prix. Ex : <i>PRIX Roses Rouges 160000</i>',
 'help.catalog.agotado':'Marquer un produit comme épuisé. Sara arrêtera de le proposer',
@@ -2278,7 +2301,7 @@ fr:{
 'help.catalog.nuevo':'Créer un nouveau produit. Ex : <i>NOUVEAU Tournesols|Bouquets|80000|10|Tournesols frais</i>',
 'help.photos.title':'📸 Photos des produits',
 'help.photos.nombre':'Envoyer cette phrase + une photo dans le même message. La photo est sauvegardée et Sara la montrera aux clients',
-'help.photos.hint':'💡 Vous pouvez aussi télécharger des photos depuis le panneau web → Catalogue → modifier le produit.',
+'help.photos.hint':'💡 Vous pouvez aussi télécharger des photos depuis le panneau web → Produits → modifier le produit.',
 'help.orders.title':'🛒 Commandes et contrôle du chat',
 'help.orders.confirmar':'Confirmer la dernière commande en attente. Sara notifie le client',
 'help.orders.cancelar':'Annuler la dernière commande en attente. Sara notifie le client',
@@ -2292,22 +2315,23 @@ fr:{
 'help.chatpanel.takeover.title':'👤 Intervenir manuellement','help.chatpanel.takeover.desc':'Vous pouvez écrire directement au client depuis le panneau. Au premier message, <b>Sara se met en pause</b> — le banner bleu le confirme.',
 'help.chatpanel.takeover.colors':'Vos messages apparaissent en <span class="font-semibold">bleu</span>, les messages de Sara en vert.',
 'help.chatpanel.resume.title':'🤖 Réactiver Sara','help.chatpanel.resume.desc':'Appuyez sur <b>"🤖 Réactiver Sara"</b>. Sara reprend la conversation avec tout le contexte.',
-'help.chatpanel.img.title':'🖼 Envoyer des photos au client','help.chatpanel.img.desc':'Avec le bouton 🖼 vous pouvez envoyer une photo du catalogue ou en télécharger une nouvelle depuis votre appareil.',
+'help.chatpanel.img.title':'🖼 Envoyer des photos au client','help.chatpanel.img.desc':'Avec le bouton 🖼 vous pouvez envoyer une photo d\'un produit existant ou en télécharger une nouvelle depuis votre appareil.',
 'help.chatpanel.colors':'<b>Couleurs des messages :</b><br>⬜ Blanc (gauche) = messages du client<br>🟩 Vert (droite) = réponses automatiques de Sara<br>🟦 Bleu (droite) = messages envoyés manuellement',
 'help.other.title':'ℹ️ Autres commandes WhatsApp','help.other.ayuda':'Voir toutes les commandes disponibles directement dans WhatsApp',
 'help.other.hint':'💡 Les commandes ne sont pas sensibles à la casse.',
-'import.btn':'📥 Importer le catalogue','import.title':'📥 Importer le catalogue',
+'import.btn':'📥 Importer des produits','import.title':'📥 Importer des produits',
 'import.tab.sheets':'Google Sheets','import.tab.csv':'CSV','import.tab.photos':'Photos IA',
 'import.how':'📌 Comment utiliser :','import.sheets.s1':'Ouvrez le ','import.sheets.template':'modèle Google Sheets →',
-'import.sheets.s2':'Faites une copie : <b>Fichier → Faire une copie</b>','import.sheets.s3':'Remplissez votre catalogue dans la copie',
+'import.sheets.s2':'Faites une copie : <b>Fichier → Faire une copie</b>','import.sheets.s3':'Remplissez vos produits dans la copie',
 'import.sheets.s4':'Partagez en public : <b>Partager → Toute personne ayant le lien → Lecteur</b>','import.sheets.s5':'Collez le lien ci-dessous',
 'import.sheets.urlLabel':'URL de votre Google Sheet','import.sheets.urlPh':'https://docs.google.com/spreadsheets/d/...',
 'import.preview.btn':'Aperçu →','import.preview.found':'Produits trouvés :','import.preview.back':'← Changer la source',
 'import.preview.note':'Les produits avec le même nom exact ne seront pas dupliqués.',
 'import.col.name':'Nom','import.col.category':'Catégorie','import.col.price':'Prix (Gs)','import.col.stock':'Stock',
-'import.confirm.btn':'Ajouter au catalogue','import.confirm.done':'produits importés.','import.confirm.skipped':'déjà existants, ignorés.',
+'import.confirm.btn':'Ajouter des produits','import.confirm.done':'produits importés.','import.confirm.skipped':'déjà existants, ignorés.',
+'import.title.services':'📥 Importer des services','import.sheets.s3.services':'Remplissez vos services dans la copie','import.photos.hint.services':'Téléchargez des photos de vos services. Claude les extrait automatiquement.','import.preview.found.services':'Services trouvés :','import.confirm.btn.services':'Ajouter des services','import.confirm.done.services':'services importés.',
 'import.csv.hint':'Colonnes attendues (dans n\'importe quel ordre) :','import.csv.drop':'Cliquez ou déposez votre fichier CSV ici',
-'import.photos.hint':'Téléchargez des photos du catalogue. Claude extrait les produits automatiquement.',
+'import.photos.hint':'Téléchargez des photos de vos produits. Claude les extrait automatiquement.',
 'import.photos.drop':'Cliquez ou déposez les photos ici','import.photos.limit':'JPG, PNG — jusqu\'à 6 images','import.photos.btn':'🤖 Extraire les produits avec l\'IA',
 'import.error.noUrl':'Collez l\'URL de votre Google Sheet.','import.error.sheet':'Erreur lors de la lecture du Sheet.','import.error.csv':'Erreur lors de la lecture du CSV.','import.error.noProducts':'Aucun produit trouvé dans les images.','import.error.generic':'Erreur lors de l\'importation.',
 'tab.appointments':'📅 Rendez-vous',
@@ -2327,7 +2351,7 @@ fr:{
 'wiz.start':'Démarrer la configuration →','wiz.back':'← Retour','wiz.next':'Continuer →',
 'wiz.s1.title':'Bienvenue sur Sara Bot !','wiz.s1.subtitle':'En 3 étapes, ton assistant WhatsApp sera opérationnel.',
 'wiz.s1.i1.title':'Connecte ton numéro WhatsApp Business','wiz.s1.i1.desc':'Nous utilisons l\'API officielle de Meta — tes clients écrivent à ton numéro habituel.',
-'wiz.s1.i2.title':'Configure ton catalogue','wiz.s1.i2.desc':'Ajoute produits, services et horaires depuis le panneau.',
+'wiz.s1.i2.title':'Configure tes produits','wiz.s1.i2.desc':'Ajoute produits, services et horaires depuis le panneau.',
 'wiz.s1.i3.title':'Sara commence à répondre','wiz.s1.i3.desc':'Ton bot gère commandes et réservations 24h/24 automatiquement.',
 'wiz.s2.title':'Connecter WhatsApp Business','wiz.s2.subtitle':'Autorise Sara Bot à utiliser ton numéro WhatsApp Business officiel.',
 'wiz.s2.success':'WhatsApp connecté avec succès.','wiz.s2.fb_btn':'Connecter avec Facebook / Meta',
@@ -2336,7 +2360,7 @@ fr:{
 'wiz.s3.title':'Ton numéro WhatsApp personnel','wiz.s3.subtitle':'Nous l\'utiliserons pour t\'envoyer des notifications de commandes et pour gérer le bot depuis WhatsApp.',
 'wiz.s3.label':'Ton numéro WhatsApp (avec indicatif pays, sans +)','wiz.s3.example':'Exemple : 33612345678 (France), 393331234567 (Italie)',
 'wiz.s4.title':'Tout est prêt !','wiz.s4.subtitle':'Ton WhatsApp Business est connecté. Sara peut maintenant servir tes clients.',
-'wiz.s4.hint':'Configure maintenant ton catalogue de produits ou services pour que Sara sache quoi proposer.',
+'wiz.s4.hint':'Configure maintenant tes produits ou services pour que Sara sache quoi proposer.',
 'wiz.s4.connected':'Numéro connecté :','wiz.s4.personal':'✅ Numéro personnel enregistré','wiz.s4.active':'✅ Bot actif et prêt à répondre',
 'wiz.s4.webhook':'✅ Webhook configuré automatiquement','wiz.s4.btn':'Aller au tableau de bord →',
 'wiz.token_error':'⚠️ Ta connexion WhatsApp a un problème. Reconnecte ton compte pour que Sara continue à fonctionner.',
@@ -2345,9 +2369,7 @@ fr:{
 'analytics.title':'📊 Analytics','analytics.week':'7 jours','analytics.month':'30 jours',
 'analytics.kpi.orders':'Commandes','analytics.kpi.revenue':'Revenus','analytics.kpi.avg':'Panier moyen',
 'analytics.kpi.customers':'Clients uniques','analytics.kpi.cancelled':'Annulées','analytics.kpi.convs':'Conversations actives',
-'analytics.chart.title':'Commandes par jour','analytics.top.title':'🏆 Produits les plus commandés','analytics.top.empty':'Aucune commande sur cette période.',
-'analytics.export.title':'⬇ Exporter les données','analytics.export.orders':'🛒 Commandes CSV','analytics.export.products':'📦 Catalogue CSV','analytics.export.customers':'👥 Clients CSV',
-'notif.new_order':'Nouvelle commande','notif.view':'Voir la commande',
+'analytics.chart.title':'Commandes par jour','analytics.top.title':'🏆 Produits les plus commandés','analytics.top.empty':'Aucune commande sur cette période.','notif.new_order':'Nouvelle commande','notif.view':'Voir la commande',
 },
 pt:{
 'login.user':'Usuário','login.password':'Senha','login.submit':'Entrar','login.hint':'Use o email e a senha que escolheu no cadastro.',
@@ -2357,14 +2379,15 @@ pt:{
 'login.title':'Entrar','login.register':'Não tem conta? Começar grátis →',
 'tab.chats':'💬 Chats','tab.products':'📦 Produtos','tab.services':'🛠 Serviços','tab.orders':'🛒 Pedidos','tab.settings':'⚙️ Configurações','tab.help':'❓ Ajuda','tab.plan':'💳 Plano','tab.analytics':'📊 Analytics','tab.appointments':'📅 Agendamentos',
 'stat.today':'Pedidos hoje','stat.pending':'Pendentes','stat.revenue':'Receita hoje','stat.products':'Produtos ativos',
-'products.title':'Catálogo de produtos','products.new':'+ Novo produto',
+'products.title':'Produtos','products.new':'+ Novo produto',
 'products.col.product':'Produto','products.col.category':'Categoria','products.col.price':'Preço (Gs)','products.col.stock':'Estoque','products.col.status':'Status','products.col.actions':'Ações',
 'products.loading':'Carregando...','products.empty':'Nenhum produto nesta categoria.','products.filter.all':'Todos','products.active':'✅ Ativo','products.sold':'🔴 Esgotado',
 'products.search':'Buscar por nome ou código...','products.lowstock':'⚠️ {n} produto(s) com estoque baixo (≤5 unidades)',
-'services.title':'Catálogo de serviços','services.new':'+ Novo serviço','services.loading':'Carregando...','services.error':'Erro ao carregar serviços.',
+'services.title':'Serviços','services.new':'+ Novo serviço','services.loading':'Carregando...','services.error':'Erro ao carregar serviços.','services.import':'📥 Importar serviços',
 'services.empty.title':'Ainda sem serviços','services.empty.hint':'Crie seu primeiro serviço com o botão acima',
 'services.active':'Ativo','services.inactive':'Inativo','services.edit':'✏️ Editar','services.delete':'🗑 Excluir','services.perHour':'/hora','services.confirm':'Excluir este serviço?',
 'orders.title':'Pedidos recentes','orders.refresh':'↻ Atualizar','orders.export':'⬇ Exportar CSV','orders.loading':'Carregando...','orders.empty':'Ainda não há pedidos.','orders.delivery':'+entrega','orders.filter.all':'Todos',
+'tab.customers':'👥 Clientes','customers.title':'Clientes','customers.export':'⬇ Exportar CSV','customers.col.name':'Nome','customers.col.phone':'Telefone','customers.col.lastContact':'Último contato','customers.col.actions':'Ações','customers.empty':'Ainda não há clientes.','customers.noName':'Sem nome','customers.editName':'Editar nome','products.export':'⬇ Exportar CSV','services.export':'⬇ Exportar CSV',
 'orders.status.pending':'Pendente','orders.status.confirmed':'Confirmado','orders.status.preparing':'Preparando','orders.status.delivering':'Em entrega','orders.status.delivered':'Entregue','orders.status.cancelled':'Cancelado',
 'orders.name.placeholder':'Nome do cliente','orders.name.save':'Salvar',
 'support.title':'Suporte técnico','support.subtitle':'Envie sua dúvida e responderemos em breve.','support.empty':'Ainda não há mensagens. Escreva-nos!','support.placeholder':'Escreva sua dúvida aqui...','support.send':'Enviar','support.loading':'Carregando...',
@@ -2385,7 +2408,7 @@ pt:{
 'chat.confirm':'✅ Confirmar pedido','chat.cancel':'❌ Cancelar','chat.pendingOrder':'🛒 Pedido pendente:',
 'chat.you':'👤 Você','chat.bot':'🤖 Sara','chat.pending':'Pedido',
 'chat.errSend':'Erro ao enviar: ','chat.errSendImg':'Erro ao enviar imagem: ','chat.cancelOrder':'Cancelar este pedido?',
-'img.title':'Enviar imagem','img.upload':'Enviar foto','img.choose':'Escolher imagem do dispositivo','img.catalog':'Fotos do catálogo','img.empty':'Sem fotos no catálogo','img.loading':'Carregando...','img.errLoad':'Erro ao carregar',
+'img.title':'Enviar imagem','img.upload':'Enviar foto','img.choose':'Escolher imagem do dispositivo','img.catalog':'Fotos de produtos','img.empty':'Sem fotos de produtos','img.loading':'Carregando...','img.errLoad':'Erro ao carregar',
 'settings.title':'Configurações',
 'settings.language.title':'🌐 Idioma do painel','settings.language.desc':'Escolha o idioma da interface de administração.',
 'settings.sections.title':'🗂 Seções ativas','settings.sections.desc':'Ative apenas as seções que seu negócio usa. Sara só oferecerá o que estiver habilitado.',
@@ -2418,7 +2441,7 @@ pt:{
 'settings.legal.title':'📄 Legal','settings.legal.terms':'📋 Termos de Serviço','settings.legal.privacy':'🔒 Política de Privacidade','settings.legal.disclaimer':'⚠️ Aviso Legal','settings.legal.note':'Ao usar este serviço você aceita os termos e condições.',
 'settings.plan.title':'💳 Plano e pagamentos','settings.plan.subtitle':'Sua assinatura ativa do Sara Bot.',
 'settings.plan.starter':'Starter','settings.plan.pro':'Pro','settings.plan.enterprise':'Enterprise','settings.plan.popular':'Popular','settings.plan.custom':'Consultar',
-'settings.plan.f1':'1 número WhatsApp','settings.plan.f2':'Catálogo ilimitado','settings.plan.f3':'1.000 conv./mês','settings.plan.f4':'Suporte por e-mail','settings.plan.f5':'5.000 conv./mês','settings.plan.f6':'Agenda de horários','settings.plan.f7':'Suporte prioritário','settings.plan.f8':'Multi-número','settings.plan.f9':'Conversas ilimitadas','settings.plan.f10':'Integrações personalizadas','settings.plan.f11':'SLA garantido',
+'settings.plan.f1':'1 número WhatsApp','settings.plan.f2':'Produtos ilimitados','settings.plan.f3':'1.000 conv./mês','settings.plan.f4':'Suporte por e-mail','settings.plan.f5':'5.000 conv./mês','settings.plan.f6':'Agenda de horários','settings.plan.f7':'Suporte prioritário','settings.plan.f8':'Multi-número','settings.plan.f9':'Conversas ilimitadas','settings.plan.f10':'Integrações personalizadas','settings.plan.f11':'SLA garantido',
 'settings.plan.contact':'Para contratar ou mudar de plano, fale conosco em',
 'modal.product.new':'Novo produto','modal.product.edit':'Editar produto',
 'modal.product.name':'Nome *','modal.product.namePh':'Ex: Buquê de Rosas Vermelhas (12 unidades)',
@@ -2444,7 +2467,7 @@ pt:{
 'preset.custom.label':'Personalizada','preset.custom.desc':'Escreva sua própria descrição',
 'help.title':'❓ Ajuda — Comandos do proprietário',
 'help.desc':'Envie essas mensagens do seu WhatsApp para o número do Sara Bot para gerenciar o negócio sem abrir o painel web.',
-'help.catalog.title':'📦 Gestão do catálogo',
+'help.catalog.title':'📦 Gestão de produtos',
 'help.catalog.catalogo':'Ver todos os produtos com estoque e preço atuais',
 'help.catalog.stock':'Atualizar o estoque de um produto. Ex: <i>STOCK Rosas Vermelhas 25</i>',
 'help.catalog.precio':'Alterar preço em guaranis. Ex: <i>PRECIO Rosas Vermelhas 160000</i>',
@@ -2453,7 +2476,7 @@ pt:{
 'help.catalog.nuevo':'Criar um novo produto. Ex: <i>NUEVO Girassóis|Buquês|80000|10|Girassóis frescos</i>',
 'help.photos.title':'📸 Fotos de produtos',
 'help.photos.nombre':'Envie esta frase + uma foto na mesma mensagem. A foto é salva e Sara a mostrará aos clientes quando perguntarem por esse produto',
-'help.photos.hint':'💡 Você também pode enviar fotos pelo painel web → Catálogo → editar produto.',
+'help.photos.hint':'💡 Você também pode enviar fotos pelo painel web → Produtos → editar produto.',
 'help.orders.title':'🛒 Pedidos e controle do chat',
 'help.orders.confirmar':'Confirmar o último pedido pendente. Sara notifica o cliente',
 'help.orders.cancelar':'Cancelar o último pedido pendente. Sara notifica o cliente',
@@ -2467,22 +2490,23 @@ pt:{
 'help.chatpanel.takeover.title':'👤 Intervir manualmente em um chat','help.chatpanel.takeover.desc':'Você pode escrever diretamente ao cliente a qualquer momento pelo painel. Ao enviar sua primeira mensagem, <b>Sara pausa automaticamente</b> neste chat — o banner azul "Modo manual ativo" confirma que o bot está em pausa.',
 'help.chatpanel.takeover.colors':'Suas mensagens aparecem em <span class="font-semibold">azul</span> para se distinguirem das mensagens automáticas de Sara (em verde).',
 'help.chatpanel.resume.title':'🤖 Reativar Sara','help.chatpanel.resume.desc':'Quando terminar de falar com o cliente, pressione o botão <b>"🤖 Reativar Sara"</b> no topo do chat. Sara retoma a conversa com todo o contexto, incluindo o que você escreveu.',
-'help.chatpanel.img.title':'🖼 Enviar fotos ao cliente','help.chatpanel.img.desc':'Com o botão 🖼 você pode enviar uma foto do catálogo existente ou enviar uma nova imagem diretamente do seu dispositivo. A foto chega ao cliente via WhatsApp.',
+'help.chatpanel.img.title':'🖼 Enviar fotos ao cliente','help.chatpanel.img.desc':'Com o botão 🖼 você pode enviar uma foto de um produto existente ou enviar uma nova imagem diretamente do seu dispositivo. A foto chega ao cliente via WhatsApp.',
 'help.chatpanel.colors':'<b>Cores das mensagens no painel:</b><br>⬜ Branco (esquerda) = mensagens do cliente<br>🟩 Verde (direita) = respostas automáticas de Sara<br>🟦 Azul (direita) = mensagens enviadas por você manualmente',
 'help.other.title':'ℹ️ Outros comandos WhatsApp','help.other.ayuda':'Ver todos os comandos disponíveis diretamente no WhatsApp',
 'help.other.hint':'💡 Os comandos não diferenciam maiúsculas/minúsculas. Você pode escrever "catalogo", "CATALOGO" ou "Catalogo".',
-'import.btn':'📥 Importar catálogo','import.title':'📥 Importar catálogo',
+'import.btn':'📥 Importar produtos','import.title':'📥 Importar produtos',
 'import.tab.sheets':'Google Sheets','import.tab.csv':'CSV','import.tab.photos':'Fotos IA',
 'import.how':'📌 Como usar:','import.sheets.s1':'Abra o ','import.sheets.template':'template do Google Sheets →',
-'import.sheets.s2':'Faça uma cópia: <b>Arquivo → Fazer uma cópia</b>','import.sheets.s3':'Preencha seu catálogo na cópia',
+'import.sheets.s2':'Faça uma cópia: <b>Arquivo → Fazer uma cópia</b>','import.sheets.s3':'Preencha seus produtos na cópia',
 'import.sheets.s4':'Compartilhe como público: <b>Compartilhar → Qualquer pessoa com o link → Leitor</b>','import.sheets.s5':'Cole o link abaixo',
 'import.sheets.urlLabel':'URL do seu Google Sheet','import.sheets.urlPh':'https://docs.google.com/spreadsheets/d/...',
 'import.preview.btn':'Pré-visualizar →','import.preview.found':'Produtos encontrados:','import.preview.back':'← Mudar fonte',
 'import.preview.note':'Produtos com o mesmo nome exato não serão duplicados.',
 'import.col.name':'Nome','import.col.category':'Categoria','import.col.price':'Preço (Gs)','import.col.stock':'Estoque',
-'import.confirm.btn':'Adicionar ao catálogo','import.confirm.done':'produtos importados.','import.confirm.skipped':'já existiam e foram ignorados.',
+'import.confirm.btn':'Adicionar produtos','import.confirm.done':'produtos importados.','import.confirm.skipped':'já existiam e foram ignorados.',
+'import.title.services':'📥 Importar serviços','import.sheets.s3.services':'Preencha seus serviços na cópia','import.photos.hint.services':'Envie fotos dos seus serviços. Claude os extrai automaticamente.','import.preview.found.services':'Serviços encontrados:','import.confirm.btn.services':'Adicionar serviços','import.confirm.done.services':'serviços importados.',
 'import.csv.hint':'Colunas esperadas (em qualquer ordem):','import.csv.drop':'Clique ou arraste seu arquivo CSV aqui',
-'import.photos.hint':'Envie fotos do catálogo. Claude extrai os produtos automaticamente.','import.photos.drop':'Clique ou arraste as fotos aqui','import.photos.limit':'JPG, PNG — até 6 imagens','import.photos.btn':'🤖 Extrair produtos com IA',
+'import.photos.hint':'Envie fotos dos seus produtos. Claude os extrai automaticamente.','import.photos.drop':'Clique ou arraste as fotos aqui','import.photos.limit':'JPG, PNG — até 6 imagens','import.photos.btn':'🤖 Extrair produtos com IA',
 'import.error.noUrl':'Cole a URL do seu Google Sheet.','import.error.sheet':'Erro ao ler o Sheet.','import.error.csv':'Erro ao ler o CSV.','import.error.noProducts':'Nenhum produto encontrado nas imagens.','import.error.generic':'Erro ao importar.',
 'appt.today':'Hoje','appt.addBlock':'🚫 Adicionar bloqueio','appt.newAppt':'+ Agendamento',
 'appt.legend.free':'Livre','appt.legend.confirmed':'Confirmado','appt.legend.pending':'Pendente','appt.legend.blocked':'Bloqueado','appt.legend.outside':'Fora do horário',
@@ -2500,7 +2524,7 @@ pt:{
 'wiz.start':'Iniciar configuração →','wiz.back':'← Voltar','wiz.next':'Continuar →',
 'wiz.s1.title':'Bem-vindo ao Sara Bot!','wiz.s1.subtitle':'Em 3 passos seu assistente WhatsApp estará funcionando.',
 'wiz.s1.i1.title':'Conecte seu número WhatsApp Business','wiz.s1.i1.desc':'Usamos a API oficial da Meta — seus clientes escrevem para o seu número habitual.',
-'wiz.s1.i2.title':'Configure seu catálogo','wiz.s1.i2.desc':'Adicione produtos, serviços e horários pelo painel.',
+'wiz.s1.i2.title':'Configure seus produtos','wiz.s1.i2.desc':'Adicione produtos, serviços e horários pelo painel.',
 'wiz.s1.i3.title':'Sara começa a atender','wiz.s1.i3.desc':'Seu bot gerencia pedidos e reservas 24/7 automaticamente.',
 'wiz.s2.title':'Conectar WhatsApp Business','wiz.s2.subtitle':'Autorize o Sara Bot a usar seu número WhatsApp Business oficial.',
 'wiz.s2.success':'WhatsApp conectado com sucesso.','wiz.s2.fb_btn':'Conectar com Facebook / Meta',
@@ -2509,7 +2533,7 @@ pt:{
 'wiz.s3.title':'Seu número pessoal de WhatsApp','wiz.s3.subtitle':'Vamos usá-lo para enviar notificações de pedidos e para você gerenciar o bot pelo WhatsApp.',
 'wiz.s3.label':'Seu número WhatsApp (com código do país, sem +)','wiz.s3.example':'Exemplo: 5521987654321 (Brasil), 5491123456789 (Argentina)',
 'wiz.s4.title':'Tudo pronto!','wiz.s4.subtitle':'Seu WhatsApp Business está conectado. Sara já pode atender seus clientes.',
-'wiz.s4.hint':'Agora configure seu catálogo de produtos ou serviços para que Sara saiba o que oferecer.',
+'wiz.s4.hint':'Agora configure seus produtos ou serviços para que Sara saiba o que oferecer.',
 'wiz.s4.connected':'Número conectado:','wiz.s4.personal':'✅ Número pessoal registrado','wiz.s4.active':'✅ Bot ativo e pronto para responder',
 'wiz.s4.webhook':'✅ Webhook configurado automaticamente','wiz.s4.btn':'Ir ao painel →',
 'wiz.token_error':'⚠️ Sua conexão WhatsApp tem um problema. Reconecte sua conta para que Sara continue funcionando.',
@@ -2517,9 +2541,7 @@ pt:{
 'analytics.title':'📊 Analytics','analytics.week':'7 dias','analytics.month':'30 dias',
 'analytics.kpi.orders':'Pedidos','analytics.kpi.revenue':'Receita','analytics.kpi.avg':'Ticket médio',
 'analytics.kpi.customers':'Clientes únicos','analytics.kpi.cancelled':'Cancelados','analytics.kpi.convs':'Conversas ativas',
-'analytics.chart.title':'Pedidos por dia','analytics.top.title':'🏆 Produtos mais pedidos','analytics.top.empty':'Sem pedidos neste período.',
-'analytics.export.title':'⬇ Exportar dados','analytics.export.orders':'🛒 Pedidos CSV','analytics.export.products':'📦 Catálogo CSV','analytics.export.customers':'👥 Clientes CSV',
-'notif.new_order':'Novo pedido','notif.view':'Ver pedido',
+'analytics.chart.title':'Pedidos por dia','analytics.top.title':'🏆 Produtos mais pedidos','analytics.top.empty':'Sem pedidos neste período.','notif.new_order':'Novo pedido','notif.view':'Ver pedido',
 }
 };
 
@@ -2838,7 +2860,7 @@ function finishOnboarding() {
 }
 
 // ── Tab gating — locked when WhatsApp not connected ───────────────────────────
-const LOCKED_TABS = ['chats','products','services','orders','appointments','analytics','support','help'];
+const LOCKED_TABS = ['chats','products','services','orders','customers','appointments','analytics','support','help'];
 const FREE_TABS   = ['plan','settings'];
 
 function applyTabGating() {
@@ -3077,7 +3099,7 @@ function switchTab(tab) {
     setTimeout(() => { banner.style.opacity = '1'; }, 150);
     return;
   }
-  ['chats','products','services','orders','appointments','settings','analytics','plan','help','support'].forEach(t => {
+  ['chats','products','services','orders','customers','appointments','settings','analytics','plan','help','support'].forEach(t => {
     document.getElementById('section' + cap(t)).classList.toggle('hidden', t !== tab);
     document.getElementById('tab'     + cap(t)).classList.toggle('tab-active', t === tab);
   });
@@ -3095,6 +3117,7 @@ function switchTab(tab) {
     }
   }
   if (tab === 'orders')       loadOrders();
+  if (tab === 'customers')    loadCustomers();
   if (tab === 'settings')     loadSettings();
   if (tab === 'analytics')    loadAnalytics();
   if (tab === 'plan')         loadPlan();
@@ -3529,7 +3552,21 @@ async function exportProducts() {
     const a = document.createElement('a'); a.href = url;
     a.download = `catalogo_${new Date().toISOString().slice(0,10)}.csv`;
     a.click(); URL.revokeObjectURL(url);
-  } catch (e) { alert('Error al exportar catálogo: ' + e.message); }
+  } catch (e) { alert('Error al exportar productos: ' + e.message); }
+}
+
+// ── Export services as CSV ────────────────────────────────────────────────────
+async function exportServices() {
+  try {
+    const TOKEN = localStorage.getItem('sara_token');
+    const res = await fetch('/admin/services/export', { headers: { Authorization: `Bearer ${TOKEN}` } });
+    if (!res.ok) throw new Error('Error');
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url;
+    a.download = `servicios_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click(); URL.revokeObjectURL(url);
+  } catch (e) { alert('Error al exportar servicios: ' + e.message); }
 }
 
 // ── Export customers as CSV ───────────────────────────────────────────────────
@@ -3735,36 +3772,68 @@ function renderCustomerLabel(phone, name) {
   return `
     <span class="flex items-center gap-1 group">
       <span id="label-${phone}">${display}</span>
-      <button onclick="startEditName('${phone}', ${JSON.stringify(name||'')})"
+      <button onclick="startEditCustomerName('label-${phone}', '${phone}', ${JSON.stringify(name||'')}, 'loadOrders')"
         title="Editar nombre"
         class="opacity-0 group-hover:opacity-100 text-gray-300 hover:text-green-500 transition text-xs ml-1">✏️</button>
     </span>`;
 }
 
-function startEditName(phone, currentName) {
-  const labelEl = document.getElementById('label-' + phone);
-  if (!labelEl) return;
-  labelEl.innerHTML = `
-    <input id="nameinput-${phone}" type="text" value="${currentName}"
-      placeholder="${t('orders.name.placeholder')}"
-      class="border border-green-400 rounded-lg px-2 py-0.5 text-sm w-36 mr-1"
-      onkeydown="if(event.key==='Enter') saveCustomerName('${phone}'); if(event.key==='Escape') loadOrders()"/>
-    <button onclick="saveCustomerName('${phone}')" class="text-green-500 text-xs font-semibold hover:underline">${t('orders.name.save')}</button>
-    <button onclick="loadOrders()" class="text-gray-400 text-xs ml-1 hover:underline">✕</button>`;
-  document.getElementById('nameinput-' + phone)?.focus();
+// ── Shared customer rename (used by Orders tab + Customers tab) ───────────────
+async function putCustomerName(phone, name) {
+  return api(`/admin/customers/${phone}/name`, 'PUT', { name });
 }
 
-async function saveCustomerName(phone) {
-  const input = document.getElementById('nameinput-' + phone);
+function startEditCustomerName(cellId, phone, currentName, refreshFnName) {
+  const cell = document.getElementById(cellId);
+  if (!cell) return;
+  const inputId = 'rn-' + cellId;
+  cell.innerHTML = `
+    <input id="${inputId}" type="text" value="${currentName}"
+      placeholder="${t('orders.name.placeholder')}"
+      class="border border-green-400 rounded-lg px-2 py-0.5 text-sm w-36 mr-1"
+      onkeydown="if(event.key==='Enter') saveCustomerNameShared('${cellId}','${phone}','${refreshFnName}'); if(event.key==='Escape') window['${refreshFnName}']()"/>
+    <button onclick="saveCustomerNameShared('${cellId}','${phone}','${refreshFnName}')" class="text-green-500 text-xs font-semibold hover:underline">${t('orders.name.save')}</button>
+    <button onclick="window['${refreshFnName}']()" class="text-gray-400 text-xs ml-1 hover:underline">✕</button>`;
+  document.getElementById(inputId)?.focus();
+}
+
+async function saveCustomerNameShared(cellId, phone, refreshFnName) {
+  const input = document.getElementById('rn-' + cellId);
   if (!input) return;
   const name = input.value.trim();
   if (!name) return;
-  await api(`/admin/customers/${phone}/name`, 'PUT', { name });
-  await loadOrders();
+  await putCustomerName(phone, name);
+  await window[refreshFnName]();
 }
 
 async function updateOrderStatus(id, status) {
   await api(`/admin/orders/${id}/status`, 'PUT', { status });
+}
+
+// ── Customers tab ────────────────────────────────────────────────────────────
+async function loadCustomers() {
+  const customers = await api('/admin/customers');
+  const el = document.getElementById('customersTable');
+  if (!customers.length) {
+    el.innerHTML = `<tr><td colspan="4" class="text-center py-8 text-gray-400">${t('customers.empty')}</td></tr>`;
+    return;
+  }
+  el.innerHTML = customers.map(c => {
+    const date = c.updated_at ? new Date(c.updated_at).toLocaleString('es-PY', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '—';
+    return `
+    <tr>
+      <td class="px-4 py-3" id="cust-name-${c.customer_phone}">
+        <span class="${c.customer_name ? 'font-medium text-gray-800' : 'text-gray-400'}">${c.customer_name || t('customers.noName')}</span>
+      </td>
+      <td class="px-4 py-3 text-gray-600">+${c.customer_phone}</td>
+      <td class="px-4 py-3 text-gray-500 text-xs">${date}</td>
+      <td class="px-4 py-3 text-center">
+        <button onclick="startEditCustomerName('cust-name-${c.customer_phone}', '${c.customer_phone}', ${JSON.stringify(c.customer_name || '')}, 'loadCustomers')"
+          title="${t('customers.editName')}"
+          class="text-gray-400 hover:text-green-500 transition text-sm">✏️</button>
+      </td>
+    </tr>`;
+  }).join('');
 }
 
 // ── Settings ───────────────────────────────────────────────────────────────────
@@ -4650,7 +4719,7 @@ async function saveName() {
   const name = document.getElementById('nameEditorInput').value.trim();
   if (!name || !currentChatPhone) { cancelEditName(); return; }
   try {
-    await api(`/admin/customers/${currentChatPhone}/name`, 'PUT', { name });
+    await putCustomerName(currentChatPhone, name);
     // Update UI immediately
     document.getElementById('chatHeaderName').textContent = name;
     // Update list data
@@ -4713,8 +4782,11 @@ const TEMPLATE_SHEET_URL = 'https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5n
 let importPreviewRows = [];
 let importSource = 'sheets'; // 'sheets' | 'csv' | 'photos'
 let importPhotoFiles = [];
+let importTarget = 'products'; // 'products' | 'services'
 
-function openImportModal() {
+function openImportModal(target = 'products') {
+  importTarget = target;
+  applyImportTarget();
   document.getElementById('importModal').classList.remove('hidden');
   document.getElementById('importSourceSelect').classList.remove('hidden');
   document.getElementById('importPreviewSection').classList.add('hidden');
@@ -4727,6 +4799,17 @@ function openImportModal() {
   importPhotoFiles = [];
   importPreviewRows = [];
   selectImportSource('sheets');
+}
+
+function applyImportTarget() {
+  const suffix = importTarget === 'services' ? '.services' : '';
+  document.getElementById('importModalTitle').textContent     = t('import.title' + suffix);
+  document.getElementById('importSheetsS3').innerHTML          = t('import.sheets.s3' + suffix);
+  document.getElementById('importPhotosHint').textContent      = t('import.photos.hint' + suffix);
+  document.getElementById('importPreviewFound').textContent    = t('import.preview.found' + suffix);
+  document.getElementById('importConfirmBtn').textContent      = t('import.confirm.btn' + suffix);
+  document.getElementById('importCsvColumnsHint').textContent  =
+    importTarget === 'services' ? 'name, category, price, duration_min, description' : 'name, category, price, stock, description';
 }
 
 function closeImportModal() {
@@ -4865,16 +4948,21 @@ async function confirmImport() {
   okEl.classList.add('hidden');
   btn.textContent = '⏳'; btn.disabled = true;
   try {
-    const res = await api('/admin/import-confirm', 'POST', { rows: importPreviewRows });
-    const msg = `✅ ${res.imported} ${t('import.confirm.done')}${res.skipped ? ' · ' + res.skipped + ' ' + t('import.confirm.skipped') : ''}`;
+    const res = await api('/admin/import-confirm', 'POST', { rows: importPreviewRows, target: importTarget });
+    const suffix = importTarget === 'services' ? '.services' : '';
+    const msg = `✅ ${res.imported} ${t('import.confirm.done' + suffix)}${res.skipped ? ' · ' + res.skipped + ' ' + t('import.confirm.skipped') : ''}`;
     okEl.textContent = msg;
     okEl.classList.remove('hidden');
-    btn.textContent = '✅ ' + t('import.confirm.btn');
-    setTimeout(async () => { await loadProducts(); closeImportModal(); }, 1800);
+    btn.textContent = '✅ ' + t('import.confirm.btn' + suffix);
+    setTimeout(async () => {
+      await (importTarget === 'services' ? loadServices() : loadProducts());
+      closeImportModal();
+    }, 1800);
   } catch(e) {
     errEl.textContent = e.message || t('import.error.generic');
     errEl.classList.remove('hidden');
-    btn.textContent = t('import.confirm.btn'); btn.disabled = false;
+    btn.textContent = t('import.confirm.btn' + (importTarget === 'services' ? '.services' : ''));
+    btn.disabled = false;
   }
 }
 
