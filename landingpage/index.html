@@ -300,14 +300,14 @@ footer a:hover { color: var(--dark); }
   </div>
   <div class="nav-right">
     <div class="lang-picker" id="langPicker">
-      <button class="lang-picker-btn" id="langPickerBtn" onclick="toggleLangPicker(event)">🇪🇸 ES ▾</button>
+      <button class="lang-picker-btn" id="langPickerBtn" onclick="toggleLangPicker(event)">ES ▾</button>
       <div class="lang-picker-menu" id="langPickerMenu">
-        <button onclick="setLang('es')">🇪🇸 Español</button>
-        <button onclick="setLang('en')">🇬🇧 English</button>
-        <button onclick="setLang('it')">🇮🇹 Italiano</button>
-        <button onclick="setLang('de')">🇩🇪 Deutsch</button>
-        <button onclick="setLang('fr')">🇫🇷 Français</button>
-        <button onclick="setLang('pt')">🇧🇷 Português</button>
+        <button onclick="setLang('es')">ES</button>
+        <button onclick="setLang('en')">EN</button>
+        <button onclick="setLang('it')">IT</button>
+        <button onclick="setLang('de')">DE</button>
+        <button onclick="setLang('fr')">FR</button>
+        <button onclick="setLang('pt')">PT</button>
       </div>
     </div>
     <a href="/admin/index.html" style="font-size:.85rem;font-weight:500;color:var(--gray);text-decoration:none;" data-i18n="nav.login">Entrar</a>
@@ -1132,7 +1132,7 @@ function applyTranslations() {
     const val = TR[currentLang] && TR[currentLang][key];
     if (val !== undefined) el.innerHTML = val;
   });
-  const LANG_LABELS = {es:'🇪🇸 ES ▾',en:'🇬🇧 EN ▾',it:'🇮🇹 IT ▾',de:'🇩🇪 DE ▾',fr:'🇫🇷 FR ▾',pt:'🇧🇷 PT ▾'};
+  const LANG_LABELS = {es:'ES ▾',en:'EN ▾',it:'IT ▾',de:'DE ▾',fr:'FR ▾',pt:'PT ▾'};
   const langBtn = document.getElementById('langPickerBtn');
   if (langBtn) langBtn.textContent = LANG_LABELS[currentLang] || currentLang.toUpperCase() + ' ▾';
   document.documentElement.lang = currentLang;

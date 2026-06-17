@@ -33,13 +33,13 @@
 <div class="topbar">
   <a href="/">Sara Bot</a>
   <div class="lang-picker" id="langPicker">
-    <button class="lang-picker-btn" id="langPickerBtn" onclick="toggleLangPicker(event)">🇪🇸 ES ▾</button>
+    <button class="lang-picker-btn" id="langPickerBtn" onclick="toggleLangPicker(event)">ES ▾</button>
     <div class="lang-picker-menu" id="langPickerMenu">
-      <button onclick="setLang('es')">🇪🇸 Español</button>
-      <button onclick="setLang('en')">🇬🇧 English</button>
-      <button onclick="setLang('it')">🇮🇹 Italiano</button>
-      <button onclick="setLang('de')">🇩🇪 Deutsch</button>
-      <button onclick="setLang('fr')">🇫🇷 Français</button>
+      <button onclick="setLang('es')">ES</button>
+      <button onclick="setLang('en')">EN</button>
+      <button onclick="setLang('it')">IT</button>
+      <button onclick="setLang('de')">DE</button>
+      <button onclick="setLang('fr')">FR</button>
     </div>
   </div>
 </div>
@@ -178,7 +178,7 @@
 </div><!-- /content -->
 <script>
 const LANGS = ['es','en','it','de','fr'];
-const LANG_LABELS={es:'🇪🇸 ES ▾',en:'🇬🇧 EN ▾',it:'🇮🇹 IT ▾',de:'🇩🇪 DE ▾',fr:'🇫🇷 FR ▾'};
+const LANG_LABELS={es:'ES ▾',en:'EN ▾',it:'IT ▾',de:'DE ▾',fr:'FR ▾'};
 function setLang(l) {
   localStorage.setItem('legal_lang', l);
   localStorage.setItem('sara_lang', l);

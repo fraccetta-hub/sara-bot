@@ -49,14 +49,14 @@
     </a>
     <div style="display:flex;align-items:center;gap:12px;">
       <div class="lang-picker" id="langPicker">
-        <button class="lang-picker-btn" id="langPickerBtn" onclick="toggleLangPicker(event)">🇪🇸 ES ▾</button>
+        <button class="lang-picker-btn" id="langPickerBtn" onclick="toggleLangPicker(event)">ES ▾</button>
         <div class="lang-picker-menu" id="langPickerMenu">
-          <button onclick="setLang('es')">🇪🇸 Español</button>
-          <button onclick="setLang('en')">🇬🇧 English</button>
-          <button onclick="setLang('it')">🇮🇹 Italiano</button>
-          <button onclick="setLang('de')">🇩🇪 Deutsch</button>
-          <button onclick="setLang('fr')">🇫🇷 Français</button>
-          <button onclick="setLang('pt')">🇧🇷 Português</button>
+          <button onclick="setLang('es')">ES</button>
+          <button onclick="setLang('en')">EN</button>
+          <button onclick="setLang('it')">IT</button>
+          <button onclick="setLang('de')">DE</button>
+          <button onclick="setLang('fr')">FR</button>
+          <button onclick="setLang('pt')">PT</button>
         </div>
       </div>
       <a href="/register/index.html" style="background:#22c55e;color:#fff;border-radius:10px;padding:8px 18px;font-size:.85rem;font-weight:700;text-decoration:none;transition:background .15s;" onmouseover="this.style.background='#16a34a'" onmouseout="this.style.background='#22c55e'" data-i18n="login.register">¿No tenés cuenta? Empezar gratis →</a>
@@ -747,12 +747,12 @@
         <h3 data-i18n="settings.language.title" class="font-medium text-gray-800 mb-1">🌐 Idioma del panel</h3>
         <p data-i18n="settings.language.desc" class="text-xs text-gray-400 mb-4">Elegí el idioma de la interfaz de administración.</p>
         <div class="flex gap-2 flex-wrap">
-          <button id="lang_es" onclick="setLang('es')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border-2 transition">🇪🇸 Español</button>
-          <button id="lang_en" onclick="setLang('en')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border-2 transition">🇬🇧 English</button>
-          <button id="lang_de" onclick="setLang('de')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border-2 transition">🇩🇪 Deutsch</button>
-          <button id="lang_it" onclick="setLang('it')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border-2 transition">🇮🇹 Italiano</button>
-          <button id="lang_fr" onclick="setLang('fr')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border-2 transition">🇫🇷 Français</button>
-          <button id="lang_pt" onclick="setLang('pt')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border-2 transition">🇧🇷 Português</button>
+          <button id="lang_es" onclick="setLang('es')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border-2 transition">ES</button>
+          <button id="lang_en" onclick="setLang('en')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border-2 transition">EN</button>
+          <button id="lang_de" onclick="setLang('de')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border-2 transition">DE</button>
+          <button id="lang_it" onclick="setLang('it')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border-2 transition">IT</button>
+          <button id="lang_fr" onclick="setLang('fr')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border-2 transition">FR</button>
+          <button id="lang_pt" onclick="setLang('pt')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border-2 transition">PT</button>
         </div>
       </div>
 
@@ -1542,7 +1542,7 @@ function applyTranslations() {
     const val = t(el.dataset.i18nPh);
     if (val !== undefined) el.placeholder = val;
   });
-  const LANG_LABELS = {es:'🇪🇸 ES ▾',en:'🇬🇧 EN ▾',it:'🇮🇹 IT ▾',de:'🇩🇪 DE ▾',fr:'🇫🇷 FR ▾',pt:'🇧🇷 PT ▾'};
+  const LANG_LABELS = {es:'ES ▾',en:'EN ▾',it:'IT ▾',de:'DE ▾',fr:'FR ▾',pt:'PT ▾'};
   const langBtn = document.getElementById('langPickerBtn');
   if (langBtn) langBtn.textContent = LANG_LABELS[currentLang] || currentLang.toUpperCase() + ' ▾';
   // Tabs (have IDs already)
