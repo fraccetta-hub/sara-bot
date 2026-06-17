@@ -67,6 +67,16 @@
 - Backend errors tradotti via `errorCode`: `routes/admin.js` aggiunge `errorCode` alle 8 risposte errore utente-visibili; `api()` helper attacca `err.code`; helper `errMsg(e)` in frontend usa `t('err.' + e.code)` con fallback `e.message`
 - Chiavi `err.*` aggiunte a `i18n.js`: `unauthorized`, `token_expired`, `suspended`, `plan_expired`, `rate_limit`, `wrong_credentials`, `password_too_short`
 
+## COSA È STATO FATTO (sessione 2026-06-18 — superadmin UX fix, commit e51ecc3)
+
+### Superadmin panel — fix UX (commit e51ecc3)
+- Logo navbar: 🤖 emoji → `/images/logo.webp` (identico ad admin panel)
+- Tab "Nuevo cliente" rimossa (flusso creazione tenant rimane via edit modal)
+- Analytics: rimossa tabella morosi duplicata in fondo (rimane solo card con conteggio)
+- Promo codes: aggiunti pulsanti ✏️ edit e 🗑️ elimina per ogni codice
+  - Modal riusato per edit (campo code readonly in edit mode)
+  - Backend: `PUT /superadmin/promo-codes/:id` (modifica) + `DELETE /superadmin/promo-codes/:id` (elimina)
+
 ## COSA È STATO FATTO (sessione 2026-06-18 — superadmin UX + promo codes)
 
 ### Superadmin panel — miglioramenti UX
@@ -116,7 +126,7 @@
 
 ## COME RIPRENDERE
 Primo messaggio da mandare a Claude nella prossima sessione:
-"Leggi HANDOFF.md. Sessione precedente: superadmin analytics + promo codes implementati. Ricordati di eseguire migration in Supabase SQL editor prima di testare."
+"Leggi HANDOFF.md. Sessione precedente: superadmin UX fix (logo, tab, promo edit/delete) + analytics/promo codes sessione precedente. Migration Supabase ancora da eseguire se non fatto."
 
 ## ERRORI NOTI / TRAPPOLE
 - NON leggere/query tabella prod `tenants` con `select('*')` o colonne sensibili senza autorizzazione esplicita utente per quella lettura specifica — bloccato da permission classifier (dati merchant: token WhatsApp, telefoni).

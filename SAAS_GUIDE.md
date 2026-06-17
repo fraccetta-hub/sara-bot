@@ -174,8 +174,8 @@ VALUES ('Nombre del Local', 'META_PHONE_NUMBER_ID', 'Sara', 'cálida y profesion
 | Tab | Contenuto |
 |-----|-----------|
 | 🏪 Clientes | Lista tenant con stato (✅ Activo / 🔵 Sin Meta / 🟠 Moroso / 🔴 Inactivo), edit modal, impersonare |
-| 📊 Analytics | Card per stato, MRR per valuta, grafici SVG registrazioni/pedidos/churn per mese, lista morosi |
-| 🎟️ Promos | CRUD codici promozionali — crea/disattiva; ogni codice ha tipo sconto, valore, mesi gratis, max usi, valuta, scadenza |
+| 📊 Analytics | Card per stato, MRR per valuta, grafici SVG registrazioni/pedidos/churn per mese |
+| 🎟️ Promos | CRUD codici promozionali — crea/modifica/elimina/disattiva; ogni codice ha tipo sconto, valore, mesi gratis, max usi, valuta, scadenza |
 | 💬 Soporte | Chat in-app con merchant, badge unread |
 
 ### Status tenant (superadmin)
