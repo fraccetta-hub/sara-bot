@@ -1725,7 +1725,7 @@ async function launchEmbeddedSignup() {
   errEl.classList.add('hidden');
 
   if (typeof FB === 'undefined') {
-    errEl.textContent = 'El SDK de Facebook aún está cargando. Intentá en un segundo.';
+    errEl.textContent = t('wiz.fb.sdkloading');
     errEl.classList.remove('hidden');
     return;
   }
@@ -1748,7 +1748,7 @@ async function launchEmbeddedSignup() {
 async function exchangeMetaCode(code) {
   const errEl = document.getElementById('wizConnectError');
   const btn   = document.getElementById('wizFbBtn');
-  btn.textContent = '⏳ Conectando...'; btn.disabled = true;
+  btn.textContent = '⏳ ' + t('saving'); btn.disabled = true;
 
   try {
     const res = await api('/admin/whatsapp-connect', 'POST', {
@@ -1759,9 +1759,9 @@ async function exchangeMetaCode(code) {
     wizConnectedPhoneId = res.phone_number_id;
     onWhatsAppConnected(res.phone_number_id);
   } catch(e) {
-    errEl.textContent = e.message || 'Error al conectar. Intentá de nuevo.';
+    errEl.textContent = e.message || t('wiz.fb.error') || 'Error';
     errEl.classList.remove('hidden');
-    btn.textContent = 'Conectar con Facebook / Meta'; btn.disabled = false;
+    btn.textContent = t('wiz.s2.fb_btn'); btn.disabled = false;
   }
 }
 
@@ -1784,7 +1784,7 @@ async function saveManual() {
   errEl.classList.add('hidden');
 
   if (!phoneId || !token) {
-    errEl.textContent = 'Completá ambos campos.';
+    errEl.textContent = t('wiz.manual.fields');
     errEl.classList.remove('hidden'); return;
   }
   try {
@@ -1794,7 +1794,7 @@ async function saveManual() {
     wizConnectedPhoneId = phoneId;
     onWhatsAppConnected(phoneId);
   } catch(e) {
-    errEl.textContent = e.message || 'Error al guardar.';
+    errEl.textContent = e.message || t('error.save');
     errEl.classList.remove('hidden');
   }
 }
@@ -1804,20 +1804,20 @@ async function saveMerchantPhone() {
   const errEl = document.getElementById('wizPhoneError');
   errEl.classList.add('hidden');
   if (!phone || phone.length < 8) {
-    errEl.textContent = 'Ingresá un número válido.';
+    errEl.textContent = t('wiz.phone.invalid');
     errEl.classList.remove('hidden');
     return;
   }
   const btn = document.getElementById('wizNextBtn3');
-  btn.textContent = 'Guardando...'; btn.disabled = true;
+  btn.textContent = t('saving'); btn.disabled = true;
   try {
     await api('/admin/settings', 'PUT', { merchant_phone: phone });
     document.getElementById('wizDonePhone').textContent = wizConnectedPhoneId || '—';
     wizNext(3);
   } catch(e) {
-    errEl.textContent = e.message || 'Error al guardar.';
+    errEl.textContent = e.message || t('error.save');
     errEl.classList.remove('hidden');
-    btn.textContent = 'Continuar →'; btn.disabled = false;
+    btn.textContent = t('wiz.next'); btn.disabled = false;
   }
 }
 
@@ -1887,7 +1887,7 @@ window.onload = () => {
       setTimeout(() => {
         const el = document.createElement('div');
         el.className = 'fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-green-600 text-white text-sm font-semibold px-5 py-3 rounded-xl shadow-lg';
-        el.textContent = '✅ Pago recibido. Tu plan ha sido renovado.';
+        el.textContent = t('billing.renewed');
         document.body.appendChild(el);
         setTimeout(() => el.remove(), 6000);
       }, 800);
@@ -1903,7 +1903,7 @@ async function login() {
   errEl.classList.add('hidden');
 
   if (!userId || !password) {
-    errEl.textContent = 'Ingresá usuario y contraseña.';
+    errEl.textContent = t('login.required');
     errEl.classList.remove('hidden');
     return;
   }
@@ -3113,7 +3113,7 @@ async function saveWpProfile() {
 
   if (!wpPhotoFile && !about) {
     msgEl.className = 'rounded-lg px-4 py-2 text-sm mb-4 bg-red-50 text-red-700';
-    msgEl.textContent = 'Agregá una foto o una descripción antes de guardar.';
+    msgEl.textContent = t('profile.required');
     msgEl.classList.remove('hidden');
     return;
   }
@@ -3131,7 +3131,7 @@ async function saveWpProfile() {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Error al actualizar');
     msgEl.className = 'rounded-lg px-4 py-2 text-sm mb-4 bg-green-50 text-green-700';
-    msgEl.textContent = '✅ Perfil actualizado en WhatsApp correctamente.';
+    msgEl.textContent = t('profile.success');
   } catch(e) {
     msgEl.className = 'rounded-lg px-4 py-2 text-sm mb-4 bg-red-50 text-red-700';
     msgEl.textContent = '❌ ' + e.message;
@@ -4178,7 +4178,7 @@ async function loadApptSlots(preselectIso) {
 async function saveAppt() {
   const btn = document.getElementById('apptSaveBtn');
   const errEl = document.getElementById('apptError');
-  btn.disabled = true; btn.textContent = 'Guardando...';
+  btn.disabled = true; btn.textContent = t('saving');
   errEl.classList.add('hidden');
 
   const slot    = document.getElementById('apptSlot').value;
@@ -4187,7 +4187,7 @@ async function saveAppt() {
   const phone   = document.getElementById('apptPhone').value.trim();
   const notes   = document.getElementById('apptNotes').value.trim();
 
-  if (!slot) { errEl.textContent = 'Seleccioná una hora.'; errEl.classList.remove('hidden'); btn.disabled=false; btn.textContent='Guardar'; return; }
+  if (!slot) { errEl.textContent = t('appt.select_time'); errEl.classList.remove('hidden'); btn.disabled=false; btn.textContent=t('save'); return; }
 
   try {
     await api('/admin/appointments', 'POST', {
@@ -4198,10 +4198,10 @@ async function saveAppt() {
     closeApptModal();
     await loadCalendarData();
   } catch(e) {
-    errEl.textContent = e.message || 'Error al guardar.';
+    errEl.textContent = e.message || t('error.save');
     errEl.classList.remove('hidden');
   } finally {
-    btn.disabled=false; btn.textContent='Guardar';
+    btn.disabled=false; btn.textContent=t('save');
   }
 }
 
@@ -4273,7 +4273,7 @@ function closeBlockModal() { document.getElementById('blockModal').classList.add
 async function saveBlock() {
   const btn   = document.getElementById('blockSaveBtn');
   const errEl = document.getElementById('blockError');
-  btn.disabled = true; btn.textContent = 'Guardando...';
+  btn.disabled = true; btn.textContent = t('saving');
   errEl.classList.add('hidden');
 
   const start  = document.getElementById('blockStart').value;
@@ -4281,17 +4281,17 @@ async function saveBlock() {
   const reason = document.getElementById('blockReason').value.trim();
 
   if (!start || !end || new Date(start) >= new Date(end)) {
-    errEl.textContent = 'Verificá las fechas.'; errEl.classList.remove('hidden');
-    btn.disabled=false; btn.textContent='Guardar'; return;
+    errEl.textContent = t('appt.check_dates'); errEl.classList.remove('hidden');
+    btn.disabled=false; btn.textContent=t('save'); return;
   }
   try {
     await api('/admin/appointment-blocks', 'POST', { start_at: new Date(start).toISOString(), end_at: new Date(end).toISOString(), reason: reason || null });
     closeBlockModal();
     await loadCalendarData();
   } catch(e) {
-    errEl.textContent = e.message || 'Error.'; errEl.classList.remove('hidden');
+    errEl.textContent = e.message || t('error.generic'); errEl.classList.remove('hidden');
   } finally {
-    btn.disabled=false; btn.textContent='Guardar';
+    btn.disabled=false; btn.textContent=t('save');
   }
 }
 
@@ -4350,12 +4350,12 @@ async function saveBusinessHours() {
   }
   try {
     await api('/admin/business-hours', 'PUT', rows);
-    bhMsg.textContent = '✅ Horarios guardados.';
+    bhMsg.textContent = t('bh.saved');
     bhMsg.className = 'rounded-lg px-4 py-2 text-sm mt-3 bg-green-50 text-green-700';
     bhMsg.classList.remove('hidden');
     setTimeout(() => bhMsg.classList.add('hidden'), 3000);
   } catch(e) {
-    bhMsg.textContent = '❌ Error al guardar.';
+    bhMsg.textContent = t('bh.error');
     bhMsg.className = 'rounded-lg px-4 py-2 text-sm mt-3 bg-red-50 text-red-700';
     bhMsg.classList.remove('hidden');
   }
