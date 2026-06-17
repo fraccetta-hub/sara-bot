@@ -244,41 +244,44 @@ async function handleMerchantMessage(tenant, messageText, phoneNumberId, token) 
 
   // ── Order management commands ─────────────────────────────────────────────
 
-  // Look up the most recent pending-action conversation for this tenant
-  const { data: conv } = await supabase
-    .from('conversations')
-    .select('*')
-    .eq('tenant_id', tenant.id)
-    .not('last_pending_order_id', 'is', null)
-    .order('updated_at', { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  if (cmdUpper === 'CHAT' || cmdUpper === '3' ||
+      cmdUpper === 'CONFIRMAR' || cmdUpper === '1' ||
+      cmdUpper === 'CANCELAR' || cmdUpper === '2') {
+    const { data: conv } = await supabase
+      .from('conversations')
+      .select('*')
+      .eq('tenant_id', tenant.id)
+      .not('last_pending_order_id', 'is', null)
+      .order('updated_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
-  if (cmdUpper === 'CHAT' || cmdUpper === '3') {
-    if (!conv) {
-      await sendMessage(tenant.merchant_phone, '⚠️ No hay ningún pedido activo para tomar el chat.', phoneNumberId, token);
+    if (cmdUpper === 'CHAT' || cmdUpper === '3') {
+      if (!conv) {
+        await sendMessage(tenant.merchant_phone, '⚠️ No hay ningún pedido activo para tomar el chat.', phoneNumberId, token);
+        return;
+      }
+      await activateTakeover(tenant, conv, phoneNumberId, token);
       return;
     }
-    await activateTakeover(tenant, conv, phoneNumberId, token);
-    return;
-  }
 
-  if (cmdUpper === 'CONFIRMAR' || cmdUpper === '1') {
-    if (!conv?.last_pending_order_id) {
-      await sendMessage(tenant.merchant_phone, '⚠️ No hay ningún pedido pendiente para confirmar.', phoneNumberId, token);
+    if (cmdUpper === 'CONFIRMAR' || cmdUpper === '1') {
+      if (!conv?.last_pending_order_id) {
+        await sendMessage(tenant.merchant_phone, '⚠️ No hay ningún pedido pendiente para confirmar.', phoneNumberId, token);
+        return;
+      }
+      await confirmOrder(tenant, conv, phoneNumberId, token);
       return;
     }
-    await confirmOrder(tenant, conv, phoneNumberId, token);
-    return;
-  }
 
-  if (cmdUpper === 'CANCELAR' || cmdUpper === '2') {
-    if (!conv?.last_pending_order_id) {
-      await sendMessage(tenant.merchant_phone, '⚠️ No hay ningún pedido pendiente para cancelar.', phoneNumberId, token);
+    if (cmdUpper === 'CANCELAR' || cmdUpper === '2') {
+      if (!conv?.last_pending_order_id) {
+        await sendMessage(tenant.merchant_phone, '⚠️ No hay ningún pedido pendiente para cancelar.', phoneNumberId, token);
+        return;
+      }
+      await cancelOrder(tenant, conv, phoneNumberId, token);
       return;
     }
-    await cancelOrder(tenant, conv, phoneNumberId, token);
-    return;
   }
 
   if (cmdUpper === 'FIN' || cmdUpper === 'BOT') {

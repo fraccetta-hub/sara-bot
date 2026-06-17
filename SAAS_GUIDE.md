@@ -1,11 +1,21 @@
 # WhatsApp Bot SaaS — Guida Operativa
 
+_Aggiornato: 2026-06-17_
+
 ## Stack tecnico
-- **Node.js + Express** — server webhook
-- **Supabase** — database PostgreSQL + autenticazione + storage immagini
-- **Claude AI (claude-sonnet-4-6)** — motore conversazionale (Sara)
+
+- **Node.js + Express** — server webhook + API REST
+- **Supabase** — PostgreSQL + autenticazione + storage immagini
+- **Anthropic Claude** — motore conversazionale Sara
+  - Chat cliente: `claude-haiku-4-5-20251001`
+  - Task complessi: `claude-sonnet-4-6`
 - **Meta Cloud API** — invio/ricezione messaggi WhatsApp
-- **Deploy** — Railway / Fly.io / Render (qualsiasi piattaforma Node.js)
+- **Stripe** — billing SaaS (subscription tenant)
+- **Nodemailer** — email transazionali
+- **Deploy** — Render (`sara-bot-tcl6.onrender.com`) — server Node.js attivo
+- **Dominio** — `sarabot.pro` su Cloudflare (solo DNS/email — MX per Brevo SMTP). `www.sarabot.pro` CNAME proxiato → Render. Webhook Meta punta a `onrender.com` direttamente.
+- **Meta App** — SaraBot, ID `27756118003980694`, Business: Deepcable LLC — **pubblicata (live)**
+- **Token WhatsApp** — System User Admin token permanente in `WHATSAPP_TOKEN` env Render
 
 ---
 
@@ -15,7 +25,8 @@
 Cliente WhatsApp → Meta Cloud API → /webhook
     → identifica tenant da phone_number_id
     → carica stock + storico conversazione
-    → Claude (Sara) risponde
+    → [se booking keywords] carica orari + slot appuntamenti
+    → Claude (Sara) risponde con prompt caching
     → se ordine confermato → notifica merchant
     → merchant risponde CONFIRMAR/CANCELAR/CHAT
     → aggiorna DB → notifica cliente
@@ -23,11 +34,26 @@ Cliente WhatsApp → Meta Cloud API → /webhook
 
 ---
 
+## Ottimizzazioni performance attive
+
+### Prompt Caching (Anthropic)
+`services/claude.js` — system prompt splittato in due blocchi:
+- **Static** (catalogo, regole, identità bot): `cache_control: {type:'ephemeral'}` → cacheato tra messaggi
+- **Dynamic** (stato delivery, slot disponibili): non cacheato, varia ogni messaggio
+
+Risparmio tipico: ~8500 token cached per messaggio (vedi `cache_read_input_tokens` nella response).
+Soglia minima caching Haiku: ~4096 token — verifica sempre `usage.cache_creation_input_tokens`.
+
+### Appointment Keyword Gating
+`routes/webhook.js` — le 3 query Supabase extra (`business_hours`, `appointments`, `appointment_blocks`) + calcolo slot 14gg girano **solo** se messaggio o ultimi 4 msg history menzionano parole chiave di booking (regex `APPOINTMENT_KEYWORDS`).
+
+---
+
 ## Human Takeover
 
 Quando Sara rileva un ordine confermato:
 1. Salva ordine con `status: 'pending'`
-2. Invia al merchant (numero configurato in `tenants.merchant_phone`):
+2. Invia al merchant (numero in `tenants.merchant_phone`):
 
 ```
 🛒 Nuevo pedido #ABC12345
@@ -46,92 +72,98 @@ Respondé con:
 💬 CHAT — tomar el chat con el cliente
 ```
 
-Il merchant risponde con:
-- **CONFIRMAR** → ordine diventa `confirmed`, cliente riceve conferma + istruzioni pagamento
-- **CANCELAR** → ordine diventa `cancelled`, cliente riceve notifica
-- **CHAT** → modalità takeover attiva: merchant e cliente si parlano direttamente attraverso il bot
-- **FIN** → termina takeover, Sara riprende il chat
+Comandi merchant:
+- **CONFIRMAR** → ordine `confirmed`, cliente riceve conferma + istruzioni pagamento
+- **CANCELAR** → ordine `cancelled`, cliente notificato
+- **CHAT** → takeover attivo: merchant ↔ cliente via bot
+- **FIN** → fine takeover, Sara riprende
 
 ---
 
 ## Foto prodotti
 
 Aggiungi `image_url` ai prodotti (URL pubblico — Supabase Storage consigliato).
+Sara include `<SHOW_IMAGE>` nella risposta; webhook intercetta e invia foto prima del testo.
 
-Quando il cliente chiede di un prodotto, Sara include automaticamente il tag `<SHOW_IMAGE>` nella risposta. Il webhook intercetta il tag e invia la foto prima del testo.
-
-**Upload foto su Supabase Storage:**
-1. Crea bucket `product-images` con policy pubblica
-2. Carica la foto
-3. Copia l'URL pubblico e salvalo in `products.image_url`
+**Upload:**
+1. Bucket `product-images` con policy pubblica in Supabase Storage
+2. Carica foto → copia URL pubblico → salva in `products.image_url`
 
 ---
 
-## Pagamenti Paraguay
+## Pagamenti
 
-Configura `tenants.payment_instructions` con le istruzioni per il tenant:
+Configura `tenants.payment_instructions` per tenant. Sara include istruzioni dopo conferma ordine.
 
-```
-Podés pagar por 📱 Billetera Personal al número 0981-000-001 (Las Orquídeas)
-o por transferencia bancaria a la cuenta BNF Nro. 000-123456.
-Envianos el comprobante por este chat 🧾
-```
+**Metodi supportati (Paraguay):** Billetera Personal (Tigo), Claro Pay, trasferimento bancario (BNF/Continental/Itaú), PagoExpress.
 
-Sara include automaticamente queste istruzioni dopo la conferma dell'ordine.
-Il merchant le include di nuovo quando conferma manualmente via CONFIRMAR.
+---
 
-**Metodi supportati in Paraguay:**
-- Billetera Personal (Tigo)
-- Billetera Claro Pay
-- Transferencia bancaria (BNF, Continental, Itaú)
-- PagoExpress
+## Appuntamenti
+
+Tenant con `appointments_enabled = true` hanno gestione turni:
+- `business_hours` — orari per giorno settimana
+- `appointment_blocks` — blocchi orario (chiusure/ferie)
+- `appointments` — prenotazioni confermate
+- Sara calcola slot liberi 14 giorni in avanti e propone al cliente
 
 ---
 
 ## Aggiungere un nuovo tenant
 
-1. Inserisci riga in `tenants`:
+1. Riga in `tenants`:
 ```sql
 INSERT INTO tenants (name, phone_number_id, bot_name, bot_personality, merchant_phone, payment_instructions)
-VALUES ('Nombre del Local', 'META_PHONE_NUMBER_ID', 'Sara', 'cálida y profesional', '595981XXXXXX', 'Instrucciones de pago...');
+VALUES ('Nombre del Local', 'META_PHONE_NUMBER_ID', 'Sara', 'cálida y profesional', '595981XXXXXX', 'Instrucciones...');
 ```
-
-2. Inserisci prodotti in `products`
-
-3. Configura un numero WhatsApp Business su Meta per il tenant
-
-4. Imposta webhook URL sul Meta Developer Portal: `https://tudominio.com/webhook`
-
-5. Tutto funziona automaticamente — il `phone_number_id` di Meta identifica il tenant.
+2. Prodotti in `products`
+3. Numero WhatsApp Business su Meta Developer Portal
+4. Webhook URL: `https://tudominio.com/webhook`
+5. Il `phone_number_id` Meta identifica automaticamente il tenant
 
 ---
 
 ## Struttura DB
 
 | Tabella | Scopo |
-|---|---|
-| `tenants` | Un record per ogni attività cliente |
+|---------|-------|
+| `tenants` | Un record per attività cliente |
 | `products` | Catalogo + stock per tenant |
+| `services` | Servizi (per tenant con appuntamenti) |
 | `orders` | Ordini con status workflow |
 | `conversations` | Storico messaggi Claude per tenant+cliente |
+| `appointments` | Prenotazioni |
+| `business_hours` | Orari apertura per giorno |
+| `appointment_blocks` | Blocchi orario (chiusure, ferie) |
+| `customers` | Anagrafica clienti per tenant |
 
-**Status ordine:** `pending` → `confirmed` → `preparing` → `delivering` → `delivered` / `cancelled`
+**Status ordine:** `pending → confirmed → preparing → delivering → delivered / cancelled`
 
 ---
 
 ## Scalabilità multi-tenant
 
-Il sistema è già multi-tenant by design:
-- Ogni attività ha il suo `phone_number_id` Meta
-- Ogni attività ha il suo catalogo, stock, conversazioni
+- Ogni attività: proprio `phone_number_id` Meta, catalogo, stock, conversazioni
 - Un solo server gestisce N tenant in parallelo
-- Supabase Row Level Security (RLS) può isolare i dati per tenant
+- Supabase RLS può isolare dati per tenant
 
 **Costi stimati a regime (50 tenant):**
 - Supabase Pro: ~$25/mese
-- Claude API: ~$0.003/messaggio (Sonnet) × volume messaggi
+- Claude API: ~$0.001/messaggio (Haiku con caching) × volume
 - Deploy (Railway): ~$5-20/mese
 - Meta Cloud API: gratuito fino a 1000 conversazioni/mese per tenant
+- Stripe: 0.5-0.7% per transazione SaaS
+
+---
+
+## Pannelli web
+
+| Route | Descrizione |
+|-------|-------------|
+| `/admin` | Pannello merchant: catalogo, ordini, chat, clienti, appuntamenti |
+| `/superadmin` | Gestione piattaforma: tutti i tenant, billing, metriche |
+| `/register` | Registrazione nuovo tenant (con i18n ES/EN/IT/DE/FR) |
+| `landingpage/` | Landing pubblica |
 
 ---
 
@@ -139,5 +171,3 @@ Il sistema è già multi-tenant by design:
 
 1. **Florería Las Orquídeas** — fioreria, Asunción Paraguay
 2. **Pastelería Dulce Sueño** — pasticceria, Asunción Paraguay
-
-Entrambi con catalogo, foto prodotti, merchant phone e istruzioni di pagamento configurate.

@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const path = require('path');
+const fs = require('fs');
 const { createClient } = require('@supabase/supabase-js');
 const webhookRoutes      = require('./routes/webhook');
 const adminRoutes        = require('./routes/admin');
@@ -12,6 +13,17 @@ const billingRouter   = require('./routes/billing');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// ── Admin HTML with injected env vars (before static middleware) ──────────────
+const adminHtmlPath = path.join(__dirname, 'public', 'admin', 'index.html');
+function serveAdminHtml(req, res) {
+  let html = fs.readFileSync(adminHtmlPath, 'utf8');
+  html = html.replace('%%META_APP_ID%%',    process.env.META_APP_ID    || '');
+  html = html.replace('%%META_CONFIG_ID%%', process.env.META_CONFIG_ID || '');
+  res.type('html').send(html);
+}
+app.get('/admin',            serveAdminHtml);
+app.get('/admin/index.html', serveAdminHtml);
 
 // ── Security headers ──────────────────────────────────────────────────────────
 app.use((req, res, next) => {

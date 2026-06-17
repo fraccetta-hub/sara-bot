@@ -10,7 +10,7 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-const FROM = process.env.SMTP_FROM || 'Sara Bot <noreply@sarabot.ai>';
+const FROM = process.env.SMTP_FROM || 'Sara Bot <info@sarabot.pro>';
 
 // ── Welcome email translations ─────────────────────────────────────────────────
 const T = {

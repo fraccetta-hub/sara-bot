@@ -2,21 +2,41 @@ const { createClient } = require('@supabase/supabase-js');
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
 
+const TTL = 45 * 1000; // 45s
+const cache = new Map();
+
+function cacheGet(key) {
+  const entry = cache.get(key);
+  if (!entry) return null;
+  if (Date.now() - entry.ts > TTL) { cache.delete(key); return null; }
+  return entry.value;
+}
+
+function cacheSet(key, value) {
+  cache.set(key, { value, ts: Date.now() });
+}
+
 async function getTenantConfig(phoneNumberId) {
+  const key = `tenant:${phoneNumberId}`;
+  const hit = cacheGet(key);
+  if (hit) return hit;
+
   const { data, error } = await supabase
     .from('tenants')
     .select('*')
     .eq('phone_number_id', phoneNumberId)
     .maybeSingle();
 
-  if (error) {
-    console.error('getTenantConfig error:', error.message);
-    return null;
-  }
+  if (error) { console.error('getTenantConfig error:', error.message); return null; }
+  if (data) cacheSet(key, data);
   return data;
 }
 
 async function getStock(tenantId) {
+  const key = `stock:${tenantId}`;
+  const hit = cacheGet(key);
+  if (hit) return hit;
+
   const { data, error } = await supabase
     .from('products')
     .select('*')
@@ -24,11 +44,10 @@ async function getStock(tenantId) {
     .eq('is_available', true)
     .order('category');
 
-  if (error) {
-    console.error('getStock error:', error.message);
-    return [];
-  }
-  return data || [];
+  if (error) { console.error('getStock error:', error.message); return []; }
+  const result = data || [];
+  cacheSet(key, result);
+  return result;
 }
 
 async function decrementStock(tenantId, items) {
@@ -49,15 +68,18 @@ async function decrementStock(tenantId, items) {
 
     await supabase
       .from('products')
-      .update({
-        stock_qty: newQty,
-        is_available: newQty > 0
-      })
+      .update({ stock_qty: newQty, is_available: newQty > 0 })
       .eq('id', product.id);
   }
+  // Invalidate stock cache so next message sees updated quantities
+  cache.delete(`stock:${tenantId}`);
 }
 
 async function getServices(tenantId) {
+  const key = `services:${tenantId}`;
+  const hit = cacheGet(key);
+  if (hit) return hit;
+
   const { data, error } = await supabase
     .from('services')
     .select('*')
@@ -65,11 +87,10 @@ async function getServices(tenantId) {
     .eq('is_available', true)
     .order('category');
 
-  if (error) {
-    console.error('getServices error:', error.message);
-    return [];
-  }
-  return data || [];
+  if (error) { console.error('getServices error:', error.message); return []; }
+  const result = data || [];
+  cacheSet(key, result);
+  return result;
 }
 
 module.exports = { getTenantConfig, getStock, decrementStock, getServices };

@@ -853,7 +853,7 @@ Respondé ÚNICAMENTE con un JSON válido, sin texto adicional, en este formato:
 
   try {
     const response = await anthropic.messages.create({
-      model: 'claude-opus-4-5',
+      model: 'claude-haiku-4-5-20251001',
       max_tokens: 2048,
       messages: [{ role: 'user', content }]
     });
@@ -1504,10 +1504,21 @@ router.post('/plan/checkout', requireAuth, async (req, res) => {
   }
 });
 
-// ─── DELETE /admin/account — delete all tenant data ───────────────────────────
+// ─── DELETE /admin/account — cancel Stripe subscription + delete all tenant data
 router.delete('/account', requireAuth, async (req, res) => {
   const tenantId = req.tenant.tenantId;
   try {
+    const { data: tenantData } = await supabase
+      .from('tenants').select('stripe_subscription_id').eq('id', tenantId).single();
+    if (tenantData?.stripe_subscription_id) {
+      const Stripe = require('stripe');
+      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+      try {
+        await stripe.subscriptions.cancel(tenantData.stripe_subscription_id);
+      } catch (stripeErr) {
+        console.warn('[delete-account] stripe cancel failed:', stripeErr.message);
+      }
+    }
     // Delete in order to respect FK constraints
     await supabase.from('appointment_blocks').delete().eq('tenant_id', tenantId);
     await supabase.from('appointments').delete().eq('tenant_id', tenantId);
