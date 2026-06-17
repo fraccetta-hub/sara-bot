@@ -1947,7 +1947,7 @@ async function login() {
     if (e.retryAfter) {
       let secs = e.retryAfter;
       const tick = () => {
-        errEl.textContent = `⏳ Demasiados intentos. Esperá ${secs}s...`;
+        errEl.textContent = `⏳ ${t('login.ratelimit')} ${secs}s...`;
         errEl.classList.remove('hidden');
         if (secs > 0) { secs--; setTimeout(tick, 1000); }
         else if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = t('login.submit'); }
