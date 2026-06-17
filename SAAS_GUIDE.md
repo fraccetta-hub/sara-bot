@@ -1,6 +1,6 @@
 # WhatsApp Bot SaaS — Guida Operativa
 
-_Aggiornato: 2026-06-17_
+_Aggiornato: 2026-06-18_
 
 ## Stack tecnico
 
@@ -136,6 +136,10 @@ VALUES ('Nombre del Local', 'META_PHONE_NUMBER_ID', 'Sara', 'cálida y profesion
 | `business_hours` | Orari apertura per giorno |
 | `appointment_blocks` | Blocchi orario (chiusure, ferie) |
 | `customers` | Anagrafica clienti per tenant |
+| `promo_codes` | Codici promozionali (sconto % / fisso, mesi gratis, max usi, valuta) |
+| `promo_redemptions` | Riscatti codice per tenant (UNIQUE promo+tenant) |
+
+**Colonne chiave tenants:** `plan_price` (prezzo mensile abbonamento in `plan_currency`), `deactivated_at` (timestamp disattivazione per tracking churn).
 
 **Status ordine:** `pending → confirmed → preparing → delivering → delivered / cancelled`
 
@@ -160,10 +164,42 @@ VALUES ('Nombre del Local', 'META_PHONE_NUMBER_ID', 'Sara', 'cálida y profesion
 
 | Route | Descrizione |
 |-------|-------------|
-| `/admin` | Pannello merchant: catalogo, ordini, chat, clienti, appuntamenti |
-| `/superadmin` | Gestione piattaforma: tutti i tenant, billing, metriche |
+| `/admin` | Pannello merchant: catalogo, ordini, chat, clienti, appuntamenti, piano (con riscatto codice promo) |
+| `/superadmin` | Gestione piattaforma: tutti i tenant, analytics, promo codes, soporte |
 | `/register` | Registrazione nuovo tenant (con i18n ES/EN/IT/DE/FR) |
 | `landingpage/` | Landing pubblica |
+
+### Superadmin — tab principali
+
+| Tab | Contenuto |
+|-----|-----------|
+| 🏪 Clientes | Lista tenant con stato (✅ Activo / 🔵 Sin Meta / 🟠 Moroso / 🔴 Inactivo), edit modal, impersonare |
+| 📊 Analytics | Card per stato, MRR per valuta, grafici SVG registrazioni/pedidos/churn per mese, lista morosi |
+| 🎟️ Promos | CRUD codici promozionali — crea/disattiva; ogni codice ha tipo sconto, valore, mesi gratis, max usi, valuta, scadenza |
+| 💬 Soporte | Chat in-app con merchant, badge unread |
+
+### Status tenant (superadmin)
+
+| Badge | Condizione |
+|-------|-----------|
+| ✅ Activo | `active=true`, piano non scaduto, `whatsapp_token` presente |
+| 🔵 Sin Meta | `active=true`, piano non scaduto, ma `whatsapp_token` NULL (usa token globale env) |
+| 🟠 Moroso | `active=true` ma `plan_expires` passato |
+| 🔴 Inactivo | `active=false` |
+
+### Promo codes — logica riscatto
+
+`POST /admin/redeem-promo` — validazioni in ordine:
+1. Codice esiste e `active=true`
+2. Non scaduto (`expires_at`)
+3. Non esaurito (`uses_count < max_uses` oppure `max_uses=null`)
+4. Valuta tenant compatibile (`valid_for_currency=null` accetta tutti)
+5. Tenant non ha già riscattato questo codice (UNIQUE su `promo_redemptions`)
+
+Effetti applicati al tenant:
+- `discount_type=percent` → `plan_price * (1 - value/100)`
+- `discount_type=fixed` → `plan_price - value` (min 0)
+- `months_free > 0` → estende `plan_expires` da oggi o dalla scadenza attuale
 
 ### i18n — architettura traduzioni
 
