@@ -178,6 +178,14 @@ Tutte le pagine condividono la chiave `sara_lang` in `localStorage`. Lingua camb
 
 Per aggiungere/modificare traduzioni admin: edita `public/admin/i18n.js` direttamente — non toccare `index.html`. Stesso pattern per register.
 
+### Errori backend tradotti
+
+`routes/admin.js` include `errorCode` nelle risposte errore utente-visibili. Il frontend usa `errMsg(e)` (definita in `admin/index.html`) che restituisce `t('err.' + e.code)` se la chiave esiste, altrimenti `e.message` come fallback.
+
+Codici attivi: `unauthorized`, `token_expired`, `suspended`, `plan_expired`, `rate_limit`, `wrong_credentials`, `password_too_short`. Chiavi `err.*` in `public/admin/i18n.js`.
+
+Per aggiungere un nuovo errore tradotto: 1) aggiungi `errorCode: 'my_code'` alla risposta in `admin.js`; 2) aggiungi `'err.my_code': '...'` in tutte e 6 le sezioni lingua di `i18n.js`.
+
 ---
 
 ## Tenant di demo inclusi

@@ -59,6 +59,14 @@
 - TR estratto da `public/admin/index.html` → `public/admin/i18n.js` (7060→4356 righe)
 - TR estratto da `public/register/index.html` → `public/register/i18n.js` (1610→811 righe)
 
+### i18n (sessione 2026-06-17 — messaggi errore + UX)
+- Lang switcher: `<select>` nativo → dropdown custom (CSS+JS) su tutte le pagine — fix emoji bandiere non renderizzate su Windows
+- Logo immagine aggiunto a legal pages (era testo plain)
+- `favicon.webp` committato nel repo (era untracked → mancava su Render)
+- Tutti i messaggi errore frontend hardcoded → `t()` (15 chiavi nuove: `saving`, `save`, `error.save`, `error.generic`, `login.required`, `wiz.fb.*`, `profile.*`, `billing.renewed`, `appt.*`, `bh.*`)
+- Backend errors tradotti via `errorCode`: `routes/admin.js` aggiunge `errorCode` alle 8 risposte errore utente-visibili; `api()` helper attacca `err.code`; helper `errMsg(e)` in frontend usa `t('err.' + e.code)` con fallback `e.message`
+- Chiavi `err.*` aggiunte a `i18n.js`: `unauthorized`, `token_expired`, `suspended`, `plan_expired`, `rate_limit`, `wrong_credentials`, `password_too_short`
+
 ## COSA NON FUNZIONA / IN SOSPESO
 - **Env vars mancanti su Render** — da aggiungere in Render → Environment prima che il wizard funzioni:
   - `META_APP_ID` = `27756118003980694` (ID app Meta)
