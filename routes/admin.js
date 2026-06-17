@@ -688,11 +688,10 @@ router.post('/whatsapp-connect-manual', requireAuth, async (req, res) => {
     );
     const verifyData = await verifyRes.json();
     if (!verifyRes.ok || verifyData.error) {
-      const msg = verifyData.error?.message || 'Token o Phone Number ID no válido';
-      return res.status(400).json({ error: msg });
+      return res.status(400).json({ error: 'Token o Phone Number ID no válido', errorCode: 'invalid_meta_credentials' });
     }
   } catch {
-    return res.status(502).json({ error: 'No se pudo verificar el token con Meta' });
+    return res.status(502).json({ error: 'No se pudo verificar el token con Meta', errorCode: 'meta_unreachable' });
   }
 
   const tokenExpiresAt = new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString();

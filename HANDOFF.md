@@ -66,6 +66,7 @@
 - Tutti i messaggi errore frontend hardcoded → `t()` (15 chiavi nuove: `saving`, `save`, `error.save`, `error.generic`, `login.required`, `wiz.fb.*`, `profile.*`, `billing.renewed`, `appt.*`, `bh.*`)
 - Backend errors tradotti via `errorCode`: `routes/admin.js` aggiunge `errorCode` alle 8 risposte errore utente-visibili; `api()` helper attacca `err.code`; helper `errMsg(e)` in frontend usa `t('err.' + e.code)` con fallback `e.message`
 - Chiavi `err.*` aggiunte a `i18n.js`: `unauthorized`, `token_expired`, `suspended`, `plan_expired`, `rate_limit`, `wrong_credentials`, `password_too_short`
+- **Sistema errori i18n (pattern da seguire sempre):** backend aggiunge `errorCode: 'snake_case'` alla response; `api()` helper in admin/index.html:3261 attacca `err.code`; `errMsg(e)` (index.html:3236) cerca `t('err.' + e.code)` con fallback `e.message`; chiave `err.snake_case` va aggiunta in tutte e 6 le lingue in `public/admin/i18n.js`
 
 ## COSA È STATO FATTO (sessione 2026-06-18 — superadmin UX fix, commit e51ecc3)
 
@@ -100,6 +101,18 @@
   - `expires_at`: scadenza codice opzionale
 - Backend: `GET/POST /superadmin/promo-codes`, `PATCH /superadmin/promo-codes/:id/toggle`, `POST /admin/redeem-promo`
 - Merchant panel: input riscatto codice nella tab Plan/Billing
+
+## COSA È STATO FATTO (sessione 2026-06-18 — fix wizard + validazione credenziali manuali)
+
+### Bug fix wizard Embedded Signup
+- `FB.login(async function...)` → rimosso `async` — Meta SDK rifiuta callback async con errore "Expression is of type asyncfunction, not function"
+- Login con credenziali errate → `api()` restituiva `undefined` su 401 non-autenticato → crash `Cannot read properties of undefined (reading 'token')` — fix: 401 con `auth=false` ora lancia errore invece di chiamare `logout()`
+- `META_APP_ID` e `META_CONFIG_ID` confermati settati su Render e iniettati correttamente nell'HTML
+
+### Validazione credenziali manuali WhatsApp
+- `POST /admin/whatsapp-connect-manual`: aggiunta chiamata verifica a `graph.facebook.com/v19.0/{phone_number_id}` prima di salvare — dati errati ora restituiscono errore leggibile invece di salvarsi silenziosamente
+- Errori con `errorCode`: `invalid_meta_credentials` (token/ID sbagliati), `meta_unreachable` (rete)
+- Chiavi `err.invalid_meta_credentials` + `err.meta_unreachable` aggiunte in ES/EN/IT/DE/FR/PT in `public/admin/i18n.js`
 
 ## COSA NON FUNZIONA / IN SOSPESO
 - **Env vars mancanti su Render** — da aggiungere in Render → Environment prima che il wizard funzioni:
