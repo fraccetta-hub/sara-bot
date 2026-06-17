@@ -4,6 +4,7 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Terms of Service — Sara Bot</title>
+  <link rel="icon" type="image/webp" href="/images/favicon.webp"/>
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
     body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f9f9f9;color:#1a1a1a;line-height:1.7}
@@ -172,6 +173,7 @@
 const LANGS = ['es','en','it','de','fr'];
 function setLang(l) {
   localStorage.setItem('legal_lang', l);
+  localStorage.setItem('sara_lang', l);
   LANGS.forEach(x => {
     document.querySelectorAll('[data-lang="'+x+'"]').forEach(el => el.classList.toggle('visible', x===l));
     document.getElementById('btn-'+x).classList.toggle('active', x===l);
