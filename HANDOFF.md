@@ -54,6 +54,10 @@
 ### i18n
 - 790 linee TR riformattate — ogni chiave su riga propria (grep ora funziona)
 - Aggiunte chiavi `wiz.resume.title/desc/btn` in ES/EN/IT/DE/FR
+- Bug fix: ~790 virgole mancanti nel TR admin causavano syntax error JS → zero traduzioni caricate
+- Legal pages ora scrivono su `sara_lang` (prima solo `legal_lang`) — lingua propagata a tutte le pagine
+- TR estratto da `public/admin/index.html` → `public/admin/i18n.js` (7060→4356 righe)
+- TR estratto da `public/register/index.html` → `public/register/i18n.js` (1610→811 righe)
 
 ## COSA NON FUNZIONA / IN SOSPESO
 - **Env vars mancanti su Render** — da aggiungere in Render → Environment prima che il wizard funzioni:
@@ -74,7 +78,9 @@
 - `routes/admin.js` / `routes/superadmin.js` — pannelli gestione tenant, import catalogo da immagini (Opus, candidato #3).
 - `services/stock.js` — `getTenantConfig`, `getStock`, `getServices` (candidati cache in-memory, #5).
 - `services/geo.js` — `isDeliveryDisabledToday`, `describeDelivery`.
-- `public/admin/index.html` — UI admin, contiene polling attivo (`setInterval`): `startSupportPoll` 5s, `startChatListPoll` 8s, `refreshChat` 3s, `checkNewOrders` 15s — non toccato, fuori scope corrente.
+- `public/admin/index.html` — UI admin (4356 righe), polling attivo: `startSupportPoll` 5s, `startChatListPoll` 8s, `refreshChat` 3s, `checkNewOrders` 15s — non toccare senza motivo.
+- `public/admin/i18n.js` — **TR traduzioni admin** (ES/EN/IT/DE/FR/PT). Edita qui, non in index.html.
+- `public/register/i18n.js` — **TR traduzioni register** (ES/EN/IT/DE/FR/PT). Edita qui, non in index.html.
 
 ## COME RIPRENDERE
 Primo messaggio da mandare a Claude nella prossima sessione:

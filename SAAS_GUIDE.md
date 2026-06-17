@@ -165,6 +165,19 @@ VALUES ('Nombre del Local', 'META_PHONE_NUMBER_ID', 'Sara', 'cálida y profesion
 | `/register` | Registrazione nuovo tenant (con i18n ES/EN/IT/DE/FR) |
 | `landingpage/` | Landing pubblica |
 
+### i18n — architettura traduzioni
+
+Tutte le pagine condividono la chiave `sara_lang` in `localStorage`. Lingua cambiata su qualsiasi pagina si propaga a tutte le altre.
+
+| File | Contenuto |
+|------|-----------|
+| `public/admin/i18n.js` | TR object admin (~2700 righe, 6 lingue: ES/EN/IT/DE/FR/PT) |
+| `public/register/i18n.js` | TR object register (~800 righe, 6 lingue) |
+| `landingpage/index.html` | TR inline (landing — pagina autonoma) |
+| `public/legal/*.html` | setLang inline per-file, legge `sara_lang`, scrive su entrambe `legal_lang` e `sara_lang` |
+
+Per aggiungere/modificare traduzioni admin: edita `public/admin/i18n.js` direttamente — non toccare `index.html`. Stesso pattern per register.
+
 ---
 
 ## Tenant di demo inclusi

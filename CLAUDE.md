@@ -52,6 +52,8 @@ Regola: parti sempre dal modello più economico che può fare il task. Scala su 
 | `services/stock.js` | `getTenantConfig`, `getStock`, `getServices` |
 | `services/geo.js` | `isDeliveryDisabledToday`, `describeDelivery` |
 | `public/admin/index.html` | UI admin (polling attivo: 3-15s interval — non toccare senza motivo) |
+| `public/admin/i18n.js` | **Traduzioni admin** (TR object, ES/EN/IT/DE/FR/PT) — edita qui per i18n admin |
+| `public/register/i18n.js` | **Traduzioni register** (TR object, ES/EN/IT/DE/FR/PT) — edita qui per i18n register |
 | `landingpage/index.html` | Landing pubblica |
 | `SAAS_GUIDE.md` | Documentazione tecnica aggiornata del progetto |
 | `HANDOFF.md` | Stato corrente sessione, task in sospeso, trappole note |
