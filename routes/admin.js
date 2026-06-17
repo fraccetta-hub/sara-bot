@@ -1537,4 +1537,89 @@ router.delete('/account', requireAuth, async (req, res) => {
   }
 });
 
+// ─── POST /admin/redeem-promo ─────────────────────────────────────────────────
+
+router.post('/redeem-promo', requireAuth, async (req, res) => {
+  const { code } = req.body;
+  if (!code?.trim()) return res.status(400).json({ error: 'Código vacío', errorCode: 'empty_code' });
+
+  const normalized = code.trim().toUpperCase();
+
+  const { data: promo } = await supabase
+    .from('promo_codes')
+    .select('*')
+    .eq('code', normalized)
+    .eq('active', true)
+    .single();
+
+  if (!promo) return res.status(404).json({ error: 'Código inválido o inactivo', errorCode: 'invalid_code' });
+  if (promo.expires_at && new Date(promo.expires_at) < new Date())
+    return res.status(400).json({ error: 'El código ha expirado', errorCode: 'code_expired' });
+  if (promo.max_uses !== null && promo.uses_count >= promo.max_uses)
+    return res.status(400).json({ error: 'El código ya alcanzó su límite de usos', errorCode: 'code_exhausted' });
+
+  const { data: tenant } = await supabase
+    .from('tenants')
+    .select('id, plan_price, plan_currency, plan_expires')
+    .eq('id', req.tenant.tenantId)
+    .single();
+
+  if (promo.valid_for_currency && promo.valid_for_currency !== tenant.plan_currency)
+    return res.status(400).json({ error: `Código válido solo para plan ${promo.valid_for_currency}`, errorCode: 'code_wrong_plan' });
+
+  const { data: existing } = await supabase
+    .from('promo_redemptions')
+    .select('id')
+    .eq('promo_code_id', promo.id)
+    .eq('tenant_id', tenant.id)
+    .single();
+  if (existing) return res.status(400).json({ error: 'Ya usaste este código', errorCode: 'code_already_used' });
+
+  const updates = {};
+  let discountApplied = 0;
+  let monthsAdded = 0;
+
+  if (promo.discount_value > 0) {
+    const currentPrice = parseFloat(tenant.plan_price) || 0;
+    if (promo.discount_type === 'percent') {
+      discountApplied = parseFloat((currentPrice * promo.discount_value / 100).toFixed(2));
+    } else {
+      discountApplied = Math.min(currentPrice, parseFloat(promo.discount_value));
+    }
+    updates.plan_price = Math.max(0, parseFloat((currentPrice - discountApplied).toFixed(2)));
+  }
+
+  if (promo.months_free > 0) {
+    const base = tenant.plan_expires && new Date(tenant.plan_expires) > new Date()
+      ? new Date(tenant.plan_expires)
+      : new Date();
+    base.setMonth(base.getMonth() + promo.months_free);
+    updates.plan_expires = base.toISOString();
+    monthsAdded = promo.months_free;
+  }
+
+  if (Object.keys(updates).length) {
+    await supabase.from('tenants').update(updates).eq('id', tenant.id);
+  }
+
+  await Promise.all([
+    supabase.from('promo_redemptions').insert({
+      promo_code_id:    promo.id,
+      tenant_id:        tenant.id,
+      discount_applied: discountApplied || null,
+      months_added:     monthsAdded || null,
+    }),
+    supabase.from('promo_codes').update({ uses_count: promo.uses_count + 1 }).eq('id', promo.id),
+  ]);
+
+  res.json({
+    ok: true,
+    description: promo.description,
+    discountApplied,
+    monthsAdded,
+    newPlanPrice:   updates.plan_price   ?? null,
+    newPlanExpires: updates.plan_expires ?? null,
+  });
+});
+
 module.exports = router;

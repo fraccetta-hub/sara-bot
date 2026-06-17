@@ -10,6 +10,7 @@
     .status-active   { background:#D1FAE5; color:#065F46; }
     .status-inactive { background:#FEE2E2; color:#991B1B; }
     .status-overdue  { background:#FEF3C7; color:#92400E; }
+    .status-meta     { background:#DBEAFE; color:#1E40AF; }
     .badge { font-size:.72rem; padding:2px 8px; border-radius:999px; font-weight:600; }
     .tab-active { border-bottom:3px solid #7C3AED; color:#7C3AED; font-weight:600; }
     input:focus,select:focus,textarea:focus { outline:2px solid #7C3AED; outline-offset:1px; }
@@ -27,16 +28,18 @@
   <nav class="bg-white border-b sticky top-0 z-10 shadow-sm">
     <div class="max-w-7xl mx-auto px-4 flex items-center justify-between h-14">
       <div class="flex items-center gap-2">
-        <span class="text-xl">🛡️</span>
+        <span class="text-xl">🤖</span>
         <span class="font-bold text-gray-800">Sara Bot</span>
         <span class="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full font-semibold">SUPERADMIN</span>
       </div>
       <button onclick="logout()" class="text-sm text-gray-500 hover:text-red-500">Salir</button>
     </div>
     <div class="max-w-7xl mx-auto px-4 flex gap-6 text-sm text-gray-500">
-      <button class="py-2 tab-active" id="tabTenants"  onclick="switchTab('tenants')">🏪 Clientes</button>
-      <button class="py-2"            id="tabNew"      onclick="switchTab('new')">➕ Nuevo cliente</button>
-      <button class="py-2 relative"   id="tabSupport"  onclick="switchTab('support')">💬 Soporte<span id="supportBadge" class="hidden absolute -top-0.5 -right-2 bg-red-500 text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center"></span></button>
+      <button class="py-2 tab-active" id="tabTenants"   onclick="switchTab('tenants')">🏪 Clientes</button>
+      <button class="py-2"            id="tabNew"       onclick="switchTab('new')">➕ Nuevo cliente</button>
+      <button class="py-2"            id="tabAnalytics" onclick="switchTab('analytics')">📊 Analytics</button>
+      <button class="py-2"            id="tabPromos"    onclick="switchTab('promos')">🎟️ Promos</button>
+      <button class="py-2 relative"   id="tabSupport"   onclick="switchTab('support')">💬 Soporte<span id="supportBadge" class="hidden absolute -top-0.5 -right-2 bg-red-500 text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center"></span></button>
     </div>
   </nav>
 
@@ -147,6 +150,118 @@
       </div>
     </div>
 
+    <!-- ── PROMOS TAB ── -->
+    <div id="sectionPromos" class="hidden">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold text-gray-800">🎟️ Códigos promocionales</h2>
+        <button onclick="openPromoModal()" class="btn-purple px-4 py-2 rounded-lg text-sm font-semibold">+ Nuevo código</button>
+      </div>
+      <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+        <table class="w-full text-sm">
+          <thead class="bg-gray-50 text-gray-500 uppercase text-xs">
+            <tr>
+              <th class="px-4 py-3 text-left">Código</th>
+              <th class="px-4 py-3 text-left hidden md:table-cell">Efecto</th>
+              <th class="px-4 py-3 text-center hidden sm:table-cell">Usos</th>
+              <th class="px-4 py-3 text-left hidden lg:table-cell">Plan</th>
+              <th class="px-4 py-3 text-left hidden lg:table-cell">Vence</th>
+              <th class="px-4 py-3 text-center">Estado</th>
+            </tr>
+          </thead>
+          <tbody id="promosTable">
+            <tr><td colspan="6" class="text-center py-8 text-gray-400">Cargando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── ANALYTICS TAB ── -->
+    <div id="sectionAnalytics" class="hidden">
+      <h2 class="text-lg font-semibold text-gray-800 mb-4">📊 Analytics de la plataforma</h2>
+
+      <!-- Status cards -->
+      <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
+        <div class="bg-white rounded-xl p-4 shadow-sm text-center">
+          <div class="text-2xl font-bold text-purple-600" id="aTotalTenants">—</div>
+          <div class="text-xs text-gray-500 mt-1">Total clientes</div>
+        </div>
+        <div class="bg-white rounded-xl p-4 shadow-sm text-center">
+          <div class="text-2xl font-bold text-green-600" id="aActiveTenants">—</div>
+          <div class="text-xs text-gray-500 mt-1">✅ Activos</div>
+        </div>
+        <div class="bg-white rounded-xl p-4 shadow-sm text-center">
+          <div class="text-2xl font-bold text-blue-600" id="aMetaPending">—</div>
+          <div class="text-xs text-gray-500 mt-1">🔵 Sin Meta</div>
+        </div>
+        <div class="bg-white rounded-xl p-4 shadow-sm text-center">
+          <div class="text-2xl font-bold text-yellow-600" id="aOverdue">—</div>
+          <div class="text-xs text-gray-500 mt-1">🟠 Morosos</div>
+        </div>
+        <div class="bg-white rounded-xl p-4 shadow-sm text-center">
+          <div class="text-2xl font-bold text-red-500" id="aInactive">—</div>
+          <div class="text-xs text-gray-500 mt-1">🔴 Inactivos</div>
+        </div>
+      </div>
+
+      <!-- Orders cards -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+        <div class="bg-white rounded-xl p-4 shadow-sm text-center">
+          <div class="text-2xl font-bold text-gray-700" id="aOrdersTotal">—</div>
+          <div class="text-xs text-gray-500 mt-1">Pedidos totales</div>
+        </div>
+        <div class="bg-white rounded-xl p-4 shadow-sm text-center">
+          <div class="text-2xl font-bold text-yellow-500" id="aOrdersToday">—</div>
+          <div class="text-xs text-gray-500 mt-1">Pedidos hoy</div>
+        </div>
+        <div class="bg-white rounded-xl p-4 shadow-sm text-center">
+          <div class="text-2xl font-bold text-green-500" id="aOrdersDelivered">—</div>
+          <div class="text-xs text-gray-500 mt-1">Entregados</div>
+        </div>
+        <div class="bg-white rounded-xl p-4 shadow-sm text-center">
+          <div class="text-2xl font-bold text-red-400" id="aOrdersCancelled">—</div>
+          <div class="text-xs text-gray-500 mt-1">Cancelados</div>
+        </div>
+      </div>
+
+      <!-- MRR -->
+      <div class="bg-white rounded-xl p-5 shadow-sm mb-4">
+        <h3 class="text-sm font-semibold text-gray-700 mb-3">💰 MRR — Ingresos mensuales recurrentes</h3>
+        <div id="aMrrList" class="flex flex-wrap gap-4">
+          <span class="text-gray-400 text-sm">Cargando...</span>
+        </div>
+        <p class="text-xs text-gray-400 mt-2">Solo clientes activos con precio/mes configurado</p>
+      </div>
+
+      <!-- Charts -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div class="bg-white rounded-xl p-5 shadow-sm">
+          <h3 class="text-sm font-semibold text-gray-700 mb-4">📈 Registros / mes</h3>
+          <div id="chartReg" class="flex items-end gap-2 h-28"></div>
+          <div id="chartRegLabels" class="flex gap-2 mt-1"></div>
+        </div>
+        <div class="bg-white rounded-xl p-5 shadow-sm">
+          <h3 class="text-sm font-semibold text-gray-700 mb-4">🛒 Pedidos / mes</h3>
+          <div id="chartOrders" class="flex items-end gap-2 h-28"></div>
+          <div id="chartOrdersLabels" class="flex gap-2 mt-1"></div>
+        </div>
+        <div class="bg-white rounded-xl p-5 shadow-sm">
+          <h3 class="text-sm font-semibold text-gray-700 mb-4">📉 Bajas / mes</h3>
+          <div id="chartChurn" class="flex items-end gap-2 h-28"></div>
+          <div id="chartChurnLabels" class="flex gap-2 mt-1"></div>
+        </div>
+      </div>
+
+      <!-- Overdue list -->
+      <div class="bg-white rounded-xl shadow-sm overflow-hidden" id="aOverdueSection">
+        <div class="px-5 py-3 border-b border-gray-100">
+          <h3 class="text-sm font-semibold text-gray-700">🟠 Clientes morosos</h3>
+        </div>
+        <div id="aOverdueList" class="divide-y divide-gray-50 text-sm">
+          <div class="px-5 py-4 text-gray-400 text-sm">Cargando...</div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -202,7 +317,7 @@
         </div>
         <div class="flex items-center gap-2">
           <label class="text-xs font-medium text-gray-500 shrink-0">Moneda</label>
-          <select id="eCurrency" class="flex-1 border border-gray-200 rounded-lg px-2 py-1.5 text-sm">
+          <select id="eCurrency" class="flex-1 border border-gray-200 rounded-lg px-2 py-1.5 text-sm" onchange="document.getElementById('ePlanPriceCurrency').textContent=this.value">
             <option value="USD">USD</option>
             <option value="ARS">ARS 🇦🇷</option>
             <option value="BRL">BRL 🇧🇷</option>
@@ -219,6 +334,12 @@
         <label class="text-xs font-medium text-gray-500 shrink-0">Vence</label>
         <input id="eExpires" type="date" class="flex-1 border border-gray-200 rounded-lg px-3 py-1.5 text-sm"/>
         <button onclick="document.getElementById('eExpires').value=''" class="text-xs text-gray-400 hover:text-red-400">✕ Sin vto</button>
+      </div>
+      <div class="flex items-center gap-2 pt-1">
+        <label class="text-xs font-medium text-gray-500 shrink-0">Precio/mes</label>
+        <input id="ePlanPrice" type="number" min="0" step="0.01" placeholder="0"
+          class="flex-1 border border-gray-200 rounded-lg px-3 py-1.5 text-sm"/>
+        <span class="text-xs text-gray-400" id="ePlanPriceCurrency">USD</span>
       </div>
     </div>
 
@@ -312,6 +433,94 @@
   </div>
 </div>
 
+<!-- ════ PROMO MODAL ════ -->
+<div id="promoModal" class="hidden fixed inset-0 modal-bg flex items-center justify-center z-50 px-4">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+    <div class="flex items-center justify-between mb-5">
+      <h3 class="font-semibold text-gray-800 text-lg">Nuevo código promocional</h3>
+      <button onclick="closePromoModal()" class="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
+    </div>
+    <div id="promoError" class="hidden bg-red-50 text-red-700 text-sm rounded-lg px-4 py-2 mb-4"></div>
+    <div class="space-y-3">
+      <div class="grid grid-cols-2 gap-3">
+        <div class="col-span-2">
+          <label class="block text-xs font-medium text-gray-500 mb-1">Código *</label>
+          <input id="pCode" type="text" placeholder="Ej: BIENVENIDO30"
+            class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm uppercase"
+            oninput="this.value=this.value.toUpperCase()"/>
+          <p class="text-xs text-gray-400 mt-0.5">Se convierte en mayúsculas automáticamente</p>
+        </div>
+        <div class="col-span-2">
+          <label class="block text-xs font-medium text-gray-500 mb-1">Descripción</label>
+          <input id="pDesc" type="text" placeholder="Ej: 30% descuento primer mes"
+            class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
+        </div>
+      </div>
+
+      <div class="border-t border-gray-100 pt-3">
+        <p class="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">Efecto del código</p>
+        <div class="grid grid-cols-3 gap-2">
+          <div>
+            <label class="block text-xs font-medium text-gray-500 mb-1">Tipo descuento</label>
+            <select id="pDiscountType" class="w-full border border-gray-200 rounded-lg px-2 py-2 text-sm">
+              <option value="percent">% Porcentaje</option>
+              <option value="fixed">Monto fijo</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-500 mb-1">Valor</label>
+            <input id="pDiscountValue" type="number" min="0" step="0.01" placeholder="0"
+              class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-500 mb-1">Meses gratis</label>
+            <input id="pMonthsFree" type="number" min="0" step="1" placeholder="0"
+              class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
+          </div>
+        </div>
+      </div>
+
+      <div class="border-t border-gray-100 pt-3">
+        <p class="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">Restricciones</p>
+        <div class="grid grid-cols-3 gap-2">
+          <div>
+            <label class="block text-xs font-medium text-gray-500 mb-1">Usos máx.</label>
+            <input id="pMaxUses" type="number" min="1" placeholder="∞ ilimitado"
+              class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
+            <p class="text-[10px] text-gray-400 mt-0.5">Vacío = ilimitado</p>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-500 mb-1">Solo plan</label>
+            <select id="pCurrency" class="w-full border border-gray-200 rounded-lg px-2 py-2 text-sm">
+              <option value="">Todos</option>
+              <option value="USD">USD</option>
+              <option value="ARS">ARS</option>
+              <option value="BRL">BRL</option>
+              <option value="MXN">MXN</option>
+              <option value="PYG">PYG</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-500 mb-1">Expira</label>
+            <input id="pExpires" type="date"
+              class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="flex gap-3 mt-5">
+      <button onclick="closePromoModal()"
+        class="flex-1 border border-gray-200 text-gray-600 py-2 rounded-lg text-sm hover:bg-gray-50">
+        Cancelar
+      </button>
+      <button onclick="savePromo()" id="promoSaveBtn"
+        class="btn-purple flex-1 py-2 rounded-lg text-sm font-semibold">
+        Crear código
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- ════ SOPORTE ════ -->
 <div id="sectionSupport" class="hidden">
   <div class="flex gap-4 h-[calc(100vh-140px)]">
@@ -391,7 +600,7 @@ async function showDashboard() {
 
 // ── Tabs ───────────────────────────────────────────────────────────────────────
 function switchTab(tab) {
-  ['tenants','new','support'].forEach(t => {
+  ['tenants','new','analytics','promos','support'].forEach(t => {
     document.getElementById('section' + cap(t)).classList.toggle('hidden', t !== tab);
     document.getElementById('tab'     + cap(t)).classList.toggle('tab-active', t === tab);
   });
@@ -405,6 +614,8 @@ function switchTab(tab) {
     supportListPollTimer = null;
     supportChatPollTimer = null;
   }
+  if (tab === 'analytics') loadAnalytics();
+  if (tab === 'promos')    loadPromos();
 }
 function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
 
@@ -430,8 +641,9 @@ function renderTenants(list) {
   const now = new Date();
   tbody.innerHTML = list.map(t => {
     const expired = t.active && t.plan_expires && new Date(t.plan_expires) < now;
-    const statusClass = !t.active ? 'status-inactive' : expired ? 'status-overdue' : 'status-active';
-    const statusLabel = !t.active ? '🔴 Inactivo' : expired ? '🟠 Moroso' : '✅ Activo';
+    const metaPending = t.active && !expired && !t.meta_connected;
+    const statusClass = !t.active ? 'status-inactive' : expired ? 'status-overdue' : metaPending ? 'status-meta' : 'status-active';
+    const statusLabel = !t.active ? '🔴 Inactivo' : expired ? '🟠 Moroso' : metaPending ? '🔵 Sin Meta' : '✅ Activo';
     const expiryHint  = t.plan_expires
       ? `<div class="text-xs ${expired ? 'text-orange-500 font-medium' : 'text-gray-300'} mt-0.5">
            ${expired ? '⚠️ Venció' : 'Vence'} ${new Date(t.plan_expires).toLocaleDateString('es-PY')}
@@ -486,9 +698,11 @@ async function openEditModal(id) {
   document.getElementById('eName').value     = t.name           || '';
   document.getElementById('eSlug').value     = t.login_slug     || '';
   document.getElementById('eMerchant').value = t.merchant_phone || '';
-  document.getElementById('eActive').value    = String(t.active);
-  document.getElementById('eCurrency').value  = t.plan_currency || 'USD';
-  document.getElementById('eExpires').value   = t.plan_expires ? t.plan_expires.slice(0,10) : '';
+  document.getElementById('eActive').value       = String(t.active);
+  document.getElementById('eCurrency').value     = t.plan_currency || 'USD';
+  document.getElementById('eExpires').value      = t.plan_expires ? t.plan_expires.slice(0,10) : '';
+  document.getElementById('ePlanPrice').value    = t.plan_price || '';
+  document.getElementById('ePlanPriceCurrency').textContent = t.plan_currency || 'USD';
   document.getElementById('eProducts').checked      = t.products_enabled !== false;
   document.getElementById('eServices').checked      = !!t.services_enabled;
   document.getElementById('eAppointments').checked  = !!t.appointments_enabled;
@@ -672,6 +886,7 @@ async function saveTenant() {
       active:              newActive,
       plan_currency:       document.getElementById('eCurrency').value || 'USD',
       plan_expires:        document.getElementById('eExpires').value || null,
+      plan_price:          parseFloat(document.getElementById('ePlanPrice').value) || 0,
       products_enabled:    document.getElementById('eProducts').checked,
       services_enabled:    document.getElementById('eServices').checked,
       appointments_enabled: document.getElementById('eAppointments').checked,
@@ -824,6 +1039,158 @@ async function sendSupportReply() {
     alert('Error al enviar: ' + e.message);
     input.value = content;
   }
+}
+
+// ── Promos ─────────────────────────────────────────────────────────────────────
+async function loadPromos() {
+  try {
+    const list = await api('/superadmin/promo-codes');
+    renderPromos(list);
+  } catch(e) { console.error('[promos]', e.message); }
+}
+
+function renderPromos(list) {
+  const tbody = document.getElementById('promosTable');
+  if (!list.length) {
+    tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-400">Sin códigos aún.</td></tr>';
+    return;
+  }
+  const now = new Date();
+  tbody.innerHTML = list.map(p => {
+    const uses = p.max_uses === null ? `${p.uses_count} / ∞` : `${p.uses_count} / ${p.max_uses}`;
+    const expired = p.expires_at && new Date(p.expires_at) < now;
+    const exhausted = p.max_uses !== null && p.uses_count >= p.max_uses;
+    const effectParts = [];
+    if (p.discount_value > 0)
+      effectParts.push(p.discount_type === 'percent' ? `-${p.discount_value}%` : `-${p.discount_value} ${p.valid_for_currency || ''}`);
+    if (p.months_free > 0)
+      effectParts.push(`+${p.months_free} mes${p.months_free > 1 ? 'es' : ''}`);
+    const effect = effectParts.join(' · ') || '—';
+    const stateClass = (!p.active || expired || exhausted) ? 'status-inactive' : 'status-active';
+    const stateLabel = !p.active ? '🔴 Inactivo' : expired ? '⏰ Expirado' : exhausted ? '🔒 Agotado' : '✅ Activo';
+    return `
+    <tr class="border-t border-gray-50 hover:bg-gray-50">
+      <td class="px-4 py-3">
+        <div class="font-mono font-bold text-purple-700">${escHtml(p.code)}</div>
+        <div class="text-xs text-gray-400">${escHtml(p.description || '')}</div>
+      </td>
+      <td class="px-4 py-3 hidden md:table-cell text-gray-700 text-xs">${escHtml(effect)}</td>
+      <td class="px-4 py-3 text-center hidden sm:table-cell text-xs text-gray-500">${uses}</td>
+      <td class="px-4 py-3 hidden lg:table-cell text-xs text-gray-400">${p.valid_for_currency || 'Todos'}</td>
+      <td class="px-4 py-3 hidden lg:table-cell text-xs ${expired ? 'text-red-500' : 'text-gray-400'}">
+        ${p.expires_at ? new Date(p.expires_at).toLocaleDateString('es-PY') : '—'}
+      </td>
+      <td class="px-4 py-3 text-center">
+        <button onclick="togglePromo('${p.id}')"
+          class="badge ${stateClass} cursor-pointer hover:opacity-75 transition">${stateLabel}</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function openPromoModal() {
+  ['pCode','pDesc','pDiscountValue','pMonthsFree','pMaxUses','pExpires'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('pDiscountType').value = 'percent';
+  document.getElementById('pCurrency').value = '';
+  document.getElementById('promoError').classList.add('hidden');
+  document.getElementById('promoModal').classList.remove('hidden');
+}
+function closePromoModal() { document.getElementById('promoModal').classList.add('hidden'); }
+
+async function savePromo() {
+  const btn = document.getElementById('promoSaveBtn');
+  const errEl = document.getElementById('promoError');
+  errEl.classList.add('hidden');
+  btn.textContent = 'Creando...'; btn.disabled = true;
+  try {
+    await api('/superadmin/promo-codes', 'POST', {
+      code:                document.getElementById('pCode').value.trim(),
+      description:         document.getElementById('pDesc').value.trim() || null,
+      discount_type:       document.getElementById('pDiscountType').value,
+      discount_value:      parseFloat(document.getElementById('pDiscountValue').value) || 0,
+      months_free:         parseInt(document.getElementById('pMonthsFree').value) || 0,
+      max_uses:            document.getElementById('pMaxUses').value ? parseInt(document.getElementById('pMaxUses').value) : null,
+      valid_for_currency:  document.getElementById('pCurrency').value || null,
+      expires_at:          document.getElementById('pExpires').value || null,
+    });
+    closePromoModal();
+    await loadPromos();
+  } catch(e) {
+    errEl.textContent = e.message;
+    errEl.classList.remove('hidden');
+  } finally {
+    btn.textContent = 'Crear código'; btn.disabled = false;
+  }
+}
+
+async function togglePromo(id) {
+  await api(`/superadmin/promo-codes/${id}/toggle`, 'PATCH');
+  await loadPromos();
+}
+
+// ── Analytics ──────────────────────────────────────────────────────────────────
+async function loadAnalytics() {
+  try {
+    const d = await api('/superadmin/analytics');
+
+    document.getElementById('aTotalTenants').textContent    = d.stats.total;
+    document.getElementById('aActiveTenants').textContent   = d.stats.active;
+    document.getElementById('aMetaPending').textContent     = d.stats.metaPending;
+    document.getElementById('aOverdue').textContent         = d.stats.overdue;
+    document.getElementById('aInactive').textContent        = d.stats.inactive;
+    document.getElementById('aOrdersTotal').textContent     = d.orderStats.total;
+    document.getElementById('aOrdersToday').textContent     = d.orderStats.today;
+    document.getElementById('aOrdersDelivered').textContent = d.orderStats.delivered;
+    document.getElementById('aOrdersCancelled').textContent = d.orderStats.cancelled;
+
+    renderBarChart('chartReg', 'chartRegLabels', d.regByMonth, '#7C3AED');
+    renderBarChart('chartOrders', 'chartOrdersLabels', d.ordersByMonth, '#10B981');
+    renderBarChart('chartChurn', 'chartChurnLabels', d.churnByMonth, '#EF4444');
+
+    const mrrEl = document.getElementById('aMrrList');
+    const entries = Object.entries(d.mrrByCurrency || {});
+    if (!entries.length) {
+      mrrEl.innerHTML = '<span class="text-gray-400 text-sm">Sin precios configurados aún</span>';
+    } else {
+      mrrEl.innerHTML = entries.map(([cur, total]) =>
+        `<div class="bg-green-50 rounded-xl px-5 py-3 text-center">
+          <div class="text-2xl font-bold text-green-700">${total.toLocaleString('es', {minimumFractionDigits:0, maximumFractionDigits:2})}</div>
+          <div class="text-xs text-green-600 font-semibold mt-0.5">${cur} / mes</div>
+        </div>`
+      ).join('');
+    }
+
+    const overdueEl = document.getElementById('aOverdueList');
+    if (!d.overdueList.length) {
+      overdueEl.innerHTML = '<div class="px-5 py-4 text-gray-400">No hay clientes morosos 🎉</div>';
+    } else {
+      overdueEl.innerHTML = d.overdueList.map(t => `
+        <div class="px-5 py-3 flex items-center justify-between hover:bg-orange-50">
+          <span class="font-medium text-gray-800">${escHtml(t.name)}</span>
+          <span class="text-xs text-orange-600 font-semibold">Venció ${new Date(t.plan_expires).toLocaleDateString('es-PY')}</span>
+        </div>`).join('');
+    }
+  } catch(e) { console.error('[analytics]', e.message); }
+}
+
+function renderBarChart(chartId, labelsId, data, color) {
+  const max = Math.max(...data.map(d => d.count), 1);
+  const chartEl  = document.getElementById(chartId);
+  const labelsEl = document.getElementById(labelsId);
+
+  chartEl.innerHTML = data.map(d => {
+    const pct = Math.round((d.count / max) * 100);
+    return `<div class="flex-1 flex flex-col items-center justify-end gap-1">
+      <span class="text-xs font-semibold text-gray-600">${d.count || ''}</span>
+      <div style="height:${Math.max(pct, d.count ? 4 : 0)}%;background:${color};border-radius:4px 4px 0 0;width:100%;min-height:${d.count ? 4 : 0}px"></div>
+    </div>`;
+  }).join('');
+
+  labelsEl.innerHTML = data.map(d => {
+    const [y, m] = d.month.split('-');
+    const label = new Date(+y, +m - 1, 1).toLocaleString('es', { month: 'short' });
+    return `<div class="flex-1 text-center text-[10px] text-gray-400">${label}</div>`;
+  }).join('');
 }
 
 // Background badge poll (when not on support tab)

@@ -1,6 +1,40 @@
 -- ============================================================
 -- Migrations — run in Supabase SQL editor after schema.sql
 -- ============================================================
+
+-- Migration 8: Billing tracking + churn tracking
+ALTER TABLE tenants
+  ADD COLUMN IF NOT EXISTS plan_price      NUMERIC(10,2) DEFAULT 0,   -- monthly subscription fee in plan_currency
+  ADD COLUMN IF NOT EXISTS deactivated_at  TIMESTAMPTZ;               -- set when active goes false, cleared on reactivation
+
+-- Migration 9: Promo codes
+CREATE TABLE IF NOT EXISTS promo_codes (
+  id                   UUID          PRIMARY KEY DEFAULT gen_random_uuid(),
+  code                 TEXT          NOT NULL UNIQUE,
+  description          TEXT,
+  discount_type        TEXT          NOT NULL DEFAULT 'percent'
+                                     CHECK (discount_type IN ('percent','fixed')),
+  discount_value       NUMERIC(10,2) NOT NULL DEFAULT 0,
+  months_free          INTEGER       NOT NULL DEFAULT 0,
+  max_uses             INTEGER,                                        -- null = unlimited
+  uses_count           INTEGER       NOT NULL DEFAULT 0,
+  valid_for_currency   TEXT,                                           -- null = all currencies
+  expires_at           TIMESTAMPTZ,
+  active               BOOLEAN       NOT NULL DEFAULT true,
+  created_at           TIMESTAMPTZ   NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS promo_redemptions (
+  id               UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  promo_code_id    UUID        NOT NULL REFERENCES promo_codes(id),
+  tenant_id        UUID        NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  discount_applied NUMERIC(10,2),
+  months_added     INTEGER,
+  redeemed_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (promo_code_id, tenant_id)
+);
+
+-- ============================================================
 -- PRIMA DI TUTTO: crea il bucket per le foto su Supabase Storage
 -- Supabase Dashboard → Storage → New bucket
 -- Nome: product-images

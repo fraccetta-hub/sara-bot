@@ -1,4 +1,4 @@
-# PROJECT HANDOFF — Sara Bot (whatsapp-bot) — 2026-06-17
+# PROJECT HANDOFF — Sara Bot (whatsapp-bot) — 2026-06-18
 
 ## STATO CORRENTE
 - Obiettivo generale: SaaS multi-tenant WhatsApp Business (Node/Express + Supabase + Anthropic Claude). Bot AI risponde a clienti, gestisce catalogo, delivery, turni/appuntamenti, ordini.
@@ -67,6 +67,30 @@
 - Backend errors tradotti via `errorCode`: `routes/admin.js` aggiunge `errorCode` alle 8 risposte errore utente-visibili; `api()` helper attacca `err.code`; helper `errMsg(e)` in frontend usa `t('err.' + e.code)` con fallback `e.message`
 - Chiavi `err.*` aggiunte a `i18n.js`: `unauthorized`, `token_expired`, `suspended`, `plan_expired`, `rate_limit`, `wrong_credentials`, `password_too_short`
 
+## COSA È STATO FATTO (sessione 2026-06-18 — superadmin UX + promo codes)
+
+### Superadmin panel — miglioramenti UX
+- Logo navbar: 🛡️ → 🤖
+- Nuovo stato tenant `🔵 Sin Meta` (status-meta, blu): tenant attivo ma senza `whatsapp_token` proprio (usa token globale env)
+- Logica stato: inactivo → moroso (expired) → sin Meta → activo
+- `meta_connected: !!t.whatsapp_token` calcolato server-side (token mai esposto al frontend)
+- Nuova tab **📊 Analytics**: card per stato tenant (totale/attivi/sin Meta/morosos/inactivos), card pedidos (totale/oggi/consegnati/cancellati), grafici a barre SVG (registros/mes, pedidos/mes, bajas/mes), MRR per valuta, tabella morosi
+- Campo `plan_price` aggiunto al modal edit (prezzo mensile abbonamento)
+- `deactivated_at` registrato al toggle off, cancellato al toggle on
+- Migration: `plan_price NUMERIC(10,2)`, `deactivated_at TIMESTAMPTZ` su `tenants`
+
+### Promo codes — IMPLEMENTATO
+- Schema: tabelle `promo_codes` + `promo_redemptions` (migration in `db/migrations.sql`)
+- Superadmin: nuova tab "🎟️ Promos" — CRUD completo (crea/modifica/disattiva)
+  - `discount_type`: percent | fixed amount
+  - `discount_value`: valore sconto
+  - `months_free`: mesi gratuiti da aggiungere al piano
+  - `max_uses`: null=illimitato, 1=singolo uso, N=N usi
+  - `valid_for_currency`: null=tutti i piani, o valuta specifica
+  - `expires_at`: scadenza codice opzionale
+- Backend: `GET/POST /superadmin/promo-codes`, `PATCH /superadmin/promo-codes/:id/toggle`, `POST /admin/redeem-promo`
+- Merchant panel: input riscatto codice nella tab Plan/Billing
+
 ## COSA NON FUNZIONA / IN SOSPESO
 - **Env vars mancanti su Render** — da aggiungere in Render → Environment prima che il wizard funzioni:
   - `META_APP_ID` = `27756118003980694` (ID app Meta)
@@ -92,7 +116,7 @@
 
 ## COME RIPRENDERE
 Primo messaggio da mandare a Claude nella prossima sessione:
-"Leggi HANDOFF.md. Configurazione Meta completata. Prossimo task: implementare Embedded Signup wizard. Parti leggendo `public/register/index.html` per capire il flusso attuale post-registrazione merchant."
+"Leggi HANDOFF.md. Sessione precedente: superadmin analytics + promo codes implementati. Ricordati di eseguire migration in Supabase SQL editor prima di testare."
 
 ## ERRORI NOTI / TRAPPOLE
 - NON leggere/query tabella prod `tenants` con `select('*')` o colonne sensibili senza autorizzazione esplicita utente per quella lettura specifica — bloccato da permission classifier (dati merchant: token WhatsApp, telefoni).

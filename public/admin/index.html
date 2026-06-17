@@ -1055,6 +1055,23 @@
         </div>
       </div>
 
+      <!-- Código promocional -->
+      <div class="bg-white rounded-xl shadow-sm p-6">
+        <h3 class="font-medium text-gray-800 mb-3">🎟️ <span data-i18n="plan.promo.title">Código promocional</span></h3>
+        <div id="promoRedeemSuccess" class="hidden bg-green-50 text-green-700 text-sm rounded-lg px-4 py-2 mb-3"></div>
+        <div id="promoRedeemError"   class="hidden bg-red-50 text-red-700 text-sm rounded-lg px-4 py-2 mb-3"></div>
+        <div class="flex gap-2">
+          <input id="promoCodeInput" type="text" placeholder="CÓDIGO" maxlength="40"
+            class="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm uppercase tracking-widest font-mono"
+            oninput="this.value=this.value.toUpperCase()"
+            onkeydown="if(event.key==='Enter') redeemPromo()"/>
+          <button onclick="redeemPromo()" id="promoRedeemBtn"
+            class="btn-purple px-4 py-2 rounded-lg text-sm font-semibold whitespace-nowrap">
+            <span data-i18n="plan.promo.btn">Aplicar</span>
+          </button>
+        </div>
+      </div>
+
       <!-- Planes disponibles -->
       <div class="bg-white rounded-xl shadow-sm p-6">
         <h3 data-i18n="plan.plans.title" class="font-medium text-gray-800 mb-4">🚀 Planes disponibles</h3>
@@ -2899,6 +2916,32 @@ function getSelectedPersonality() {
     return document.getElementById('sPersonalityCustom').value.trim() || null;
   }
   return preset?.value || null;
+}
+
+async function redeemPromo() {
+  const input = document.getElementById('promoCodeInput');
+  const btn   = document.getElementById('promoRedeemBtn');
+  const errEl = document.getElementById('promoRedeemError');
+  const okEl  = document.getElementById('promoRedeemSuccess');
+  errEl.classList.add('hidden');
+  okEl.classList.add('hidden');
+  const code = input.value.trim();
+  if (!code) return;
+  btn.disabled = true;
+  try {
+    const d = await api('/admin/redeem-promo', { method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+TOKEN}, body: JSON.stringify({ code }) });
+    const parts = [];
+    if (d.discountApplied > 0) parts.push(`-${d.discountApplied} en tu precio mensual`);
+    if (d.monthsAdded  > 0)   parts.push(`+${d.monthsAdded} mes${d.monthsAdded>1?'es':''} al plan`);
+    okEl.textContent = `✅ Código aplicado! ${d.description ? d.description + '. ' : ''}${parts.join(' · ')}`;
+    okEl.classList.remove('hidden');
+    input.value = '';
+  } catch(e) {
+    errEl.textContent = '❌ ' + e.message;
+    errEl.classList.remove('hidden');
+  } finally {
+    btn.disabled = false;
+  }
 }
 
 async function startMpCheckout() {

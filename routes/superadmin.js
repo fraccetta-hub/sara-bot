@@ -72,12 +72,11 @@ router.get('/stats', requireSuper, async (req, res) => {
 router.get('/tenants', requireSuper, async (req, res) => {
   const { data: tenants, error } = await supabase
     .from('tenants')
-    .select('id, name, active, plan_expires, phone_number_id, bot_name, merchant_phone, created_at, whatsapp_token_refresh_error')
+    .select('id, name, active, plan_expires, phone_number_id, bot_name, merchant_phone, created_at, whatsapp_token_refresh_error, whatsapp_token')
     .order('created_at', { ascending: false });
 
   if (error) return res.status(500).json({ error: error.message });
 
-  // Enrich with order counts
   const { data: orderCounts } = await supabase
     .from('orders')
     .select('tenant_id, status');
@@ -91,8 +90,10 @@ router.get('/tenants', requireSuper, async (req, res) => {
 
   const result = tenants.map(t => ({
     ...t,
-    totalOrders:   countMap[t.id]?.total   || 0,
-    pendingOrders: countMap[t.id]?.pending || 0,
+    whatsapp_token: undefined,
+    meta_connected: !!t.whatsapp_token,
+    totalOrders:    countMap[t.id]?.total   || 0,
+    pendingOrders:  countMap[t.id]?.pending || 0,
   }));
 
   res.json(result);
@@ -155,7 +156,7 @@ router.put('/tenants/:id', requireSuper, async (req, res) => {
   const allowed = [
     'name','login_slug','phone_number_id','bot_name','bot_personality',
     'merchant_phone','payment_instructions','active',
-    'plan_expires','plan_currency',
+    'plan_expires','plan_currency','plan_price',
     'delivery_base_fee','delivery_per_km',
     'location_lat','location_lng',
     'products_enabled','services_enabled','appointments_enabled'
@@ -182,8 +183,11 @@ router.patch('/tenants/:id/toggle', requireSuper, async (req, res) => {
   if (!tenant) return res.status(404).json({ error: 'Tenant no encontrado' });
 
   const newActive = !tenant.active;
+  const toggleUpdate = { active: newActive };
+  if (!newActive) toggleUpdate.deactivated_at = new Date().toISOString();
+  else            toggleUpdate.deactivated_at = null;
   const { data, error } = await supabase
-    .from('tenants').update({ active: newActive })
+    .from('tenants').update(toggleUpdate)
     .eq('id', req.params.id).select('id, name, active').single();
 
   if (error) return res.status(500).json({ error: error.message });
@@ -339,6 +343,84 @@ router.post('/tenants/:id/import-confirm', requireSuper, async (req, res) => {
   res.json({ ok: true, count: toInsert.length });
 });
 
+// ─── GET /superadmin/analytics ───────────────────────────────────────────────
+
+router.get('/analytics', requireSuper, async (req, res) => {
+  const [tenantsRes, ordersRes] = await Promise.all([
+    supabase.from('tenants').select('id, name, active, plan_expires, plan_currency, plan_price, whatsapp_token, created_at, deactivated_at'),
+    supabase.from('orders').select('id, tenant_id, status, created_at'),
+  ]);
+
+  const tenants = tenantsRes.data || [];
+  const orders  = ordersRes.data  || [];
+  const now     = new Date();
+
+  const stats = { total: 0, active: 0, inactive: 0, overdue: 0, metaPending: 0 };
+  const overdueList = [];
+  const mrrByCurrency = {};
+
+  for (const t of tenants) {
+    stats.total++;
+    const expired = t.active && t.plan_expires && new Date(t.plan_expires) < now;
+    if (!t.active) {
+      stats.inactive++;
+    } else if (expired) {
+      stats.overdue++;
+      overdueList.push({ id: t.id, name: t.name, plan_expires: t.plan_expires });
+    } else if (!t.whatsapp_token) {
+      stats.metaPending++;
+    } else {
+      stats.active++;
+      if (t.plan_price > 0) {
+        const cur = t.plan_currency || 'USD';
+        mrrByCurrency[cur] = (mrrByCurrency[cur] || 0) + Number(t.plan_price);
+      }
+    }
+  }
+
+  // Build last-6-months keys
+  const monthKeys = [];
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    monthKeys.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
+  }
+
+  const regByMonth    = Object.fromEntries(monthKeys.map(k => [k, 0]));
+  const ordersByMonth = Object.fromEntries(monthKeys.map(k => [k, 0]));
+  const churnByMonth  = Object.fromEntries(monthKeys.map(k => [k, 0]));
+
+  for (const t of tenants) {
+    const k = t.created_at?.slice(0, 7);
+    if (k && regByMonth[k] !== undefined) regByMonth[k]++;
+    if (t.deactivated_at) {
+      const ck = t.deactivated_at.slice(0, 7);
+      if (churnByMonth[ck] !== undefined) churnByMonth[ck]++;
+    }
+  }
+  for (const o of orders) {
+    const k = o.created_at?.slice(0, 7);
+    if (k && ordersByMonth[k] !== undefined) ordersByMonth[k]++;
+  }
+
+  const orderStats = {
+    total:     orders.length,
+    today:     orders.filter(o => o.created_at?.slice(0, 10) === now.toISOString().slice(0, 10)).length,
+    pending:   orders.filter(o => o.status === 'pending').length,
+    delivered: orders.filter(o => o.status === 'delivered').length,
+    cancelled: orders.filter(o => o.status === 'cancelled').length,
+  };
+
+  res.json({
+    stats,
+    orderStats,
+    overdueList,
+    mrrByCurrency,
+    regByMonth:    monthKeys.map(k => ({ month: k, count: regByMonth[k] })),
+    ordersByMonth: monthKeys.map(k => ({ month: k, count: ordersByMonth[k] })),
+    churnByMonth:  monthKeys.map(k => ({ month: k, count: churnByMonth[k] })),
+  });
+});
+
 // ─── GET /superadmin/support — list all tenants with support messages ─────────
 router.get('/support', requireSuper, async (req, res) => {
   // Get all support messages with tenant info
@@ -401,6 +483,59 @@ router.post('/support/:tenantId', requireSuper, async (req, res) => {
   });
   if (error) return res.status(500).json({ error: error.message });
   res.json({ ok: true });
+});
+
+// ─── GET /superadmin/promo-codes ─────────────────────────────────────────────
+
+router.get('/promo-codes', requireSuper, async (req, res) => {
+  const { data, error } = await supabase
+    .from('promo_codes')
+    .select('*, promo_redemptions(tenant_id)')
+    .order('created_at', { ascending: false });
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data || []);
+});
+
+// ─── POST /superadmin/promo-codes ────────────────────────────────────────────
+
+router.post('/promo-codes', requireSuper, async (req, res) => {
+  const {
+    code, description, discount_type, discount_value,
+    months_free, max_uses, valid_for_currency, expires_at
+  } = req.body;
+
+  if (!code?.trim()) return res.status(400).json({ error: 'El código es obligatorio' });
+
+  const { data, error } = await supabase
+    .from('promo_codes')
+    .insert({
+      code:                code.trim().toUpperCase(),
+      description:         description?.trim() || null,
+      discount_type:       discount_type || 'percent',
+      discount_value:      parseFloat(discount_value) || 0,
+      months_free:         parseInt(months_free) || 0,
+      max_uses:            max_uses ? parseInt(max_uses) : null,
+      valid_for_currency:  valid_for_currency || null,
+      expires_at:          expires_at || null,
+    })
+    .select()
+    .single();
+
+  if (error) return res.status(error.code === '23505' ? 409 : 500).json({ error: error.code === '23505' ? 'Código ya existe' : error.message });
+  res.status(201).json(data);
+});
+
+// ─── PATCH /superadmin/promo-codes/:id — toggle active ───────────────────────
+
+router.patch('/promo-codes/:id/toggle', requireSuper, async (req, res) => {
+  const { data: current } = await supabase.from('promo_codes').select('active').eq('id', req.params.id).single();
+  if (!current) return res.status(404).json({ error: 'Código no encontrado' });
+
+  const { data, error } = await supabase
+    .from('promo_codes').update({ active: !current.active })
+    .eq('id', req.params.id).select().single();
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
 });
 
 module.exports = router;
