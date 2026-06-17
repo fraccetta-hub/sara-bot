@@ -1730,9 +1730,9 @@ async function launchEmbeddedSignup() {
     return;
   }
 
-  FB.login(async function(response) {
+  FB.login(function(response) {
     if (response.authResponse?.code) {
-      await exchangeMetaCode(response.authResponse.code);
+      exchangeMetaCode(response.authResponse.code);
     } else {
       errEl.textContent = 'Conexión cancelada o no autorizada.';
       errEl.classList.remove('hidden');
@@ -3208,7 +3208,8 @@ async function api(path, method = 'GET', body = null, auth = true) {
       showAccountBanner('expired');
       const err = new Error(data.error); err.status = 403; throw err;
     }
-    if (res.status === 401) { logout(); return; }
+    if (res.status === 401 && auth) { logout(); return; }
+    if (res.status === 401) { const err = new Error(data.error || 'Credenciales incorrectas'); err.status = 401; throw err; }
     const err = new Error(data.error || 'Error desconocido');
     err.status = res.status;
     if (data.retryAfter) err.retryAfter = data.retryAfter;
