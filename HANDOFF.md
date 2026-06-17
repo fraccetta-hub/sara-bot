@@ -102,6 +102,15 @@
 - Backend: `GET/POST /superadmin/promo-codes`, `PATCH /superadmin/promo-codes/:id/toggle`, `POST /admin/redeem-promo`
 - Merchant panel: input riscatto codice nella tab Plan/Billing
 
+## COSA È STATO FATTO (sessione 2026-06-18 — fix login flash + bug fix showDashboard)
+
+### Bug fix loginPage flash / impersonazione superadmin
+- `showDashboard()` era async → nascondeva loginPage solo DOPO `await api('/admin/settings')` → flash visivo della login screen durante la request
+- Fix: `loginPage.classList.add('hidden')` spostato come prima riga sync di `showDashboard()` (prima dell'await)
+- Secondo bug: `api()` su 401 chiama `logout()` ma ritorna `undefined` invece di throw → `settings.phone_number_id` crashava con TypeError → catch swallowava → codice nascondeva loginPage e mostrava dashboard comunque → poi altre API 401 → `logout()` → loginPage mostrata
+- Fix: `if (!settings) return` aggiunto subito dopo `await api('/admin/settings')`
+- File: `public/admin/index.html` — funzione `showDashboard()`
+
 ## COSA È STATO FATTO (sessione 2026-06-18 — fix wizard + validazione credenziali manuali)
 
 ### Bug fix wizard Embedded Signup

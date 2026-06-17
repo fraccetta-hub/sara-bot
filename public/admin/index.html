@@ -1987,9 +1987,11 @@ function logout() {
 
 // ── Dashboard ──────────────────────────────────────────────────────────────────
 async function showDashboard() {
+  document.getElementById('loginPage').classList.add('hidden');
   // Check WhatsApp connection — show wizard on first login, locked dashboard if dismissed
   try {
     const settings = await api('/admin/settings');
+    if (!settings) return; // 401 → api() called logout(), abort
     waConnected = !!settings.phone_number_id;
     if (!waConnected && !localStorage.getItem('sara_wizard_dismissed')) {
       showOnboarding();
