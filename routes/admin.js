@@ -681,6 +681,20 @@ router.post('/whatsapp-connect-manual', requireAuth, async (req, res) => {
   if (!phone_number_id || !access_token)
     return res.status(400).json({ error: 'phone_number_id y access_token son obligatorios' });
 
+  // Validate token + phone_number_id against Meta API before saving
+  try {
+    const verifyRes = await fetch(
+      `https://graph.facebook.com/v19.0/${phone_number_id}?fields=display_phone_number,verified_name&access_token=${access_token}`
+    );
+    const verifyData = await verifyRes.json();
+    if (!verifyRes.ok || verifyData.error) {
+      const msg = verifyData.error?.message || 'Token o Phone Number ID no válido';
+      return res.status(400).json({ error: msg });
+    }
+  } catch {
+    return res.status(502).json({ error: 'No se pudo verificar el token con Meta' });
+  }
+
   const tokenExpiresAt = new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString();
   const { error } = await supabase.from('tenants')
     .update({ phone_number_id, whatsapp_token: access_token, whatsapp_token_expires_at: tokenExpiresAt })
