@@ -525,6 +525,44 @@ router.post('/promo-codes', requireSuper, async (req, res) => {
   res.status(201).json(data);
 });
 
+// ─── PUT /superadmin/promo-codes/:id — edit ──────────────────────────────────
+
+router.put('/promo-codes/:id', requireSuper, async (req, res) => {
+  const {
+    description, discount_type, discount_value,
+    months_free, max_uses, valid_for_currency, expires_at
+  } = req.body;
+
+  const { data, error } = await supabase
+    .from('promo_codes')
+    .update({
+      description:        description?.trim() || null,
+      discount_type:      discount_type || 'percent',
+      discount_value:     parseFloat(discount_value) || 0,
+      months_free:        parseInt(months_free) || 0,
+      max_uses:           max_uses ? parseInt(max_uses) : null,
+      valid_for_currency: valid_for_currency || null,
+      expires_at:         expires_at || null,
+    })
+    .eq('id', req.params.id)
+    .select()
+    .single();
+
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
+// ─── DELETE /superadmin/promo-codes/:id ──────────────────────────────────────
+
+router.delete('/promo-codes/:id', requireSuper, async (req, res) => {
+  const { error } = await supabase
+    .from('promo_codes')
+    .delete()
+    .eq('id', req.params.id);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ ok: true });
+});
+
 // ─── PATCH /superadmin/promo-codes/:id — toggle active ───────────────────────
 
 router.patch('/promo-codes/:id/toggle', requireSuper, async (req, res) => {
