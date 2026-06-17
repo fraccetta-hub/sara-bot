@@ -1734,7 +1734,7 @@ async function launchEmbeddedSignup() {
     if (response.authResponse?.code) {
       exchangeMetaCode(response.authResponse.code);
     } else {
-      errEl.textContent = 'Conexión cancelada o no autorizada.';
+      errEl.textContent = t('wiz.fb.cancelled');
       errEl.classList.remove('hidden');
     }
   }, {
