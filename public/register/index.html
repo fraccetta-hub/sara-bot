@@ -23,9 +23,7 @@
   .faq-body { max-height: 0; overflow: hidden; transition: max-height .35s ease; }
   .faq-body.open { max-height: 400px; }
   .check-icon { display: inline-block; width: 20px; height: 20px; border-radius: 50%; background: #22c55e; color: #fff; text-align: center; line-height: 20px; font-size: 12px; flex-shrink: 0; }
-  .lang-btn { background: none; border: none; cursor: pointer; font-size: .72rem; font-weight: 600; color: #6b7280; padding: 3px 6px; border-radius: 5px; transition: all .15s; }
-  .lang-btn:hover { color: #1f2937; background: #f0fdf4; }
-  .lang-btn.active { color: #16a34a; background: #f0fdf4; }
+  #langSelect { border:1px solid #e5e7eb;border-radius:8px;padding:4px 8px;font-size:13px;cursor:pointer;background:#fff;color:#374151;outline:none; }
   @media(max-width:640px){ .lang-switcher { display: none; } }
 </style>
 </head>
@@ -80,14 +78,14 @@
     <img src="/images/logosarabot.webp" alt="Sara Bot" style="height:32px;">
   </a>
   <div class="flex items-center gap-3">
-    <div class="lang-switcher flex items-center gap-1">
-      <button class="lang-btn" data-lang="es" onclick="setLang('es')">ES</button>
-      <button class="lang-btn" data-lang="en" onclick="setLang('en')">EN</button>
-      <button class="lang-btn" data-lang="it" onclick="setLang('it')">IT</button>
-      <button class="lang-btn" data-lang="de" onclick="setLang('de')">DE</button>
-      <button class="lang-btn" data-lang="fr" onclick="setLang('fr')">FR</button>
-      <button class="lang-btn" data-lang="pt" onclick="setLang('pt')">PT</button>
-    </div>
+    <select id="langSelect" onchange="setLang(this.value)">
+      <option value="es">🇪🇸 ES</option>
+      <option value="en">🇬🇧 EN</option>
+      <option value="it">🇮🇹 IT</option>
+      <option value="de">🇩🇪 DE</option>
+      <option value="fr">🇫🇷 FR</option>
+      <option value="pt">🇧🇷 PT</option>
+    </select>
     <a href="/admin/index.html" style="background:#22c55e;color:#fff;border-radius:10px;padding:8px 18px;font-size:.85rem;font-weight:700;text-decoration:none;transition:background .15s;" onmouseover="this.style.background='#16a34a'" onmouseout="this.style.background='#22c55e'" data-i18n="nav.signin">Sign in →</a>
   </div>
 </header>
@@ -500,9 +498,8 @@ function applyTranslations() {
     if (val) el.placeholder = val;
   });
 
-  document.querySelectorAll('.lang-btn').forEach(btn => {
-    btn.classList.toggle('active', btn.getAttribute('data-lang') === currentLang);
-  });
+  const langSel = document.getElementById('langSelect');
+  if (langSel) langSel.value = currentLang;
 
   updateBizPreview();
 

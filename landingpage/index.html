@@ -270,15 +270,8 @@ footer a:hover { color: var(--dark); }
 .container { max-width: 1100px; margin: 0 auto; }
 
 /* ── LANG SWITCHER ── */
-.lang-switcher { display: flex; gap: 2px; align-items: center; }
-.lang-btn {
-  background: none; border: none; cursor: pointer;
-  font-size: .72rem; font-weight: 600; color: var(--gray);
-  padding: 3px 6px; border-radius: 5px; transition: all .15s;
-}
-.lang-btn:hover { color: var(--dark); background: var(--green-light); }
-.lang-btn.active { color: var(--green-dark); background: var(--green-light); }
-@media(max-width:640px){ .lang-switcher { display: none; } }
+#langSelect { border:1px solid #e5e7eb;border-radius:8px;padding:4px 8px;font-size:13px;cursor:pointer;background:#fff;color:#374151;outline:none; }
+@media(max-width:640px){ #langSelect { display: none; } }
 
 /* ── SARA FLOWER LOGO ── */
 .logo-icon { width: 34px; height: 34px; border-radius: 10px; background: var(--green); display: grid; place-items: center; }
@@ -301,14 +294,14 @@ footer a:hover { color: var(--dark); }
     <a href="#faq">FAQ</a>
   </div>
   <div class="nav-right">
-    <div class="lang-switcher">
-      <button class="lang-btn" onclick="setLang('es')">ES</button>
-      <button class="lang-btn" onclick="setLang('en')">EN</button>
-      <button class="lang-btn" onclick="setLang('it')">IT</button>
-      <button class="lang-btn" onclick="setLang('de')">DE</button>
-      <button class="lang-btn" onclick="setLang('fr')">FR</button>
-      <button class="lang-btn" onclick="setLang('pt')">PT</button>
-    </div>
+    <select id="langSelect" onchange="setLang(this.value)">
+      <option value="es">🇪🇸 ES</option>
+      <option value="en">🇬🇧 EN</option>
+      <option value="it">🇮🇹 IT</option>
+      <option value="de">🇩🇪 DE</option>
+      <option value="fr">🇫🇷 FR</option>
+      <option value="pt">🇧🇷 PT</option>
+    </select>
     <a href="/admin/index.html" style="font-size:.85rem;font-weight:500;color:var(--gray);text-decoration:none;" data-i18n="nav.login">Entrar</a>
     <a href="/register/index.html" class="nav-cta" data-i18n="nav.cta">Empezar gratis →</a>
   </div>
@@ -1131,9 +1124,8 @@ function applyTranslations() {
     const val = TR[currentLang] && TR[currentLang][key];
     if (val !== undefined) el.innerHTML = val;
   });
-  document.querySelectorAll('.lang-btn').forEach(btn => {
-    btn.classList.toggle('active', btn.textContent === currentLang.toUpperCase());
-  });
+  const langSel = document.getElementById('langSelect');
+  if (langSel) langSel.value = currentLang;
   document.documentElement.lang = currentLang;
 }
 
