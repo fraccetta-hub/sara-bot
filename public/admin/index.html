@@ -1759,7 +1759,7 @@ async function exchangeMetaCode(code) {
     wizConnectedPhoneId = res.phone_number_id;
     onWhatsAppConnected(res.phone_number_id);
   } catch(e) {
-    errEl.textContent = e.message || t('wiz.fb.error') || 'Error';
+    errEl.textContent = errMsg(e) || t('wiz.fb.error') || 'Error';
     errEl.classList.remove('hidden');
     btn.textContent = t('wiz.s2.fb_btn'); btn.disabled = false;
   }
@@ -1794,7 +1794,7 @@ async function saveManual() {
     wizConnectedPhoneId = phoneId;
     onWhatsAppConnected(phoneId);
   } catch(e) {
-    errEl.textContent = e.message || t('error.save');
+    errEl.textContent = errMsg(e) || t('error.save');
     errEl.classList.remove('hidden');
   }
 }
@@ -1815,7 +1815,7 @@ async function saveMerchantPhone() {
     document.getElementById('wizDonePhone').textContent = wizConnectedPhoneId || '—';
     wizNext(3);
   } catch(e) {
-    errEl.textContent = e.message || t('error.save');
+    errEl.textContent = errMsg(e) || t('error.save');
     errEl.classList.remove('hidden');
     btn.textContent = t('wiz.next'); btn.disabled = false;
   }
@@ -1921,7 +1921,7 @@ async function login() {
       localStorage.setItem('sara_super_token', data.token);
       window.location.href = '/superadmin/index.html';
     } catch (e) {
-      errEl.textContent = e.message;
+      errEl.textContent = errMsg(e);
       errEl.classList.remove('hidden');
     }
     return;
@@ -1954,7 +1954,7 @@ async function login() {
       };
       tick();
     } else {
-      errEl.textContent = e.message;
+      errEl.textContent = errMsg(e);
       errEl.classList.remove('hidden');
       if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = t('login.submit'); }
     }
@@ -2418,7 +2418,7 @@ async function saveProduct() {
     closeProductModal();
     await loadProducts();
   } catch (e) {
-    errEl.textContent = e.message;
+    errEl.textContent = errMsg(e);
     errEl.classList.remove('hidden');
   } finally {
     if (saveBtn) { saveBtn.textContent = t('modal.product.save'); saveBtn.disabled = false; }
@@ -3055,7 +3055,7 @@ async function saveMerchantPhone() {
     msgEl.classList.remove('hidden');
   } catch (e) {
     msgEl.className = 'rounded-lg px-4 py-2 text-sm mb-3 bg-red-50 text-red-700';
-    msgEl.textContent = e.message;
+    msgEl.textContent = errMsg(e);
     msgEl.classList.remove('hidden');
   }
 }
@@ -3073,7 +3073,7 @@ async function saveSettings() {
     msgEl.classList.remove('hidden');
   } catch (e) {
     msgEl.className   = 'rounded-lg px-4 py-2 text-sm mb-4 bg-red-50 text-red-700';
-    msgEl.textContent = e.message;
+    msgEl.textContent = errMsg(e);
     msgEl.classList.remove('hidden');
   }
 }
@@ -3151,7 +3151,7 @@ async function saveCustomInstructions() {
     msgEl.classList.remove('hidden');
   } catch (e) {
     msgEl.className   = 'rounded-lg px-4 py-2 text-sm mb-3 bg-red-50 text-red-700';
-    msgEl.textContent = e.message;
+    msgEl.textContent = errMsg(e);
     msgEl.classList.remove('hidden');
   }
 }
@@ -3168,7 +3168,7 @@ async function savePayment() {
     msgEl.classList.remove('hidden');
   } catch (e) {
     msgEl.className   = 'rounded-lg px-4 py-2 text-sm mb-3 bg-red-50 text-red-700';
-    msgEl.textContent = e.message;
+    msgEl.textContent = errMsg(e);
     msgEl.classList.remove('hidden');
   }
 }
@@ -3184,12 +3184,14 @@ async function changePassword() {
     document.getElementById('newPwd').value = '';
   } catch (e) {
     msgEl.className = 'rounded-lg px-4 py-2 text-sm mb-3 bg-red-50 text-red-700';
-    msgEl.textContent = e.message;
+    msgEl.textContent = errMsg(e);
     msgEl.classList.remove('hidden');
   }
 }
 
 // ── API helper ─────────────────────────────────────────────────────────────────
+function errMsg(e) { return e.code ? (t('err.' + e.code) || e.message) : e.message; }
+
 async function api(path, method = 'GET', body = null, auth = true) {
   const opts = {
     method,
@@ -3213,6 +3215,7 @@ async function api(path, method = 'GET', body = null, auth = true) {
     const err = new Error(data.error || 'Error desconocido');
     err.status = res.status;
     if (data.retryAfter) err.retryAfter = data.retryAfter;
+    if (data.errorCode) err.code = data.errorCode;
     throw err;
   }
   return data;
@@ -3399,7 +3402,7 @@ async function saveService() {
     closeServiceModal();
     loadServices();
   } catch(e) {
-    errEl.textContent = e.message;
+    errEl.textContent = errMsg(e);
     errEl.classList.remove('hidden');
   }
 }
@@ -3838,7 +3841,7 @@ async function previewImport() {
     const data = await api('/admin/import-preview', 'POST', { url });
     showImportPreview(data.rows);
   } catch(e) {
-    errEl.textContent = e.message || t('import.error.sheet');
+    errEl.textContent = errMsg(e) || t('import.error.sheet');
     errEl.classList.remove('hidden');
   } finally {
     btn.textContent = t('import.preview.btn'); btn.disabled = false;
@@ -3862,7 +3865,7 @@ async function handleCsvFile(file) {
     const data = await api('/admin/import-preview', 'POST', { csvText: text });
     showImportPreview(data.rows);
   } catch(e) {
-    errEl.textContent = e.message || t('import.error.csv');
+    errEl.textContent = errMsg(e) || t('import.error.csv');
     errEl.classList.remove('hidden');
   }
 }
@@ -3909,7 +3912,7 @@ async function runPhotosImport() {
     if (!data.products?.length) throw new Error(t('import.error.noProducts'));
     showImportPreview(data.products.map(p => ({ ...p, stock_qty: 99 })));
   } catch(e) {
-    errEl.textContent = e.message;
+    errEl.textContent = errMsg(e);
     errEl.classList.remove('hidden');
     btn.textContent = t('import.photos.btn'); btn.disabled = false;
   }
@@ -3935,7 +3938,7 @@ async function confirmImport() {
       closeImportModal();
     }, 1800);
   } catch(e) {
-    errEl.textContent = e.message || t('import.error.generic');
+    errEl.textContent = errMsg(e) || t('import.error.generic');
     errEl.classList.remove('hidden');
     btn.textContent = t('import.confirm.btn' + (importTarget === 'services' ? '.services' : ''));
     btn.disabled = false;
@@ -4198,7 +4201,7 @@ async function saveAppt() {
     closeApptModal();
     await loadCalendarData();
   } catch(e) {
-    errEl.textContent = e.message || t('error.save');
+    errEl.textContent = errMsg(e) || t('error.save');
     errEl.classList.remove('hidden');
   } finally {
     btn.disabled=false; btn.textContent=t('save');
@@ -4289,7 +4292,7 @@ async function saveBlock() {
     closeBlockModal();
     await loadCalendarData();
   } catch(e) {
-    errEl.textContent = e.message || t('error.generic'); errEl.classList.remove('hidden');
+    errEl.textContent = errMsg(e) || t('error.generic'); errEl.classList.remove('hidden');
   } finally {
     btn.disabled=false; btn.textContent=t('save');
   }

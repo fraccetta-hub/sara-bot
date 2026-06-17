@@ -30,11 +30,11 @@ const ALWAYS_ALLOWED = ['/admin/support', '/admin/settings'];
 
 async function requireAuth(req, res, next) {
   const auth = req.headers.authorization;
-  if (!auth?.startsWith('Bearer ')) return res.status(401).json({ error: 'No autorizado' });
+  if (!auth?.startsWith('Bearer ')) return res.status(401).json({ error: 'No autorizado', errorCode: 'unauthorized' });
   try {
     req.tenant = jwt.verify(auth.slice(7), JWT_SECRET);
   } catch {
-    return res.status(401).json({ error: 'Token inválido o expirado' });
+    return res.status(401).json({ error: 'Token inválido o expirado', errorCode: 'token_expired' });
   }
 
   // Always-allowed routes skip the active/expiry check
@@ -45,10 +45,10 @@ async function requireAuth(req, res, next) {
     .from('tenants').select('active, plan_expires').eq('id', req.tenant.tenantId).single();
 
   if (!tenant || !tenant.active)
-    return res.status(403).json({ error: 'Cuenta suspendida. Contactá a soporte.', suspended: true });
+    return res.status(403).json({ error: 'Cuenta suspendida. Contactá a soporte.', suspended: true, errorCode: 'suspended' });
 
   if (tenant.plan_expires && new Date(tenant.plan_expires) < new Date())
-    return res.status(403).json({ error: 'Plan vencido. Renovalo para continuar.', expired: true });
+    return res.status(403).json({ error: 'Plan vencido. Renovalo para continuar.', expired: true, errorCode: 'plan_expired' });
 
   next();
 }
@@ -111,6 +111,7 @@ router.post('/login', async (req, res) => {
     const waitSec = Math.ceil((attempt.nextAllowedAt - now) / 1000);
     return res.status(429).json({
       error: `Demasiados intentos. Esperá ${waitSec} segundos.`,
+      errorCode: 'rate_limit',
       retryAfter: waitSec
     });
   }
@@ -132,10 +133,10 @@ router.post('/login', async (req, res) => {
     attempt.lastAttempt = now;
     attempt.nextAllowedAt = now + getLoginDelay(attempt.count);
     loginAttempts.set(ip, attempt);
-    return res.status(401).json({ error: 'Usuario o contraseña incorrectos' });
+    return res.status(401).json({ error: 'Usuario o contraseña incorrectos', errorCode: 'wrong_credentials' });
   }
 
-  if (!tenant.active) return res.status(403).json({ error: 'Cuenta suspendida. Contactá a soporte.' });
+  if (!tenant.active) return res.status(403).json({ error: 'Cuenta suspendida. Contactá a soporte.', errorCode: 'suspended' });
 
   // Verify password
   let ok = false;
@@ -154,7 +155,7 @@ router.post('/login', async (req, res) => {
     attempt.lastAttempt = now;
     attempt.nextAllowedAt = now + getLoginDelay(attempt.count);
     loginAttempts.set(ip, attempt);
-    return res.status(401).json({ error: 'Usuario o contraseña incorrectos' });
+    return res.status(401).json({ error: 'Usuario o contraseña incorrectos', errorCode: 'wrong_credentials' });
   }
 
   // Success — clear failed attempts for this IP
@@ -215,7 +216,7 @@ router.put('/settings', requireAuth, async (req, res) => {
 router.post('/change-password', requireAuth, async (req, res) => {
   const { newPassword } = req.body;
   if (!newPassword || newPassword.length < 6)
-    return res.status(400).json({ error: 'La contraseña debe tener al menos 6 caracteres' });
+    return res.status(400).json({ error: 'La contraseña debe tener al menos 6 caracteres', errorCode: 'password_too_short' });
   const hash = await bcrypt.hash(newPassword, 10);
   await supabase.from('tenants').update({ admin_password_hash: hash }).eq('id', req.tenant.tenantId);
   res.json({ ok: true });
