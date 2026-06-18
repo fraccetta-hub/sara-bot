@@ -194,59 +194,204 @@ async function processIncoming(body) {
   }
 }
 
-// ─── Merchant message handler ────────────────────────────────────────────────
+// ─── Merchant NL bot ─────────────────────────────────────────────────────────
+
+const Anthropic = require('@anthropic-ai/sdk');
+const merchantPending = new Map(); // tenantId → pending confirmation state
+
+// Multi-language response templates
+const MT = {
+  stock_set:        { es:(n,q)=>`✅ *${n}*\nStock: ${q} unidades.`, it:(n,q)=>`✅ *${n}*\nStock: ${q} unità.`, en:(n,q)=>`✅ *${n}*\nStock: ${q} units.`, fr:(n,q)=>`✅ *${n}*\nStock: ${q} unités.`, de:(n,q)=>`✅ *${n}*\nBestand: ${q} Einheiten.`, pt:(n,q)=>`✅ *${n}*\nEstoque: ${q} unidades.` },
+  stock_added:      { es:(n,d,t)=>`✅ *${n}*\n+${d} agregadas → ${t} en total.`, it:(n,d,t)=>`✅ *${n}*\n+${d} aggiunte → ${t} in totale.`, en:(n,d,t)=>`✅ *${n}*\n+${d} added → ${t} total.`, fr:(n,d,t)=>`✅ *${n}*\n+${d} ajoutées → ${t} au total.`, de:(n,d,t)=>`✅ *${n}*\n+${d} hinzugefügt → ${t} gesamt.`, pt:(n,d,t)=>`✅ *${n}*\n+${d} adicionadas → ${t} no total.` },
+  stock_removed:    { es:(n,d,t)=>`✅ *${n}*\n-${d} descontadas → ${t} en total.`, it:(n,d,t)=>`✅ *${n}*\n-${d} rimosse → ${t} in totale.`, en:(n,d,t)=>`✅ *${n}*\n-${d} removed → ${t} total.`, fr:(n,d,t)=>`✅ *${n}*\n-${d} retirées → ${t} au total.`, de:(n,d,t)=>`✅ *${n}*\n-${d} entfernt → ${t} gesamt.`, pt:(n,d,t)=>`✅ *${n}*\n-${d} removidas → ${t} no total.` },
+  price_updated:    { es:(n,p)=>`✅ *${n}*\nPrecio: ${p.toLocaleString()} Gs.`, it:(n,p)=>`✅ *${n}*\nPrezzo: ${p.toLocaleString()} Gs.`, en:(n,p)=>`✅ *${n}*\nPrice: ${p.toLocaleString()} Gs.`, fr:(n,p)=>`✅ *${n}*\nPrix: ${p.toLocaleString()} Gs.`, de:(n,p)=>`✅ *${n}*\nPreis: ${p.toLocaleString()} Gs.`, pt:(n,p)=>`✅ *${n}*\nPreço: ${p.toLocaleString()} Gs.` },
+  unavailable:      { es:n=>`🔴 *${n}* marcado como agotado.`, it:n=>`🔴 *${n}* segnato come esaurito.`, en:n=>`🔴 *${n}* marked as out of stock.`, fr:n=>`🔴 *${n}* marqué comme épuisé.`, de:n=>`🔴 *${n}* als ausverkauft markiert.`, pt:n=>`🔴 *${n}* marcado como esgotado.` },
+  available:        { es:n=>`✅ *${n}* marcado como disponible.`, it:n=>`✅ *${n}* segnato come disponibile.`, en:n=>`✅ *${n}* marked as available.`, fr:n=>`✅ *${n}* marqué comme disponible.`, de:n=>`✅ *${n}* als verfügbar markiert.`, pt:n=>`✅ *${n}* marcado como disponível.` },
+  product_added:    { es:n=>`✅ Producto *${n}* agregado.`, it:n=>`✅ Prodotto *${n}* aggiunto.`, en:n=>`✅ Product *${n}* added.`, fr:n=>`✅ Produit *${n}* ajouté.`, de:n=>`✅ Produkt *${n}* hinzugefügt.`, pt:n=>`✅ Produto *${n}* adicionado.` },
+  customer_named:   { es:(ph,nm)=>`✅ +${ph} guardado como *${nm}*.`, it:(ph,nm)=>`✅ +${ph} salvato come *${nm}*.`, en:(ph,nm)=>`✅ +${ph} saved as *${nm}*.`, fr:(ph,nm)=>`✅ +${ph} enregistré comme *${nm}*.`, de:(ph,nm)=>`✅ +${ph} gespeichert als *${nm}*.`, pt:(ph,nm)=>`✅ +${ph} salvo como *${nm}*.` },
+  not_found:        { es:q=>`⚠️ No encontré ningún producto para "${q}".`, it:q=>`⚠️ Nessun prodotto trovato per "${q}".`, en:q=>`⚠️ No product found for "${q}".`, fr:q=>`⚠️ Aucun produit pour "${q}".`, de:q=>`⚠️ Kein Produkt für "${q}" gefunden.`, pt:q=>`⚠️ Nenhum produto para "${q}".` },
+  confirm_one:      { es:n=>`¿Te referís a *${n}*?`, it:n=>`Intendi *${n}*?`, en:n=>`Do you mean *${n}*?`, fr:n=>`Vous voulez dire *${n}*?`, de:n=>`Meinen Sie *${n}*?`, pt:n=>`Você quer dizer *${n}*?` },
+  confirm_many:     { es:l=>`Encontré varios:\n${l}\n¿Cuál de estos? Respondé con el número.`, it:l=>`Ho trovato più prodotti:\n${l}\nQuale di questi? Rispondi con il numero.`, en:l=>`Found multiple:\n${l}\nWhich one? Reply with the number.`, fr:l=>`Plusieurs trouvés:\n${l}\nLequel? Répondez avec le numéro.`, de:l=>`Mehrere gefunden:\n${l}\nWelches? Antworte mit der Nummer.`, pt:l=>`Vários encontrados:\n${l}\nQual deles? Responda com o número.` },
+  canceled:         { es:()=>`Operación cancelada.`, it:()=>`Operazione annullata.`, en:()=>`Canceled.`, fr:()=>`Annulé.`, de:()=>`Abgebrochen.`, pt:()=>`Cancelado.` },
+  no_pending_order: { es:()=>`⚠️ No hay ningún pedido pendiente.`, it:()=>`⚠️ Nessun ordine in attesa.`, en:()=>`⚠️ No pending order.`, fr:()=>`⚠️ Aucune commande en attente.`, de:()=>`⚠️ Keine ausstehende Bestellung.`, pt:()=>`⚠️ Nenhum pedido pendente.` },
+  no_active_conv:   { es:()=>`⚠️ No hay ningún pedido activo para tomar el chat.`, it:()=>`⚠️ Nessuna chat attiva da prendere.`, en:()=>`⚠️ No active chat to take over.`, fr:()=>`⚠️ Aucun chat actif.`, de:()=>`⚠️ Kein aktiver Chat zum Übernehmen.`, pt:()=>`⚠️ Nenhum chat ativo.` },
+  no_takeover:      { es:()=>`⚠️ No hay ningún chat en modo takeover activo.`, it:()=>`⚠️ Nessuna chat in modalità takeover.`, en:()=>`⚠️ No active takeover chat.`, fr:()=>`⚠️ Aucun chat en prise en charge.`, de:()=>`⚠️ Kein aktiver Takeover-Chat.`, pt:()=>`⚠️ Nenhum chat em takeover.` },
+  catalog_empty:    { es:()=>`📦 No tenés productos cargados todavía.`, it:()=>`📦 Nessun prodotto nel catalogo.`, en:()=>`📦 No products loaded yet.`, fr:()=>`📦 Aucun produit chargé.`, de:()=>`📦 Noch keine Produkte geladen.`, pt:()=>`📦 Nenhum produto carregado ainda.` },
+  unknown:          { es:()=>`No entendí. Podés pedirme:\n• ver catálogo\n• actualizar/agregar/quitar stock\n• cambiar precio\n• marcar agotado o disponible\n• agregar producto\n• confirmar/cancelar pedido\n• tomar/terminar chat`, it:()=>`Non ho capito. Puoi chiedermi:\n• vedere il catalogo\n• aggiornare/aggiungere/togliere stock\n• cambiare prezzo\n• segnare esaurito o disponibile\n• aggiungere prodotto\n• confermare/annullare ordine\n• prendere/terminare chat`, en:()=>`Didn't understand. You can ask:\n• view catalog\n• update/add/remove stock\n• change price\n• mark unavailable or available\n• add product\n• confirm/cancel order\n• take/end chat`, fr:()=>`Pas compris. Vous pouvez demander:\n• voir le catalogue\n• mettre à jour/ajouter/retirer du stock\n• changer le prix\n• marquer épuisé ou disponible\n• ajouter un produit\n• confirmer/annuler commande\n• prendre/terminer chat`, de:()=>`Nicht verstanden. Sie können:\n• Katalog anzeigen\n• Bestand aktualisieren/hinzufügen/entfernen\n• Preis ändern\n• Als ausverkauft/verfügbar markieren\n• Produkt hinzufügen\n• Bestellung bestätigen/stornieren\n• Chat übernehmen/beenden`, pt:()=>`Não entendi. Pode pedir:\n• ver catálogo\n• atualizar/adicionar/remover estoque\n• mudar preço\n• marcar esgotado ou disponível\n• adicionar produto\n• confirmar/cancelar pedido\n• assumir/terminar chat` },
+};
+
+function mt(lang, key, ...args) {
+  const l = MT[key]?.[lang] ? lang : 'es';
+  return MT[key][l](...args);
+}
+
+async function parseMerchantIntent(messageText, products) {
+  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  const catalog = products.length
+    ? products.map(p => `• ${p.name} (stock: ${p.stock_qty ?? 'N/A'}, price: ${p.price_guarani})`).join('\n')
+    : 'empty';
+  const resp = await client.messages.create({
+    model: 'claude-haiku-4-5-20251001',
+    max_tokens: 200,
+    system: `You parse merchant WhatsApp messages. Return ONLY valid JSON, no explanation.
+Actions: update_stock (delta ±), set_stock (absolute), set_price, mark_unavailable, mark_available, add_product, get_catalog, confirm_order, cancel_order, chat_takeover, end_takeover, name_customer, unknown.
+JSON schema: {"action":"...","product_query":null,"params":{},"language":"es|it|en|fr|de|pt"}
+params.update_stock: {"delta": N} — positive=add ("ho ricevuto 50 rose", "arrivate 50", "+50"), negative=remove ("vendute 10", "leva 10", "meno 10", "sold 10")
+params.set_stock: {"qty": N} — absolute ("il nuovo stock è 50", "stock = 50 rose")
+params.set_price: {"price": N}
+params.add_product: {"name":"...","category":"...","price":0,"stock":0,"description":null}
+params.name_customer: {"phone":"...","name":"..."}
+Detect language from the message (iso 639-1).`,
+    messages: [{ role: 'user', content: `Catalog:\n${catalog}\n\nMessage: ${messageText}` }],
+  });
+  try {
+    return JSON.parse(resp.content[0].text.trim());
+  } catch {
+    return { action: 'unknown', product_query: null, params: {}, language: 'es' };
+  }
+}
+
+function findProductsFuzzy(products, query) {
+  if (!query) return [];
+  const q = query.toLowerCase();
+  const matches = products.filter(p => p.name.toLowerCase().includes(q) || q.includes(p.name.toLowerCase()));
+  if (matches.length) return matches;
+  // Fallback: any word overlap
+  const words = q.split(/\s+/).filter(w => w.length > 2);
+  return products.filter(p => words.some(w => p.name.toLowerCase().includes(w)));
+}
+
+async function executeMerchantAction(tenant, action, product, params, lang, phoneNumberId, token) {
+  if (action === 'update_stock') {
+    const delta = params.delta || 0;
+    const newQty = Math.max(0, (product.stock_qty || 0) + delta);
+    await supabase.from('products').update({ stock_qty: newQty, is_available: newQty > 0 }).eq('id', product.id);
+    const key = delta > 0 ? 'stock_added' : 'stock_removed';
+    await sendMessage(tenant.merchant_phone, mt(lang, key, product.name, Math.abs(delta), newQty), phoneNumberId, token);
+    return;
+  }
+  if (action === 'set_stock') {
+    const qty = params.qty ?? 0;
+    await supabase.from('products').update({ stock_qty: qty, is_available: qty > 0 }).eq('id', product.id);
+    await sendMessage(tenant.merchant_phone, mt(lang, 'stock_set', product.name, qty), phoneNumberId, token);
+    return;
+  }
+  if (action === 'set_price') {
+    const price = params.price || 0;
+    await supabase.from('products').update({ price_guarani: price }).eq('id', product.id);
+    await sendMessage(tenant.merchant_phone, mt(lang, 'price_updated', product.name, price), phoneNumberId, token);
+    return;
+  }
+  if (action === 'mark_unavailable') {
+    await supabase.from('products').update({ is_available: false, stock_qty: 0 }).eq('id', product.id);
+    await sendMessage(tenant.merchant_phone, mt(lang, 'unavailable', product.name), phoneNumberId, token);
+    return;
+  }
+  if (action === 'mark_available') {
+    const qty = product.stock_qty || 1;
+    await supabase.from('products').update({ is_available: true, stock_qty: qty }).eq('id', product.id);
+    await sendMessage(tenant.merchant_phone, mt(lang, 'available', product.name), phoneNumberId, token);
+    return;
+  }
+}
+
+// ─── Merchant message handler ─────────────────────────────────────────────────
 
 async function handleMerchantMessage(tenant, messageText, phoneNumberId, token) {
-  const cmdUpper = messageText.toUpperCase().trim();
-  const firstWord = cmdUpper.split(/\s+/)[0];
+  // ── Takeover forward (highest priority — merchant free-texts go to customer) ─
+  const { data: activeConv } = await supabase
+    .from('conversations')
+    .select('id, last_pending_customer_phone')
+    .eq('tenant_id', tenant.id)
+    .eq('takeover_active', true)
+    .maybeSingle();
 
-  // ── Catalog management commands ──────────────────────────────────────────
-
-  if (firstWord === 'CATALOGO') {
-    await cmdCatalogo(tenant, phoneNumberId, token);
+  if (activeConv?.last_pending_customer_phone) {
+    // Check if merchant is ending takeover before forwarding
+    const intent0 = await parseMerchantIntent(messageText, []);
+    if (intent0.action === 'end_takeover') {
+      await endTakeover(tenant, activeConv, phoneNumberId, token);
+      return;
+    }
+    await sendMessage(activeConv.last_pending_customer_phone, messageText, phoneNumberId, token);
+    console.log(`[takeover] merchant→customer: ${activeConv.last_pending_customer_phone}`);
     return;
   }
 
-  if (firstWord === 'STOCK') {
-    await cmdStock(tenant, messageText, phoneNumberId, token);
+  // ── Pending confirmation check ────────────────────────────────────────────
+  const pending = merchantPending.get(tenant.id);
+  if (pending) {
+    if (Date.now() > pending.expiresAt) {
+      merchantPending.delete(tenant.id);
+    } else {
+      const txt = messageText.trim();
+
+      // Candidate selection by number (confirm_many flow)
+      if (pending.candidates) {
+        const num = parseInt(txt);
+        if (!isNaN(num) && num >= 1 && num <= pending.candidates.length) {
+          const chosen = pending.candidates[num - 1];
+          merchantPending.delete(tenant.id);
+          await executeMerchantAction(tenant, pending.action, chosen, pending.params, pending.lang, phoneNumberId, token);
+          return;
+        }
+        // Try name match among candidates
+        const byName = findProductsFuzzy(pending.candidates, txt);
+        if (byName.length === 1) {
+          merchantPending.delete(tenant.id);
+          await executeMerchantAction(tenant, pending.action, byName[0], pending.params, pending.lang, phoneNumberId, token);
+          return;
+        }
+      }
+
+      // Yes/no for confirm_one flow
+      if (pending.product) {
+        const lower = txt.toLowerCase();
+        const yes = /^(yes|sì|si|oui|ja|ok|yep|sure|correct|exacto|esatto|richtig|exact|y|s|j|1|👍|✅|certo|claro|bien|ouais|klar|genau|natürlich|c'est ça|именно)/.test(lower);
+        const no  = /^(no|nope|nein|non|cancel|nada|n|2|❌|👎|wrong|sbagliato|faux|falsch|annulla|cancelar|nein|pas ça)/.test(lower);
+        if (yes) {
+          merchantPending.delete(tenant.id);
+          await executeMerchantAction(tenant, pending.action, pending.product, pending.params, pending.lang, phoneNumberId, token);
+          return;
+        }
+        if (no) {
+          merchantPending.delete(tenant.id);
+          await sendMessage(tenant.merchant_phone, mt(pending.lang, 'canceled'), phoneNumberId, token);
+          return;
+        }
+      }
+
+      // Not a recognizable confirmation — clear pending and treat as new command
+      merchantPending.delete(tenant.id);
+    }
+  }
+
+  // ── NL intent parsing ─────────────────────────────────────────────────────
+  const { data: products } = await supabase
+    .from('products')
+    .select('id, name, stock_qty, price_guarani, is_available')
+    .eq('tenant_id', tenant.id);
+
+  const allProducts = products || [];
+  const intent = await parseMerchantIntent(messageText, allProducts);
+  const lang = intent.language || 'es';
+
+  // ── Catalog ───────────────────────────────────────────────────────────────
+  if (intent.action === 'get_catalog') {
+    if (!allProducts.length) {
+      await sendMessage(tenant.merchant_phone, mt(lang, 'catalog_empty'), phoneNumberId, token);
+      return;
+    }
+    const lines = allProducts.map(p => {
+      const estado = !p.is_available ? '🔴' : p.stock_qty === 0 ? '🔴' : `🟢 ${p.stock_qty}`;
+      return `• *${p.name}* — ${p.price_guarani.toLocaleString()} Gs — ${estado}`;
+    });
+    await sendMessage(tenant.merchant_phone, `📦 *${allProducts.length} productos:*\n\n${lines.join('\n')}`, phoneNumberId, token);
     return;
   }
 
-  if (firstWord === 'PRECIO') {
-    await cmdPrecio(tenant, messageText, phoneNumberId, token);
-    return;
-  }
-
-  if (firstWord === 'AGOTADO') {
-    await cmdAgotado(tenant, messageText, false, phoneNumberId, token);
-    return;
-  }
-
-  if (firstWord === 'DISPONIBLE') {
-    await cmdAgotado(tenant, messageText, true, phoneNumberId, token);
-    return;
-  }
-
-  if (firstWord === 'NUEVO') {
-    await cmdNuevo(tenant, messageText, phoneNumberId, token);
-    return;
-  }
-
-  if (firstWord === 'NOMBRE') {
-    await cmdNombre(tenant, messageText, phoneNumberId, token);
-    return;
-  }
-
-  if (firstWord === 'AYUDA' || firstWord === 'HELP') {
-    await sendMessage(tenant.merchant_phone, AYUDA_TEXT, phoneNumberId, token);
-    return;
-  }
-
-  // ── Order management commands ─────────────────────────────────────────────
-
-  if (cmdUpper === 'CHAT' || cmdUpper === '3' ||
-      cmdUpper === 'CONFIRMAR' || cmdUpper === '1' ||
-      cmdUpper === 'CANCELAR' || cmdUpper === '2') {
+  // ── Order actions ─────────────────────────────────────────────────────────
+  if (intent.action === 'confirm_order' || intent.action === 'cancel_order' || intent.action === 'chat_takeover') {
     const { data: conv } = await supabase
       .from('conversations')
       .select('*')
@@ -256,64 +401,92 @@ async function handleMerchantMessage(tenant, messageText, phoneNumberId, token) 
       .limit(1)
       .maybeSingle();
 
-    if (cmdUpper === 'CHAT' || cmdUpper === '3') {
-      if (!conv) {
-        await sendMessage(tenant.merchant_phone, '⚠️ No hay ningún pedido activo para tomar el chat.', phoneNumberId, token);
-        return;
-      }
+    if (intent.action === 'chat_takeover') {
+      if (!conv) { await sendMessage(tenant.merchant_phone, mt(lang, 'no_active_conv'), phoneNumberId, token); return; }
       await activateTakeover(tenant, conv, phoneNumberId, token);
       return;
     }
-
-    if (cmdUpper === 'CONFIRMAR' || cmdUpper === '1') {
-      if (!conv?.last_pending_order_id) {
-        await sendMessage(tenant.merchant_phone, '⚠️ No hay ningún pedido pendiente para confirmar.', phoneNumberId, token);
-        return;
-      }
-      await confirmOrder(tenant, conv, phoneNumberId, token);
+    if (!conv?.last_pending_order_id) {
+      await sendMessage(tenant.merchant_phone, mt(lang, 'no_pending_order'), phoneNumberId, token);
       return;
     }
-
-    if (cmdUpper === 'CANCELAR' || cmdUpper === '2') {
-      if (!conv?.last_pending_order_id) {
-        await sendMessage(tenant.merchant_phone, '⚠️ No hay ningún pedido pendiente para cancelar.', phoneNumberId, token);
-        return;
-      }
-      await cancelOrder(tenant, conv, phoneNumberId, token);
-      return;
-    }
+    if (intent.action === 'confirm_order') { await confirmOrder(tenant, conv, phoneNumberId, token); return; }
+    if (intent.action === 'cancel_order')  { await cancelOrder(tenant, conv, phoneNumberId, token); return; }
   }
 
-  if (cmdUpper === 'FIN' || cmdUpper === 'BOT') {
-    const { data: activeConv } = await supabase
-      .from('conversations')
-      .select('*')
-      .eq('tenant_id', tenant.id)
-      .eq('takeover_active', true)
-      .maybeSingle();
-
-    if (!activeConv) {
-      await sendMessage(tenant.merchant_phone, '⚠️ No hay ningún chat en modo takeover activo.', phoneNumberId, token);
-      return;
-    }
-    await endTakeover(tenant, activeConv, phoneNumberId, token);
+  if (intent.action === 'end_takeover') {
+    const { data: tc } = await supabase.from('conversations').select('*').eq('tenant_id', tenant.id).eq('takeover_active', true).maybeSingle();
+    if (!tc) { await sendMessage(tenant.merchant_phone, mt(lang, 'no_takeover'), phoneNumberId, token); return; }
+    await endTakeover(tenant, tc, phoneNumberId, token);
     return;
   }
 
-  // ── Free-text in takeover mode — forward to customer ─────────────────────
-  const { data: activeConv } = await supabase
-    .from('conversations')
-    .select('*')
-    .eq('tenant_id', tenant.id)
-    .eq('takeover_active', true)
-    .maybeSingle();
-
-  if (activeConv?.last_pending_customer_phone) {
-    await sendMessage(activeConv.last_pending_customer_phone, messageText, phoneNumberId, token);
-    console.log(`[takeover] merchant→customer: ${activeConv.last_pending_customer_phone}`);
-  } else {
-    await sendMessage(tenant.merchant_phone, AYUDA_TEXT, phoneNumberId, token);
+  // ── Add product ───────────────────────────────────────────────────────────
+  if (intent.action === 'add_product') {
+    const { name, category, price, stock, description } = intent.params;
+    if (!name) { await sendMessage(tenant.merchant_phone, mt(lang, 'unknown'), phoneNumberId, token); return; }
+    await supabase.from('products').insert({
+      tenant_id: tenant.id,
+      name, category: category || 'General',
+      price_guarani: price || 0,
+      stock_qty: stock || 0,
+      description: description || null,
+      is_available: (stock || 0) > 0,
+    });
+    await sendMessage(tenant.merchant_phone, mt(lang, 'product_added', name), phoneNumberId, token);
+    return;
   }
+
+  // ── Name customer ─────────────────────────────────────────────────────────
+  if (intent.action === 'name_customer') {
+    const { phone, name } = intent.params;
+    if (!phone || !name) { await sendMessage(tenant.merchant_phone, mt(lang, 'unknown'), phoneNumberId, token); return; }
+    await supabase.from('conversations').update({ customer_name: name }).eq('tenant_id', tenant.id).eq('customer_phone', phone);
+    await sendMessage(tenant.merchant_phone, mt(lang, 'customer_named', phone, name), phoneNumberId, token);
+    return;
+  }
+
+  // ── Unknown ───────────────────────────────────────────────────────────────
+  if (intent.action === 'unknown') {
+    await sendMessage(tenant.merchant_phone, mt(lang, 'unknown'), phoneNumberId, token);
+    return;
+  }
+
+  // ── Product-dependent actions (stock/price/availability) ──────────────────
+  if (!intent.product_query) {
+    await sendMessage(tenant.merchant_phone, mt(lang, 'unknown'), phoneNumberId, token);
+    return;
+  }
+
+  const matches = findProductsFuzzy(allProducts, intent.product_query);
+
+  if (matches.length === 0) {
+    await sendMessage(tenant.merchant_phone, mt(lang, 'not_found', intent.product_query), phoneNumberId, token);
+    return;
+  }
+
+  if (matches.length === 1) {
+    merchantPending.set(tenant.id, {
+      action: intent.action,
+      params: intent.params,
+      product: matches[0],
+      lang,
+      expiresAt: Date.now() + 5 * 60 * 1000,
+    });
+    await sendMessage(tenant.merchant_phone, mt(lang, 'confirm_one', matches[0].name), phoneNumberId, token);
+    return;
+  }
+
+  // Multiple matches — list them
+  const list = matches.slice(0, 5).map((p, i) => `${i + 1}. *${p.name}*`).join('\n');
+  merchantPending.set(tenant.id, {
+    action: intent.action,
+    params: intent.params,
+    candidates: matches.slice(0, 5),
+    lang,
+    expiresAt: Date.now() + 5 * 60 * 1000,
+  });
+  await sendMessage(tenant.merchant_phone, mt(lang, 'confirm_many', list), phoneNumberId, token);
 }
 
 // ─── Payment proof handler ────────────────────────────────────────────────────
@@ -413,12 +586,13 @@ async function handleMerchantImage(tenant, message, phoneNumberId, token) {
   await sendMessage(tenant.merchant_phone, `⏳ Subiendo foto para "${caption}"...`, phoneNumberId, token);
 
   try {
-    // Find the product
-    const product = await findProduct(tenant.id, caption);
+    const allP = await getProductsForTenant(tenant.id);
+    const matches = findProductsFuzzy(allP, caption);
+    const product = matches[0] || null;
     if (!product) {
       await sendMessage(
         tenant.merchant_phone,
-        `⚠️ No encontré el producto: "${caption}"\nUsá *CATALOGO* para ver los nombres disponibles.`,
+        `⚠️ No encontré el producto: "${caption}". Verificá el nombre en el catálogo.`,
         phoneNumberId,
         token
       );
@@ -451,176 +625,14 @@ async function handleMerchantImage(tenant, message, phoneNumberId, token) {
   }
 }
 
-// ─── Catalog command helpers ──────────────────────────────────────────────────
+// ─── Catalog helpers ──────────────────────────────────────────────────────────
 
-const AYUDA_TEXT =
-  `📋 *Comandos disponibles:*\n\n` +
-  `*📦 Catálogo:*\n` +
-  `• CATALOGO — ver todos los productos\n` +
-  `• STOCK Nombre del producto 10 — actualizar stock\n` +
-  `• PRECIO Nombre del producto 150000 — cambiar precio\n` +
-  `• AGOTADO Nombre del producto — marcar sin stock\n` +
-  `• DISPONIBLE Nombre del producto — reactivar producto\n` +
-  `• NUEVO Nombre|Categoría|Precio|Stock|Descripción — agregar producto\n\n` +
-  `*👤 Clientes:*\n` +
-  `• NOMBRE +595981234567 Francesco — guardar nombre de un cliente\n\n` +
-  `*🛒 Pedidos:*\n` +
-  `• CONFIRMAR — aceptar pedido pendiente\n` +
-  `• CANCELAR — rechazar pedido pendiente\n` +
-  `• CHAT — tomar chat con el cliente\n` +
-  `• FIN — devolver chat a Sara`;
-
-async function cmdCatalogo(tenant, phoneNumberId, token) {
-  const { data: products } = await supabase
+async function getProductsForTenant(tenantId) {
+  const { data } = await supabase
     .from('products')
-    .select('name, category, price_guarani, stock_qty, is_available')
-    .eq('tenant_id', tenant.id)
-    .order('category');
-
-  if (!products?.length) {
-    await sendMessage(tenant.merchant_phone, '📦 No tenés productos cargados todavía.', phoneNumberId, token);
-    return;
-  }
-
-  const lines = products.map(p => {
-    const estado = !p.is_available ? '🔴 AGOTADO' : p.stock_qty === 0 ? '🔴 Sin stock' : `🟢 Stock: ${p.stock_qty}`;
-    return `• *${p.name}*\n  ${p.category} — ${p.price_guarani.toLocaleString('es-PY')} Gs — ${estado}`;
-  });
-
-  await sendMessage(
-    tenant.merchant_phone,
-    `📦 *Tu catálogo (${products.length} productos):*\n\n${lines.join('\n\n')}`,
-    phoneNumberId,
-    token
-  );
-}
-
-async function cmdStock(tenant, messageText, phoneNumberId, token) {
-  // Format: STOCK nombre del producto 10
-  const match = messageText.match(/^STOCK\s+(.+?)\s+(\d+)$/i);
-  if (!match) {
-    await sendMessage(tenant.merchant_phone, '⚠️ Formato: *STOCK Nombre del producto 10*', phoneNumberId, token);
-    return;
-  }
-  const [, nameRaw, qtyStr] = match;
-  const qty = parseInt(qtyStr);
-  const product = await findProduct(tenant.id, nameRaw);
-  if (!product) {
-    await sendMessage(tenant.merchant_phone, `⚠️ No encontré el producto: "${nameRaw}"\nUsá CATALOGO para ver los nombres exactos.`, phoneNumberId, token);
-    return;
-  }
-  await supabase.from('products').update({ stock_qty: qty, is_available: qty > 0 }).eq('id', product.id);
-  await sendMessage(tenant.merchant_phone, `✅ *${product.name}*\nStock actualizado a ${qty} unidades.`, phoneNumberId, token);
-}
-
-async function cmdPrecio(tenant, messageText, phoneNumberId, token) {
-  // Format: PRECIO nombre del producto 150000
-  const match = messageText.match(/^PRECIO\s+(.+?)\s+(\d+)$/i);
-  if (!match) {
-    await sendMessage(tenant.merchant_phone, '⚠️ Formato: *PRECIO Nombre del producto 150000*', phoneNumberId, token);
-    return;
-  }
-  const [, nameRaw, priceStr] = match;
-  const price = parseInt(priceStr);
-  const product = await findProduct(tenant.id, nameRaw);
-  if (!product) {
-    await sendMessage(tenant.merchant_phone, `⚠️ No encontré el producto: "${nameRaw}"\nUsá CATALOGO para ver los nombres exactos.`, phoneNumberId, token);
-    return;
-  }
-  await supabase.from('products').update({ price_guarani: price }).eq('id', product.id);
-  await sendMessage(tenant.merchant_phone, `✅ *${product.name}*\nPrecio actualizado a ${price.toLocaleString('es-PY')} Gs.`, phoneNumberId, token);
-}
-
-async function cmdAgotado(tenant, messageText, disponible, phoneNumberId, token) {
-  const prefix = disponible ? 'DISPONIBLE' : 'AGOTADO';
-  const nameRaw = messageText.replace(new RegExp(`^${prefix}\\s+`, 'i'), '').trim();
-  if (!nameRaw) {
-    await sendMessage(tenant.merchant_phone, `⚠️ Formato: *${prefix} Nombre del producto*`, phoneNumberId, token);
-    return;
-  }
-  const product = await findProduct(tenant.id, nameRaw);
-  if (!product) {
-    await sendMessage(tenant.merchant_phone, `⚠️ No encontré el producto: "${nameRaw}"\nUsá CATALOGO para ver los nombres exactos.`, phoneNumberId, token);
-    return;
-  }
-  await supabase.from('products').update({
-    is_available: disponible,
-    stock_qty: disponible ? (product.stock_qty || 1) : 0
-  }).eq('id', product.id);
-
-  const icon = disponible ? '✅' : '🔴';
-  const estado = disponible ? 'marcado como disponible' : 'marcado como agotado';
-  await sendMessage(tenant.merchant_phone, `${icon} *${product.name}*\n${estado}.`, phoneNumberId, token);
-}
-
-async function cmdNuevo(tenant, messageText, phoneNumberId, token) {
-  // Format: NUEVO Nombre|Categoría|Precio|Stock|Descripción
-  const body = messageText.replace(/^NUEVO\s+/i, '').trim();
-  const parts = body.split('|').map(s => s.trim());
-  if (parts.length < 4) {
-    await sendMessage(
-      tenant.merchant_phone,
-      '⚠️ Formato:\n*NUEVO Nombre|Categoría|Precio|Stock|Descripción*\n\nEjemplo:\nNUEVO Ramo de Girasoles|Ramos|120000|10|Girasoles frescos importados',
-      phoneNumberId, token
-    );
-    return;
-  }
-  const [name, category, priceStr, stockStr, ...descParts] = parts;
-  const price = parseInt(priceStr);
-  const stock = parseInt(stockStr);
-  const description = descParts.join('|') || null;
-
-  if (isNaN(price) || isNaN(stock)) {
-    await sendMessage(tenant.merchant_phone, '⚠️ Precio y stock deben ser números.', phoneNumberId, token);
-    return;
-  }
-
-  await supabase.from('products').insert({
-    tenant_id: tenant.id,
-    name, category, price_guarani: price, stock_qty: stock,
-    description, is_available: stock > 0
-  });
-
-  await sendMessage(
-    tenant.merchant_phone,
-    `✅ Producto agregado:\n*${name}*\nCategoría: ${category}\nPrecio: ${price.toLocaleString('es-PY')} Gs\nStock: ${stock}${description ? `\nDesc: ${description}` : ''}`,
-    phoneNumberId, token
-  );
-}
-
-async function cmdNombre(tenant, messageText, phoneNumberId, token) {
-  // Format: NOMBRE +595981234567 Francesco  (or without +)
-  const match = messageText.match(/^NOMBRE\s+\+?(\d+)\s+(.+)$/i);
-  if (!match) {
-    await sendMessage(tenant.merchant_phone,
-      '⚠️ Formato: *NOMBRE +595981234567 Francesco*', phoneNumberId, token);
-    return;
-  }
-  const [, phone, name] = match;
-  const { error } = await supabase
-    .from('conversations')
-    .update({ customer_name: name.trim() })
-    .eq('tenant_id', tenant.id)
-    .eq('customer_phone', phone);
-
-  if (error) {
-    await sendMessage(tenant.merchant_phone,
-      `⚠️ No encontré conversación con +${phone}.`, phoneNumberId, token);
-    return;
-  }
-  await sendMessage(tenant.merchant_phone,
-    `✅ Cliente +${phone} guardado como *${name.trim()}*.`, phoneNumberId, token);
-}
-
-// Fuzzy product lookup — case-insensitive partial match
-async function findProduct(tenantId, nameQuery) {
-  const { data: products } = await supabase
-    .from('products')
-    .select('id, name, stock_qty')
-    .eq('tenant_id', tenantId)
-    .ilike('name', `%${nameQuery}%`)
-    .limit(1);
-  return products?.[0] || null;
+    .select('id, name, stock_qty, price_guarani, is_available')
+    .eq('tenant_id', tenantId);
+  return data || [];
 }
 
 // ─── Customer message handler ─────────────────────────────────────────────────
