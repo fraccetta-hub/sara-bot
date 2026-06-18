@@ -1023,6 +1023,20 @@ Respondé ÚNICAMENTE con un JSON válido, sin texto adicional, en este formato:
 });
 
 // ─── POST /admin/products/bulk-images — ZIP upload, fuzzy match filenames ────
+function detectImageMime(buffer) {
+  if (!buffer || buffer.length < 12) return null;
+  // JPEG: FF D8 FF
+  if (buffer[0] === 0xFF && buffer[1] === 0xD8 && buffer[2] === 0xFF) return 'image/jpeg';
+  // PNG: 89 50 4E 47 0D 0A 1A 0A
+  if (buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4E && buffer[3] === 0x47) return 'image/png';
+  // GIF: GIF8
+  if (buffer[0] === 0x47 && buffer[1] === 0x49 && buffer[2] === 0x46 && buffer[3] === 0x38) return 'image/gif';
+  // WebP: RIFF....WEBP
+  if (buffer[0] === 0x52 && buffer[1] === 0x49 && buffer[2] === 0x46 && buffer[3] === 0x46 &&
+      buffer[8] === 0x57 && buffer[9] === 0x45 && buffer[10] === 0x42 && buffer[11] === 0x50) return 'image/webp';
+  return null;
+}
+
 function normalizeName(s) {
   return s.toLowerCase()
     .replace(/\.[^.]+$/, '')
@@ -1123,7 +1137,9 @@ router.post('/products/bulk-images', requireAuth, zipRateLimit, handleZipUpload,
 
     try {
       const buffer = entry.getData();
-      const imageUrl = await uploadImageBuffer(buffer, filename, mime, req.tenant.tenantId);
+      const realMime = detectImageMime(buffer);
+      if (!realMime) { unmatched.push(filename + ' (not a valid image)'); continue; }
+      const imageUrl = await uploadImageBuffer(buffer, filename, realMime, req.tenant.tenantId);
       await supabase.from('products').update({ image_url: imageUrl }).eq('id', best.id);
       matched.push({ filename, productId: best.id, productName: best.name, score: Math.round(bestScore * 100) });
     } catch (e) {
