@@ -6,7 +6,7 @@ const { createClient } = require('@supabase/supabase-js');
 const { getSectorPrompt, getCurrencyForCountry } = require('../services/sectorPrompts');
 
 const supabase   = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
-const JWT_SECRET = process.env.ADMIN_JWT_SECRET || 'sara-bot-secret-change-me';
+const JWT_SECRET = process.env.ADMIN_JWT_SECRET;
 const TRIAL_DAYS = 7;
 
 // ── Helpers ───────────────────────────────────────────────────────────────────

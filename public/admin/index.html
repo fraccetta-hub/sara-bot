@@ -2310,7 +2310,8 @@ async function loadSupportMessages(scrollToBottom = true) {
     }).join('');
     if (scrollToBottom) box.scrollTop = box.scrollHeight;
   } catch(e) {
-    box.innerHTML = `<div class="text-center text-red-400 text-sm py-4">Error: ${e.message}</div>`;
+    box.textContent = 'Error: ' + e.message;
+    box.className = 'text-center text-red-400 text-sm py-4';
   }
 }
 

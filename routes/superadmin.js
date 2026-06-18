@@ -119,7 +119,7 @@ router.get('/tenants', requireSuper, async (req, res) => {
 router.get('/tenants/:id', requireSuper, async (req, res) => {
   const { data, error } = await supabase
     .from('tenants')
-    .select('*')
+    .select('id, name, bot_name, login_slug, merchant_phone, phone_number_id, active, plan_expires, plan_currency, plan_price, meta_connected, whatsapp_token_refresh_error, created_at, deactivated_at')
     .eq('id', req.params.id)
     .single();
   if (error) return res.status(404).json({ error: 'Tenant no encontrado' });
@@ -368,7 +368,7 @@ router.post('/tenants/:id/import-confirm', requireSuper, async (req, res) => {
 
 router.get('/analytics', requireSuper, async (req, res) => {
   const [tenantsRes, ordersRes] = await Promise.all([
-    supabase.from('tenants').select('id, name, active, plan_expires, plan_currency, plan_price, whatsapp_token, created_at, deactivated_at'),
+    supabase.from('tenants').select('id, name, active, plan_expires, plan_currency, plan_price, created_at, deactivated_at'),
     supabase.from('orders').select('id, tenant_id, status, created_at'),
   ]);
 
