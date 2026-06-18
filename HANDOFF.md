@@ -287,8 +287,9 @@
 ### Superadmin modal → read-only info view (commit 997f8c0)
 - Modal edit rimpiazzato con vista read-only: nome, email, username, WhatsApp merchant, Bot ID (Meta), stato Meta, sezioni attive, piano (moneda/prezzo/scadenza), paese, data registrazione
 - Azioni rimaste: impersonate, toggle active (nel modal), reset password
-- Rimosso: form editing, import-from-images dal modal
+- Rimosso: form editing, import-from-images dal modal; bottoni duplicati rimossi (tenuti stile blu/giallo originali)
 - `toggleFromModal()` nuovo — toggle + chiude modal + ricarica lista
+- `bot_phone_number` salvato al wizard connect (OAuth + manuale) da `display_phone_number` Meta API — mostrato nel modal superadmin; tenant esistenti vedranno "—" finché non riconnettono
 
 ### Email separata da username (commit 997f8c0)
 - `routes/register.js`: salva `email` + `country` al signup
@@ -304,6 +305,7 @@
 ```sql
 ALTER TABLE tenants ADD COLUMN IF NOT EXISTS email TEXT;
 ALTER TABLE tenants ADD COLUMN IF NOT EXISTS country TEXT;
+ALTER TABLE tenants ADD COLUMN IF NOT EXISTS bot_phone_number TEXT;
 UPDATE tenants SET email = login_slug WHERE email IS NULL;
 ```
 
