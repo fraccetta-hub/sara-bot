@@ -10,6 +10,15 @@ const { sendMessage, sendImage } = require('../services/whatsapp');
 
 const crypto = require('crypto');
 const { sendPasswordReset } = require('../services/mailer');
+const { rateLimit } = require('express-rate-limit');
+
+const forgotPasswordLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests, try again in 1 hour.' },
+});
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 const uploadCatalog = multer({ storage: multer.memoryStorage(), limits: { fileSize: 4 * 1024 * 1024, files: 6 } });
 
@@ -191,7 +200,7 @@ router.post('/logout', (req, res) => {
 
 // ─── POST /admin/forgot-password ─────────────────────────────────────────────
 
-router.post('/forgot-password', async (req, res) => {
+router.post('/forgot-password', forgotPasswordLimiter, async (req, res) => {
   const { email, lang = 'es' } = req.body;
   if (!email) return res.status(400).json({ error: 'Email requerido' });
 
