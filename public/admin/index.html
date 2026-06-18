@@ -91,13 +91,72 @@
         </button>
       </div>
 
-      <p class="text-center text-xs text-gray-400 mt-6 leading-relaxed">
+      <div class="text-center mt-4">
+        <button onclick="showForgotPassword()" data-i18n="login.forgot"
+          class="text-xs text-gray-400 hover:text-green-600 underline bg-transparent border-none cursor-pointer">
+          ¿Olvidaste tu contraseña?
+        </button>
+      </div>
+
+      <p class="text-center text-xs text-gray-400 mt-4 leading-relaxed">
         Al ingresar aceptás nuestros
         <a href="/legal/terms" target="_blank" class="underline hover:text-gray-600">Términos</a>,
         <a href="/legal/privacy" target="_blank" class="underline hover:text-gray-600">Privacidad</a>
         y <a href="/legal/disclaimer" target="_blank" class="underline hover:text-gray-600">Disclaimer</a>.
       </p>
 
+    </div>
+  </div>
+</div>
+
+<!-- ════ FORGOT PASSWORD MODAL ════ -->
+<div id="forgotModal" class="hidden fixed inset-0 modal-bg z-50 flex items-center justify-center px-4">
+  <div class="bg-white rounded-2xl w-full max-w-sm p-8" style="box-shadow:0 4px 24px rgba(0,0,0,.12);">
+    <h2 class="text-lg font-bold text-gray-900 mb-1" data-i18n="forgot.title">Recuperar contraseña</h2>
+    <p class="text-sm text-gray-400 mb-5" data-i18n="forgot.hint">Ingresá tu email y te enviamos un enlace para resetearla.</p>
+    <div id="forgotError" class="hidden bg-red-50 text-red-700 text-sm rounded-xl px-4 py-3 mb-4"></div>
+    <div id="forgotSuccess" class="hidden bg-green-50 text-green-700 text-sm rounded-xl px-4 py-3 mb-4"></div>
+    <input id="forgotEmail" type="email" data-i18n-ph="login.user" placeholder="hola@minegocio.com"
+      class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm mb-4"
+      onkeydown="if(event.key==='Enter') sendForgotPassword()"/>
+    <div class="flex gap-3">
+      <button onclick="hideForgotPassword()" data-i18n="forgot.cancel"
+        class="flex-1 py-2.5 rounded-xl text-sm font-semibold text-gray-600 border border-gray-200 hover:bg-gray-50">
+        Cancelar
+      </button>
+      <button onclick="sendForgotPassword()" id="forgotBtn" data-i18n="forgot.send"
+        class="flex-1 py-2.5 rounded-xl text-sm font-bold text-white"
+        style="background:#25D366;">
+        Enviar →
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ════ RESET PASSWORD PAGE ════ -->
+<div id="resetPage" class="hidden min-h-screen flex flex-col" style="background:linear-gradient(135deg,#f0fdf4 0%,#ecfdf5 60%,#f0f9ff 100%);">
+  <header style="padding:12px 16px;border-bottom:1px solid #e5e7eb;background:rgba(255,255,255,.96);">
+    <img src="/images/logosarabot.webp" alt="Sara Bot" style="height:32px;">
+  </header>
+  <div class="flex-1 flex items-center justify-center px-4 py-10">
+    <div class="bg-white rounded-2xl w-full max-w-sm p-8" style="box-shadow:0 4px 24px rgba(0,0,0,.07);border:1px solid #e5e7eb;">
+      <h1 class="text-xl font-bold text-gray-900 mb-1" data-i18n="reset.title">Nueva contraseña</h1>
+      <p class="text-sm text-gray-400 mb-6" data-i18n="reset.hint">Elegí una contraseña de al menos 8 caracteres.</p>
+      <div id="resetError" class="hidden bg-red-50 text-red-700 text-sm rounded-xl px-4 py-3 mb-4"></div>
+      <div id="resetSuccess" class="hidden bg-green-50 text-green-700 text-sm rounded-xl px-4 py-3 mb-4"></div>
+      <div class="space-y-4">
+        <input id="resetPassword" type="password" placeholder="••••••••"
+          class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm"
+          onkeydown="if(event.key==='Enter') submitReset()"/>
+        <input id="resetPassword2" type="password" data-i18n-ph="reset.confirm" placeholder="Repetir contraseña"
+          class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm"
+          onkeydown="if(event.key==='Enter') submitReset()"/>
+        <button onclick="submitReset()" id="resetBtn" data-i18n="reset.submit"
+          class="w-full py-2.5 rounded-xl text-sm font-bold text-white"
+          style="background:#25D366;">
+          Guardar contraseña →
+        </button>
+      </div>
     </div>
   </div>
 </div>
@@ -1880,8 +1939,17 @@ let activeCategory = 'all';
 
 // ── Boot ───────────────────────────────────────────────────────────────────────
 window.onload = () => {
-  // Support impersonation: superadmin passes ?token=xxx&name=yyy
   const params = new URLSearchParams(window.location.search);
+
+  // Password reset link: ?reset=<token>
+  const resetToken = params.get('reset');
+  if (resetToken) {
+    applyTranslations();
+    showResetPage(resetToken);
+    return;
+  }
+
+  // Support impersonation: superadmin passes ?token=xxx&name=yyy
   const urlToken = params.get('token');
   const urlName  = params.get('name');
   if (urlToken) {
@@ -1983,6 +2051,90 @@ function logout() {
   localStorage.removeItem('sara_token');
   document.getElementById('dashPage').classList.add('hidden');
   document.getElementById('loginPage').classList.remove('hidden');
+}
+
+// ── Forgot / Reset password ────────────────────────────────────────────────────
+
+function showForgotPassword() {
+  document.getElementById('forgotEmail').value = document.getElementById('loginPhoneId').value.trim();
+  document.getElementById('forgotError').classList.add('hidden');
+  document.getElementById('forgotSuccess').classList.add('hidden');
+  document.getElementById('forgotModal').classList.remove('hidden');
+}
+
+function hideForgotPassword() {
+  document.getElementById('forgotModal').classList.add('hidden');
+}
+
+async function sendForgotPassword() {
+  const email = document.getElementById('forgotEmail').value.trim();
+  const errEl = document.getElementById('forgotError');
+  const okEl  = document.getElementById('forgotSuccess');
+  errEl.classList.add('hidden');
+  okEl.classList.add('hidden');
+  if (!email) { errEl.textContent = t('forgot.required'); errEl.classList.remove('hidden'); return; }
+
+  const btn = document.getElementById('forgotBtn');
+  btn.disabled = true;
+  try {
+    await fetch('/admin/forgot-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, lang: currentLang || 'es' }),
+    });
+    okEl.textContent = t('forgot.sent');
+    okEl.classList.remove('hidden');
+    btn.textContent = '✓';
+  } catch {
+    errEl.textContent = t('forgot.error');
+    errEl.classList.remove('hidden');
+    btn.disabled = false;
+  }
+}
+
+function showResetPage(token) {
+  document.getElementById('loginPage').classList.add('hidden');
+  document.getElementById('resetPage').classList.remove('hidden');
+  document.getElementById('resetPage').dataset.token = token;
+}
+
+async function submitReset() {
+  const token = document.getElementById('resetPage').dataset.token;
+  const password  = document.getElementById('resetPassword').value;
+  const password2 = document.getElementById('resetPassword2').value;
+  const errEl = document.getElementById('resetError');
+  const okEl  = document.getElementById('resetSuccess');
+  errEl.classList.add('hidden');
+  okEl.classList.add('hidden');
+
+  if (password !== password2) {
+    errEl.textContent = t('reset.mismatch');
+    errEl.classList.remove('hidden');
+    return;
+  }
+
+  const btn = document.getElementById('resetBtn');
+  btn.disabled = true;
+  try {
+    const res = await fetch('/admin/reset-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, password }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Error');
+    okEl.textContent = t('reset.success');
+    okEl.classList.remove('hidden');
+    setTimeout(() => {
+      document.getElementById('resetPage').classList.add('hidden');
+      document.getElementById('loginPage').classList.remove('hidden');
+      history.replaceState(null, '', '/admin/index.html');
+    }, 2500);
+  } catch (e) {
+    errEl.textContent = e.message;
+    errEl.classList.remove('hidden');
+    btn.disabled = false;
+  }
 }
 
 // ── Dashboard ──────────────────────────────────────────────────────────────────

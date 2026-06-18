@@ -1,4 +1,20 @@
 require('dotenv').config();
+
+// ── Fail fast if required secrets are missing ─────────────────────────────────
+const REQUIRED_ENV = [
+  'ADMIN_JWT_SECRET',
+  'SUPERADMIN_JWT_SECRET',
+  'STRIPE_SECRET_KEY',
+  'SUPABASE_URL',
+  'SUPABASE_KEY',
+  'ANTHROPIC_API_KEY',
+];
+const missingEnv = REQUIRED_ENV.filter(k => !process.env[k]);
+if (missingEnv.length) {
+  console.error('FATAL: missing required env vars:', missingEnv.join(', '));
+  process.exit(1);
+}
+
 const express = require('express');
 const path = require('path');
 const fs = require('fs');

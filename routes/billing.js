@@ -5,9 +5,9 @@ const jwt      = require('jsonwebtoken');
 const { createClient } = require('@supabase/supabase-js');
 const { sendWelcome } = require('../services/mailer');
 
-const stripe   = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder');
+const stripe   = new Stripe(process.env.STRIPE_SECRET_KEY);
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
-const JWT_SECRET = process.env.ADMIN_JWT_SECRET || 'sara-bot-secret-change-me';
+const JWT_SECRET = process.env.ADMIN_JWT_SECRET;
 
 const PRICE_IDS = {
   starter: process.env.STRIPE_PRICE_STARTER,

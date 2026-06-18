@@ -117,4 +117,100 @@ async function sendWelcome({ email, businessName, lang = 'es' }) {
   }
 }
 
-module.exports = { sendWelcome };
+// ── Password reset email translations ─────────────────────────────────────────
+const TR = {
+  es: {
+    subject: 'Restablecer contraseña — Sara Bot',
+    greeting: name => `Hola, ${name}`,
+    body: 'Recibimos una solicitud para restablecer tu contraseña. Hacé clic en el botón para elegir una nueva.',
+    btn: 'Restablecer contraseña →',
+    expiry: 'El enlace expira en 1 hora.',
+    ignore: 'Si no solicitaste esto, ignorá este correo. Tu contraseña no cambiará.',
+  },
+  en: {
+    subject: 'Reset your password — Sara Bot',
+    greeting: name => `Hi, ${name}`,
+    body: 'We received a request to reset your password. Click the button below to choose a new one.',
+    btn: 'Reset password →',
+    expiry: 'The link expires in 1 hour.',
+    ignore: "If you didn't request this, ignore this email. Your password won't change.",
+  },
+  it: {
+    subject: 'Reimposta la password — Sara Bot',
+    greeting: name => `Ciao, ${name}`,
+    body: 'Abbiamo ricevuto una richiesta di reimpostazione della password. Clicca il pulsante per sceglierne una nuova.',
+    btn: 'Reimposta password →',
+    expiry: 'Il link scade tra 1 ora.',
+    ignore: 'Se non hai richiesto questo, ignora questa email. La tua password non cambierà.',
+  },
+  de: {
+    subject: 'Passwort zurücksetzen — Sara Bot',
+    greeting: name => `Hallo, ${name}`,
+    body: 'Wir haben eine Anfrage zum Zurücksetzen deines Passworts erhalten. Klicke auf den Button, um ein neues zu wählen.',
+    btn: 'Passwort zurücksetzen →',
+    expiry: 'Der Link läuft in 1 Stunde ab.',
+    ignore: 'Wenn du das nicht angefordert hast, ignoriere diese E-Mail. Dein Passwort wird nicht geändert.',
+  },
+  fr: {
+    subject: 'Réinitialiser votre mot de passe — Sara Bot',
+    greeting: name => `Bonjour, ${name}`,
+    body: 'Nous avons reçu une demande de réinitialisation de votre mot de passe. Cliquez sur le bouton pour en choisir un nouveau.',
+    btn: 'Réinitialiser le mot de passe →',
+    expiry: 'Le lien expire dans 1 heure.',
+    ignore: "Si vous n'avez pas fait cette demande, ignorez cet e-mail. Votre mot de passe ne changera pas.",
+  },
+  pt: {
+    subject: 'Redefinir senha — Sara Bot',
+    greeting: name => `Olá, ${name}`,
+    body: 'Recebemos uma solicitação para redefinir sua senha. Clique no botão para escolher uma nova.',
+    btn: 'Redefinir senha →',
+    expiry: 'O link expira em 1 hora.',
+    ignore: 'Se você não solicitou isso, ignore este e-mail. Sua senha não será alterada.',
+  },
+};
+
+function buildResetHtml(tr, businessName, resetUrl) {
+  return `<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/></head>
+<body style="margin:0;padding:0;background:#f0fdf4;font-family:sans-serif;">
+<div style="max-width:520px;margin:32px auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.06);">
+  <div style="background:#22c55e;padding:28px 32px;text-align:center;">
+    <img src="https://sarabot.pro/images/logosarabot.webp" alt="Sara Bot" style="height:44px;">
+  </div>
+  <div style="padding:32px;">
+    <p style="font-size:18px;font-weight:700;color:#111;margin:0 0 16px;">${tr.greeting(businessName)}</p>
+    <p style="color:#444;line-height:1.6;margin:0 0 24px;">${tr.body}</p>
+    <div style="text-align:center;margin-bottom:24px;">
+      <a href="${resetUrl}" style="display:inline-block;background:#22c55e;color:#fff;font-weight:700;font-size:15px;padding:14px 32px;border-radius:12px;text-decoration:none;">${tr.btn}</a>
+    </div>
+    <p style="color:#9ca3af;font-size:13px;margin:0 0 8px;">⏱ ${tr.expiry}</p>
+  </div>
+  <div style="padding:16px 32px;border-top:1px solid #f0f0f0;text-align:center;">
+    <p style="color:#9ca3af;font-size:11px;margin:0;">${tr.ignore}</p>
+  </div>
+</div>
+</body>
+</html>`;
+}
+
+async function sendPasswordReset({ email, businessName, resetUrl, lang = 'es' }) {
+  if (!process.env.SMTP_HOST || !process.env.SMTP_USER) {
+    console.warn('[mailer] SMTP not configured — skipping password reset email');
+    return;
+  }
+  const tr = TR[lang] || TR.es;
+  try {
+    await transporter.sendMail({
+      from: FROM,
+      to: email,
+      subject: tr.subject,
+      html: buildResetHtml(tr, businessName, resetUrl),
+    });
+    console.log(`[mailer] Password reset email sent to ${email}`);
+  } catch (err) {
+    console.error('[mailer] Failed to send password reset email:', err.message);
+  }
+}
+
+module.exports = { sendWelcome, sendPasswordReset };

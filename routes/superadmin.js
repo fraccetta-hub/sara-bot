@@ -11,8 +11,8 @@ const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024, files: 6 } });
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
-const JWT_SECRET       = process.env.ADMIN_JWT_SECRET    || 'sara-bot-secret-change-me';
-const SUPER_JWT_SECRET = process.env.SUPERADMIN_JWT_SECRET || 'sara-super-secret-change-me';
+const JWT_SECRET       = process.env.ADMIN_JWT_SECRET;
+const SUPER_JWT_SECRET = process.env.SUPERADMIN_JWT_SECRET;
 
 // ─── Auth middleware ──────────────────────────────────────────────────────────
 

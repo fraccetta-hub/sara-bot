@@ -8,6 +8,8 @@ const { createClient } = require('@supabase/supabase-js');
 const { uploadImageBuffer } = require('../services/storage');
 const { sendMessage, sendImage } = require('../services/whatsapp');
 
+const crypto = require('crypto');
+const { sendPasswordReset } = require('../services/mailer');
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 const uploadCatalog = multer({ storage: multer.memoryStorage(), limits: { fileSize: 4 * 1024 * 1024, files: 6 } });
 
@@ -21,7 +23,7 @@ const upload = multer({
 });
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
-const JWT_SECRET = process.env.ADMIN_JWT_SECRET || 'sara-bot-secret-change-me';
+const JWT_SECRET = process.env.ADMIN_JWT_SECRET;
 
 // ─── Auth middleware ──────────────────────────────────────────────────────────
 
@@ -141,11 +143,7 @@ router.post('/login', async (req, res) => {
   // Verify password
   let ok = false;
   if (!tenant.admin_password_hash) {
-    ok = (password === 'sara1234');
-    if (ok) {
-      const hash = await bcrypt.hash(password, 10);
-      await supabase.from('tenants').update({ admin_password_hash: hash }).eq('id', tenant.id);
-    }
+    return res.status(403).json({ error: 'Contraseña no configurada. Contactá a soporte para activar tu cuenta.', errorCode: 'no_password' });
   } else {
     ok = await bcrypt.compare(password, tenant.admin_password_hash);
   }
@@ -169,6 +167,62 @@ router.post('/login', async (req, res) => {
 
   const needsSetup = !tenant.phone_number_id;
   res.json({ token, tenantName: tenant.name, botName: tenant.bot_name, needsSetup });
+});
+
+// ─── POST /admin/forgot-password ─────────────────────────────────────────────
+
+router.post('/forgot-password', async (req, res) => {
+  const { email, lang = 'es' } = req.body;
+  if (!email) return res.status(400).json({ error: 'Email requerido' });
+
+  const { data: tenant } = await supabase
+    .from('tenants')
+    .select('id, name, login_slug, active')
+    .eq('login_slug', email.toLowerCase().trim())
+    .maybeSingle();
+
+  // Always respond OK to prevent user enumeration
+  if (!tenant || !tenant.active) return res.json({ ok: true });
+
+  const token = crypto.randomBytes(32).toString('hex');
+  const expires = new Date(Date.now() + 60 * 60 * 1000).toISOString(); // 1 hour
+
+  await supabase.from('tenants').update({
+    password_reset_token: token,
+    password_reset_expires: expires,
+  }).eq('id', tenant.id);
+
+  const resetUrl = `${process.env.APP_URL}/admin/index.html?reset=${token}`;
+  await sendPasswordReset({ email: tenant.login_slug, businessName: tenant.name, resetUrl, lang });
+
+  res.json({ ok: true });
+});
+
+// ─── POST /admin/reset-password ──────────────────────────────────────────────
+
+router.post('/reset-password', async (req, res) => {
+  const { token, password } = req.body;
+  if (!token || !password) return res.status(400).json({ error: 'Datos incompletos' });
+  if (password.length < 8) return res.status(400).json({ error: 'La contraseña debe tener al menos 8 caracteres', errorCode: 'password_too_short' });
+
+  const { data: tenant } = await supabase
+    .from('tenants')
+    .select('id, password_reset_token, password_reset_expires')
+    .eq('password_reset_token', token)
+    .maybeSingle();
+
+  if (!tenant) return res.status(400).json({ error: 'Token inválido o expirado', errorCode: 'invalid_token' });
+  if (new Date(tenant.password_reset_expires) < new Date())
+    return res.status(400).json({ error: 'Token expirado. Solicitá un nuevo enlace.', errorCode: 'token_expired' });
+
+  const hash = await bcrypt.hash(password, 10);
+  await supabase.from('tenants').update({
+    admin_password_hash: hash,
+    password_reset_token: null,
+    password_reset_expires: null,
+  }).eq('id', tenant.id);
+
+  res.json({ ok: true });
 });
 
 // ─── GET /admin/settings ─────────────────────────────────────────────────────
