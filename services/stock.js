@@ -93,4 +93,8 @@ async function getServices(tenantId) {
   return result;
 }
 
-module.exports = { getTenantConfig, getStock, decrementStock, getServices };
+function invalidateStock(tenantId) { cache.delete(`stock:${tenantId}`); }
+function invalidateServices(tenantId) { cache.delete(`services:${tenantId}`); }
+function invalidateTenant(phoneNumberId) { cache.delete(`tenant:${phoneNumberId}`); }
+
+module.exports = { getTenantConfig, getStock, decrementStock, getServices, invalidateStock, invalidateServices, invalidateTenant };

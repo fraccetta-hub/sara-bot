@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { createClient } = require('@supabase/supabase-js');
-const { getTenantConfig, getStock, decrementStock, getServices } = require('../services/stock');
+const { getTenantConfig, getStock, decrementStock, getServices, invalidateStock, invalidateServices } = require('../services/stock');
 const { sendMessage, sendImage, notifyMerchant } = require('../services/whatsapp');
 const { chat } = require('../services/claude');
 const { downloadAndStore, uploadImageBuffer } = require('../services/storage');
@@ -197,10 +197,15 @@ async function processIncoming(body) {
 // ─── Merchant NL bot ─────────────────────────────────────────────────────────
 
 const Anthropic = require('@anthropic-ai/sdk');
-const merchantPending = new Map(); // tenantId → pending confirmation state
+const merchantPending = new Map();  // tenantId → pending confirmation state
+const merchantLang    = new Map();  // tenantId → last detected language (for notifications)
 
 // Multi-language response templates
 const MT = {
+  orders_none:       { es:()=>`📋 No hay pedidos pendientes.`, it:()=>`📋 Nessun ordine in attesa.`, en:()=>`📋 No pending orders.`, fr:()=>`📋 Aucune commande en attente.`, de:()=>`📋 Keine ausstehenden Bestellungen.`, pt:()=>`📋 Nenhum pedido pendente.` },
+  order_status_upd:  { es:(id,s)=>`✅ Pedido #${id} → *${s}*.`, it:(id,s)=>`✅ Ordine #${id} → *${s}*.`, en:(id,s)=>`✅ Order #${id} → *${s}*.`, fr:(id,s)=>`✅ Commande #${id} → *${s}*.`, de:(id,s)=>`✅ Bestellung #${id} → *${s}*.`, pt:(id,s)=>`✅ Pedido #${id} → *${s}*.` },
+  order_not_found:   { es:()=>`⚠️ No encontré ese pedido.`, it:()=>`⚠️ Ordine non trovato.`, en:()=>`⚠️ Order not found.`, fr:()=>`⚠️ Commande introuvable.`, de:()=>`⚠️ Bestellung nicht gefunden.`, pt:()=>`⚠️ Pedido não encontrado.` },
+  block_missing:     { es:()=>`Necesito saber el rango de tiempo a bloquear. ¿Desde cuándo hasta cuándo?`, it:()=>`Ho bisogno del periodo da bloccare. Da quando a quando?`, en:()=>`I need the time range to block. From when to when?`, fr:()=>`J'ai besoin de la plage horaire. De quand à quand?`, de:()=>`Ich brauche den Zeitraum. Von wann bis wann?`, pt:()=>`Preciso do período a bloquear. De quando até quando?` },
   appt_list_header: { es:(n)=>`📅 *${n} próximas citas:*`, it:(n)=>`📅 *${n} prossimi appuntamenti:*`, en:(n)=>`📅 *${n} upcoming appointments:*`, fr:(n)=>`📅 *${n} prochains rendez-vous:*`, de:(n)=>`📅 *${n} bevorstehende Termine:*`, pt:(n)=>`📅 *${n} próximas consultas:*` },
   appt_none:        { es:()=>`📅 No hay citas próximas.`, it:()=>`📅 Nessun appuntamento in programma.`, en:()=>`📅 No upcoming appointments.`, fr:()=>`📅 Aucun rendez-vous à venir.`, de:()=>`📅 Keine bevorstehenden Termine.`, pt:()=>`📅 Nenhuma consulta próxima.` },
   appt_added:       { es:(n,s,t)=>`✅ Cita agregada:\n👤 ${n}\n💼 ${s}\n🕐 ${t}`, it:(n,s,t)=>`✅ Appuntamento aggiunto:\n👤 ${n}\n💼 ${s}\n🕐 ${t}`, en:(n,s,t)=>`✅ Appointment added:\n👤 ${n}\n💼 ${s}\n🕐 ${t}`, fr:(n,s,t)=>`✅ Rendez-vous ajouté:\n👤 ${n}\n💼 ${s}\n🕐 ${t}`, de:(n,s,t)=>`✅ Termin hinzugefügt:\n👤 ${n}\n💼 ${s}\n🕐 ${t}`, pt:(n,s,t)=>`✅ Consulta adicionada:\n👤 ${n}\n💼 ${s}\n🕐 ${t}` },
@@ -255,7 +260,7 @@ async function parseMerchantIntent(messageText, products, services) {
 Today: ${today}
 
 Actions: update_stock, set_stock, set_price, mark_unavailable, mark_available, add_product, get_catalog,
-confirm_order, cancel_order, chat_takeover, name_customer,
+get_orders, confirm_order, cancel_order, update_order_status, chat_takeover, name_customer,
 get_appointments, add_appointment, cancel_appointment, reschedule_appointment,
 block_time, unblock_time,
 get_services, update_service, add_service,
@@ -269,6 +274,8 @@ set_stock: {"qty": N} absolute value
 set_price: {"price": N}
 add_product: {"name":"...","category":"...","price":0,"stock":0,"description":null}
 name_customer: {"phone":"...","name":"..."}
+get_orders: {} — list pending/active orders
+update_order_status: {"customer_query":null,"status":"preparing|delivering|delivered"}
 chat_takeover: {"customer_query":"..."} partial name or phone, null if not specified
 get_appointments: {"from":"ISO","to":"ISO","customer_query":null} — default from=today, to=+7days
 add_appointment: {"customer_name":"...","customer_phone":null,"service_query":null,"start_at":"ISO or null","duration_override":null} — duration_override in minutes when merchant says "serve mezz'ora/30 minuti/1 ora" without a service
@@ -410,6 +417,7 @@ async function executeMerchantAction(tenant, action, product, params, lang, phon
     const delta = params.delta || 0;
     const newQty = Math.max(0, (product.stock_qty || 0) + delta);
     await supabase.from('products').update({ stock_qty: newQty, is_available: newQty > 0 }).eq('id', product.id);
+    invalidateStock(tenant.id);
     const key = delta > 0 ? 'stock_added' : 'stock_removed';
     await sendMessage(tenant.merchant_phone, mt(lang, key, product.name, Math.abs(delta), newQty), phoneNumberId, token);
     return;
@@ -417,23 +425,27 @@ async function executeMerchantAction(tenant, action, product, params, lang, phon
   if (action === 'set_stock') {
     const qty = params.qty ?? 0;
     await supabase.from('products').update({ stock_qty: qty, is_available: qty > 0 }).eq('id', product.id);
+    invalidateStock(tenant.id);
     await sendMessage(tenant.merchant_phone, mt(lang, 'stock_set', product.name, qty), phoneNumberId, token);
     return;
   }
   if (action === 'set_price') {
     const price = params.price || 0;
     await supabase.from('products').update({ price_guarani: price }).eq('id', product.id);
+    invalidateStock(tenant.id);
     await sendMessage(tenant.merchant_phone, mt(lang, 'price_updated', product.name, price), phoneNumberId, token);
     return;
   }
   if (action === 'mark_unavailable') {
     await supabase.from('products').update({ is_available: false, stock_qty: 0 }).eq('id', product.id);
+    invalidateStock(tenant.id);
     await sendMessage(tenant.merchant_phone, mt(lang, 'unavailable', product.name), phoneNumberId, token);
     return;
   }
   if (action === 'mark_available') {
     const qty = product.stock_qty || 1;
     await supabase.from('products').update({ is_available: true, stock_qty: qty }).eq('id', product.id);
+    invalidateStock(tenant.id);
     await sendMessage(tenant.merchant_phone, mt(lang, 'available', product.name), phoneNumberId, token);
     return;
   }
@@ -480,8 +492,16 @@ async function handleMerchantMessage(tenant, messageText, phoneNumberId, token) 
             await supabase.from('appointments').update({ status: 'cancelled' }).eq('id', chosen.id);
             const dt = new Date(chosen.start_at).toLocaleString('es-PY', { weekday:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
             await sendMessage(tenant.merchant_phone, mt(pending.lang, 'appt_cancelled', chosen.customer_name || chosen.customer_phone, dt), phoneNumberId, token);
+          } else if (pending.action === 'update_order_status') {
+            await supabase.from('orders').update({ status: pending.params.status }).eq('id', chosen.id);
+            await sendMessage(tenant.merchant_phone, mt(pending.lang, 'order_status_upd', chosen.id.substring(0,8).toUpperCase(), pending.params.status), phoneNumberId, token);
+          } else if (pending.action === 'confirm_order') {
+            await confirmOrder(tenant, chosen, phoneNumberId, token);
+          } else if (pending.action === 'cancel_order') {
+            await cancelOrder(tenant, chosen, phoneNumberId, token);
           } else if (pending.action === 'update_service') {
             await supabase.from('services').update(pending.params.updates).eq('id', chosen.id);
+            invalidateServices(tenant.id);
             await sendMessage(tenant.merchant_phone, mt(pending.lang, 'svc_updated', chosen.name), phoneNumberId, token);
           } else {
             await executeMerchantAction(tenant, pending.action, chosen, pending.params, pending.lang, phoneNumberId, token);
@@ -547,6 +567,9 @@ async function handleMerchantMessage(tenant, messageText, phoneNumberId, token) 
   const intent = await parseMerchantIntent(messageText, allProducts, allServices);
   const lang = intent.language || 'es';
 
+  // Save detected language for outbound notifications (e.g. new order alerts)
+  if (lang !== 'es') merchantLang.set(tenant.id, lang);
+
   // ── Feature gate ──────────────────────────────────────────────────────────
   const gateErr = featureGate(tenant, intent.action, lang);
   if (gateErr) { await sendMessage(tenant.merchant_phone, gateErr, phoneNumberId, token); return; }
@@ -608,17 +631,62 @@ async function handleMerchantMessage(tenant, messageText, phoneNumberId, token) 
     return;
   }
 
-  if (intent.action === 'confirm_order' || intent.action === 'cancel_order') {
-    const { data: conv } = await supabase
-      .from('conversations').select('*').eq('tenant_id', tenant.id)
-      .not('last_pending_order_id', 'is', null)
-      .order('updated_at', { ascending: false }).limit(1).maybeSingle();
-    if (!conv?.last_pending_order_id) {
-      await sendMessage(tenant.merchant_phone, mt(lang, 'no_pending_order'), phoneNumberId, token);
+  if (intent.action === 'get_orders') {
+    const { data: orders } = await supabase
+      .from('orders').select('id, customer_phone, items_json, total_guarani, delivery_fee, status, created_at')
+      .eq('tenant_id', tenant.id).in('status', ['pending','confirmed','preparing','delivering'])
+      .order('created_at', { ascending: false }).limit(10);
+    if (!orders?.length) { await sendMessage(tenant.merchant_phone, mt(lang, 'orders_none'), phoneNumberId, token); return; }
+    const STATUS_ICON = { pending:'🟡', confirmed:'✅', preparing:'🔧', delivering:'🚚', delivered:'✔️' };
+    const lines = orders.map(o => {
+      const id = o.id.substring(0,8).toUpperCase();
+      const total = (o.total_guarani + (o.delivery_fee||0)).toLocaleString();
+      const icon = STATUS_ICON[o.status] || '•';
+      const phone = o.customer_phone;
+      const names = (o.items_json||[]).map(i=>`${i.name} x${i.qty}`).join(', ');
+      return `${icon} *#${id}* +${phone}\n   ${names} — ${total} Gs`;
+    });
+    const HDR = { es:`📋 *Pedidos activos (${orders.length}):*`, it:`📋 *Ordini attivi (${orders.length}):*`, en:`📋 *Active orders (${orders.length}):*`, fr:`📋 *Commandes actives (${orders.length}):*`, de:`📋 *Aktive Bestellungen (${orders.length}):*`, pt:`📋 *Pedidos ativos (${orders.length}):*` };
+    await sendMessage(tenant.merchant_phone, `${HDR[lang]||HDR.es}\n\n${lines.join('\n\n')}`, phoneNumberId, token);
+    return;
+  }
+
+  if (intent.action === 'update_order_status') {
+    const { customer_query, status } = intent.params || {};
+    const validStatuses = ['preparing','delivering','delivered'];
+    if (!status || !validStatuses.includes(status)) { await sendMessage(tenant.merchant_phone, mt(lang, 'unknown'), phoneNumberId, token); return; }
+    let q = supabase.from('orders').select('id, customer_phone, status').eq('tenant_id', tenant.id).in('status', ['pending','confirmed','preparing','delivering']);
+    if (customer_query) q = q.ilike('customer_phone', `%${customer_query}%`);
+    const { data: orders } = await q.order('created_at', { ascending: false }).limit(5);
+    if (!orders?.length) { await sendMessage(tenant.merchant_phone, mt(lang, 'order_not_found'), phoneNumberId, token); return; }
+    if (orders.length === 1) {
+      await supabase.from('orders').update({ status }).eq('id', orders[0].id);
+      await sendMessage(tenant.merchant_phone, mt(lang, 'order_status_upd', orders[0].id.substring(0,8).toUpperCase(), status), phoneNumberId, token);
       return;
     }
-    if (intent.action === 'confirm_order') { await confirmOrder(tenant, conv, phoneNumberId, token); return; }
-    if (intent.action === 'cancel_order')  { await cancelOrder(tenant, conv, phoneNumberId, token); return; }
+    const list = orders.map((o,i) => `${i+1}. *#${o.id.substring(0,8).toUpperCase()}* +${o.customer_phone} (${o.status})`).join('\n');
+    const WH = { es:`Varios pedidos:\n${list}\n¿Cuál marcar como ${status}?`, it:`Più ordini:\n${list}\nQuale segnare come ${status}?`, en:`Multiple orders:\n${list}\nWhich to mark as ${status}?`, fr:`Plusieurs commandes:\n${list}\nLaquelle marquer comme ${status}?`, de:`Mehrere Bestellungen:\n${list}\nWelche als ${status} markieren?`, pt:`Vários pedidos:\n${list}\nQual marcar como ${status}?` };
+    merchantPending.set(tenant.id, { action: 'update_order_status', candidates: orders, params: { status }, lang, expiresAt: Date.now() + 5 * 60 * 1000 });
+    await sendMessage(tenant.merchant_phone, WH[lang]||WH.es, phoneNumberId, token);
+    return;
+  }
+
+  if (intent.action === 'confirm_order' || intent.action === 'cancel_order') {
+    const { data: convs } = await supabase
+      .from('conversations').select('*').eq('tenant_id', tenant.id)
+      .not('last_pending_order_id', 'is', null)
+      .order('updated_at', { ascending: false }).limit(5);
+    if (!convs?.length) { await sendMessage(tenant.merchant_phone, mt(lang, 'no_pending_order'), phoneNumberId, token); return; }
+    if (convs.length === 1) {
+      if (intent.action === 'confirm_order') { await confirmOrder(tenant, convs[0], phoneNumberId, token); return; }
+      await cancelOrder(tenant, convs[0], phoneNumberId, token); return;
+    }
+    // Multiple pending — list them
+    const list = convs.map((c,i) => `${i+1}. +${c.last_pending_customer_phone||c.customer_phone}`).join('\n');
+    const WH = { es:`Varios pedidos pendientes:\n${list}\n¿Cuál?`, it:`Più ordini in attesa:\n${list}\nQuale?`, en:`Multiple pending orders:\n${list}\nWhich one?`, fr:`Plusieurs commandes en attente:\n${list}\nLaquelle?`, de:`Mehrere ausstehende Bestellungen:\n${list}\nWelche?`, pt:`Vários pedidos pendentes:\n${list}\nQual?` };
+    merchantPending.set(tenant.id, { action: intent.action, candidates: convs, lang, expiresAt: Date.now() + 5 * 60 * 1000 });
+    await sendMessage(tenant.merchant_phone, WH[lang]||WH.es, phoneNumberId, token);
+    return;
   }
 
   // ── Add product ───────────────────────────────────────────────────────────
@@ -633,6 +701,7 @@ async function handleMerchantMessage(tenant, messageText, phoneNumberId, token) 
       description: description || null,
       is_available: (stock || 0) > 0,
     });
+    invalidateStock(tenant.id);
     await sendMessage(tenant.merchant_phone, mt(lang, 'product_added', name), phoneNumberId, token);
     return;
   }
@@ -705,6 +774,8 @@ async function handleMerchantMessage(tenant, messageText, phoneNumberId, token) 
     const appt = appts[0];
     const durationMs = new Date(appt.end_at) - new Date(appt.start_at);
     const new_end = new Date(new Date(new_start).getTime() + durationMs).toISOString();
+    const slotCheck = await checkSlotAvailability(tenant.id, new_start, new_end);
+    if (!slotCheck.available) { await sendMessage(tenant.merchant_phone, slotConflictMessage(slotCheck, lang), phoneNumberId, token); return; }
     await supabase.from('appointments').update({ start_at: new_start, end_at: new_end }).eq('id', appt.id);
     const dt = new Date(new_start).toLocaleString('es-PY', { weekday:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
     await sendMessage(tenant.merchant_phone, mt(lang, 'appt_rescheduled', appt.customer_name || appt.customer_phone, dt), phoneNumberId, token);
@@ -712,8 +783,14 @@ async function handleMerchantMessage(tenant, messageText, phoneNumberId, token) 
   }
 
   if (intent.action === 'block_time') {
-    const { start_at, end_at, reason } = intent.params || {};
-    if (!start_at || !end_at) { await sendMessage(tenant.merchant_phone, mt(lang, 'unknown'), phoneNumberId, token); return; }
+    const { start_at, reason } = intent.params || {};
+    let { end_at } = intent.params || {};
+    if (!start_at) { await sendMessage(tenant.merchant_phone, mt(lang, 'block_missing'), phoneNumberId, token); return; }
+    // Default end_at to end of day if not specified
+    if (!end_at) {
+      const d = new Date(start_at); d.setHours(23, 59, 59, 0);
+      end_at = d.toISOString();
+    }
     await supabase.from('appointment_blocks').insert({ tenant_id: tenant.id, start_at, end_at, reason: reason || null });
     const s = new Date(start_at).toLocaleString('es-PY', { weekday:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
     const e = new Date(end_at).toLocaleString('es-PY', { weekday:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
@@ -757,6 +834,7 @@ async function handleMerchantMessage(tenant, messageText, phoneNumberId, token) 
       price_type: price_type || 'fixed',
       is_available: true,
     });
+    invalidateServices(tenant.id);
     await sendMessage(tenant.merchant_phone, mt(lang, 'svc_added', name), phoneNumberId, token);
     return;
   }
@@ -774,6 +852,7 @@ async function handleMerchantMessage(tenant, messageText, phoneNumberId, token) 
     if (!Object.keys(updates).length) { await sendMessage(tenant.merchant_phone, mt(lang, 'unknown'), phoneNumberId, token); return; }
     if (sMatches.length === 1) {
       await supabase.from('services').update(updates).eq('id', sMatches[0].id);
+      invalidateServices(tenant.id);
       await sendMessage(tenant.merchant_phone, mt(lang, 'svc_updated', sMatches[0].name), phoneNumberId, token);
       return;
     }
@@ -1237,7 +1316,7 @@ async function handleCustomerMessage(tenant, customerPhone, messageText, locatio
 
     if (tenant.merchant_phone && savedOrderId) {
       const orderWithId = { ...order, delivery_fee: deliveryFee, id: savedOrderId };
-      await notifyMerchant(tenant.merchant_phone, orderWithId, customerPhone, phoneNumberId, token);
+      await notifyMerchant(tenant.merchant_phone, orderWithId, customerPhone, phoneNumberId, token, merchantLang.get(tenant.id) || 'es');
 
       await supabase.from('conversations').upsert({
         tenant_id: tenant.id,
