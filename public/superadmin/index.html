@@ -334,13 +334,27 @@
       </div>
     </div>
 
-    <!-- Toggle (inyectado por JS) -->
-    <div class="mt-4 pt-3 border-t border-gray-100">
+    <!-- Bottoni azione -->
+    <div class="mt-4 pt-3 border-t border-gray-100 space-y-2">
       <button id="eToggleBtn" onclick="toggleFromModal()"
         class="w-full py-2 rounded-lg text-xs font-semibold transition">—</button>
+      <div class="flex gap-2">
+        <button onclick="impersonate()" title="Entrar al panel del comerciante"
+          class="flex-1 bg-blue-50 text-blue-600 hover:bg-blue-100 py-2 rounded-lg text-xs font-semibold transition">
+          🔑 Impersonar
+        </button>
+        <button onclick="resetPassword()" title="Resetear contraseña a sara1234"
+          class="flex-1 bg-yellow-50 text-yellow-700 hover:bg-yellow-100 py-2 rounded-lg text-xs font-semibold transition">
+          🔄 Reset contraseña
+        </button>
+        <button onclick="closeEditModal()"
+          class="flex-1 bg-gray-50 text-gray-500 hover:bg-gray-100 py-2 rounded-lg text-xs font-semibold transition">
+          ✕ Cerrar
+        </button>
+      </div>
     </div>
 
-    <!-- keep hidden stubs for JS refs that may remain -->
+    <!-- hidden stubs for JS compat -->
     <div id="editConfig" class="hidden"></div>
     <div id="editProducts" class="hidden"></div>
     <div id="editImport" class="hidden">
@@ -355,26 +369,7 @@
       </div>
     </div>
     <div id="editError" class="hidden"></div>
-    <button id="editSaveBtn" class="hidden">
-        Guardar
-      </button>
-    </div>
-
-    <!-- Acciones extra -->
-    <div class="mt-4 pt-4 border-t border-gray-100 flex gap-2 flex-wrap">
-      <button onclick="impersonate()" title="Entrar al panel del comerciante"
-        class="flex-1 bg-blue-50 text-blue-600 hover:bg-blue-100 py-2 rounded-lg text-xs font-semibold transition">
-        🔑 Impersonar
-      </button>
-      <button onclick="resetPassword()" title="Resetear contraseña a sara1234"
-        class="flex-1 bg-yellow-50 text-yellow-700 hover:bg-yellow-100 py-2 rounded-lg text-xs font-semibold transition">
-        🔄 Reset contraseña
-      </button>
-      <button onclick="closeEditModal()"
-        class="flex-1 bg-gray-50 text-gray-500 hover:bg-gray-100 py-2 rounded-lg text-xs font-semibold transition">
-        ✕ Cerrar
-      </button>
-    </div>
+    <button id="editSaveBtn" class="hidden"></button>
   </div>
 </div>
 
