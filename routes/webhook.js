@@ -234,13 +234,14 @@ async function parseMerchantIntent(messageText, products) {
     model: 'claude-haiku-4-5-20251001',
     max_tokens: 200,
     system: `You parse merchant WhatsApp messages. Return ONLY valid JSON, no explanation.
-Actions: update_stock (delta ±), set_stock (absolute), set_price, mark_unavailable, mark_available, add_product, get_catalog, confirm_order, cancel_order, chat_takeover, end_takeover, name_customer, unknown.
+Actions: update_stock (delta ±), set_stock (absolute), set_price, mark_unavailable, mark_available, add_product, get_catalog, confirm_order, cancel_order, chat_takeover, name_customer, unknown.
 JSON schema: {"action":"...","product_query":null,"params":{},"language":"es|it|en|fr|de|pt"}
 params.update_stock: {"delta": N} — positive=add ("ho ricevuto 50 rose", "arrivate 50", "+50"), negative=remove ("vendute 10", "leva 10", "meno 10", "sold 10")
 params.set_stock: {"qty": N} — absolute ("il nuovo stock è 50", "stock = 50 rose")
 params.set_price: {"price": N}
 params.add_product: {"name":"...","category":"...","price":0,"stock":0,"description":null}
 params.name_customer: {"phone":"...","name":"..."}
+params.chat_takeover: {"customer_query":"..."} — name or partial phone the merchant mentions ("parla con Giuseppe", "talk to the one ending in 335", "chatta con Mario"). If no specific customer mentioned, customer_query=null.
 Detect language from the message (iso 639-1).`,
     messages: [{ role: 'user', content: `Catalog:\n${catalog}\n\nMessage: ${messageText}` }],
   });
@@ -301,15 +302,13 @@ async function handleMerchantMessage(tenant, messageText, phoneNumberId, token) 
   // ── Takeover forward (highest priority — merchant free-texts go to customer) ─
   const { data: activeConv } = await supabase
     .from('conversations')
-    .select('id, last_pending_customer_phone')
+    .select('id, last_pending_customer_phone, customer_name')
     .eq('tenant_id', tenant.id)
     .eq('takeover_active', true)
     .maybeSingle();
 
   if (activeConv?.last_pending_customer_phone) {
-    // Check if merchant is ending takeover before forwarding
-    const intent0 = await parseMerchantIntent(messageText, []);
-    if (intent0.action === 'end_takeover') {
+    if (messageText.trim().toUpperCase() === 'STOP') {
       await endTakeover(tenant, activeConv, phoneNumberId, token);
       return;
     }
@@ -326,21 +325,26 @@ async function handleMerchantMessage(tenant, messageText, phoneNumberId, token) 
     } else {
       const txt = messageText.trim();
 
-      // Candidate selection by number (confirm_many flow)
+      // Candidate selection by number
       if (pending.candidates) {
         const num = parseInt(txt);
         if (!isNaN(num) && num >= 1 && num <= pending.candidates.length) {
           const chosen = pending.candidates[num - 1];
           merchantPending.delete(tenant.id);
-          await executeMerchantAction(tenant, pending.action, chosen, pending.params, pending.lang, phoneNumberId, token);
+          if (pending.action === 'chat_takeover') {
+            await activateTakeover(tenant, chosen, pending.lang, phoneNumberId, token);
+          } else {
+            await executeMerchantAction(tenant, pending.action, chosen, pending.params, pending.lang, phoneNumberId, token);
+          }
           return;
         }
-        // Try name match among candidates
-        const byName = findProductsFuzzy(pending.candidates, txt);
-        if (byName.length === 1) {
-          merchantPending.delete(tenant.id);
-          await executeMerchantAction(tenant, pending.action, byName[0], pending.params, pending.lang, phoneNumberId, token);
-          return;
+        // Try name/product match among candidates
+        if (pending.action === 'chat_takeover') {
+          const byName = (pending.candidates).filter(c => (c.customer_name || '').toLowerCase().includes(txt.toLowerCase()) || (c.customer_phone || '').includes(txt));
+          if (byName.length === 1) { merchantPending.delete(tenant.id); await activateTakeover(tenant, byName[0], pending.lang, phoneNumberId, token); return; }
+        } else {
+          const byName = findProductsFuzzy(pending.candidates, txt);
+          if (byName.length === 1) { merchantPending.delete(tenant.id); await executeMerchantAction(tenant, pending.action, byName[0], pending.params, pending.lang, phoneNumberId, token); return; }
         }
       }
 
@@ -391,34 +395,59 @@ async function handleMerchantMessage(tenant, messageText, phoneNumberId, token) 
   }
 
   // ── Order actions ─────────────────────────────────────────────────────────
-  if (intent.action === 'confirm_order' || intent.action === 'cancel_order' || intent.action === 'chat_takeover') {
-    const { data: conv } = await supabase
-      .from('conversations')
-      .select('*')
-      .eq('tenant_id', tenant.id)
-      .not('last_pending_order_id', 'is', null)
-      .order('updated_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    if (intent.action === 'chat_takeover') {
-      if (!conv) { await sendMessage(tenant.merchant_phone, mt(lang, 'no_active_conv'), phoneNumberId, token); return; }
-      await activateTakeover(tenant, conv, phoneNumberId, token);
+  if (intent.action === 'chat_takeover') {
+    const customerQuery = intent.params?.customer_query || null;
+    if (customerQuery) {
+      // Find conversation matching name or partial phone
+      const { data: convs } = await supabase
+        .from('conversations')
+        .select('id, customer_phone, customer_name, last_pending_customer_phone, updated_at')
+        .eq('tenant_id', tenant.id)
+        .order('updated_at', { ascending: false })
+        .limit(50);
+      const q = customerQuery.toLowerCase();
+      const matches = (convs || []).filter(c => {
+        const name = (c.customer_name || '').toLowerCase();
+        const phone = c.customer_phone || '';
+        return name.includes(q) || phone.includes(q) || q.split(/\s+/).some(w => name.includes(w));
+      });
+      if (matches.length === 0) {
+        const MT_NO_CUSTOMER = { es:`⚠️ No encontré cliente para "${customerQuery}".`, it:`⚠️ Nessun cliente trovato per "${customerQuery}".`, en:`⚠️ No customer found for "${customerQuery}".`, fr:`⚠️ Aucun client pour "${customerQuery}".`, de:`⚠️ Kein Kunde für "${customerQuery}" gefunden.`, pt:`⚠️ Nenhum cliente para "${customerQuery}".` };
+        await sendMessage(tenant.merchant_phone, MT_NO_CUSTOMER[lang] || MT_NO_CUSTOMER.es, phoneNumberId, token);
+        return;
+      }
+      if (matches.length === 1) {
+        await activateTakeover(tenant, matches[0], lang, phoneNumberId, token);
+        return;
+      }
+      // Multiple — ask which one
+      const list = matches.slice(0, 5).map((c, i) => `${i + 1}. ${c.customer_name || '?'} (+${c.customer_phone})`).join('\n');
+      const MT_WHICH = { es:`Varios clientes encontrados:\n${list}\n¿Con cuál? Respondé con el número.`, it:`Più clienti trovati:\n${list}\nCon quale? Rispondi con il numero.`, en:`Multiple customers found:\n${list}\nWhich one? Reply with the number.`, fr:`Plusieurs clients trouvés:\n${list}\nLequel? Répondez avec le numéro.`, de:`Mehrere Kunden gefunden:\n${list}\nWelcher? Antworte mit der Nummer.`, pt:`Vários clientes encontrados:\n${list}\nQual deles? Responda com o número.` };
+      merchantPending.set(tenant.id, { action: 'chat_takeover', candidates: matches.slice(0, 5), lang, expiresAt: Date.now() + 5 * 60 * 1000 });
+      await sendMessage(tenant.merchant_phone, MT_WHICH[lang] || MT_WHICH.es, phoneNumberId, token);
       return;
     }
+    // No specific customer — pick most recent with pending order
+    const { data: conv } = await supabase
+      .from('conversations').select('*').eq('tenant_id', tenant.id)
+      .not('last_pending_order_id', 'is', null)
+      .order('updated_at', { ascending: false }).limit(1).maybeSingle();
+    if (!conv) { await sendMessage(tenant.merchant_phone, mt(lang, 'no_active_conv'), phoneNumberId, token); return; }
+    await activateTakeover(tenant, conv, lang, phoneNumberId, token);
+    return;
+  }
+
+  if (intent.action === 'confirm_order' || intent.action === 'cancel_order') {
+    const { data: conv } = await supabase
+      .from('conversations').select('*').eq('tenant_id', tenant.id)
+      .not('last_pending_order_id', 'is', null)
+      .order('updated_at', { ascending: false }).limit(1).maybeSingle();
     if (!conv?.last_pending_order_id) {
       await sendMessage(tenant.merchant_phone, mt(lang, 'no_pending_order'), phoneNumberId, token);
       return;
     }
     if (intent.action === 'confirm_order') { await confirmOrder(tenant, conv, phoneNumberId, token); return; }
     if (intent.action === 'cancel_order')  { await cancelOrder(tenant, conv, phoneNumberId, token); return; }
-  }
-
-  if (intent.action === 'end_takeover') {
-    const { data: tc } = await supabase.from('conversations').select('*').eq('tenant_id', tenant.id).eq('takeover_active', true).maybeSingle();
-    if (!tc) { await sendMessage(tenant.merchant_phone, mt(lang, 'no_takeover'), phoneNumberId, token); return; }
-    await endTakeover(tenant, tc, phoneNumberId, token);
-    return;
   }
 
   // ── Add product ───────────────────────────────────────────────────────────
@@ -961,28 +990,26 @@ async function handleCustomerMessage(tenant, customerPhone, messageText, locatio
 
 // ─── Takeover helpers ─────────────────────────────────────────────────────────
 
-async function activateTakeover(tenant, conv, phoneNumberId, token) {
+async function activateTakeover(tenant, conv, lang, phoneNumberId, token) {
   await supabase
     .from('conversations')
     .update({ takeover_active: true, takeover_started_at: new Date().toISOString() })
     .eq('id', conv.id);
 
   const customerPhone = conv.last_pending_customer_phone || conv.customer_phone;
+  const customerLabel = conv.customer_name ? `*${conv.customer_name}* (+${customerPhone})` : `+${customerPhone}`;
 
-  await sendMessage(
-    tenant.merchant_phone,
-    `✅ Chat directo activado con +${customerPhone}.\nTus mensajes llegarán directamente al cliente.\nCuando termines, respondé *FIN* para devolver el chat a Sara.`,
-    phoneNumberId,
-    token
-  );
+  const TAKEOVER_ON = {
+    es: `🟢 Estás hablando con ${customerLabel}.\nTus mensajes van directo al cliente.\nEnviá *STOP* para devolver el chat a Sara.`,
+    it: `🟢 Stai parlando con ${customerLabel}.\nI tuoi messaggi vanno direttamente al cliente.\nInvia *STOP* per restituire la chat a Sara.`,
+    en: `🟢 You're now chatting with ${customerLabel}.\nYour messages go directly to the customer.\nSend *STOP* to hand back to Sara.`,
+    fr: `🟢 Vous parlez maintenant avec ${customerLabel}.\nVos messages vont directement au client.\nEnvoyez *STOP* pour rendre le chat à Sara.`,
+    de: `🟢 Sie chatten jetzt mit ${customerLabel}.\nIhre Nachrichten gehen direkt an den Kunden.\nSenden Sie *STOP* um den Chat an Sara zurückzugeben.`,
+    pt: `🟢 Você está falando com ${customerLabel}.\nSuas mensagens vão direto ao cliente.\nEnvie *STOP* para devolver o chat a Sara.`,
+  };
 
-  await sendMessage(
-    customerPhone,
-    `En este momento te atiendo yo directamente 👋 ¿En qué te ayudo?`,
-    phoneNumberId,
-    token
-  );
-
+  await sendMessage(tenant.merchant_phone, TAKEOVER_ON[lang] || TAKEOVER_ON.es, phoneNumberId, token);
+  await sendMessage(customerPhone, `En este momento te atiendo yo directamente 👋 ¿En qué te ayudo?`, phoneNumberId, token);
   console.log(`[takeover] activated: tenant=${tenant.name} customer=${customerPhone}`);
 }
 
