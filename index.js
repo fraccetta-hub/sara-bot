@@ -109,6 +109,22 @@ app.listen(PORT, () => {
   setInterval(cleanOldConversations, 24 * 60 * 60 * 1000);
 })();
 
+// ─── Cron: auto-delete support messages older than 90 days ───────────────────
+(function scheduleSupportCleanup() {
+  const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
+  async function cleanOldSupportMessages() {
+    const cutoff = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
+    const { error, count } = await supabase
+      .from('support_messages')
+      .delete({ count: 'exact' })
+      .lt('created_at', cutoff);
+    if (error) console.error('[cleanup] support_messages error:', error.message);
+    else if (count > 0) console.log(`[cleanup] Deleted ${count} support messages older than 90 days`);
+  }
+  setTimeout(cleanOldSupportMessages, 10000);
+  setInterval(cleanOldSupportMessages, 24 * 60 * 60 * 1000);
+})();
+
 // ─── Cron: auto-renew WhatsApp tokens expiring within 15 days ────────────────
 (function scheduleTokenRenewal() {
   const supabase   = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
