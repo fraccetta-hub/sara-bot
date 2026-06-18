@@ -439,6 +439,24 @@ function findProductsFuzzy(products, query) {
   return products.filter(p => words.some(w => p.name.toLowerCase().includes(w)));
 }
 
+async function notifyWaitlist(tenant, productName, phoneNumberId, token) {
+  const { data: waiting } = await supabase.from('waitlist')
+    .select('customer_phone')
+    .eq('tenant_id', tenant.id)
+    .ilike('product_name', productName);
+  if (!waiting?.length) return;
+  for (const { customer_phone } of waiting) {
+    await sendMessage(customer_phone,
+      `¡Buenas noticias! 🎉 *${productName}* volvió a estar disponible en ${tenant.name}. ¿Querés pedirlo?`,
+      phoneNumberId, token
+    );
+  }
+  await supabase.from('waitlist')
+    .delete()
+    .eq('tenant_id', tenant.id)
+    .ilike('product_name', productName);
+}
+
 async function executeMerchantAction(tenant, action, product, params, lang, phoneNumberId, token) {
   if (action === 'update_stock') {
     const delta = params.delta || 0;
@@ -447,6 +465,7 @@ async function executeMerchantAction(tenant, action, product, params, lang, phon
     invalidateStock(tenant.id);
     const key = delta > 0 ? 'stock_added' : 'stock_removed';
     await sendMessage(tenant.merchant_phone, mt(lang, key, product.name, Math.abs(delta), newQty), phoneNumberId, token);
+    if (newQty > 0) notifyWaitlist(tenant, product.name, phoneNumberId, token).catch(e => console.error('[waitlist]', e.message));
     return;
   }
   if (action === 'set_stock') {
@@ -454,6 +473,7 @@ async function executeMerchantAction(tenant, action, product, params, lang, phon
     await supabase.from('products').update({ stock_qty: qty, is_available: qty > 0 }).eq('id', product.id);
     invalidateStock(tenant.id);
     await sendMessage(tenant.merchant_phone, mt(lang, 'stock_set', product.name, qty), phoneNumberId, token);
+    if (qty > 0) notifyWaitlist(tenant, product.name, phoneNumberId, token).catch(e => console.error('[waitlist]', e.message));
     return;
   }
   if (action === 'set_price') {
@@ -1154,10 +1174,30 @@ async function handleCustomerMessage(tenant, customerPhone, messageText, locatio
       // Return ONLY role + content — strip source, image_url, and any other extra fields
       return { role: msg.role, content: typeof content === 'string' ? content : String(content) };
     });
-  const [stock, services] = await Promise.all([
+  // ── Customer context: active order + past orders ────────────────────────────
+  const [stock, services, activeOrderRes, pastOrdersRes] = await Promise.all([
     getStock(tenant.id),
     getServices(tenant.id),
+    supabase.from('orders')
+      .select('id,status,items_json,total_guarani,created_at')
+      .eq('tenant_id', tenant.id)
+      .eq('customer_phone', customerPhone)
+      .in('status', ['pending','confirmed','preparing','delivering'])
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabase.from('orders')
+      .select('items_json,created_at')
+      .eq('tenant_id', tenant.id)
+      .eq('customer_phone', customerPhone)
+      .eq('status', 'delivered')
+      .order('created_at', { ascending: false })
+      .limit(3),
   ]);
+
+  const customerContext = (activeOrderRes.data || pastOrdersRes.data?.length)
+    ? { activeOrder: activeOrderRes.data || null, pastOrders: pastOrdersRes.data || [] }
+    : null;
 
   // ── Load appointment slots for next 14 days (if feature enabled AND relevant) ─
   // Skip the 3 extra queries + large prompt block when the conversation has no
@@ -1267,12 +1307,13 @@ async function handleCustomerMessage(tenant, customerPhone, messageText, locatio
   // ── Normal text message → Claude ───────────────────────────────────────────
   const { reply, order, imageProductName, customerName,
           deliveryChoice, deliveryAddress, offTopic, updatedHistory,
-          appointmentRequest } = await chat({
+          appointmentRequest, waitlistProduct } = await chat({
     tenant, stock, services, history,
     userMessage: messageText,
     convState,
     imageData: imageData || null,
     appointmentSlots,
+    customerContext,
   });
 
   if (offTopic) {
@@ -1424,6 +1465,16 @@ async function handleCustomerMessage(tenant, customerPhone, messageText, locatio
         .update({ customer_name: nameToSave })
         .eq('tenant_id', tenant.id).eq('customer_phone', customerPhone);
     }
+  }
+
+  // ── Handle waitlist signup ──────────────────────────────────────────────────
+  if (waitlistProduct) {
+    await supabase.from('waitlist').upsert({
+      tenant_id: tenant.id,
+      customer_phone: customerPhone,
+      product_name: waitlistProduct,
+      created_at: new Date().toISOString(),
+    }, { onConflict: 'tenant_id,customer_phone,product_name' });
   }
 
   // ── Send product image ──────────────────────────────────────────────────────

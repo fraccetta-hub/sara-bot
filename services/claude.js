@@ -25,6 +25,36 @@ function formatPrice(amount, currency) {
 
 const MAX_HISTORY = 20;
 
+function getNearbyOccasion() {
+  const now = new Date();
+  const m = now.getMonth() + 1;
+  const d = now.getDate();
+  const y = now.getFullYear();
+
+  if (m === 2 && d >= 12 && d <= 14) return 'San Valentín (14 de febrero)';
+  if (m === 3 && d === 8) return 'Día de la Mujer (8 de marzo)';
+  if (m === 12 && d >= 22 && d <= 25) return 'Navidad';
+  if (m === 12 && d >= 29 || (m === 1 && d <= 2)) return 'Año Nuevo';
+
+  // Mother's Day: 2nd Sunday of May
+  if (m === 5) {
+    const firstDow = new Date(y, 4, 1).getDay();
+    const firstSun = firstDow === 0 ? 1 : 8 - firstDow;
+    const secondSun = firstSun + 7;
+    if (d >= secondSun - 3 && d <= secondSun) return `Día de la Madre (${secondSun} de mayo)`;
+  }
+
+  // Father's Day: 3rd Sunday of June
+  if (m === 6) {
+    const firstDow = new Date(y, 5, 1).getDay();
+    const firstSun = firstDow === 0 ? 1 : 8 - firstDow;
+    const thirdSun = firstSun + 14;
+    if (d >= thirdSun - 3 && d <= thirdSun) return `Día del Padre (${thirdSun} de junio)`;
+  }
+
+  return null;
+}
+
 // Static per-tenant content — identical across consecutive messages in the same
 // conversation (only changes when the merchant edits catalog/config). Cached via
 // Anthropic prompt caching so it isn't re-billed at full price on every message.
@@ -105,15 +135,16 @@ REGLAS OPERATIVAS:
 <ORDER>{"items":[{"name":"NOMBRE_EXACTO","qty":1,"price_guarani":0,"type":"product"}],"total_guarani":0,"delivery_fee":0}</ORDER>
 6. Completá el JSON con los datos reales. Para servicios usá "type":"service". Para servicios por hora, multiplicá el precio por la cantidad de horas. En delivery_fee poné el costo de envío (0 si retira en local o es un servicio).
 7. Después de confirmar un pedido, incluí las instrucciones de pago en tu respuesta (si están disponibles).
-8. Si el cliente pregunta por un producto que tiene foto: <SHOW_IMAGE:NOMBRE_EXACTO_DEL_PRODUCTO>
+8. Si el cliente muestra interés en un producto (lo menciona, pregunta precio, cantidad, o quiere pedirlo) Y ese producto tiene foto, enviá la foto automáticamente: <SHOW_IMAGE:NOMBRE_EXACTO_DEL_PRODUCTO> No esperés que el cliente la pida explícitamente.
 9. Si el cliente menciona su nombre por primera vez: <CUSTOMER_NAME:NOMBRE_DEL_CLIENTE>
 10. Si el cliente no confirma o solo pregunta, NO incluyas el bloque <ORDER>.
-11. Si el cliente envía una imagen o mensaje sin ninguna relación con los productos o servicios del local, respondé ÚNICAMENTE con: <OFF_TOPIC>`;
+11. Si el cliente pide que lo avises cuando un producto agotado vuelva a estar disponible, respondé afirmativamente y agregá: <WAITLIST:NOMBRE_EXACTO_DEL_PRODUCTO>
+12. Si el cliente envía una imagen o mensaje sin ninguna relación con los productos o servicios del local, respondé ÚNICAMENTE con: <OFF_TOPIC>`;
 }
 
 // Per-conversation dynamic content — varies message to message (delivery state,
-// appointment slot availability). Kept out of the cached block on purpose.
-function buildDynamicSystemPrompt(tenant, convState = {}, appointmentSlots = null) {
+// appointment slot availability, customer context). Kept out of the cached block on purpose.
+function buildDynamicSystemPrompt(tenant, convState = {}, appointmentSlots = null, customerContext = null) {
   // ── Delivery block ──────────────────────────────────────────────────────────
   let deliveryBlock = '';
   if (tenant.delivery_enabled) {
@@ -200,12 +231,41 @@ A7. FECHA_ISO debe ser exactamente uno de los ISO strings de la lista (ej: 2026-
 A8. Después de emitir la reserva, informá al cliente que el local confirmará el turno en breve.`;
   }
 
-  return `${deliveryBlock}\n${appointmentsBlock}`.trim();
+  // ── Customer context block ──────────────────────────────────────────────────
+  let customerBlock = '';
+  if (customerContext) {
+    const parts = [];
+    if (customerContext.activeOrder) {
+      const o = customerContext.activeOrder;
+      const statusLabel = {
+        pending: 'pendiente (esperando confirmación del local)',
+        confirmed: 'confirmado',
+        preparing: 'en preparación',
+        delivering: 'en camino',
+      }[o.status] || o.status;
+      const items = (o.items_json || []).map(i => `${i.qty}x ${i.name}`).join(', ');
+      parts.push(`PEDIDO ACTIVO: estado "${statusLabel}", productos: ${items || '—'}, total: ${(o.total_guarani || 0).toLocaleString('es-PY')} Gs.`);
+    }
+    if (customerContext.pastOrders?.length) {
+      const summaries = customerContext.pastOrders
+        .map(o => (o.items_json || []).map(i => `${i.qty}x ${i.name}`).join(', ') || '—')
+        .join(' | ');
+      parts.push(`HISTORIAL DE COMPRAS DEL CLIENTE: ${summaries} — podés usar esto para sugerir "¿lo mismo de siempre?" si es relevante.`);
+    }
+    if (parts.length) customerBlock = `\nCONTEXTO DEL CLIENTE:\n${parts.join('\n')}`;
+  }
+
+  // ── Date and occasion awareness ─────────────────────────────────────────────
+  const todayStr = new Date().toLocaleDateString('es', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  const occasion = getNearbyOccasion();
+  const dateBlock = `\nFECHA ACTUAL: ${todayStr}${occasion ? `\nOCASIÓN PRÓXIMA: ${occasion} — si el cliente busca algo para regalar o celebrar, podés mencionarlo naturalmente.` : ''}`;
+
+  return `${deliveryBlock}\n${appointmentsBlock}\n${customerBlock}\n${dateBlock}`.trim();
 }
 
-async function chat({ tenant, stock, services, history, userMessage, convState, imageData, appointmentSlots }) {
+async function chat({ tenant, stock, services, history, userMessage, convState, imageData, appointmentSlots, customerContext }) {
   const staticPrompt  = buildStaticSystemPrompt(tenant, stock, services || []);
-  const dynamicPrompt = buildDynamicSystemPrompt(tenant, convState || {}, appointmentSlots || null);
+  const dynamicPrompt = buildDynamicSystemPrompt(tenant, convState || {}, appointmentSlots || null, customerContext || null);
 
   // Static catalog/rules block is cached (only changes when the merchant edits
   // products/config) — avoids re-billing it at full price on every message.
@@ -298,6 +358,14 @@ async function chat({ tenant, stock, services, history, userMessage, convState, 
     cleanReply = cleanReply.replace(/<DELIVERY_ADDRESS:.+?>/, '').trim();
   }
 
+  // Extract WAITLIST tag
+  let waitlistProduct = null;
+  const waitlistMatch = cleanReply.match(/<WAITLIST:(.+?)>/);
+  if (waitlistMatch) {
+    waitlistProduct = waitlistMatch[1].trim();
+    cleanReply = cleanReply.replace(/<WAITLIST:.+?>/, '').trim();
+  }
+
   // Extract APPOINTMENT tag
   let appointmentRequest = null;
   const apptMatch = cleanReply.match(/<APPOINTMENT:(\{[\s\S]*?\})>/);
@@ -321,7 +389,7 @@ async function chat({ tenant, stock, services, history, userMessage, convState, 
     { role: 'assistant', content: rawReply }
   ].slice(-MAX_HISTORY);
 
-  return { reply: cleanReply, order, imageProductName, customerName, deliveryChoice, deliveryAddress, offTopic, updatedHistory, appointmentRequest };
+  return { reply: cleanReply, order, imageProductName, customerName, deliveryChoice, deliveryAddress, offTopic, updatedHistory, appointmentRequest, waitlistProduct };
 }
 
 module.exports = { chat };
