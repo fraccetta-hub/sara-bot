@@ -91,7 +91,29 @@ Sara include `<SHOW_IMAGE>` nella risposta; webhook intercetta e invia foto prim
 
 ---
 
-## Pagamenti
+## Billing SaaS (Stripe)
+
+`routes/billing.js` gestisce l'intero ciclo di vita abbonamento:
+
+| Endpoint | Scopo |
+|----------|-------|
+| `POST /billing/create-checkout` | Crea Stripe Checkout session (`mode:'subscription'`, trial 7gg) |
+| `POST /billing/webhook` | Webhook Stripe: attiva/sospende tenant su `subscription.created/updated/deleted`, log su `invoice.payment_failed` |
+| `GET /billing/success` | Redirect post-checkout: attiva tenant + mostra credenziali |
+| `POST /billing/cancel` | Cancel at period end (accesso fino a fine periodo) |
+| `POST /billing/reactivate` | Annulla cancellazione |
+
+**Env vars richieste:**
+- `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_STARTER`, `STRIPE_PRICE_PRO`
+
+**Webhook URL:** `https://sarabot.pro/billing/webhook`
+**Events:** `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.payment_failed`
+
+Sara Bot non conserva dati di carta — tutto delegato a Stripe (PCI-DSS compliant).
+
+---
+
+## Pagamenti merchant (incasso clienti)
 
 Configura `tenants.payment_instructions` per tenant. Sara include istruzioni dopo conferma ordine.
 

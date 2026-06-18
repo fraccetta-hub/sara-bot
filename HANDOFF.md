@@ -123,12 +123,34 @@
 - Errori con `errorCode`: `invalid_meta_credentials` (token/ID sbagliati), `meta_unreachable` (rete)
 - Chiavi `err.invalid_meta_credentials` + `err.meta_unreachable` aggiunte in ES/EN/IT/DE/FR/PT in `public/admin/i18n.js`
 
+## COSA È STATO FATTO (sessione 2026-06-18 — legal + billing)
+
+### Legal pages — aggiornamento completo
+- `public/legal/terms.html` / `privacy.html` / `disclaimer.html`: Stripe aggiunto come processore pagamenti in tutte e 5 le lingue (ES/EN/IT/DE/FR); date aggiornate a 2026
+- `privacy.html`: riga "dati di fatturazione (Stripe)" aggiunta alla tabella Merchant + Stripe aggiunto in sezione fornitori terzi
+- `disclaimer.html`: §5 rinominato "Meta, Anthropic e Stripe" con testo aggiornato
+- `public/register/index.html` + `public/register/i18n.js`: link rotti `/terms.html` → `/legal/terms` e `/privacy.html` → `/legal/privacy` in tutte e 6 le lingue
+- `landingpage/index.html` + `register/i18n.js`: © 2025 → © 2026
+- `services/mailer.js`: footer legale con link Terms + Privacy aggiunto all'email di benvenuto
+
+### Billing Stripe — stato
+- **Codice già completamente implementato** (`routes/billing.js`): Checkout session `mode:'subscription'` con trial 7gg, webhook per rinnovi automatici, cancel/reactivate, success page con credenziali
+- `register/index.html` chiama già `/billing/create-checkout` correttamente
+- `.env`: duplicato `APP_URL=https://candidatelens.com` rimosso; placeholder Stripe aggiunti
+- **Mancano solo le env var reali** da configurare su Render e Stripe Dashboard
+
 ## COSA NON FUNZIONA / IN SOSPESO
 - **Env vars mancanti su Render** — da aggiungere in Render → Environment prima che il wizard funzioni:
   - `META_APP_ID` = `27756118003980694` (ID app Meta)
   - `META_APP_SECRET` = chiave segreta app (visibile in Meta Developer → Settings → Basic → "Chiave segreta")
   - `META_CONFIG_ID` = Configuration ID da Facebook Login for Business → Configurations (da creare se non esiste ancora)
 - **META_CONFIG_ID non ancora creato** — va su Meta Developer → Facebook Login for Business → Configurations → crea nuova configurazione → copia ID
+- **Stripe env vars mancanti su Render** — da configurare su stripe.com + aggiungere in Render → Environment:
+  - `STRIPE_SECRET_KEY=sk_live_...`
+  - `STRIPE_WEBHOOK_SECRET=whsec_...` (da Stripe Dashboard → Developers → Webhooks → endpoint `https://sarabot.pro/billing/webhook`)
+  - `STRIPE_PRICE_STARTER=price_...`
+  - `STRIPE_PRICE_PRO=price_...`
+  - Webhook Stripe: events `customer.subscription.created/updated/deleted` + `invoice.payment_failed`
 
 ## DECISIONI TECNICHE PRESE (non riaprire)
 - Modello chat cliente: `claude-haiku-4-5-20251001` (non cambiato, va bene per chat conversazionale).
