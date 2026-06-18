@@ -1,4 +1,4 @@
-# PROJECT HANDOFF — Sara Bot (whatsapp-bot) — 2026-06-18
+# PROJECT HANDOFF — Sara Bot (whatsapp-bot) — 2026-06-19
 
 ## STATO CORRENTE
 - Obiettivo generale: SaaS multi-tenant WhatsApp Business (Node/Express + Supabase + Anthropic Claude). Bot AI risponde a clienti, gestisce catalogo, delivery, turni/appuntamenti, ordini.
@@ -166,8 +166,35 @@
 - `window.onload`: check `?reset=<token>` in URL → mostra `#resetPage` direttamente (salta loginPage)
 - i18n: chiavi `login.forgot`, `forgot.*`, `reset.*` aggiunte in tutte e 6 le lingue in `public/admin/i18n.js`
 
-### Pendente (identificato ma non implementato)
-- **JWT in localStorage → cookie HttpOnly**: rischio XSS attuale basso ma da fare. Richiede: `cookie-parser` in `index.js`, `res.cookie()` nel login, `req.cookies` in `requireAuth`, rimozione `localStorage`/`TOKEN` dal frontend, refactor impersonation superadmin (attualmente via `?token=`). Stima: 2-3h.
+## COSA È STATO FATTO (sessione 2026-06-19 — security hardening HttpOnly cookies + audit)
+
+### JWT → HttpOnly cookies (COMPLETATO)
+- `cookie-parser` aggiunto come middleware in `index.js`
+- Login admin/superadmin/billing: `res.cookie('sara_token', token, { httpOnly, secure, sameSite:'strict' })` — JWT non più nel body
+- `requireAuth` / `requireSuper` / billing cancel+reactivate: leggono da `req.cookies` — Bearer fallback rimosso (era attack surface)
+- Nuovi endpoint: `GET /admin/me` (boot check leggero), `POST /admin/logout`, `GET /superadmin/me`, `POST /superadmin/logout`
+- Frontend admin + superadmin: rimossi tutti i `localStorage.getItem/setItem('sara_token')`, rimossi header `Authorization: Bearer`, `credentials:'same-origin'` su tutte le fetch, variabile `TOKEN` eliminata
+- Impersonazione superadmin: cookie settato server-side, token rimosso dall'URL
+- `billing/success`: `localStorage.setItem` rimosso dall'HTML inline — cookie settato server-side prima della redirect
+- `privacy.html` (ES/EN/IT/DE/FR): sezione 6 aggiornata — localStorage→HttpOnly cookie, testo accurato
+- `NODE_ENV=production` settato su Render (flag `Secure` attivo su cookie HTTPS)
+
+### Audit sicurezza post-migrazione (COMPLETATO)
+- `routes/register.js`: rimosso fallback hardcoded `|| 'sara-bot-secret-change-me'` — fail-fast via `index.js`
+- `routes/superadmin.js` `GET /tenants/:id`: `select('*')` → campi espliciti (esclude `whatsapp_token`, `admin_password_hash`, `stripe_*`, `password_reset_*`)
+- `routes/superadmin.js` analytics: rimosso `whatsapp_token` dalla query
+- `public/admin/index.html`: XSS in error display — `innerHTML` con `e.message` → `textContent`
+
+## PROSSIME PRIORITÀ (sessione successiva)
+1. **Stripe** — configurare env vars reali su Render + testare flow completo con account business
+2. **Email** — finire config Cloudflare send + Brevo receive
+3. **Bot assistenza** — FAQ/supporto automatico per merchant
+4. **Import/export** — audit completo flussi dati
+5. **Sara risposte** — tuning qualità risposte ai clienti finali
+6. **Costi/margini** — calcolo reale token AI + infra + limiti piano
+7. **Fatturazione** — capire come mandare fatture ai merchant
+8. **GDPR compliance** — audit cosa manca (DPA, retention policy, right-to-erasure flow)
+9. **Go-to-market** — pubblicità, test, vendita
 
 ## COSA NON FUNZIONA / IN SOSPESO
 - **Env vars mancanti su Render** — da aggiungere in Render → Environment prima che il wizard funzioni:
@@ -200,9 +227,9 @@
 
 ## COME RIPRENDERE
 Primo messaggio da mandare a Claude nella prossima sessione:
-"Leggi HANDOFF.md. Sessione precedente: landing page fix (false claims rimossi, mockup fioraio, tab professionisti). Priorità: Stripe env vars su Render + META_CONFIG_ID da creare."
+"Leggi HANDOFF.md. Sessione precedente: HttpOnly cookie migration + security audit completati. Priorità: punto 2 lista — Stripe con account business reale."
 
 ## ERRORI NOTI / TRAPPOLE
-- NON leggere/query tabella prod `tenants` con `select('*')` o colonne sensibili senza autorizzazione esplicita utente per quella lettura specifica — bloccato da permission classifier (dati merchant: token WhatsApp, telefoni).
+- NON leggere/query tabella prod `tenants` con `select('*')` o colonne sensibili senza autorizzazione esplicita utente per quella lettura specifica — bloccato da permission classifier (dati merchant: token WhatsApp, telefoni). `superadmin GET /tenants/:id` ora usa campi espliciti sicuri.
 - Anthropic prompt caching ha soglia minima ~4096 token sul prefisso cacheabile per modelli Haiku-tier: sotto soglia, caching no-op silenzioso, nessun errore — non assumere che caching funzioni senza verificare `response.usage.cache_creation_input_tokens`/`cache_read_input_tokens`.
 - Caching è match byte-prefix stretto: qualsiasi contenuto dynamic messo PRIMA del blocco static rompe la cache ogni volta.
