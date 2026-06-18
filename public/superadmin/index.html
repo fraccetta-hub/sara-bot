@@ -652,7 +652,6 @@ async function openEditModal(id) {
 
   document.getElementById('eInfoCurrency').textContent = t.plan_currency || '—';
   document.getElementById('eInfoPrice').textContent    = t.plan_price ? `${t.plan_price} ${t.plan_currency || ''}` : '—';
-  document.getElementById('eInfoExpires').textContent  = t.plan_expires ? new Date(t.plan_expires).toLocaleDateString('es-PY') : '∞';
   document.getElementById('eInfoCountry').textContent  = t.country || '—';
   document.getElementById('eInfoCreated').textContent  = t.created_at ? new Date(t.created_at).toLocaleDateString('es-PY') : '—';
 
