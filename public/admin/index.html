@@ -1525,10 +1525,18 @@
         <li data-i18n="zip.s4">Subí el ZIP acá — las fotos se asignan automáticamente.</li>
       </ol>
     </div>
+    <div class="bg-gray-50 rounded-xl px-4 py-3 mb-4 text-xs text-gray-500 space-y-1">
+      <p data-i18n="zip.limits.title" class="font-semibold text-gray-600">📋 Límites del ZIP:</p>
+      <ul class="list-disc list-inside space-y-0.5">
+        <li data-i18n="zip.limits.formats">Formatos aceptados: <b>.jpg / .jpeg / .png / .webp</b></li>
+        <li data-i18n="zip.limits.count">Máximo <b>300 imágenes</b> por ZIP</li>
+        <li data-i18n="zip.limits.filesize">Máximo <b>50 MB</b> por archivo ZIP</li>
+        <li data-i18n="zip.limits.imgsize">Cada imagen: máx. <b>8 MB</b> sin comprimir</li>
+      </ul>
+    </div>
     <div id="zipDropzone" onclick="document.getElementById('zipFileInput').click()" class="border-2 border-dashed border-gray-200 rounded-xl py-8 text-center cursor-pointer hover:border-green-400 transition mb-4">
       <span class="text-3xl">📦</span>
       <p id="zipDropText" data-i18n="zip.drop" class="text-sm text-gray-500 mt-2">Tocá para seleccionar un archivo ZIP</p>
-      <p class="text-xs text-gray-400 mt-1" data-i18n="zip.hint">Máx. 50 MB</p>
       <input id="zipFileInput" type="file" accept=".zip,application/zip" class="hidden" onchange="handleZipFile(this)"/>
     </div>
     <div id="zipError" class="hidden bg-red-50 text-red-700 text-sm rounded-lg px-4 py-2 mb-3"></div>
