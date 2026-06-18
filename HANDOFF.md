@@ -1,4 +1,4 @@
-# PROJECT HANDOFF — Sara Bot (whatsapp-bot) — 2026-06-19
+# PROJECT HANDOFF — Sara Bot (whatsapp-bot) — 2026-06-20
 
 ## STATO CORRENTE
 - Obiettivo generale: SaaS multi-tenant WhatsApp Business (Node/Express + Supabase + Anthropic Claude). Bot AI risponde a clienti, gestisce catalogo, delivery, turni/appuntamenti, ordini.
@@ -185,13 +185,71 @@
 - `routes/superadmin.js` analytics: rimosso `whatsapp_token` dalla query
 - `public/admin/index.html`: XSS in error display — `innerHTML` con `e.message` → `textContent`
 
+## COSA È STATO FATTO (sessione 2026-06-20 — merchant NL bot completo)
+
+### Bot WhatsApp merchant — linguaggio naturale (COMPLETATO)
+- Rimossi tutti i comandi rigidi (CATALOGO, STOCK, PRECIO, CONFIRMAR, ecc.)
+- Tutto passa per Claude Haiku che interpreta linguaggio naturale in qualsiasi lingua
+- Lingua rilevata automaticamente da ogni messaggio → tutte le risposte nella lingua del merchant
+- Template multilingua ES/IT/EN/FR/DE/PT per tutte le risposte
+
+**Stock (delta vs assoluto):**
+- "aggiungi 50 rose" / "arrivate 50" → `update_stock delta:+50` → stock precedente + 50
+- "vendute 10" / "leva 10" / "meno 10" → `update_stock delta:-10`
+- "il nuovo stock è 50" / "stock = 50" → `set_stock qty:50`
+
+**Prodotti:** aggiungere, cambiare prezzo, marcare esaurito/disponibile, vedere catalogo
+
+**Ordini:**
+- `get_orders` — lista ordini attivi con icone stato (🟡 pending, ✅ confirmed, 🔧 preparing, 🚚 delivering)
+- `update_order_status` — "sto preparando l'ordine di Mario" → status preparing/delivering/delivered
+- `confirm_order` / `cancel_order` — disambiguazione se più ordini pendenti
+- Notifiche nuovo ordine localizzate in 6 lingue
+
+**Takeover chat:**
+- "fammi parlare con Giuseppe" / "chatta con chi finisce con 335" → cerca conversazione → attiva
+- Conferma: "🟢 Stai parlando con Giuseppe (+595...335). Invia STOP per restituire la chat a Sara."
+- `STOP` (parola riservata esplicita) → termina takeover
+- Selezione cliente per numero se più match
+
+**Appuntamenti (se `appointments_enabled`):**
+- `get_appointments` — agenda prossimi 7 giorni (filtrabile per cliente)
+- `add_appointment` — con slot check (giorno chiuso, fuori orario, già occupato, blocco manuale)
+- `cancel_appointment` / `reschedule_appointment` — fuzzy match + slot check su nuovo orario
+- `block_time` / `unblock_time` — blocco calendario (ferie, chiusure); end_at default fine giornata
+- Campi mancanti: chiede tutto in una volta, non step-by-step; flusso multi-turn con pending
+- `duration_override` — "serve mezz'ora" senza specificare il servizio
+
+**Servizi (se `services_enabled`):**
+- `get_services`, `add_service`, `update_service` — prezzo, durata, disponibilità, nome, categoria
+
+**Feature gating:** azioni bloccate se modulo disabilitato sul tenant (products/services/appointments_enabled)
+
+**Fuzzy match prodotti/clienti:** typo tollerati, singolo match → conferma "Intendi *X*?", multipli → lista numerata
+
+**Pending state persistito su DB:**
+- `merchant_pending_json` (jsonb) su tabella `tenants`
+- L1: in-memory Map (zero overhead operazione normale)
+- L2: DB (sopravvive restart Render)
+- **Migration richiesta:** `ALTER TABLE tenants ADD COLUMN IF NOT EXISTS merchant_pending_json jsonb DEFAULT NULL;`
+
+**Cache invalidation:** `invalidateStock` / `invalidateServices` chiamati dopo ogni modifica NL
+
+### Commits questa sessione
+- `658d849` — NL bot base (replace rigid commands)
+- `dc02955` — takeover by customer name/phone + STOP
+- `43391ef` — appointments + services actions
+- `3ad53e4` — feature gating, missing fields, slot check
+- `6550443` — order workflow, cache invalidation, multilang notifications
+- `d31bae4` — merchant_pending_json DB persistence
+
 ## PROSSIME PRIORITÀ (sessione successiva)
-1. **Stripe** — configurare env vars reali su Render + testare flow completo con account business
-2. **Email** — finire config Cloudflare send + Brevo receive
-3. **Bot assistenza** — FAQ/supporto automatico per merchant
-4. **Import/export** — audit completo flussi dati
+1. **Migration Supabase** — `ALTER TABLE tenants ADD COLUMN IF NOT EXISTS merchant_pending_json jsonb DEFAULT NULL;` (richiesta per pending persistence)
+2. **Stripe** — configurare env vars reali su Render + testare flow completo con account business
+3. **Bot supporto** — risposta automatica FAQ/supporto nella sezione support del pannello admin
+4. **Email** — finire config Cloudflare send + Brevo receive
 5. **Sara risposte** — tuning qualità risposte ai clienti finali
-6. **Costi/margini** — calcolo reale token AI + infra + limiti piano
+6. **Costi/margini** — calcolo reale token AI + infra + limiti piano + definire piani starter/pro
 7. **Fatturazione** — capire come mandare fatture ai merchant
 8. **GDPR compliance** — audit cosa manca (DPA, retention policy, right-to-erasure flow)
 9. **Go-to-market** — pubblicità, test, vendita
@@ -227,7 +285,7 @@
 
 ## COME RIPRENDERE
 Primo messaggio da mandare a Claude nella prossima sessione:
-"Leggi HANDOFF.md. Sessione precedente: HttpOnly cookie migration + security audit completati. Priorità: punto 2 lista — Stripe con account business reale."
+"Leggi HANDOFF.md. Sessione precedente: merchant NL bot completato (linguaggio naturale, appuntamenti, ordini, servizi, takeover, persistence DB). Prima cosa: eseguire migration Supabase `merchant_pending_json`. Poi priorità 2: Stripe con account business reale."
 
 ## ERRORI NOTI / TRAPPOLE
 - NON leggere/query tabella prod `tenants` con `select('*')` o colonne sensibili senza autorizzazione esplicita utente per quella lettura specifica — bloccato da permission classifier (dati merchant: token WhatsApp, telefoni). `superadmin GET /tenants/:id` ora usa campi espliciti sicuri.
