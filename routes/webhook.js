@@ -271,7 +271,7 @@ add_product: {"name":"...","category":"...","price":0,"stock":0,"description":nu
 name_customer: {"phone":"...","name":"..."}
 chat_takeover: {"customer_query":"..."} partial name or phone, null if not specified
 get_appointments: {"from":"ISO","to":"ISO","customer_query":null} — default from=today, to=+7days
-add_appointment: {"customer_name":"...","customer_phone":null,"service_query":"...","start_at":"ISO"}
+add_appointment: {"customer_name":"...","customer_phone":null,"service_query":null,"start_at":"ISO or null","duration_override":null} — duration_override in minutes when merchant says "serve mezz'ora/30 minuti/1 ora" without a service
 cancel_appointment: {"customer_query":"...","start_at":"ISO or null"}
 reschedule_appointment: {"customer_query":"...","current_start":"ISO or null","new_start":"ISO"}
 block_time: {"start_at":"ISO","end_at":"ISO","reason":null}
@@ -287,6 +287,112 @@ Resolve relative dates using today's ISO above. "domani alle 15" → compute cor
   } catch {
     return { action: 'unknown', product_query: null, service_query: null, params: {}, language: 'es' };
   }
+}
+
+// Feature gate — returns localised error string if action not allowed, null if OK
+function featureGate(tenant, action, lang) {
+  const productActions = new Set(['update_stock','set_stock','set_price','mark_unavailable','mark_available','add_product','get_catalog']);
+  const serviceActions  = new Set(['get_services','add_service','update_service']);
+  const apptActions     = new Set(['get_appointments','add_appointment','cancel_appointment','reschedule_appointment','block_time','unblock_time']);
+  if (productActions.has(action) && !tenant.products_enabled) {
+    const m = { es:'⚠️ El módulo de productos no está activado en tu plan.', it:'⚠️ Il modulo prodotti non è attivo nel tuo piano.', en:'⚠️ Product module is not enabled on your plan.', fr:'⚠️ Le module produits n\'est pas activé.', de:'⚠️ Produktmodul ist nicht aktiviert.', pt:'⚠️ O módulo de produtos não está ativo.' };
+    return m[lang] || m.es;
+  }
+  if (serviceActions.has(action) && !tenant.services_enabled) {
+    const m = { es:'⚠️ El módulo de servicios no está activado en tu plan.', it:'⚠️ Il modulo servizi non è attivo nel tuo piano.', en:'⚠️ Services module is not enabled on your plan.', fr:'⚠️ Le module services n\'est pas activé.', de:'⚠️ Dienstleistungsmodul ist nicht aktiviert.', pt:'⚠️ O módulo de serviços não está ativo.' };
+    return m[lang] || m.es;
+  }
+  if (apptActions.has(action) && !tenant.appointments_enabled) {
+    const m = { es:'⚠️ El módulo de citas no está activado en tu plan.', it:'⚠️ Il modulo appuntamenti non è attivo nel tuo piano.', en:'⚠️ Appointments module is not enabled on your plan.', fr:'⚠️ Le module rendez-vous n\'est pas activé.', de:'⚠️ Terminmodul ist nicht aktiviert.', pt:'⚠️ O módulo de agendamentos não está ativo.' };
+    return m[lang] || m.es;
+  }
+  return null;
+}
+
+// Slot availability check — returns { available: true } or { available: false, reason, detail }
+async function checkSlotAvailability(tenantId, startAt, endAt) {
+  const d = new Date(startAt);
+  const dayOfWeek = d.getUTCDay();
+  const startHHMM = d.toISOString().slice(11, 16);
+  const endHHMM   = new Date(endAt).toISOString().slice(11, 16);
+
+  const [bhRes, blocksRes, apptsRes] = await Promise.all([
+    supabase.from('business_hours').select('open_time,close_time,is_closed').eq('tenant_id', tenantId).eq('day_of_week', dayOfWeek).maybeSingle(),
+    supabase.from('appointment_blocks').select('start_at,end_at,reason').eq('tenant_id', tenantId).lt('start_at', endAt).gt('end_at', startAt).limit(1),
+    supabase.from('appointments').select('customer_name,customer_phone,start_at,end_at,service_id').eq('tenant_id', tenantId).neq('status', 'cancelled').lt('start_at', endAt).gt('end_at', startAt).limit(1),
+  ]);
+
+  const bh = bhRes.data;
+  if (!bh || bh.is_closed) return { available: false, reason: 'closed_day' };
+  if (startHHMM < bh.open_time || endHHMM > bh.close_time)
+    return { available: false, reason: 'outside_hours', open: bh.open_time, close: bh.close_time };
+  if (blocksRes.data?.length)
+    return { available: false, reason: 'blocked', block: blocksRes.data[0] };
+  if (apptsRes.data?.length)
+    return { available: false, reason: 'booked', appt: apptsRes.data[0] };
+  return { available: true };
+}
+
+function slotConflictMessage(check, lang) {
+  if (check.reason === 'closed_day') {
+    const m = { es:'🔴 Ese día estamos cerrados.', it:'🔴 Quel giorno siamo chiusi.', en:'🔴 We are closed that day.', fr:'🔴 Ce jour-là nous sommes fermés.', de:'🔴 Dieser Tag ist geschlossen.', pt:'🔴 Esse dia estamos fechados.' };
+    return m[lang] || m.es;
+  }
+  if (check.reason === 'outside_hours') {
+    const m = { es:`⏰ Ese horario está fuera del horario de atención (${check.open}–${check.close}).`, it:`⏰ Quell'orario è fuori dall'orario di apertura (${check.open}–${check.close}).`, en:`⏰ That time is outside business hours (${check.open}–${check.close}).`, fr:`⏰ Cet horaire est en dehors des heures d'ouverture (${check.open}–${check.close}).`, de:`⏰ Diese Zeit liegt außerhalb der Öffnungszeiten (${check.open}–${check.close}).`, pt:`⏰ Esse horário está fora do horário de atendimento (${check.open}–${check.close}).` };
+    return m[lang] || m.es;
+  }
+  if (check.reason === 'blocked') {
+    const reason = check.block.reason ? ` (${check.block.reason})` : '';
+    const m = { es:`🔒 Ese horario está bloqueado${reason}.`, it:`🔒 Quell'orario è bloccato${reason}.`, en:`🔒 That slot is blocked${reason}.`, fr:`🔒 Ce créneau est bloqué${reason}.`, de:`🔒 Dieser Slot ist gesperrt${reason}.`, pt:`🔒 Esse horário está bloqueado${reason}.` };
+    return m[lang] || m.es;
+  }
+  if (check.reason === 'booked') {
+    const a = check.appt;
+    const who = a.customer_name || `+${a.customer_phone}`;
+    const t = new Date(a.start_at).toLocaleString('es-PY', { hour:'2-digit', minute:'2-digit' });
+    const dur = Math.round((new Date(a.end_at) - new Date(a.start_at)) / 60000);
+    const m = { es:`📌 Ese slot ya está ocupado por *${who}* a las ${t} (${dur}min).`, it:`📌 Quello slot è già occupato da *${who}* alle ${t} (${dur}min).`, en:`📌 That slot is already booked by *${who}* at ${t} (${dur}min).`, fr:`📌 Ce créneau est déjà réservé par *${who}* à ${t} (${dur}min).`, de:`📌 Dieser Slot ist bereits von *${who}* um ${t} (${dur}min) gebucht.`, pt:`📌 Esse horário já está ocupado por *${who}* às ${t} (${dur}min).` };
+    return m[lang] || m.es;
+  }
+  return null;
+}
+
+// Parse missing fields from a follow-up message for add_appointment
+async function parseMissingApptFields(reply, partial, services) {
+  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  const today = new Date().toISOString();
+  const svcList = services.length ? services.map(s => `• ${s.name} (${s.duration_min ?? '?'}min)`).join('\n') : 'empty';
+  const resp = await client.messages.create({
+    model: 'claude-haiku-4-5-20251001',
+    max_tokens: 150,
+    system: `Extract appointment fields from a follow-up reply. Today: ${today}
+Return ONLY JSON: {"customer_name":null,"customer_phone":null,"service_query":null,"start_at":null,"duration_override":null}
+Only fill fields that are present in the reply. Resolve relative dates to ISO.
+Services available:\n${svcList}`,
+    messages: [{ role: 'user', content: `Already known: ${JSON.stringify(partial)}\nReply: ${reply}` }],
+  });
+  try { return JSON.parse(resp.content[0].text.trim()); }
+  catch { return {}; }
+}
+
+function missingApptFieldsMsg(params, lang) {
+  const missing = [];
+  if (!params.customer_name && !params.customer_phone) {
+    const f = { es:'nombre del cliente', it:'nome del cliente', en:'customer name', fr:'nom du client', de:'Name des Kunden', pt:'nome do cliente' };
+    missing.push(f[lang] || f.es);
+  }
+  if (!params.start_at) {
+    const f = { es:'día y hora', it:'giorno e ora', en:'day and time', fr:'jour et heure', de:'Tag und Uhrzeit', pt:'dia e hora' };
+    missing.push(f[lang] || f.es);
+  }
+  if (!params.service_query && !params.duration_override) {
+    const f = { es:'servicio o duración (ej: 30 minutos)', it:'servizio o durata (es: 30 minuti)', en:'service or duration (e.g. 30 minutes)', fr:'service ou durée (ex: 30 minutes)', de:'Dienstleistung oder Dauer (z.B. 30 Minuten)', pt:'serviço ou duração (ex: 30 minutos)' };
+    missing.push(f[lang] || f.es);
+  }
+  if (!missing.length) return null;
+  const ask = { es:`Faltan estos datos:\n• ${missing.join('\n• ')}`, it:`Mancano questi dati:\n• ${missing.join('\n• ')}`, en:`Missing info:\n• ${missing.join('\n• ')}`, fr:`Informations manquantes:\n• ${missing.join('\n• ')}`, de:`Fehlende Angaben:\n• ${missing.join('\n• ')}`, pt:`Dados faltando:\n• ${missing.join('\n• ')}` };
+  return ask[lang] || ask.es;
 }
 
 function findProductsFuzzy(products, query) {
@@ -392,6 +498,22 @@ async function handleMerchantMessage(tenant, messageText, phoneNumberId, token) 
         }
       }
 
+      // awaiting_fields flow (add_appointment incomplete)
+      if (pending.type === 'awaiting_fields' && pending.action === 'add_appointment') {
+        const extra = await parseMissingApptFields(txt, pending.params, pending.services || []);
+        const merged = { ...pending.params };
+        for (const [k, v] of Object.entries(extra)) { if (v != null) merged[k] = v; }
+        const stillMissing = missingApptFieldsMsg(merged, pending.lang);
+        if (stillMissing) {
+          merchantPending.set(tenant.id, { ...pending, params: merged });
+          await sendMessage(tenant.merchant_phone, stillMissing, phoneNumberId, token);
+          return;
+        }
+        merchantPending.delete(tenant.id);
+        await completeAddAppointment(tenant, merged, pending.services || [], pending.lang, phoneNumberId, token);
+        return;
+      }
+
       // Yes/no for confirm_one flow
       if (pending.product) {
         const lower = txt.toLowerCase();
@@ -424,6 +546,10 @@ async function handleMerchantMessage(tenant, messageText, phoneNumberId, token) 
   const allServices = services || [];
   const intent = await parseMerchantIntent(messageText, allProducts, allServices);
   const lang = intent.language || 'es';
+
+  // ── Feature gate ──────────────────────────────────────────────────────────
+  const gateErr = featureGate(tenant, intent.action, lang);
+  if (gateErr) { await sendMessage(tenant.merchant_phone, gateErr, phoneNumberId, token); return; }
 
   // ── Catalog ───────────────────────────────────────────────────────────────
   if (intent.action === 'get_catalog') {
@@ -537,26 +663,14 @@ async function handleMerchantMessage(tenant, messageText, phoneNumberId, token) 
   }
 
   if (intent.action === 'add_appointment') {
-    const { customer_name, customer_phone, service_query, start_at } = intent.params || {};
-    if (!start_at) { await sendMessage(tenant.merchant_phone, mt(lang, 'unknown'), phoneNumberId, token); return; }
-    let service = null;
-    if (service_query) {
-      const sMatches = allServices.filter(s => s.name.toLowerCase().includes(service_query.toLowerCase()));
-      service = sMatches[0] || null;
+    const params = intent.params || {};
+    const missing = missingApptFieldsMsg(params, lang);
+    if (missing) {
+      merchantPending.set(tenant.id, { type: 'awaiting_fields', action: 'add_appointment', params, services: allServices, lang, expiresAt: Date.now() + 10 * 60 * 1000 });
+      await sendMessage(tenant.merchant_phone, missing, phoneNumberId, token);
+      return;
     }
-    const duration_min = service?.duration_min || 60;
-    const end_at = new Date(new Date(start_at).getTime() + duration_min * 60000).toISOString();
-    const { error } = await supabase.from('appointments').insert({
-      tenant_id: tenant.id,
-      customer_name: customer_name || 'Cliente',
-      customer_phone: customer_phone || '',
-      service_id: service?.id || null,
-      start_at, end_at, status: 'confirmed',
-      notes: null,
-    });
-    if (error) { await sendMessage(tenant.merchant_phone, `❌ ${error.message}`, phoneNumberId, token); return; }
-    const dt = new Date(start_at).toLocaleString('es-PY', { weekday:'short', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
-    await sendMessage(tenant.merchant_phone, mt(lang, 'appt_added', customer_name || 'Cliente', service?.name || '—', dt), phoneNumberId, token);
+    await completeAddAppointment(tenant, params, allServices, lang, phoneNumberId, token);
     return;
   }
 
@@ -848,6 +962,41 @@ async function handleMerchantImage(tenant, message, phoneNumberId, token) {
       token
     );
   }
+}
+
+// ─── Appointment helper ───────────────────────────────────────────────────────
+
+async function completeAddAppointment(tenant, params, services, lang, phoneNumberId, token) {
+  const { customer_name, customer_phone, service_query, start_at, duration_override } = params;
+
+  let service = null;
+  if (service_query) {
+    const q = service_query.toLowerCase();
+    service = services.find(s => s.name.toLowerCase().includes(q)) || null;
+  }
+
+  const duration_min = duration_override || service?.duration_min || 60;
+  const end_at = new Date(new Date(start_at).getTime() + duration_min * 60000).toISOString();
+
+  const check = await checkSlotAvailability(tenant.id, start_at, end_at);
+  if (!check.available) {
+    await sendMessage(tenant.merchant_phone, slotConflictMessage(check, lang), phoneNumberId, token);
+    return;
+  }
+
+  const { error } = await supabase.from('appointments').insert({
+    tenant_id: tenant.id,
+    customer_name: customer_name || 'Cliente',
+    customer_phone: customer_phone || '',
+    service_id: service?.id || null,
+    start_at, end_at,
+    status: 'confirmed',
+    notes: null,
+  });
+  if (error) { await sendMessage(tenant.merchant_phone, `❌ ${error.message}`, phoneNumberId, token); return; }
+
+  const dt = new Date(start_at).toLocaleString('es-PY', { weekday:'short', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
+  await sendMessage(tenant.merchant_phone, mt(lang, 'appt_added', customer_name || 'Cliente', service?.name || `${duration_min}min`, dt), phoneNumberId, token);
 }
 
 // ─── Catalog helpers ──────────────────────────────────────────────────────────
