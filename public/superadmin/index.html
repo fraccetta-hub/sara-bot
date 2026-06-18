@@ -292,9 +292,13 @@
           <p id="eInfoMerchant" class="text-gray-700 font-mono text-xs">—</p>
         </div>
         <div>
-          <p class="text-xs text-gray-400 mb-0.5">🤖 Bot ID (Meta)</p>
-          <p id="eInfoPhone" class="text-gray-700 font-mono text-xs break-all">—</p>
+          <p class="text-xs text-gray-400 mb-0.5">🤖 WhatsApp Bot</p>
+          <p id="eInfoBotPhone" class="text-gray-700 font-mono text-xs">—</p>
         </div>
+      </div>
+      <div class="border-t border-gray-100 pt-3">
+        <p class="text-xs text-gray-400 mb-0.5">🔢 Phone Number ID (Meta)</p>
+        <p id="eInfoPhone" class="text-gray-500 font-mono text-xs break-all">—</p>
       </div>
       <div class="border-t border-gray-100 pt-3">
         <p class="text-xs text-gray-400 mb-1.5">Conexión Meta</p>
@@ -640,8 +644,9 @@ async function openEditModal(id) {
   document.getElementById('eInfoBot').textContent      = t.bot_name       || 'Sara';
   document.getElementById('eInfoEmail').textContent    = t.email          || t.login_slug || '—';
   document.getElementById('eInfoSlug').textContent     = t.login_slug     || '—';
-  document.getElementById('eInfoMerchant').textContent = t.merchant_phone || '—';
-  document.getElementById('eInfoPhone').textContent    = t.phone_number_id || '—';
+  document.getElementById('eInfoMerchant').textContent  = t.merchant_phone  || '—';
+  document.getElementById('eInfoBotPhone').textContent  = t.bot_phone_number || '—';
+  document.getElementById('eInfoPhone').textContent     = t.phone_number_id  || '—';
 
   const metaEl = document.getElementById('eInfoMeta');
   if (t.whatsapp_token_refresh_error) {

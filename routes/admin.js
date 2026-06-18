@@ -784,10 +784,18 @@ router.post('/whatsapp-connect', requireAuth, async (req, res) => {
       );
     } catch (_) { /* non-fatal */ }
 
-    // 5. Save to tenant
+    // 5. Fetch display phone number
+    let botPhoneNumber = null;
+    try {
+      const dpRes  = await fetch(`https://graph.facebook.com/v19.0/${phoneNumberId}?fields=display_phone_number&access_token=${accessToken}`);
+      const dpData = await dpRes.json();
+      botPhoneNumber = dpData.display_phone_number || null;
+    } catch (_) { /* non-fatal */ }
+
+    // 6. Save to tenant
     const tokenExpiresAt = new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString();
     const { error: dbErr } = await supabase.from('tenants')
-      .update({ phone_number_id: phoneNumberId, whatsapp_token: accessToken, whatsapp_token_expires_at: tokenExpiresAt })
+      .update({ phone_number_id: phoneNumberId, whatsapp_token: accessToken, whatsapp_token_expires_at: tokenExpiresAt, bot_phone_number: botPhoneNumber })
       .eq('id', req.tenant.tenantId);
     if (dbErr) return res.status(500).json({ error: dbErr.message });
 
@@ -805,6 +813,7 @@ router.post('/whatsapp-connect-manual', requireAuth, async (req, res) => {
     return res.status(400).json({ error: 'phone_number_id y access_token son obligatorios' });
 
   // Validate token + phone_number_id against Meta API before saving
+  let botPhoneNumber = null;
   try {
     const verifyRes = await fetch(
       `https://graph.facebook.com/v19.0/${phone_number_id}?fields=display_phone_number,verified_name&access_token=${access_token}`
@@ -813,13 +822,15 @@ router.post('/whatsapp-connect-manual', requireAuth, async (req, res) => {
     if (!verifyRes.ok || verifyData.error) {
       return res.status(400).json({ error: 'Token o Phone Number ID no válido', errorCode: 'invalid_meta_credentials' });
     }
+    botPhoneNumber = verifyData.display_phone_number || null;
   } catch {
     return res.status(502).json({ error: 'No se pudo verificar el token con Meta', errorCode: 'meta_unreachable' });
   }
 
   const tokenExpiresAt = new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString();
+
   const { error } = await supabase.from('tenants')
-    .update({ phone_number_id, whatsapp_token: access_token, whatsapp_token_expires_at: tokenExpiresAt })
+    .update({ phone_number_id, whatsapp_token: access_token, whatsapp_token_expires_at: tokenExpiresAt, bot_phone_number: botPhoneNumber })
     .eq('id', req.tenant.tenantId);
   if (error) return res.status(500).json({ error: error.message });
   res.json({ ok: true });

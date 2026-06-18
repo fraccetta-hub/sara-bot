@@ -119,7 +119,7 @@ router.get('/tenants', requireSuper, async (req, res) => {
 router.get('/tenants/:id', requireSuper, async (req, res) => {
   const { data, error } = await supabase
     .from('tenants')
-    .select('id, name, bot_name, login_slug, email, country, merchant_phone, phone_number_id, active, plan_expires, plan_currency, plan_price, whatsapp_token, whatsapp_token_refresh_error, products_enabled, services_enabled, appointments_enabled, created_at, deactivated_at')
+    .select('id, name, bot_name, login_slug, email, country, merchant_phone, phone_number_id, bot_phone_number, active, plan_expires, plan_currency, plan_price, whatsapp_token, whatsapp_token_refresh_error, products_enabled, services_enabled, appointments_enabled, created_at, deactivated_at')
     .eq('id', req.params.id)
     .single();
   if (error) return res.status(404).json({ error: `Tenant no encontrado: ${error.message}` });
