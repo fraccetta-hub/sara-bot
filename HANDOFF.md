@@ -1,9 +1,9 @@
-# PROJECT HANDOFF — Sara Bot (whatsapp-bot) — 2026-06-20
+# PROJECT HANDOFF — Sara Bot (whatsapp-bot) — 2026-06-18
 
 ## STATO CORRENTE
 - Obiettivo generale: SaaS multi-tenant WhatsApp Business (Node/Express + Supabase + Anthropic Claude). Bot AI risponde a clienti, gestisce catalogo, delivery, turni/appuntamenti, ordini.
-- Fase attuale: configurazione Meta completata, prossimo step implementazione Embedded Signup wizard nel codice.
-- Ultimo commit stabile: `20cf3e9` — "perf: skip appointment-slot queries when irrelevant, add Anthropic prompt caching" — pushato su `origin/main`.
+- Fase attuale: email transazionali operative (Brevo HTTP API). Prossimo: Stripe env vars + META_CONFIG_ID.
+- Ultimo commit stabile: `3c91d96` — "security: rate limit forgot-password (5/h per IP), fix multer+nodemailer vulns"
 
 ## COSA È STATO FATTO (sessioni precedenti + 2026-06-17)
 - **#3** — `routes/admin.js` + `routes/superadmin.js`: Opus → `claude-haiku-4-5-20251001` per import catalogo da foto
@@ -149,6 +149,17 @@
 - Aggiunto tab settore "🩺 Medico / Professionista" con story HTML di esempio consultorio
 - Mockup hero: sostituito mix pizza/fiori/parrucchiera (irrealistico per un singolo tenant) con fioraio coerente — valuta ₲, 4 ordini realistici (delivery rose, ritiro bouquet, arreglo anniversario, orchidee)
 - Rimosso label "Sara Bot 🤖" da tutti e 6 i bubble-who nelle chat di esempio
+
+## COSA È STATO FATTO (sessione 2026-06-18 — email transazionali operative)
+
+### Email — COMPLETATO
+- `services/mailer.js`: riscritto da SMTP (bloccato da Render) → Brevo HTTP API (`axios` POST a `api.brevo.com/v3/smtp/email`)
+- `BREVO_API_KEY` aggiunta su Render — niente più SMTP vars
+- Header email: sfondo verde → sfondo bianco con bordino verde — logo trasparente ora visibile
+- Rate limit `/forgot-password`: 5 richieste/IP/ora via `express-rate-limit`
+- Fix vulnerabilità: `multer` + `nodemailer` aggiornati (`npm audit fix`)
+- Email operative: welcome (nuove iscrizioni) + password reset — testate e funzionanti
+- Lingua email: segue `currentLang` del pannello al momento della richiesta
 
 ## COSA È STATO FATTO (sessione 2026-06-18 — security hardening + forgot password)
 
