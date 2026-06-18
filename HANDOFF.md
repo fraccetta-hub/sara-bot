@@ -163,6 +163,14 @@
 - Lingua email: segue `currentLang` del pannello al momento della richiesta
 - Email da aggiungere (quando si fa Stripe): pagamento fallito, cancellazione abbonamento, eliminazione account
 
+## COSA È STATO FATTO (sessione 2026-06-20 — fix superadmin edit tenant)
+
+### Bug fix GET /superadmin/tenants/:id
+- Errore: modal edit tenant → 404 "Tenant no encontrado"
+- Causa: select includeva `meta_connected` (campo computato, non colonna DB) → Supabase error → catch restituiva 404
+- Fix (`commit a1e8360`): rimosso `meta_connected` dal select, aggiunto `whatsapp_token` + `products_enabled/services_enabled/appointments_enabled`; `meta_connected` calcolato server-side come `!!data.whatsapp_token` prima della risposta
+- Migliorato messaggio errore: espone dettaglio Supabase per debug futuro
+
 ## COSA È STATO FATTO (sessione 2026-06-18 — security hardening + forgot password)
 
 ### Security hardening
