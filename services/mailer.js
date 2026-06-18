@@ -90,7 +90,12 @@ function buildHtml(t, businessName, panelUrl) {
     </div>
   </div>
   <div style="padding:16px 32px;border-top:1px solid #f0f0f0;text-align:center;">
-    <p style="color:#9ca3af;font-size:11px;margin:0;">${t.footer}</p>
+    <p style="color:#9ca3af;font-size:11px;margin:0 0 8px;">${t.footer}</p>
+    <p style="color:#d1d5db;font-size:10px;margin:0;">
+      <a href="https://sarabot.pro/legal/terms" style="color:#d1d5db;">Terms</a> ·
+      <a href="https://sarabot.pro/legal/privacy" style="color:#d1d5db;">Privacy</a> ·
+      © 2026 Sara Bot
+    </p>
   </div>
 </div>
 </body>
