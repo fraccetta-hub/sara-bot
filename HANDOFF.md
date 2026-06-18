@@ -264,6 +264,14 @@
 - `6550443` — order workflow, cache invalidation, multilang notifications
 - `d31bae4` — merchant_pending_json DB persistence
 
+## COSA È STATO FATTO (sessione 2026-06-20 — help tab rewrite)
+
+### Admin help tab — aggiornata per riflettere bot NL reale (`commit 68c5f94`)
+- `renderHelp()` in `public/admin/index.html`: rimosso helper `cmd(keyword, desc)` con comandi fissi (CATALOGO, STOCK nome qty, PRECIO, AGOTADO, DISPONIBLE, NUEVO, NOMBRE, CONFIRMAR, CANCELAR, CHAT, FIN, AYUDA) — sostituito con `item(html)` — card con esempi NL in corsivo
+- Nuova struttura: badge NL multilingua (🌐), prodotti (esempi NL), foto (caption method), ordini (NL), takeover (box viola con STOP), confirmazioni (flusso lista numerata + sì/no), chat panel (invariato)
+- `public/admin/i18n.js`: chiave `help.nl.info` aggiunta; tutti `help.*` aggiornati in ES/EN/IT/DE/FR/PT — esempi in linguaggio naturale, nessun comando rigido, STOP al posto di FIN per uscire dal takeover
+- Nota: anche `routes/superadmin.js GET /tenants/:id` già fixato in questa sessione (commit precedente incluso nel push)
+
 ## PROSSIME PRIORITÀ (sessione successiva)
 1. **Migration Supabase** — `ALTER TABLE tenants ADD COLUMN IF NOT EXISTS merchant_pending_json jsonb DEFAULT NULL;` (richiesta per pending persistence)
 2. **Stripe** — configurare env vars reali su Render + testare flow completo con account business
