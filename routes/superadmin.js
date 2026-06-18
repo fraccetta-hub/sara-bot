@@ -87,7 +87,7 @@ router.get('/stats', requireSuper, async (req, res) => {
 router.get('/tenants', requireSuper, async (req, res) => {
   const { data: tenants, error } = await supabase
     .from('tenants')
-    .select('id, name, active, plan_expires, phone_number_id, bot_name, merchant_phone, created_at, whatsapp_token_refresh_error, whatsapp_token')
+    .select('id, name, active, plan_expires, phone_number_id, bot_name, merchant_phone, created_at, whatsapp_token_refresh_error, whatsapp_token, email, country, login_slug')
     .order('created_at', { ascending: false });
 
   if (error) return res.status(500).json({ error: error.message });
@@ -119,7 +119,7 @@ router.get('/tenants', requireSuper, async (req, res) => {
 router.get('/tenants/:id', requireSuper, async (req, res) => {
   const { data, error } = await supabase
     .from('tenants')
-    .select('id, name, bot_name, login_slug, merchant_phone, phone_number_id, active, plan_expires, plan_currency, plan_price, whatsapp_token, whatsapp_token_refresh_error, products_enabled, services_enabled, appointments_enabled, created_at, deactivated_at')
+    .select('id, name, bot_name, login_slug, email, country, merchant_phone, phone_number_id, active, plan_expires, plan_currency, plan_price, whatsapp_token, whatsapp_token_refresh_error, products_enabled, services_enabled, appointments_enabled, created_at, deactivated_at')
     .eq('id', req.params.id)
     .single();
   if (error) return res.status(404).json({ error: `Tenant no encontrado: ${error.message}` });
@@ -442,6 +442,15 @@ router.get('/analytics', requireSuper, async (req, res) => {
   });
 });
 
+// In-memory read timestamps: tenantId -> ISO string (resets on redeploy, acceptable)
+const supportReadAt = new Map();
+
+// ─── POST /superadmin/support/:tenantId/read — mark conversation as read ──────
+router.post('/support/:tenantId/read', requireSuper, (req, res) => {
+  supportReadAt.set(req.params.tenantId, new Date().toISOString());
+  res.json({ ok: true });
+});
+
 // ─── GET /superadmin/support — list all tenants with support messages ─────────
 router.get('/support', requireSuper, async (req, res) => {
   // Get all support messages with tenant info
@@ -468,13 +477,17 @@ router.get('/support', requireSuper, async (req, res) => {
     if (!byTenant[tid].last_at) byTenant[tid].last_at = msg.created_at;
   }
 
-  // Count unread = merchant messages after the last support reply
+  // Count unread = merchant messages after the last support reply OR last read timestamp
   for (const t of Object.values(byTenant)) {
     t.messages.reverse(); // now ascending
     let lastSupportIdx = -1;
     t.messages.forEach((m, i) => { if (m.role === 'support') lastSupportIdx = i; });
-    t.unread = t.messages.slice(lastSupportIdx + 1).filter(m => m.role === 'merchant').length;
-    delete t.messages; // don't send full history in list
+    const readAt = supportReadAt.get(t.tenant_id);
+    const afterSupport = t.messages.slice(lastSupportIdx + 1).filter(m => m.role === 'merchant');
+    t.unread = readAt
+      ? afterSupport.filter(m => new Date(m.created_at) > new Date(readAt)).length
+      : afterSupport.length;
+    delete t.messages;
   }
 
   const list = Object.values(byTenant).sort((a, b) => new Date(b.last_at) - new Date(a.last_at));

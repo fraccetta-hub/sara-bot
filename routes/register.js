@@ -79,6 +79,8 @@ router.post('/', async (req, res) => {
   const insertPayload = {
     name:                 business_name,
     login_slug,
+    email:                email.toLowerCase().trim(),
+    country:              country || null,
     bot_name:             'Sara',
     bot_personality:      personality,
     custom_instructions:  `${instructions}\n\n${owner_name ? `Propietario: ${owner_name}` : ''}`.trim(),

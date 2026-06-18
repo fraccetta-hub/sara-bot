@@ -204,11 +204,20 @@ router.post('/forgot-password', forgotPasswordLimiter, async (req, res) => {
   const { email, lang = 'es' } = req.body;
   if (!email) return res.status(400).json({ error: 'Email requerido' });
 
-  const { data: tenant } = await supabase
+  const normalized = email.toLowerCase().trim();
+  // Look up by email column first, then by login_slug for tenants created before email column existed
+  let { data: tenant } = await supabase
     .from('tenants')
-    .select('id, name, login_slug, active')
-    .eq('login_slug', email.toLowerCase().trim())
+    .select('id, name, login_slug, email, active')
+    .eq('email', normalized)
     .maybeSingle();
+  if (!tenant) {
+    ({ data: tenant } = await supabase
+      .from('tenants')
+      .select('id, name, login_slug, email, active')
+      .eq('login_slug', normalized)
+      .maybeSingle());
+  }
 
   // Always respond OK to prevent user enumeration
   if (!tenant || !tenant.active) return res.json({ ok: true });
@@ -222,7 +231,8 @@ router.post('/forgot-password', forgotPasswordLimiter, async (req, res) => {
   }).eq('id', tenant.id);
 
   const resetUrl = `${process.env.APP_URL}/admin/index.html?reset=${token}`;
-  await sendPasswordReset({ email: tenant.login_slug, businessName: tenant.name, resetUrl, lang });
+  const sendTo = tenant.email || tenant.login_slug;
+  await sendPasswordReset({ email: sendTo, businessName: tenant.name, resetUrl, lang });
 
   res.json({ ok: true });
 });
@@ -259,7 +269,7 @@ router.post('/reset-password', async (req, res) => {
 router.get('/settings', requireAuth, async (req, res) => {
   const { data, error } = await supabase
     .from('tenants')
-    .select(`bot_name, bot_personality, merchant_phone, payment_instructions, custom_instructions,
+    .select(`name, login_slug, email, bot_name, bot_personality, merchant_phone, payment_instructions, custom_instructions,
              products_enabled, services_enabled, appointments_enabled,
              delivery_enabled, location_address, location_lat, location_lng,
              delivery_type, delivery_base_fee, delivery_zone_km,
@@ -302,6 +312,36 @@ router.post('/change-password', requireAuth, async (req, res) => {
     return res.status(400).json({ error: 'La contraseña debe tener al menos 6 caracteres', errorCode: 'password_too_short' });
   const hash = await bcrypt.hash(newPassword, 10);
   await supabase.from('tenants').update({ admin_password_hash: hash }).eq('id', req.tenant.tenantId);
+  res.json({ ok: true });
+});
+
+// ─── POST /admin/change-email ─────────────────────────────────────────────────
+
+router.post('/change-email', requireAuth, async (req, res) => {
+  const { email } = req.body;
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+    return res.status(400).json({ error: 'Email inválido', errorCode: 'invalid_email' });
+  const normalized = email.toLowerCase().trim();
+  // Check uniqueness
+  const { data: existing } = await supabase.from('tenants').select('id').eq('email', normalized).maybeSingle();
+  if (existing && existing.id !== req.tenant.tenantId)
+    return res.status(409).json({ error: 'Ese email ya está en uso', errorCode: 'email_taken' });
+  await supabase.from('tenants').update({ email: normalized }).eq('id', req.tenant.tenantId);
+  res.json({ ok: true });
+});
+
+// ─── POST /admin/change-username ──────────────────────────────────────────────
+
+router.post('/change-username', requireAuth, async (req, res) => {
+  const { username } = req.body;
+  if (!username || username.length < 3)
+    return res.status(400).json({ error: 'El usuario debe tener al menos 3 caracteres', errorCode: 'username_too_short' });
+  if (!/^[a-z0-9_.-]+$/.test(username))
+    return res.status(400).json({ error: 'Solo letras minúsculas, números, puntos, guiones y guión bajo', errorCode: 'username_invalid' });
+  const { data: existing } = await supabase.from('tenants').select('id').or(`login_slug.eq.${username},phone_number_id.eq.${username}`).maybeSingle();
+  if (existing && existing.id !== req.tenant.tenantId)
+    return res.status(409).json({ error: 'Ese usuario ya está en uso', errorCode: 'username_taken' });
+  await supabase.from('tenants').update({ login_slug: username }).eq('id', req.tenant.tenantId);
   res.json({ ok: true });
 });
 
@@ -1305,9 +1345,9 @@ STRICT RULES — never break these:
 - NEVER share data about other merchants or tenants
 - NEVER invent features that do not exist in the platform
 - NEVER make promises about future features or timelines
-- If a question is outside your knowledge, say so clearly and direct them to support@sarabot.pro
 - Detect the language of the merchant's message and always respond in that same language
 - Be concise, practical, and friendly — no long lectures
+- ESCALATION RULE: if you cannot resolve the issue (bug, billing dispute, account problem requiring manual action, or anything outside your knowledge), start your response with the exact token [ESCALATE] on its own line, then give your response normally. Only escalate when truly necessary — most questions can be answered from the knowledge base.
 
 PLATFORM KNOWLEDGE:
 
@@ -1412,7 +1452,10 @@ router.post('/support', requireAuth, async (req, res) => {
       messages,
     });
 
-    const reply = aiRes.content[0]?.text?.trim();
+    let reply = aiRes.content[0]?.text?.trim();
+    const needsEscalation = reply?.startsWith('[ESCALATE]');
+    if (needsEscalation) reply = reply.replace(/^\[ESCALATE\]\n?/, '').trim();
+
     if (reply) {
       await supabase.from('support_messages').insert({
         tenant_id: req.tenant.tenantId,
@@ -1420,18 +1463,19 @@ router.post('/support', requireAuth, async (req, res) => {
         content: reply,
       });
     }
+
+    if (needsEscalation) {
+      try {
+        const { data: tenant } = await supabase.from('tenants')
+          .select('name').eq('id', req.tenant.tenantId).single();
+        const { notifySuperadmin } = require('./telegram');
+        await notifySuperadmin(tenant?.name || req.tenant.tenantId, req.tenant.tenantId, `⚠️ ESCALATION richiesta\n\n${content.trim()}`);
+      } catch (e) {
+        console.warn('[support] Telegram escalation notify failed:', e.message);
+      }
+    }
   } catch (e) {
     console.error('[support] AI reply failed:', e.message);
-  }
-
-  // Notify superadmin via Telegram
-  try {
-    const { data: tenant } = await supabase.from('tenants')
-      .select('name').eq('id', req.tenant.tenantId).single();
-    const { notifySuperadmin } = require('./telegram');
-    await notifySuperadmin(tenant?.name || req.tenant.tenantId, req.tenant.tenantId, content.trim());
-  } catch (e) {
-    console.warn('[support] Telegram notify failed:', e.message);
   }
 
   res.json({ ok: true });
