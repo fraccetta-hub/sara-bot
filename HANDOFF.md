@@ -139,6 +139,17 @@
 - `.env`: duplicato `APP_URL=https://candidatelens.com` rimosso; placeholder Stripe aggiunti
 - **Mancano solo le env var reali** da configurare su Render e Stripe Dashboard
 
+## COSA È STATO FATTO (sessione 2026-06-19 — landing page fix)
+
+### Landing page — correzioni contenuto (`landingpage/index.html`)
+- Rimosso "nessuna carta di credito" falso da tutti i punti (hero.note, pricing.note, cta.sub, cta.badge1) in tutte e 6 le lingue (ES/EN/IT/DE/FR/PT) — la carta è richiesta al signup come indicato nella FAQ7
+- "Il telefono non smette di suonare" → "i messaggi WhatsApp non si fermano" — Sara è chat only, non risponde a chiamate vocali
+- Titolo settori "Funziona per qualsiasi attività che vende" → "...o professionista" — include medici, avvocati, consulenti
+- Sottotitolo settori aggiornato con esempi professionisti in tutte e 6 le lingue
+- Aggiunto tab settore "🩺 Medico / Professionista" con story HTML di esempio consultorio
+- Mockup hero: sostituito mix pizza/fiori/parrucchiera (irrealistico per un singolo tenant) con fioraio coerente — valuta ₲, 4 ordini realistici (delivery rose, ritiro bouquet, arreglo anniversario, orchidee)
+- Rimosso label "Sara Bot 🤖" da tutti e 6 i bubble-who nelle chat di esempio
+
 ## COSA È STATO FATTO (sessione 2026-06-18 — security hardening + forgot password)
 
 ### Security hardening
@@ -189,7 +200,7 @@
 
 ## COME RIPRENDERE
 Primo messaggio da mandare a Claude nella prossima sessione:
-"Leggi HANDOFF.md. Sessione precedente: superadmin UX fix (logo, tab, promo edit/delete) + analytics/promo codes sessione precedente. Migration Supabase ancora da eseguire se non fatto."
+"Leggi HANDOFF.md. Sessione precedente: landing page fix (false claims rimossi, mockup fioraio, tab professionisti). Priorità: Stripe env vars su Render + META_CONFIG_ID da creare."
 
 ## ERRORI NOTI / TRAPPOLE
 - NON leggere/query tabella prod `tenants` con `select('*')` o colonne sensibili senza autorizzazione esplicita utente per quella lettura specifica — bloccato da permission classifier (dati merchant: token WhatsApp, telefoni).
