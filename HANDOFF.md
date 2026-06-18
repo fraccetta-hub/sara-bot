@@ -139,6 +139,25 @@
 - `.env`: duplicato `APP_URL=https://candidatelens.com` rimosso; placeholder Stripe aggiunti
 - **Mancano solo le env var reali** da configurare su Render e Stripe Dashboard
 
+## COSA È STATO FATTO (sessione 2026-06-18 — security hardening + forgot password)
+
+### Security hardening
+- `index.js`: fail-fast all'avvio se mancano env var critiche (`ADMIN_JWT_SECRET`, `SUPERADMIN_JWT_SECRET`, `STRIPE_SECRET_KEY`, `SUPABASE_URL`, `SUPABASE_KEY`, `ANTHROPIC_API_KEY`) — server non parte se mancano
+- `routes/admin.js`, `routes/superadmin.js`, `routes/billing.js`: rimossi tutti i fallback hardcoded (`'sara-bot-secret-change-me'`, `'sara-super-secret-change-me'`, `'sk_test_placeholder'`) — ora usano solo `process.env.*`
+- Password fallback `sara1234` eliminata — tenant senza `admin_password_hash` riceve errore `403` con messaggio "contraseña no configurada, contactá soporte"
+- Supabase: colonne `password_reset_token TEXT` + `password_reset_expires TIMESTAMPTZ` aggiunte alla tabella `tenants` (migration eseguita manualmente)
+
+### Forgot password flow — IMPLEMENTATO
+- `POST /admin/forgot-password`: genera token 32 byte (crypto.randomBytes), scadenza 1h, manda mail con link `APP_URL/admin/index.html?reset=<token>` — risponde sempre `{ok:true}` per prevenire user enumeration
+- `POST /admin/reset-password`: verifica token + scadenza, salva bcrypt hash, invalida token (set null)
+- `services/mailer.js`: aggiunta `sendPasswordReset()` con template HTML i18n completo (ES/EN/IT/DE/FR/PT)
+- UI admin: link "¿Olvidaste tu contraseña?" sul login → modal email → form reset con double-confirm password
+- `window.onload`: check `?reset=<token>` in URL → mostra `#resetPage` direttamente (salta loginPage)
+- i18n: chiavi `login.forgot`, `forgot.*`, `reset.*` aggiunte in tutte e 6 le lingue in `public/admin/i18n.js`
+
+### Pendente (identificato ma non implementato)
+- **JWT in localStorage → cookie HttpOnly**: rischio XSS attuale basso ma da fare. Richiede: `cookie-parser` in `index.js`, `res.cookie()` nel login, `req.cookies` in `requireAuth`, rimozione `localStorage`/`TOKEN` dal frontend, refactor impersonation superadmin (attualmente via `?token=`). Stima: 2-3h.
+
 ## COSA NON FUNZIONA / IN SOSPESO
 - **Env vars mancanti su Render** — da aggiungere in Render → Environment prima che il wizard funzioni:
   - `META_APP_ID` = `27756118003980694` (ID app Meta)
