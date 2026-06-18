@@ -201,6 +201,20 @@ const merchantPending = new Map(); // tenantId → pending confirmation state
 
 // Multi-language response templates
 const MT = {
+  appt_list_header: { es:(n)=>`📅 *${n} próximas citas:*`, it:(n)=>`📅 *${n} prossimi appuntamenti:*`, en:(n)=>`📅 *${n} upcoming appointments:*`, fr:(n)=>`📅 *${n} prochains rendez-vous:*`, de:(n)=>`📅 *${n} bevorstehende Termine:*`, pt:(n)=>`📅 *${n} próximas consultas:*` },
+  appt_none:        { es:()=>`📅 No hay citas próximas.`, it:()=>`📅 Nessun appuntamento in programma.`, en:()=>`📅 No upcoming appointments.`, fr:()=>`📅 Aucun rendez-vous à venir.`, de:()=>`📅 Keine bevorstehenden Termine.`, pt:()=>`📅 Nenhuma consulta próxima.` },
+  appt_added:       { es:(n,s,t)=>`✅ Cita agregada:\n👤 ${n}\n💼 ${s}\n🕐 ${t}`, it:(n,s,t)=>`✅ Appuntamento aggiunto:\n👤 ${n}\n💼 ${s}\n🕐 ${t}`, en:(n,s,t)=>`✅ Appointment added:\n👤 ${n}\n💼 ${s}\n🕐 ${t}`, fr:(n,s,t)=>`✅ Rendez-vous ajouté:\n👤 ${n}\n💼 ${s}\n🕐 ${t}`, de:(n,s,t)=>`✅ Termin hinzugefügt:\n👤 ${n}\n💼 ${s}\n🕐 ${t}`, pt:(n,s,t)=>`✅ Consulta adicionada:\n👤 ${n}\n💼 ${s}\n🕐 ${t}` },
+  appt_cancelled:   { es:(n,t)=>`❌ Cita de ${n} el ${t} cancelada.`, it:(n,t)=>`❌ Appuntamento di ${n} del ${t} annullato.`, en:(n,t)=>`❌ Appointment for ${n} on ${t} cancelled.`, fr:(n,t)=>`❌ Rendez-vous de ${n} le ${t} annulé.`, de:(n,t)=>`❌ Termin von ${n} am ${t} abgesagt.`, pt:(n,t)=>`❌ Consulta de ${n} em ${t} cancelada.` },
+  appt_rescheduled: { es:(n,t)=>`✅ Cita de ${n} movida a ${t}.`, it:(n,t)=>`✅ Appuntamento di ${n} spostato a ${t}.`, en:(n,t)=>`✅ Appointment for ${n} moved to ${t}.`, fr:(n,t)=>`✅ Rendez-vous de ${n} déplacé à ${t}.`, de:(n,t)=>`✅ Termin von ${n} verschoben auf ${t}.`, pt:(n,t)=>`✅ Consulta de ${n} movida para ${t}.` },
+  appt_not_found:   { es:()=>`⚠️ No encontré esa cita.`, it:()=>`⚠️ Appuntamento non trovato.`, en:()=>`⚠️ Appointment not found.`, fr:()=>`⚠️ Rendez-vous introuvable.`, de:()=>`⚠️ Termin nicht gefunden.`, pt:()=>`⚠️ Consulta não encontrada.` },
+  block_added:      { es:(s,e)=>`🔒 Bloqueo agregado:\nDe ${s}\nHasta ${e}`, it:(s,e)=>`🔒 Blocco aggiunto:\nDa ${s}\nA ${e}`, en:(s,e)=>`🔒 Block added:\nFrom ${s}\nTo ${e}`, fr:(s,e)=>`🔒 Blocage ajouté:\nDe ${s}\nÀ ${e}`, de:(s,e)=>`🔒 Sperre hinzugefügt:\nVon ${s}\nBis ${e}`, pt:(s,e)=>`🔒 Bloqueio adicionado:\nDe ${s}\nAté ${e}` },
+  block_removed:    { es:()=>`✅ Bloqueo eliminado.`, it:()=>`✅ Blocco rimosso.`, en:()=>`✅ Block removed.`, fr:()=>`✅ Blocage supprimé.`, de:()=>`✅ Sperre entfernt.`, pt:()=>`✅ Bloqueio removido.` },
+  block_not_found:  { es:()=>`⚠️ No encontré ese bloqueo.`, it:()=>`⚠️ Blocco non trovato.`, en:()=>`⚠️ Block not found.`, fr:()=>`⚠️ Blocage introuvable.`, de:()=>`⚠️ Sperre nicht gefunden.`, pt:()=>`⚠️ Bloqueio não encontrado.` },
+  svc_list_header:  { es:(n)=>`💼 *${n} servicios:*`, it:(n)=>`💼 *${n} servizi:*`, en:(n)=>`💼 *${n} services:*`, fr:(n)=>`💼 *${n} services:*`, de:(n)=>`💼 *${n} Dienstleistungen:*`, pt:(n)=>`💼 *${n} serviços:*` },
+  svc_none:         { es:()=>`💼 No tenés servicios cargados.`, it:()=>`💼 Nessun servizio configurato.`, en:()=>`💼 No services configured.`, fr:()=>`💼 Aucun service configuré.`, de:()=>`💼 Keine Dienstleistungen konfiguriert.`, pt:()=>`💼 Nenhum serviço configurado.` },
+  svc_added:        { es:n=>`✅ Servicio *${n}* agregado.`, it:n=>`✅ Servizio *${n}* aggiunto.`, en:n=>`✅ Service *${n}* added.`, fr:n=>`✅ Service *${n}* ajouté.`, de:n=>`✅ Dienstleistung *${n}* hinzugefügt.`, pt:n=>`✅ Serviço *${n}* adicionado.` },
+  svc_updated:      { es:n=>`✅ Servicio *${n}* actualizado.`, it:n=>`✅ Servizio *${n}* aggiornato.`, en:n=>`✅ Service *${n}* updated.`, fr:n=>`✅ Service *${n}* mis à jour.`, de:n=>`✅ Dienstleistung *${n}* aktualisiert.`, pt:n=>`✅ Serviço *${n}* atualizado.` },
+  svc_not_found:    { es:q=>`⚠️ No encontré el servicio "${q}".`, it:q=>`⚠️ Servizio "${q}" non trovato.`, en:q=>`⚠️ Service "${q}" not found.`, fr:q=>`⚠️ Service "${q}" introuvable.`, de:q=>`⚠️ Dienstleistung "${q}" nicht gefunden.`, pt:q=>`⚠️ Serviço "${q}" não encontrado.` },
   stock_set:        { es:(n,q)=>`✅ *${n}*\nStock: ${q} unidades.`, it:(n,q)=>`✅ *${n}*\nStock: ${q} unità.`, en:(n,q)=>`✅ *${n}*\nStock: ${q} units.`, fr:(n,q)=>`✅ *${n}*\nStock: ${q} unités.`, de:(n,q)=>`✅ *${n}*\nBestand: ${q} Einheiten.`, pt:(n,q)=>`✅ *${n}*\nEstoque: ${q} unidades.` },
   stock_added:      { es:(n,d,t)=>`✅ *${n}*\n+${d} agregadas → ${t} en total.`, it:(n,d,t)=>`✅ *${n}*\n+${d} aggiunte → ${t} in totale.`, en:(n,d,t)=>`✅ *${n}*\n+${d} added → ${t} total.`, fr:(n,d,t)=>`✅ *${n}*\n+${d} ajoutées → ${t} au total.`, de:(n,d,t)=>`✅ *${n}*\n+${d} hinzugefügt → ${t} gesamt.`, pt:(n,d,t)=>`✅ *${n}*\n+${d} adicionadas → ${t} no total.` },
   stock_removed:    { es:(n,d,t)=>`✅ *${n}*\n-${d} descontadas → ${t} en total.`, it:(n,d,t)=>`✅ *${n}*\n-${d} rimosse → ${t} in totale.`, en:(n,d,t)=>`✅ *${n}*\n-${d} removed → ${t} total.`, fr:(n,d,t)=>`✅ *${n}*\n-${d} retirées → ${t} au total.`, de:(n,d,t)=>`✅ *${n}*\n-${d} entfernt → ${t} gesamt.`, pt:(n,d,t)=>`✅ *${n}*\n-${d} removidas → ${t} no total.` },
@@ -225,30 +239,53 @@ function mt(lang, key, ...args) {
   return MT[key][l](...args);
 }
 
-async function parseMerchantIntent(messageText, products) {
+async function parseMerchantIntent(messageText, products, services) {
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
   const catalog = products.length
     ? products.map(p => `• ${p.name} (stock: ${p.stock_qty ?? 'N/A'}, price: ${p.price_guarani})`).join('\n')
     : 'empty';
+  const svcList = services && services.length
+    ? services.map(s => `• ${s.name} (${s.duration_min ?? '?'}min, price: ${s.price_guarani})`).join('\n')
+    : 'empty';
+  const today = new Date().toISOString();
   const resp = await client.messages.create({
     model: 'claude-haiku-4-5-20251001',
-    max_tokens: 200,
+    max_tokens: 300,
     system: `You parse merchant WhatsApp messages. Return ONLY valid JSON, no explanation.
-Actions: update_stock (delta ±), set_stock (absolute), set_price, mark_unavailable, mark_available, add_product, get_catalog, confirm_order, cancel_order, chat_takeover, name_customer, unknown.
-JSON schema: {"action":"...","product_query":null,"params":{},"language":"es|it|en|fr|de|pt"}
-params.update_stock: {"delta": N} — positive=add ("ho ricevuto 50 rose", "arrivate 50", "+50"), negative=remove ("vendute 10", "leva 10", "meno 10", "sold 10")
-params.set_stock: {"qty": N} — absolute ("il nuovo stock è 50", "stock = 50 rose")
-params.set_price: {"price": N}
-params.add_product: {"name":"...","category":"...","price":0,"stock":0,"description":null}
-params.name_customer: {"phone":"...","name":"..."}
-params.chat_takeover: {"customer_query":"..."} — name or partial phone the merchant mentions ("parla con Giuseppe", "talk to the one ending in 335", "chatta con Mario"). If no specific customer mentioned, customer_query=null.
-Detect language from the message (iso 639-1).`,
-    messages: [{ role: 'user', content: `Catalog:\n${catalog}\n\nMessage: ${messageText}` }],
+Today: ${today}
+
+Actions: update_stock, set_stock, set_price, mark_unavailable, mark_available, add_product, get_catalog,
+confirm_order, cancel_order, chat_takeover, name_customer,
+get_appointments, add_appointment, cancel_appointment, reschedule_appointment,
+block_time, unblock_time,
+get_services, update_service, add_service,
+unknown.
+
+JSON schema: {"action":"...","product_query":null,"service_query":null,"params":{},"language":"es|it|en|fr|de|pt"}
+
+params by action:
+update_stock: {"delta": N} positive=add, negative=remove ("vendute 10", "leva 10", "arrivate 50")
+set_stock: {"qty": N} absolute value
+set_price: {"price": N}
+add_product: {"name":"...","category":"...","price":0,"stock":0,"description":null}
+name_customer: {"phone":"...","name":"..."}
+chat_takeover: {"customer_query":"..."} partial name or phone, null if not specified
+get_appointments: {"from":"ISO","to":"ISO","customer_query":null} — default from=today, to=+7days
+add_appointment: {"customer_name":"...","customer_phone":null,"service_query":"...","start_at":"ISO"}
+cancel_appointment: {"customer_query":"...","start_at":"ISO or null"}
+reschedule_appointment: {"customer_query":"...","current_start":"ISO or null","new_start":"ISO"}
+block_time: {"start_at":"ISO","end_at":"ISO","reason":null}
+unblock_time: {"start_at":"ISO or null","reason_query":null}
+update_service: {"updates":{"price_guarani":null,"duration_min":null,"is_available":null,"name":null,"category":null,"description":null}}
+add_service: {"name":"...","category":null,"price":0,"duration_min":null,"price_type":"fixed"}
+
+Resolve relative dates using today's ISO above. "domani alle 15" → compute correct ISO datetime.`,
+    messages: [{ role: 'user', content: `Products:\n${catalog}\n\nServices:\n${svcList}\n\nMessage: ${messageText}` }],
   });
   try {
     return JSON.parse(resp.content[0].text.trim());
   } catch {
-    return { action: 'unknown', product_query: null, params: {}, language: 'es' };
+    return { action: 'unknown', product_query: null, service_query: null, params: {}, language: 'es' };
   }
 }
 
@@ -333,6 +370,13 @@ async function handleMerchantMessage(tenant, messageText, phoneNumberId, token) 
           merchantPending.delete(tenant.id);
           if (pending.action === 'chat_takeover') {
             await activateTakeover(tenant, chosen, pending.lang, phoneNumberId, token);
+          } else if (pending.action === 'cancel_appointment') {
+            await supabase.from('appointments').update({ status: 'cancelled' }).eq('id', chosen.id);
+            const dt = new Date(chosen.start_at).toLocaleString('es-PY', { weekday:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
+            await sendMessage(tenant.merchant_phone, mt(pending.lang, 'appt_cancelled', chosen.customer_name || chosen.customer_phone, dt), phoneNumberId, token);
+          } else if (pending.action === 'update_service') {
+            await supabase.from('services').update(pending.params.updates).eq('id', chosen.id);
+            await sendMessage(tenant.merchant_phone, mt(pending.lang, 'svc_updated', chosen.name), phoneNumberId, token);
           } else {
             await executeMerchantAction(tenant, pending.action, chosen, pending.params, pending.lang, phoneNumberId, token);
           }
@@ -371,13 +415,14 @@ async function handleMerchantMessage(tenant, messageText, phoneNumberId, token) 
   }
 
   // ── NL intent parsing ─────────────────────────────────────────────────────
-  const { data: products } = await supabase
-    .from('products')
-    .select('id, name, stock_qty, price_guarani, is_available')
-    .eq('tenant_id', tenant.id);
+  const [{ data: products }, { data: services }] = await Promise.all([
+    supabase.from('products').select('id, name, stock_qty, price_guarani, is_available').eq('tenant_id', tenant.id),
+    supabase.from('services').select('id, name, category, price_guarani, duration_min, price_type, is_available, description').eq('tenant_id', tenant.id),
+  ]);
 
   const allProducts = products || [];
-  const intent = await parseMerchantIntent(messageText, allProducts);
+  const allServices = services || [];
+  const intent = await parseMerchantIntent(messageText, allProducts, allServices);
   const lang = intent.language || 'es';
 
   // ── Catalog ───────────────────────────────────────────────────────────────
@@ -472,6 +517,157 @@ async function handleMerchantMessage(tenant, messageText, phoneNumberId, token) 
     if (!phone || !name) { await sendMessage(tenant.merchant_phone, mt(lang, 'unknown'), phoneNumberId, token); return; }
     await supabase.from('conversations').update({ customer_name: name }).eq('tenant_id', tenant.id).eq('customer_phone', phone);
     await sendMessage(tenant.merchant_phone, mt(lang, 'customer_named', phone, name), phoneNumberId, token);
+    return;
+  }
+
+  // ── Appointments ──────────────────────────────────────────────────────────
+  if (intent.action === 'get_appointments') {
+    const from = intent.params?.from || new Date().toISOString();
+    const to = intent.params?.to || new Date(Date.now() + 7 * 86400000).toISOString();
+    let q = supabase.from('appointments').select('customer_name, customer_phone, start_at, end_at, status, notes')
+      .eq('tenant_id', tenant.id).gte('start_at', from).lte('start_at', to).neq('status', 'cancelled').order('start_at');
+    const { data: appts } = await q;
+    if (!appts?.length) { await sendMessage(tenant.merchant_phone, mt(lang, 'appt_none'), phoneNumberId, token); return; }
+    const lines = appts.map(a => {
+      const dt = new Date(a.start_at).toLocaleString('es-PY', { weekday:'short', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
+      return `📌 *${a.customer_name || a.customer_phone}* — ${dt}${a.notes ? `\n   📝 ${a.notes}` : ''}`;
+    });
+    await sendMessage(tenant.merchant_phone, `${mt(lang, 'appt_list_header', appts.length)}\n\n${lines.join('\n\n')}`, phoneNumberId, token);
+    return;
+  }
+
+  if (intent.action === 'add_appointment') {
+    const { customer_name, customer_phone, service_query, start_at } = intent.params || {};
+    if (!start_at) { await sendMessage(tenant.merchant_phone, mt(lang, 'unknown'), phoneNumberId, token); return; }
+    let service = null;
+    if (service_query) {
+      const sMatches = allServices.filter(s => s.name.toLowerCase().includes(service_query.toLowerCase()));
+      service = sMatches[0] || null;
+    }
+    const duration_min = service?.duration_min || 60;
+    const end_at = new Date(new Date(start_at).getTime() + duration_min * 60000).toISOString();
+    const { error } = await supabase.from('appointments').insert({
+      tenant_id: tenant.id,
+      customer_name: customer_name || 'Cliente',
+      customer_phone: customer_phone || '',
+      service_id: service?.id || null,
+      start_at, end_at, status: 'confirmed',
+      notes: null,
+    });
+    if (error) { await sendMessage(tenant.merchant_phone, `❌ ${error.message}`, phoneNumberId, token); return; }
+    const dt = new Date(start_at).toLocaleString('es-PY', { weekday:'short', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
+    await sendMessage(tenant.merchant_phone, mt(lang, 'appt_added', customer_name || 'Cliente', service?.name || '—', dt), phoneNumberId, token);
+    return;
+  }
+
+  if (intent.action === 'cancel_appointment') {
+    const { customer_query, start_at } = intent.params || {};
+    let q = supabase.from('appointments').select('id, customer_name, customer_phone, start_at').eq('tenant_id', tenant.id).neq('status', 'cancelled');
+    if (start_at) q = q.gte('start_at', start_at).lte('start_at', new Date(new Date(start_at).getTime() + 3600000).toISOString());
+    if (customer_query) q = q.ilike('customer_name', `%${customer_query}%`);
+    const { data: appts } = await q.order('start_at').limit(5);
+    if (!appts?.length) { await sendMessage(tenant.merchant_phone, mt(lang, 'appt_not_found'), phoneNumberId, token); return; }
+    if (appts.length > 1) {
+      const list = appts.map((a, i) => { const dt = new Date(a.start_at).toLocaleString('es-PY', { weekday:'short', day:'numeric', hour:'2-digit', minute:'2-digit' }); return `${i+1}. *${a.customer_name || a.customer_phone}* — ${dt}`; }).join('\n');
+      merchantPending.set(tenant.id, { action: 'cancel_appointment', candidates: appts, lang, expiresAt: Date.now() + 5 * 60 * 1000 });
+      const MT_WHICH_APPT = { es:`Varias citas:\n${list}\n¿Cuál cancelar?`, it:`Più appuntamenti:\n${list}\nQuale annullare?`, en:`Multiple appointments:\n${list}\nWhich to cancel?`, fr:`Plusieurs rendez-vous:\n${list}\nLequel annuler?`, de:`Mehrere Termine:\n${list}\nWelchen stornieren?`, pt:`Várias consultas:\n${list}\nQual cancelar?` };
+      await sendMessage(tenant.merchant_phone, MT_WHICH_APPT[lang] || MT_WHICH_APPT.es, phoneNumberId, token);
+      return;
+    }
+    await supabase.from('appointments').update({ status: 'cancelled' }).eq('id', appts[0].id);
+    const dt = new Date(appts[0].start_at).toLocaleString('es-PY', { weekday:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
+    await sendMessage(tenant.merchant_phone, mt(lang, 'appt_cancelled', appts[0].customer_name || appts[0].customer_phone, dt), phoneNumberId, token);
+    return;
+  }
+
+  if (intent.action === 'reschedule_appointment') {
+    const { customer_query, current_start, new_start } = intent.params || {};
+    if (!new_start) { await sendMessage(tenant.merchant_phone, mt(lang, 'unknown'), phoneNumberId, token); return; }
+    let q = supabase.from('appointments').select('id, customer_name, customer_phone, start_at, end_at').eq('tenant_id', tenant.id).neq('status', 'cancelled');
+    if (current_start) q = q.gte('start_at', current_start).lte('start_at', new Date(new Date(current_start).getTime() + 3600000).toISOString());
+    if (customer_query) q = q.ilike('customer_name', `%${customer_query}%`);
+    const { data: appts } = await q.order('start_at').limit(5);
+    if (!appts?.length) { await sendMessage(tenant.merchant_phone, mt(lang, 'appt_not_found'), phoneNumberId, token); return; }
+    const appt = appts[0];
+    const durationMs = new Date(appt.end_at) - new Date(appt.start_at);
+    const new_end = new Date(new Date(new_start).getTime() + durationMs).toISOString();
+    await supabase.from('appointments').update({ start_at: new_start, end_at: new_end }).eq('id', appt.id);
+    const dt = new Date(new_start).toLocaleString('es-PY', { weekday:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
+    await sendMessage(tenant.merchant_phone, mt(lang, 'appt_rescheduled', appt.customer_name || appt.customer_phone, dt), phoneNumberId, token);
+    return;
+  }
+
+  if (intent.action === 'block_time') {
+    const { start_at, end_at, reason } = intent.params || {};
+    if (!start_at || !end_at) { await sendMessage(tenant.merchant_phone, mt(lang, 'unknown'), phoneNumberId, token); return; }
+    await supabase.from('appointment_blocks').insert({ tenant_id: tenant.id, start_at, end_at, reason: reason || null });
+    const s = new Date(start_at).toLocaleString('es-PY', { weekday:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
+    const e = new Date(end_at).toLocaleString('es-PY', { weekday:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
+    await sendMessage(tenant.merchant_phone, mt(lang, 'block_added', s, e), phoneNumberId, token);
+    return;
+  }
+
+  if (intent.action === 'unblock_time') {
+    const { start_at, reason_query } = intent.params || {};
+    let q = supabase.from('appointment_blocks').select('id, start_at, end_at, reason').eq('tenant_id', tenant.id);
+    if (start_at) q = q.gte('start_at', start_at).lte('start_at', new Date(new Date(start_at).getTime() + 86400000).toISOString());
+    if (reason_query) q = q.ilike('reason', `%${reason_query}%`);
+    const { data: blocks } = await q.order('start_at').limit(1);
+    if (!blocks?.length) { await sendMessage(tenant.merchant_phone, mt(lang, 'block_not_found'), phoneNumberId, token); return; }
+    await supabase.from('appointment_blocks').delete().eq('id', blocks[0].id);
+    await sendMessage(tenant.merchant_phone, mt(lang, 'block_removed'), phoneNumberId, token);
+    return;
+  }
+
+  // ── Services ──────────────────────────────────────────────────────────────
+  if (intent.action === 'get_services') {
+    if (!allServices.length) { await sendMessage(tenant.merchant_phone, mt(lang, 'svc_none'), phoneNumberId, token); return; }
+    const lines = allServices.map(s => {
+      const price = s.price_type === 'hourly' ? `${s.price_guarani.toLocaleString()} Gs/h` : `${s.price_guarani.toLocaleString()} Gs`;
+      const dur = s.duration_min ? ` · ${s.duration_min}min` : '';
+      const avail = s.is_available ? '🟢' : '🔴';
+      return `${avail} *${s.name}*${s.category ? ` [${s.category}]` : ''} — ${price}${dur}`;
+    });
+    await sendMessage(tenant.merchant_phone, `${mt(lang, 'svc_list_header', allServices.length)}\n\n${lines.join('\n')}`, phoneNumberId, token);
+    return;
+  }
+
+  if (intent.action === 'add_service') {
+    const { name, category, price, duration_min, price_type } = intent.params || {};
+    if (!name) { await sendMessage(tenant.merchant_phone, mt(lang, 'unknown'), phoneNumberId, token); return; }
+    await supabase.from('services').insert({
+      tenant_id: tenant.id,
+      name, category: category || null,
+      price_guarani: price || 0,
+      duration_min: duration_min || null,
+      price_type: price_type || 'fixed',
+      is_available: true,
+    });
+    await sendMessage(tenant.merchant_phone, mt(lang, 'svc_added', name), phoneNumberId, token);
+    return;
+  }
+
+  if (intent.action === 'update_service') {
+    const sQuery = intent.service_query;
+    if (!sQuery) { await sendMessage(tenant.merchant_phone, mt(lang, 'unknown'), phoneNumberId, token); return; }
+    const sMatches = allServices.filter(s => s.name.toLowerCase().includes(sQuery.toLowerCase()));
+    if (!sMatches.length) { await sendMessage(tenant.merchant_phone, mt(lang, 'svc_not_found', sQuery), phoneNumberId, token); return; }
+    const updates = {};
+    const u = intent.params?.updates || {};
+    for (const f of ['price_guarani','duration_min','is_available','name','category','description']) {
+      if (u[f] != null) updates[f] = u[f];
+    }
+    if (!Object.keys(updates).length) { await sendMessage(tenant.merchant_phone, mt(lang, 'unknown'), phoneNumberId, token); return; }
+    if (sMatches.length === 1) {
+      await supabase.from('services').update(updates).eq('id', sMatches[0].id);
+      await sendMessage(tenant.merchant_phone, mt(lang, 'svc_updated', sMatches[0].name), phoneNumberId, token);
+      return;
+    }
+    // Multiple — ask which
+    const list = sMatches.slice(0, 5).map((s, i) => `${i+1}. *${s.name}*`).join('\n');
+    merchantPending.set(tenant.id, { action: 'update_service', candidates: sMatches.slice(0, 5), params: { updates }, lang, expiresAt: Date.now() + 5 * 60 * 1000 });
+    const MT_WHICH_SVC = { es:`Varios servicios:\n${list}\n¿Cuál actualizar?`, it:`Più servizi:\n${list}\nQuale aggiornare?`, en:`Multiple services:\n${list}\nWhich to update?`, fr:`Plusieurs services:\n${list}\nLequel mettre à jour?`, de:`Mehrere Dienste:\n${list}\nWelchen aktualisieren?`, pt:`Vários serviços:\n${list}\nQual atualizar?` };
+    await sendMessage(tenant.merchant_phone, MT_WHICH_SVC[lang] || MT_WHICH_SVC.es, phoneNumberId, token);
     return;
   }
 
