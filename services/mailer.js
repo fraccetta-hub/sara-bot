@@ -31,6 +31,7 @@ Entrá al panel, conectá tu número de WhatsApp Business y Sara empezará a ate
     btn: 'Ir al panel →',
     trial: 'No se cobra nada por 7 días. Podés cancelar cuando quieras desde el panel.',
     footer: 'Si no creaste esta cuenta, ignorá este correo.',
+    noreply: 'Este mensaje es automático. Por favor, no respondas a este correo.',
   },
   en: {
     subject: 'Welcome to Sara Bot! Your account is active',
@@ -40,6 +41,7 @@ Go to the panel, connect your WhatsApp Business number and Sara will start servi
     btn: 'Go to panel →',
     trial: 'No charges for 7 days. You can cancel anytime from the panel.',
     footer: "If you didn't create this account, ignore this email.",
+    noreply: 'This is an automated message. Please do not reply to this email.',
   },
   it: {
     subject: 'Benvenuto su Sara Bot! Il tuo account è attivo',
@@ -49,6 +51,7 @@ Accedi al pannello, collega il tuo numero WhatsApp Business e Sara inizierà a r
     btn: 'Vai al pannello →',
     trial: 'Nessun addebito per 7 giorni. Puoi cancellare in qualsiasi momento dal pannello.',
     footer: "Se non hai creato questo account, ignora questa email.",
+    noreply: 'Questo messaggio è generato automaticamente. Non rispondere a questa email.',
   },
   de: {
     subject: 'Willkommen bei Sara Bot! Dein Konto ist aktiv',
@@ -58,6 +61,7 @@ Gehe zum Panel, verbinde deine WhatsApp Business-Nummer und Sara wird deine Kund
     btn: 'Zum Panel →',
     trial: 'Keine Kosten für 7 Tage. Du kannst jederzeit vom Panel aus kündigen.',
     footer: 'Wenn du dieses Konto nicht erstellt hast, ignoriere diese E-Mail.',
+    noreply: 'Diese Nachricht wurde automatisch generiert. Bitte antworte nicht auf diese E-Mail.',
   },
   fr: {
     subject: 'Bienvenue sur Sara Bot ! Votre compte est actif',
@@ -67,6 +71,7 @@ Connectez-vous au panneau, connectez votre numéro WhatsApp Business et Sara com
     btn: 'Aller au panneau →',
     trial: 'Aucun frais pendant 7 jours. Vous pouvez annuler à tout moment depuis le panneau.',
     footer: "Si vous n'avez pas créé ce compte, ignorez cet e-mail.",
+    noreply: "Ce message est généré automatiquement. Merci de ne pas répondre à cet e-mail.",
   },
   pt: {
     subject: 'Bem-vindo ao Sara Bot! Sua conta está ativa',
@@ -76,6 +81,7 @@ Acesse o painel, conecte seu número do WhatsApp Business e Sara começará a at
     btn: 'Ir ao painel →',
     trial: 'Nenhuma cobrança por 7 dias. Você pode cancelar a qualquer momento pelo painel.',
     footer: 'Se você não criou esta conta, ignore este e-mail.',
+    noreply: 'Esta mensagem é gerada automaticamente. Por favor, não responda a este e-mail.',
   },
 };
 
@@ -99,7 +105,8 @@ function buildHtml(t, businessName, panelUrl) {
     </div>
   </div>
   <div style="padding:16px 32px;border-top:1px solid #f0f0f0;text-align:center;">
-    <p style="color:#9ca3af;font-size:11px;margin:0 0 8px;">${t.footer}</p>
+    <p style="color:#9ca3af;font-size:11px;margin:0 0 4px;">${t.footer}</p>
+    <p style="color:#d1d5db;font-size:10px;margin:0 0 8px;">${t.noreply}</p>
     <p style="color:#d1d5db;font-size:10px;margin:0;">
       <a href="https://sarabot.pro/legal/terms" style="color:#d1d5db;">Terms</a> ·
       <a href="https://sarabot.pro/legal/privacy" style="color:#d1d5db;">Privacy</a> ·
@@ -135,6 +142,7 @@ const TR = {
     btn: 'Restablecer contraseña →',
     expiry: 'El enlace expira en 1 hora.',
     ignore: 'Si no solicitaste esto, ignorá este correo. Tu contraseña no cambiará.',
+    noreply: 'Este mensaje es automático. Por favor, no respondas a este correo.',
   },
   en: {
     subject: 'Reset your password — Sara Bot',
@@ -143,6 +151,7 @@ const TR = {
     btn: 'Reset password →',
     expiry: 'The link expires in 1 hour.',
     ignore: "If you didn't request this, ignore this email. Your password won't change.",
+    noreply: 'This is an automated message. Please do not reply to this email.',
   },
   it: {
     subject: 'Reimposta la password — Sara Bot',
@@ -151,6 +160,7 @@ const TR = {
     btn: 'Reimposta password →',
     expiry: 'Il link scade tra 1 ora.',
     ignore: 'Se non hai richiesto questo, ignora questa email. La tua password non cambierà.',
+    noreply: 'Questo messaggio è generato automaticamente. Non rispondere a questa email.',
   },
   de: {
     subject: 'Passwort zurücksetzen — Sara Bot',
@@ -159,6 +169,7 @@ const TR = {
     btn: 'Passwort zurücksetzen →',
     expiry: 'Der Link läuft in 1 Stunde ab.',
     ignore: 'Wenn du das nicht angefordert hast, ignoriere diese E-Mail. Dein Passwort wird nicht geändert.',
+    noreply: 'Diese Nachricht wurde automatisch generiert. Bitte antworte nicht auf diese E-Mail.',
   },
   fr: {
     subject: 'Réinitialiser votre mot de passe — Sara Bot',
@@ -167,6 +178,7 @@ const TR = {
     btn: 'Réinitialiser le mot de passe →',
     expiry: 'Le lien expire dans 1 heure.',
     ignore: "Si vous n'avez pas fait cette demande, ignorez cet e-mail. Votre mot de passe ne changera pas.",
+    noreply: "Ce message est généré automatiquement. Merci de ne pas répondre à cet e-mail.",
   },
   pt: {
     subject: 'Redefinir senha — Sara Bot',
@@ -175,6 +187,7 @@ const TR = {
     btn: 'Redefinir senha →',
     expiry: 'O link expira em 1 hora.',
     ignore: 'Se você não solicitou isso, ignore este e-mail. Sua senha não será alterada.',
+    noreply: 'Esta mensagem é gerada automaticamente. Por favor, não responda a este e-mail.',
   },
 };
 
@@ -196,7 +209,13 @@ function buildResetHtml(tr, businessName, resetUrl) {
     <p style="color:#9ca3af;font-size:13px;margin:0 0 8px;">⏱ ${tr.expiry}</p>
   </div>
   <div style="padding:16px 32px;border-top:1px solid #f0f0f0;text-align:center;">
-    <p style="color:#9ca3af;font-size:11px;margin:0;">${tr.ignore}</p>
+    <p style="color:#9ca3af;font-size:11px;margin:0 0 4px;">${tr.ignore}</p>
+    <p style="color:#d1d5db;font-size:10px;margin:0 0 8px;">${tr.noreply}</p>
+    <p style="color:#d1d5db;font-size:10px;margin:0;">
+      <a href="https://sarabot.pro/legal/terms" style="color:#d1d5db;">Terms</a> ·
+      <a href="https://sarabot.pro/legal/privacy" style="color:#d1d5db;">Privacy</a> ·
+      © 2026 Sara Bot
+    </p>
   </div>
 </div>
 </body>
