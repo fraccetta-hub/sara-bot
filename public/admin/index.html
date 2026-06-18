@@ -1938,7 +1938,7 @@ let deletingProductId = null;
 let activeCategory = 'all';
 
 // ── Boot ───────────────────────────────────────────────────────────────────────
-window.onload = () => {
+window.onload = async () => {
   const params = new URLSearchParams(window.location.search);
 
   // Password reset link: ?reset=<token>
