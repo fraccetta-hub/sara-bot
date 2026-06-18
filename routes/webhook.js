@@ -197,8 +197,35 @@ async function processIncoming(body) {
 // ─── Merchant NL bot ─────────────────────────────────────────────────────────
 
 const Anthropic = require('@anthropic-ai/sdk');
-const merchantPending = new Map();  // tenantId → pending confirmation state
-const merchantLang    = new Map();  // tenantId → last detected language (for notifications)
+const merchantPendingCache = new Map();  // L1: in-memory
+const merchantLang         = new Map();  // tenantId → last detected language (for notifications)
+
+// Pending state persisted in tenants.merchant_pending_json (L2: DB)
+// L1 is always checked first — DB only on cache miss (after server restart)
+const merchantPending = {
+  async get(tenantId) {
+    if (merchantPendingCache.has(tenantId)) return merchantPendingCache.get(tenantId);
+    const { data } = await supabase.from('tenants').select('merchant_pending_json').eq('id', tenantId).maybeSingle();
+    const val = data?.merchant_pending_json || null;
+    if (val) {
+      if (val.expiresAt && Date.now() > val.expiresAt) {
+        // Expired — clear from DB silently
+        supabase.from('tenants').update({ merchant_pending_json: null }).eq('id', tenantId).then(() => {});
+        return null;
+      }
+      merchantPendingCache.set(tenantId, val);
+    }
+    return val;
+  },
+  set(tenantId, val) {
+    merchantPendingCache.set(tenantId, val);
+    supabase.from('tenants').update({ merchant_pending_json: val }).eq('id', tenantId).then(() => {});
+  },
+  delete(tenantId) {
+    merchantPendingCache.delete(tenantId);
+    supabase.from('tenants').update({ merchant_pending_json: null }).eq('id', tenantId).then(() => {});
+  },
+};
 
 // Multi-language response templates
 const MT = {
@@ -473,7 +500,7 @@ async function handleMerchantMessage(tenant, messageText, phoneNumberId, token) 
   }
 
   // ── Pending confirmation check ────────────────────────────────────────────
-  const pending = merchantPending.get(tenant.id);
+  const pending = await merchantPending.get(tenant.id);
   if (pending) {
     if (Date.now() > pending.expiresAt) {
       merchantPending.delete(tenant.id);
