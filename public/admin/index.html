@@ -1642,41 +1642,41 @@ function applyTranslations() {
 function renderHelp() {
   const el = document.getElementById('sectionHelp');
   if (!el) return;
-  const cmd = (code, desc, color='green') => `
-    <div class="flex gap-3 items-start p-2 rounded-lg bg-gray-50">
-      <code class="bg-${color}-100 text-${color}-800 px-2 py-0.5 rounded font-mono text-xs whitespace-nowrap">${code}</code>
-      <span class="text-gray-600">${desc}</span>
-    </div>`;
+  const item = (html) => `<div class="p-2 rounded-lg bg-gray-50 text-sm text-gray-700">${html}</div>`;
   el.innerHTML = `
     <h2 class="text-lg font-semibold text-gray-800">${t('help.title')}</h2>
     <p class="text-sm text-gray-500">${t('help.desc')}</p>
+    <div class="p-3 bg-blue-50 border border-blue-100 rounded-xl text-sm text-blue-800">${t('help.nl.info')}</div>
     <div class="bg-white rounded-xl shadow-sm p-5">
       <h3 class="font-semibold text-gray-800 mb-3">${t('help.catalog.title')}</h3>
-      <div class="space-y-2 text-sm">
-        ${cmd('CATALOGO', t('help.catalog.catalogo'))}
-        ${cmd('STOCK nombre_producto CANTIDAD', t('help.catalog.stock'))}
-        ${cmd('PRECIO nombre_producto MONTO', t('help.catalog.precio'))}
-        ${cmd('AGOTADO nombre_producto', t('help.catalog.agotado'))}
-        ${cmd('DISPONIBLE nombre_producto', t('help.catalog.disponible'))}
-        ${cmd('NUEVO nombre | categoría | precio | stock | descripción', t('help.catalog.nuevo'))}
+      <div class="space-y-2">
+        ${item(t('help.catalog.catalogo'))}
+        ${item(t('help.catalog.stock'))}
+        ${item(t('help.catalog.precio'))}
+        ${item(t('help.catalog.agotado'))}
+        ${item(t('help.catalog.disponible'))}
+        ${item(t('help.catalog.nuevo'))}
       </div>
     </div>
     <div class="bg-white rounded-xl shadow-sm p-5">
-      <h3 class="font-semibold text-gray-800 mb-3">${t('help.photos.title')}</h3>
-      <div class="space-y-2 text-sm">
-        ${cmd('NOMBRE nombre_producto', t('help.photos.nombre'), 'blue')}
-      </div>
-      <p class="text-xs text-gray-400 mt-3">${t('help.photos.hint')}</p>
+      <h3 class="font-semibold text-gray-800 mb-2">${t('help.photos.title')}</h3>
+      <p class="text-sm text-gray-600 mb-2">${t('help.photos.nombre')}</p>
+      <p class="text-xs text-gray-400">${t('help.photos.hint')}</p>
     </div>
     <div class="bg-white rounded-xl shadow-sm p-5">
       <h3 class="font-semibold text-gray-800 mb-3">${t('help.orders.title')}</h3>
-      <div class="space-y-2 text-sm">
-        ${cmd('CONFIRMAR', t('help.orders.confirmar'), 'yellow')}
-        ${cmd('CANCELAR', t('help.orders.cancelar'), 'red')}
-        ${cmd('CHAT', t('help.orders.chat'), 'purple')}
-        ${cmd('FIN', t('help.orders.fin'), 'purple')}
+      <div class="space-y-2">
+        ${item(t('help.orders.confirmar'))}
+        ${item(t('help.orders.cancelar'))}
+        ${item(t('help.orders.chat'))}
+        ${item(t('help.orders.fin'))}
       </div>
-      <div class="mt-3 p-3 bg-yellow-50 rounded-lg text-xs text-yellow-800">${t('help.orders.takeover')}</div>
+      <div class="mt-3 p-3 bg-purple-50 border border-purple-100 rounded-lg text-sm text-purple-800">${t('help.orders.takeover')}</div>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm p-5">
+      <h3 class="font-semibold text-gray-800 mb-3">${t('help.other.title')}</h3>
+      <p class="text-sm text-gray-600 mb-2">${t('help.other.ayuda')}</p>
+      <p class="text-xs text-gray-500">${t('help.other.hint')}</p>
     </div>
     <div class="bg-white rounded-xl shadow-sm p-5">
       <h3 class="font-semibold text-gray-800 mb-1">${t('help.chatpanel.title')}</h3>
@@ -1705,13 +1705,6 @@ function renderHelp() {
         </div>
       </div>
       <div class="mt-4 p-3 bg-yellow-50 rounded-lg text-xs text-yellow-800">${t('help.chatpanel.colors')}</div>
-    </div>
-    <div class="bg-white rounded-xl shadow-sm p-5">
-      <h3 class="font-semibold text-gray-800 mb-3">${t('help.other.title')}</h3>
-      <div class="space-y-2 text-sm">
-        ${cmd('AYUDA', t('help.other.ayuda'), 'gray')}
-      </div>
-      <p class="text-xs text-gray-400 mt-3">${t('help.other.hint')}</p>
     </div>`;
 }
 
