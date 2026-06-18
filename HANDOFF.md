@@ -295,7 +295,7 @@
 - `routes/admin.js` `GET /settings`: espone `login_slug`, `email`, `name`
 - `routes/admin.js` `POST /change-email`: valida formato + unicità, aggiorna colonna `email`
 - `routes/admin.js` `POST /change-username`: valida formato (`[a-z0-9_.-]+`) + unicità, aggiorna `login_slug`
-- `routes/admin.js` forgot-password: cerca per colonna `email` prima, fallback `login_slug` (backward compat); manda reset a `email` reale
+- `routes/admin.js` forgot-password: accetta sia email che username — cerca per colonna `email` prima, fallback `login_slug`; manda reset a `email` reale (fallback `login_slug` per tenant legacy senza email)
 - `routes/superadmin.js` GET /tenants + GET /tenants/:id: include `email`, `country`
 - `public/admin/index.html` settings: nuova card "Account" — cambia email + username con feedback i18n
 - `public/admin/i18n.js`: chiavi `settings.account.*` + `err.invalid_email/email_taken/username_*` in ES/EN/IT/DE/FR/PT
