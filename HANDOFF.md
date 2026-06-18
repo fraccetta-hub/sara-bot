@@ -150,6 +150,16 @@
 - Mockup hero: sostituito mix pizza/fiori/parrucchiera (irrealistico per un singolo tenant) con fioraio coerente — valuta ₲, 4 ordini realistici (delivery rose, ritiro bouquet, arreglo anniversario, orchidee)
 - Rimosso label "Sara Bot 🤖" da tutti e 6 i bubble-who nelle chat di esempio
 
+## COSA È STATO FATTO (sessione 2026-06-18 — support bot)
+
+### Support bot — COMPLETATO
+- `routes/admin.js`: Claude Haiku risponde automaticamente a ogni messaggio merchant nella chat supporto
+- System prompt con knowledge base completa: catalogo, ordini, delivery, appuntamenti, billing, WhatsApp, account
+- Escalation: bot include `[ESCALATE]` quando non può risolvere → Telegram alert solo in quel caso
+- Badge fix superadmin: `POST /superadmin/support/:tenantId/read` + in-memory timestamp → badge sparisce all'apertura chat
+- Cleanup: `support_messages` > 90 giorni eliminati ogni 24h
+- Rate limit 10 msg/min/tenant confermato valido
+
 ## COSA È STATO FATTO (sessione 2026-06-18 — email transazionali operative)
 
 ### Email — COMPLETATO
