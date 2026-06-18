@@ -1044,7 +1044,28 @@ function matchScore(filename, productName) {
   return hits / Math.max(wa.length, wb.size);
 }
 
-router.post('/products/bulk-images', requireAuth, uploadZip.single('zipfile'), async (req, res) => {
+const zipRateLimit = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 10,
+  keyGenerator: (req) => req.tenant?.tenantId || req.ip,
+  standardHeaders: true, legacyHeaders: false,
+  message: { error: 'Too many ZIP uploads, try again in 1 hour.' },
+});
+
+const MAX_ZIP_ENTRIES   = 300;
+const MAX_ENTRY_BYTES   = 8 * 1024 * 1024;  // 8 MB uncompressed per image
+const MAX_TOTAL_BYTES   = 200 * 1024 * 1024; // 200 MB total uncompressed
+
+function handleZipUpload(req, res, next) {
+  uploadZip.single('zipfile')(req, res, (err) => {
+    if (err && err.code === 'LIMIT_FILE_SIZE')
+      return res.status(413).json({ error: 'ZIP file exceeds 50 MB limit.' });
+    if (err) return res.status(400).json({ error: err.message });
+    next();
+  });
+}
+
+router.post('/products/bulk-images', requireAuth, zipRateLimit, handleZipUpload, async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No ZIP file received' });
 
   const ALLOWED_MIME = new Set(['image/jpeg','image/png','image/webp','image/gif']);
@@ -1057,24 +1078,40 @@ router.post('/products/bulk-images', requireAuth, uploadZip.single('zipfile'), a
     return res.status(400).json({ error: 'Invalid ZIP file' });
   }
 
+  const allEntries = zip.getEntries().filter(e =>
+    !e.isDirectory && !e.entryName.startsWith('__MACOSX') && !e.entryName.startsWith('.')
+  );
+
+  if (allEntries.length > MAX_ZIP_ENTRIES)
+    return res.status(400).json({ error: `ZIP contains too many files (max ${MAX_ZIP_ENTRIES}).` });
+
+  // ZIP bomb check: sum uncompressed sizes before extracting anything
+  const totalUncompressed = allEntries.reduce((s, e) => s + (e.header.size || 0), 0);
+  if (totalUncompressed > MAX_TOTAL_BYTES)
+    return res.status(400).json({ error: 'ZIP uncompressed content exceeds 200 MB limit.' });
+
   const { data: products, error } = await supabase
     .from('products').select('id, name').eq('tenant_id', req.tenant.tenantId);
   if (error) return res.status(500).json({ error: error.message });
   if (!products?.length) return res.status(400).json({ error: 'No products found. Add products first.' });
 
-  const entries = zip.getEntries().filter(e =>
-    !e.isDirectory && !e.entryName.startsWith('__MACOSX') && !e.entryName.startsWith('.')
-  );
+  const entries = allEntries.filter(e => {
+    const name = e.entryName.replace(/.*[\\/]/, '');
+    return /\.(jpe?g|png|webp|gif)$/i.test(name);
+  });
 
   const matched = [], unmatched = [];
 
   for (const entry of entries) {
     const filename = entry.entryName.replace(/.*[\\/]/, '');
+    if ((entry.header.size || 0) > MAX_ENTRY_BYTES) {
+      unmatched.push(filename + ' (exceeds 8 MB uncompressed)');
+      continue;
+    }
     const mime = filename.match(/\.png$/i) ? 'image/png'
                : filename.match(/\.webp$/i) ? 'image/webp'
                : filename.match(/\.gif$/i)  ? 'image/gif'
                : 'image/jpeg';
-    if (!ALLOWED_MIME.has(mime)) continue;
 
     let best = null, bestScore = 0;
     for (const p of products) {
