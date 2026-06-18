@@ -328,7 +328,7 @@ footer a:hover { color: var(--dark); }
     <a href="/register/index.html" class="btn-primary" data-i18n="hero.btn1">🚀 Empezar 7 días gratis</a>
     <a href="#how" class="btn-ghost" data-i18n="hero.btn2">Ver cómo funciona</a>
   </div>
-  <p class="hero-note" data-i18n="hero.note">Sin tarjeta de crédito · <strong>7 días gratis</strong> · Cancelás cuando querés</p>
+  <p class="hero-note" data-i18n="hero.note"><strong>7 días gratis</strong> · Cancelás cuando querés</p>
 </section>
 
 <!-- MOCKUP -->
@@ -352,38 +352,38 @@ footer a:hover { color: var(--dark); }
       <div class="mockup-content">
         <div class="stat-row">
           <div class="stat-box">
-            <div class="stat-val">47</div>
+            <div class="stat-val">14</div>
             <div class="stat-lbl">Pedidos hoy</div>
-            <div class="stat-up">↑ 12% vs ayer</div>
+            <div class="stat-up">↑ 3 sin confirmar</div>
           </div>
           <div class="stat-box">
-            <div class="stat-val">8</div>
-            <div class="stat-lbl">Pendientes</div>
+            <div class="stat-val">5</div>
+            <div class="stat-lbl">En preparación</div>
           </div>
           <div class="stat-box">
-            <div class="stat-val">₲ 4.2M</div>
+            <div class="stat-val">₲ 1.8M</div>
             <div class="stat-lbl">Ventas hoy</div>
-            <div class="stat-up">↑ mejor semana</div>
+            <div class="stat-up">↑ mejor viernes del mes</div>
           </div>
-        </div>
-        <div class="order-row">
-          <span style="font-weight:600">📍 Mesa 4 — Juan P.</span>
-          <span style="color:var(--gray)">2 pizzas + 1 Fanta</span>
-          <span class="badge-amber">Preparando</span>
         </div>
         <div class="order-row">
           <span style="font-weight:600">🚚 Delivery — María G.</span>
-          <span style="color:var(--gray)">Rosas rojas x12</span>
-          <span class="badge-green">Confirmado</span>
+          <span style="color:var(--gray)">Rosas rojas x12 — cumpleaños</span>
+          <span class="badge-amber">Preparando</span>
         </div>
         <div class="order-row">
-          <span style="font-weight:600">📅 Turno 15:30 — Ana L.</span>
-          <span style="color:var(--gray)">Corte + color</span>
-          <span class="badge-blue">En 45 min</span>
+          <span style="font-weight:600">📦 Retiro — Juan P.</span>
+          <span style="color:var(--gray)">Bouquet girasoles + tarjeta</span>
+          <span class="badge-green">Listo</span>
+        </div>
+        <div class="order-row">
+          <span style="font-weight:600">🚚 Delivery — Ana L.</span>
+          <span style="color:var(--gray)">Arreglo aniversario premium</span>
+          <span class="badge-blue">Sale en 20 min</span>
         </div>
         <div class="order-row">
           <span style="font-weight:600">📦 Retiro — Carlos M.</span>
-          <span style="color:var(--gray)">Lamparas LED x4</span>
+          <span style="color:var(--gray)">Orquídeas x2 — regalo oficina</span>
           <span class="badge-green">Confirmado</span>
         </div>
       </div>
@@ -402,7 +402,7 @@ footer a:hover { color: var(--dark); }
         <div class="ba-label" data-i18n="problem.before_label">❌ Antes de Sara Bot</div>
         <div class="ba-item" data-i18n="problem.before1">Respondés "¿tienen esto?" 30 veces por día</div>
         <div class="ba-item" data-i18n="problem.before2">Un pedido llega a las 11pm y no te enterás</div>
-        <div class="ba-item" data-i18n="problem.before3">El sábado a la noche el teléfono no para</div>
+        <div class="ba-item" data-i18n="problem.before3">El sábado a la noche los mensajes de WhatsApp no paran</div>
         <div class="ba-item" data-i18n="problem.before4">Perdés turnos porque nadie registra las reservas</div>
         <div class="ba-item" data-i18n="problem.before5">No sabés cuánto vendiste esta semana</div>
         <div class="ba-item" data-i18n="problem.before6">Cualquier ausencia tuya = el negocio para</div>
@@ -477,8 +477,8 @@ footer a:hover { color: var(--dark); }
 <section class="bg-light">
   <div class="container center">
     <div class="section-label" data-i18n="sectors.label">Para tu negocio</div>
-    <h2 class="section-title" data-i18n="sectors.h2">Funciona para cualquier negocio que vende</h2>
-    <p class="section-sub" style="margin:0 auto 36px" data-i18n="sectors.sub">Desde la pizzería del sábado a la noche hasta el técnico de lamparas. Si tenés clientes que escriben por WhatsApp, Sara Bot es para vos.</p>
+    <h2 class="section-title" data-i18n="sectors.h2">Funciona para cualquier negocio o profesional</h2>
+    <p class="section-sub" style="margin:0 auto 36px" data-i18n="sectors.sub">Restaurantes, floristas, estéticas, médicos, técnicos, abogados — si tenés clientes que escriben por WhatsApp, Sara Bot es para vos.</p>
 
     <div class="sectors-wrap">
       <button class="sector-tab active" onclick="showSector('pizzeria', this)" data-i18n="sectors.tab1">🍕 Restaurante</button>
@@ -486,6 +486,7 @@ footer a:hover { color: var(--dark); }
       <button class="sector-tab" onclick="showSector('estetica', this)" data-i18n="sectors.tab3">💆 Estética</button>
       <button class="sector-tab" onclick="showSector('electro', this)" data-i18n="sectors.tab4">💡 Electro / Repuestos</button>
       <button class="sector-tab" onclick="showSector('pasteleria', this)" data-i18n="sectors.tab5">🍰 Pastelería</button>
+      <button class="sector-tab" onclick="showSector('medico', this)" data-i18n="sectors.tab6">🩺 Médico / Profesional</button>
     </div>
 
     <!-- Pizzería -->
@@ -554,6 +555,19 @@ footer a:hover { color: var(--dark); }
           <div style="align-self:flex-end"><div class="bubble-who" style="text-align:right">Sara Bot 🤖</div><div class="bubble bot">¡Qué emoción! 🎂 Para 20 personas te recomiendo la torta de 30cm (₲220.000). ¿De qué sabor? Tenemos chocolate, vainilla, red velvet y chocovainilla.</div></div>
           <div><div class="bubble-who">Cliente</div><div class="bubble customer">Chocolate! Y que diga "Feliz cumple María" en rosa</div></div>
           <div style="align-self:flex-end"><div class="bubble bot">Perfecto! 🍫 Torta de chocolate 30cm con texto "Feliz cumple María" en rosa. ¿Necesitás entrega a domicilio o retirás? Los pedidos personalizados requieren 48hs de anticipación 😊</div></div>
+        </div>
+      </div>
+    </div>
+    <!-- Médico / Profesional -->
+    <div class="sector-story" id="story-medico">
+      <div class="story-box">
+        <div class="story-title">🩺 Consultorio "Dra. Gómez" — turnos sin llamadas</div>
+        <div class="story-sub">Pacientes que piden turno a las 22hs, consultas sobre precios, recordatorios — todo lo maneja Sara sin que la doctora tenga que contestar el celular.</div>
+        <div class="chat-bubbles">
+          <div><div class="bubble-who">Paciente</div><div class="bubble customer">Hola, quería saber si tienen turno disponible para esta semana, soy nuevo paciente</div></div>
+          <div style="align-self:flex-end"><div class="bubble-who" style="text-align:right">Sara Bot 🤖</div><div class="bubble bot">¡Hola! Bienvenido 😊 Tenemos disponibilidad el miércoles a las 10:00hs y el jueves a las 16:30hs. La consulta es de €60. ¿Cuál te viene mejor?</div></div>
+          <div><div class="bubble-who">Paciente</div><div class="bubble customer">El jueves a las 16:30 perfecto</div></div>
+          <div style="align-self:flex-end"><div class="bubble bot">✅ Turno reservado: Jueves 16:30hs — consulta general. Te pedimos avisar con 24hs si necesitás cancelar. ¡Hasta el jueves! 🩺</div></div>
         </div>
       </div>
     </div>
@@ -635,7 +649,7 @@ footer a:hover { color: var(--dark); }
         <a href="/register/index.html" class="price-btn primary" data-i18n="pricing.btn_free">Empezar gratis →</a>
       </div>
     </div>
-    <p class="pricing-note" data-i18n="pricing.note">7 días gratis en cualquier plan · Sin tarjeta · Cancelás cuando querés · Facturación mensual</p>
+    <p class="pricing-note" data-i18n="pricing.note">7 días gratis en cualquier plan · Cancelás cuando querés · Facturación mensual</p>
   </div>
 </section>
 
@@ -691,10 +705,10 @@ footer a:hover { color: var(--dark); }
 <section class="cta-section">
   <div class="container">
     <h2 data-i18n="cta.h2">El sábado a la noche, el bot trabaja.<br/>Vos descansás.</h2>
-    <p data-i18n="cta.sub">Probalo 7 días gratis. Sin tarjeta, sin compromisos.</p>
+    <p data-i18n="cta.sub">Probalo 7 días gratis. Sin contratos, sin sorpresas.</p>
     <a href="/register/index.html" class="btn-primary" style="font-size:1rem;padding:16px 36px;" data-i18n="cta.btn">🚀 Crear mi cuenta gratis →</a>
     <div class="cta-badges">
-      <span class="cta-badge" data-i18n="cta.badge1">✓ Sin tarjeta de crédito</span>
+      <span class="cta-badge" data-i18n="cta.badge1">✓ 7 días gratis incluidos</span>
       <span class="cta-badge" data-i18n="cta.badge2">✓ Activo en menos de una hora</span>
       <span class="cta-badge" data-i18n="cta.badge3">✓ Cancelás cuando querés</span>
       <span class="cta-badge" data-i18n="cta.badge4">✓ Soporte incluido</span>
@@ -726,12 +740,12 @@ const TR = {
     'hero.h1':'Gestioná tu negocio.<br/><em>El bot atiende a tus clientes.</em>',
     'hero.sub':'Pedidos, turnos, catálogo, clientes — todo desde un panel. Tu bot de IA en WhatsApp toma pedidos, responde consultas y agenda citas 24/7, sin que tengas que estar pendiente del celular.',
     'hero.btn1':'🚀 Empezar 7 días gratis','hero.btn2':'Ver cómo funciona',
-    'hero.note':'Sin tarjeta de crédito · <strong>7 días gratis</strong> · Cancelás cuando querés',
+    'hero.note':'<strong>7 días gratis</strong> · Cancelás cuando querés',
     'problem.label':'El problema','problem.h2':'¿Cuánto tiempo pasás respondiendo mensajes que dicen lo mismo?',
     'problem.sub':'Cada negocio que atiende por WhatsApp tiene el mismo problema: el dueño termina siendo el operador de chat.',
     'problem.before_label':'❌ Antes de Sara Bot',
     'problem.before1':'Respondés "¿tienen esto?" 30 veces por día','problem.before2':'Un pedido llega a las 11pm y no te enterás',
-    'problem.before3':'El sábado a la noche el teléfono no para','problem.before4':'Perdés turnos porque nadie registra las reservas',
+    'problem.before3':'El sábado a la noche los mensajes de WhatsApp no paran','problem.before4':'Perdés turnos porque nadie registra las reservas',
     'problem.before5':'No sabés cuánto vendiste esta semana','problem.before6':'Cualquier ausencia tuya = el negocio para',
     'problem.after_label':'✅ Con Sara Bot',
     'problem.after1':'El bot responde, muestra fotos, toma el pedido','problem.after2':'Recibís una notificación solo cuando hay un pedido nuevo',
@@ -763,14 +777,14 @@ const TR = {
     'pricing.pro.f1':'Todo lo del Starter','pricing.pro.f2':'5.000 conversaciones/mes','pricing.pro.f3':'Agenda de turnos automática',
     'pricing.pro.f4':'Servicios con precio por hora','pricing.pro.f5':'Analytics completo + exportación CSV',
     'pricing.pro.f6':'Catálogo de servicios separado','pricing.pro.f7':'Soporte prioritario',
-    'pricing.note':'7 días gratis en cualquier plan · Sin tarjeta · Cancelás cuando querés · Facturación mensual',
+    'pricing.note':'7 días gratis en cualquier plan · Cancelás cuando querés · Facturación mensual',
     'cta.h2':'El sábado a la noche, el bot trabaja.<br/>Vos descansás.',
-    'cta.sub':'Probalo 7 días gratis. Sin tarjeta, sin compromisos.','cta.btn':'🚀 Crear mi cuenta gratis →',
-    'cta.badge1':'✓ Sin tarjeta de crédito','cta.badge2':'✓ Activo en menos de una hora','cta.badge3':'✓ Cancelás cuando querés','cta.badge4':'✓ Soporte incluido',
+    'cta.sub':'Probalo 7 días gratis. Sin contratos, sin sorpresas.','cta.btn':'🚀 Crear mi cuenta gratis →',
+    'cta.badge1':'✓ 7 días gratis incluidos','cta.badge2':'✓ Activo en menos de una hora','cta.badge3':'✓ Cancelás cuando querés','cta.badge4':'✓ Soporte incluido',
     'footer.terms':'Términos de servicio','footer.privacy':'Privacidad','footer.legal':'Aviso legal','footer.start':'Empezar gratis','footer.login':'Entrar al panel','footer.copy':'© 2026 Sara Bot',
-    'sectors.label':'Para tu negocio','sectors.h2':'Funciona para cualquier negocio que vende',
-    'sectors.sub':'Desde la pizzería del sábado a la noche hasta el técnico de lamparas. Si tenés clientes que escriben por WhatsApp, Sara Bot es para vos.',
-    'sectors.tab1':'🍕 Restaurante','sectors.tab2':'🌸 Florería','sectors.tab3':'💆 Estética','sectors.tab4':'💡 Electro / Repuestos','sectors.tab5':'🍰 Pastelería',
+    'sectors.label':'Para tu negocio','sectors.h2':'Funciona para cualquier negocio o profesional',
+    'sectors.sub':'Restaurantes, floristas, estéticas, médicos, técnicos, abogados — si tenés clientes que escriben por WhatsApp, Sara Bot es para vos.',
+    'sectors.tab1':'🍕 Restaurante','sectors.tab2':'🌸 Florería','sectors.tab3':'💆 Estética','sectors.tab4':'💡 Electro / Repuestos','sectors.tab5':'🍰 Pastelería','sectors.tab6':'🩺 Médico / Profesional',
     'faq.label':'Preguntas frecuentes','faq.h2':'Todo lo que necesitás saber',
     'faq1.q':'¿Necesito saber programar para configurarlo?',
     'faq1.a':'No. Todo se configura desde un panel web con formularios y botones. El asistente de activación te guía paso a paso desde el registro hasta el primer pedido, sin ningún conocimiento técnico.',
@@ -793,12 +807,12 @@ const TR = {
     'hero.h1':'Manage your business.<br/><em>The bot handles your customers.</em>',
     'hero.sub':'Orders, appointments, catalog, customers — all from one panel. Your WhatsApp AI bot takes orders, answers questions and books appointments 24/7, so you can put down the phone.',
     'hero.btn1':'🚀 Start 7 days free','hero.btn2':'See how it works',
-    'hero.note':'No credit card · <strong>7 days free</strong> · Cancel anytime',
+    'hero.note':'<strong>7 days free</strong> · Cancel anytime',
     'problem.label':'The problem','problem.h2':'How much time do you spend answering the same messages over and over?',
     'problem.sub':'Every business on WhatsApp has the same problem: the owner ends up being the chat operator.',
     'problem.before_label':'❌ Before Sara Bot',
     'problem.before1':'You answer "do you have this?" 30 times a day','problem.before2':'An order comes in at 11pm and you miss it',
-    'problem.before3':'Saturday night the phone never stops','problem.before4':'You lose bookings because nobody logs the appointments',
+    'problem.before3':'Saturday night the WhatsApp messages never stop','problem.before4':'You lose bookings because nobody logs the appointments',
     'problem.before5':'You don\'t know how much you sold this week','problem.before6':'If you\'re unavailable = business stops',
     'problem.after_label':'✅ With Sara Bot',
     'problem.after1':'The bot replies, shows photos, takes the order','problem.after2':'You get a notification only when there\'s a new order',
@@ -830,14 +844,14 @@ const TR = {
     'pricing.pro.f1':'Everything in Starter','pricing.pro.f2':'5,000 conversations/month','pricing.pro.f3':'Automatic appointment calendar',
     'pricing.pro.f4':'Hourly-rate services','pricing.pro.f5':'Full analytics + CSV export',
     'pricing.pro.f6':'Separate services catalog','pricing.pro.f7':'Priority support',
-    'pricing.note':'7 days free on any plan · No card · Cancel anytime · Monthly billing',
+    'pricing.note':'7 days free on any plan · Cancel anytime · Monthly billing',
     'cta.h2':'Saturday night the bot works.<br/>You rest.',
-    'cta.sub':'Try it free for 7 days. No card, no commitment.','cta.btn':'🚀 Create my free account →',
-    'cta.badge1':'✓ No credit card','cta.badge2':'✓ Live in under an hour','cta.badge3':'✓ Cancel anytime','cta.badge4':'✓ Support included',
+    'cta.sub':'Try it free for 7 days. No contracts, no surprises.','cta.btn':'🚀 Create my free account →',
+    'cta.badge1':'✓ 7 days free included','cta.badge2':'✓ Live in under an hour','cta.badge3':'✓ Cancel anytime','cta.badge4':'✓ Support included',
     'footer.terms':'Terms of service','footer.privacy':'Privacy','footer.legal':'Legal notice','footer.start':'Start free','footer.login':'Sign in to panel','footer.copy':'© 2026 Sara Bot',
-    'sectors.label':'For your business','sectors.h2':'Works for any business that sells',
-    'sectors.sub':'From the Saturday night pizzeria to the spare parts technician. If you have customers writing on WhatsApp, Sara Bot is for you.',
-    'sectors.tab1':'🍕 Restaurant','sectors.tab2':'🌸 Florist','sectors.tab3':'💆 Beauty salon','sectors.tab4':'💡 Electronics / Parts','sectors.tab5':'🍰 Bakery',
+    'sectors.label':'For your business','sectors.h2':'Works for any business or professional',
+    'sectors.sub':'Restaurants, florists, beauty salons, doctors, technicians, lawyers — if your customers write on WhatsApp, Sara Bot is for you.',
+    'sectors.tab1':'🍕 Restaurant','sectors.tab2':'🌸 Florist','sectors.tab3':'💆 Beauty salon','sectors.tab4':'💡 Electronics / Parts','sectors.tab5':'🍰 Bakery','sectors.tab6':'🩺 Doctor / Professional',
     'faq.label':'Frequently asked questions','faq.h2':'Everything you need to know',
     'faq1.q':'Do I need to know how to code to set it up?',
     'faq1.a':'No. Everything is configured from a web panel with forms and buttons. The setup wizard guides you step by step from registration to the first order, with no technical knowledge required.',
@@ -860,12 +874,12 @@ const TR = {
     'hero.h1':'Gestisci la tua attività.<br/><em>Il bot risponde ai tuoi clienti.</em>',
     'hero.sub':'Ordini, appuntamenti, catalogo, clienti — tutto da un pannello. Il tuo bot AI su WhatsApp prende ordini, risponde alle domande e prenota appuntamenti 24/7, senza che tu debba stare attaccato al telefono.',
     'hero.btn1':'🚀 Inizia 7 giorni gratis','hero.btn2':'Scopri come funziona',
-    'hero.note':'Nessuna carta di credito · <strong>7 giorni gratis</strong> · Disdici quando vuoi',
+    'hero.note':'<strong>7 giorni gratis</strong> · Disdici quando vuoi',
     'problem.label':'Il problema','problem.h2':'Quanto tempo passi a rispondere agli stessi messaggi ogni giorno?',
     'problem.sub':'Ogni attività su WhatsApp ha lo stesso problema: il titolare finisce per fare l\'operatore di chat.',
     'problem.before_label':'❌ Prima di Sara Bot',
     'problem.before1':'Rispondi "avete questo?" 30 volte al giorno','problem.before2':'Un ordine arriva alle 23 e non te ne accorgi',
-    'problem.before3':'Il sabato sera il telefono non smette di suonare','problem.before4':'Perdi prenotazioni perché nessuno le registra',
+    'problem.before3':'Il sabato sera i messaggi WhatsApp non si fermano mai','problem.before4':'Perdi prenotazioni perché nessuno le registra',
     'problem.before5':'Non sai quanto hai venduto questa settimana','problem.before6':'Se sei assente = l\'attività si ferma',
     'problem.after_label':'✅ Con Sara Bot',
     'problem.after1':'Il bot risponde, mostra le foto, prende l\'ordine','problem.after2':'Ricevi una notifica solo quando c\'è un nuovo ordine',
@@ -897,14 +911,14 @@ const TR = {
     'pricing.pro.f1':'Tutto lo Starter','pricing.pro.f2':'5.000 conversazioni/mese','pricing.pro.f3':'Agenda appuntamenti automatica',
     'pricing.pro.f4':'Servizi con tariffa oraria','pricing.pro.f5':'Analytics completo + esportazione CSV',
     'pricing.pro.f6':'Catalogo servizi separato','pricing.pro.f7':'Supporto prioritario',
-    'pricing.note':'7 giorni gratis su qualsiasi piano · Nessuna carta · Disdici quando vuoi · Fatturazione mensile',
+    'pricing.note':'7 giorni gratis su qualsiasi piano · Disdici quando vuoi · Fatturazione mensile',
     'cta.h2':'Il sabato sera il bot lavora.<br/>Tu riposi.',
-    'cta.sub':'Provalo 7 giorni gratis. Nessuna carta, nessun impegno.','cta.btn':'🚀 Crea il mio account gratis →',
-    'cta.badge1':'✓ Nessuna carta di credito','cta.badge2':'✓ Operativo in meno di un\'ora','cta.badge3':'✓ Disdici quando vuoi','cta.badge4':'✓ Supporto incluso',
+    'cta.sub':'Provalo 7 giorni gratis. Nessun contratto, nessuna sorpresa.','cta.btn':'🚀 Crea il mio account gratis →',
+    'cta.badge1':'✓ 7 giorni gratis inclusi','cta.badge2':'✓ Operativo in meno di un\'ora','cta.badge3':'✓ Disdici quando vuoi','cta.badge4':'✓ Supporto incluso',
     'footer.terms':'Termini di servizio','footer.privacy':'Privacy','footer.legal':'Note legali','footer.start':'Inizia gratis','footer.login':'Accedi al pannello','footer.copy':'© 2026 Sara Bot',
-    'sectors.label':'Per la tua attività','sectors.h2':'Funziona per qualsiasi attività che vende',
-    'sectors.sub':'Dalla pizzeria del sabato sera al tecnico di ricambi. Se hai clienti che scrivono su WhatsApp, Sara Bot è per te.',
-    'sectors.tab1':'🍕 Ristorante','sectors.tab2':'🌸 Fioreria','sectors.tab3':'💆 Centro estetico','sectors.tab4':'💡 Elettronica / Ricambi','sectors.tab5':'🍰 Pasticceria',
+    'sectors.label':'Per la tua attività','sectors.h2':'Funziona per qualsiasi attività o professionista',
+    'sectors.sub':'Ristoranti, fiorerie, centri estetici, medici, tecnici, avvocati — se hai clienti che scrivono su WhatsApp, Sara Bot è per te.',
+    'sectors.tab1':'🍕 Ristorante','sectors.tab2':'🌸 Fioreria','sectors.tab3':'💆 Centro estetico','sectors.tab4':'💡 Elettronica / Ricambi','sectors.tab5':'🍰 Pasticceria','sectors.tab6':'🩺 Medico / Professionista',
     'faq.label':'Domande frequenti','faq.h2':'Tutto quello che devi sapere',
     'faq1.q':'Devo saper programmare per configurarlo?',
     'faq1.a':'No. Tutto si configura da un pannello web con moduli e pulsanti. L\'assistente di attivazione ti guida passo dopo passo dalla registrazione al primo ordine, senza alcuna conoscenza tecnica.',
@@ -927,12 +941,12 @@ const TR = {
     'hero.h1':'Verwalte dein Geschäft.<br/><em>Der Bot kümmert sich um deine Kunden.</em>',
     'hero.sub':'Bestellungen, Termine, Katalog, Kunden — alles in einem Panel. Dein WhatsApp-KI-Bot nimmt Bestellungen an, beantwortet Fragen und bucht Termine 24/7, ohne dass du dein Handy im Blick behalten musst.',
     'hero.btn1':'🚀 7 Tage kostenlos starten','hero.btn2':'So funktioniert\'s',
-    'hero.note':'Keine Kreditkarte · <strong>7 Tage gratis</strong> · Jederzeit kündbar',
+    'hero.note':'<strong>7 Tage gratis</strong> · Jederzeit kündbar',
     'problem.label':'Das Problem','problem.h2':'Wie viel Zeit verbringst du damit, immer wieder dieselben Nachrichten zu beantworten?',
     'problem.sub':'Jedes Unternehmen auf WhatsApp hat dasselbe Problem: Der Inhaber wird zum Chat-Operator.',
     'problem.before_label':'❌ Vor Sara Bot',
     'problem.before1':'Du beantwortest „Habt ihr das?" 30 Mal am Tag','problem.before2':'Eine Bestellung kommt um 23 Uhr und du merkst es nicht',
-    'problem.before3':'Samstagabend hört das Telefon nicht auf zu klingeln','problem.before4':'Du verlierst Buchungen, weil niemand sie aufzeichnet',
+    'problem.before3':'Samstagabend hören die WhatsApp-Nachrichten nicht auf','problem.before4':'Du verlierst Buchungen, weil niemand sie aufzeichnet',
     'problem.before5':'Du weißt nicht, wie viel du diese Woche verkauft hast','problem.before6':'Wenn du weg bist = Geschäft steht still',
     'problem.after_label':'✅ Mit Sara Bot',
     'problem.after1':'Der Bot antwortet, zeigt Fotos, nimmt die Bestellung','problem.after2':'Du bekommst nur eine Benachrichtigung bei einer neuen Bestellung',
@@ -964,14 +978,14 @@ const TR = {
     'pricing.pro.f1':'Alles aus Starter','pricing.pro.f2':'5.000 Gespräche/Monat','pricing.pro.f3':'Automatischer Terminkalender',
     'pricing.pro.f4':'Dienstleistungen mit Stundensatz','pricing.pro.f5':'Vollständige Analytics + CSV-Export',
     'pricing.pro.f6':'Separater Dienstleistungskatalog','pricing.pro.f7':'Prioritäts-Support',
-    'pricing.note':'7 Tage gratis auf jedem Plan · Keine Karte · Jederzeit kündbar · Monatliche Abrechnung',
+    'pricing.note':'7 Tage gratis auf jedem Plan · Jederzeit kündbar · Monatliche Abrechnung',
     'cta.h2':'Samstagabend arbeitet der Bot.<br/>Du ruhst dich aus.',
-    'cta.sub':'7 Tage kostenlos testen. Keine Karte, kein Engagement.','cta.btn':'🚀 Mein Konto kostenlos erstellen →',
-    'cta.badge1':'✓ Keine Kreditkarte','cta.badge2':'✓ In weniger als einer Stunde live','cta.badge3':'✓ Jederzeit kündbar','cta.badge4':'✓ Support inklusive',
+    'cta.sub':'7 Tage kostenlos testen. Keine Verträge, keine Überraschungen.','cta.btn':'🚀 Mein Konto kostenlos erstellen →',
+    'cta.badge1':'✓ 7 Tage gratis inklusive','cta.badge2':'✓ In weniger als einer Stunde live','cta.badge3':'✓ Jederzeit kündbar','cta.badge4':'✓ Support inklusive',
     'footer.terms':'Nutzungsbedingungen','footer.privacy':'Datenschutz','footer.legal':'Impressum','footer.start':'Kostenlos starten','footer.login':'Zum Panel','footer.copy':'© 2026 Sara Bot',
-    'sectors.label':'Für dein Unternehmen','sectors.h2':'Funktioniert für jedes Unternehmen, das verkauft',
-    'sectors.sub':'Vom Samstagabend-Pizzeria bis zum Ersatzteil-Techniker. Wenn du Kunden hast, die auf WhatsApp schreiben, ist Sara Bot für dich.',
-    'sectors.tab1':'🍕 Restaurant','sectors.tab2':'🌸 Blumengeschäft','sectors.tab3':'💆 Beautysalon','sectors.tab4':'💡 Elektronik / Ersatzteile','sectors.tab5':'🍰 Bäckerei',
+    'sectors.label':'Für dein Unternehmen','sectors.h2':'Funktioniert für jedes Unternehmen oder Freiberufler',
+    'sectors.sub':'Restaurants, Floristen, Beautysalons, Ärzte, Techniker, Anwälte — wenn deine Kunden auf WhatsApp schreiben, ist Sara Bot für dich.',
+    'sectors.tab1':'🍕 Restaurant','sectors.tab2':'🌸 Blumengeschäft','sectors.tab3':'💆 Beautysalon','sectors.tab4':'💡 Elektronik / Ersatzteile','sectors.tab5':'🍰 Bäckerei','sectors.tab6':'🩺 Arzt / Freiberufler',
     'faq.label':'Häufige Fragen','faq.h2':'Alles, was du wissen musst',
     'faq1.q':'Muss ich programmieren können, um es einzurichten?',
     'faq1.a':'Nein. Alles wird über ein Web-Panel mit Formularen und Schaltflächen konfiguriert. Der Setup-Assistent führt dich Schritt für Schritt von der Registrierung bis zur ersten Bestellung, ohne technische Kenntnisse.',
@@ -994,12 +1008,12 @@ const TR = {
     'hero.h1':'Gérez votre activité.<br/><em>Le bot s\'occupe de vos clients.</em>',
     'hero.sub':'Commandes, rendez-vous, catalogue, clients — tout depuis un panneau. Votre bot IA sur WhatsApp prend les commandes, répond aux questions et planifie des rendez-vous 24h/24, sans que vous ayez à surveiller votre téléphone.',
     'hero.btn1':'🚀 Commencer 7 jours gratuits','hero.btn2':'Voir comment ça marche',
-    'hero.note':'Sans carte bancaire · <strong>7 jours gratuits</strong> · Résiliez quand vous voulez',
+    'hero.note':'<strong>7 jours gratuits</strong> · Résiliez quand vous voulez',
     'problem.label':'Le problème','problem.h2':'Combien de temps passez-vous à répondre aux mêmes messages ?',
     'problem.sub':'Chaque entreprise sur WhatsApp a le même problème : le propriétaire finit par être l\'opérateur de chat.',
     'problem.before_label':'❌ Avant Sara Bot',
     'problem.before1':'Vous répondez « vous avez ça ? » 30 fois par jour','problem.before2':'Une commande arrive à 23h et vous ne la voyez pas',
-    'problem.before3':'Le samedi soir le téléphone n\'arrête pas','problem.before4':'Vous perdez des réservations parce que personne ne les enregistre',
+    'problem.before3':'Le samedi soir les messages WhatsApp n\'arrêtent pas','problem.before4':'Vous perdez des réservations parce que personne ne les enregistre',
     'problem.before5':'Vous ne savez pas combien vous avez vendu cette semaine','problem.before6':'Si vous êtes absent = l\'activité s\'arrête',
     'problem.after_label':'✅ Avec Sara Bot',
     'problem.after1':'Le bot répond, montre les photos, prend la commande','problem.after2':'Vous recevez une notification uniquement pour les nouvelles commandes',
@@ -1031,14 +1045,14 @@ const TR = {
     'pricing.pro.f1':'Tout le Starter','pricing.pro.f2':'5 000 conversations/mois','pricing.pro.f3':'Agenda de rendez-vous automatique',
     'pricing.pro.f4':'Services au tarif horaire','pricing.pro.f5':'Analytics complet + export CSV',
     'pricing.pro.f6':'Catalogue de services séparé','pricing.pro.f7':'Support prioritaire',
-    'pricing.note':'7 jours gratuits sur tous les plans · Sans carte · Résiliez quand vous voulez · Facturation mensuelle',
+    'pricing.note':'7 jours gratuits sur tous les plans · Résiliez quand vous voulez · Facturation mensuelle',
     'cta.h2':'Le samedi soir le bot travaille.<br/>Vous vous reposez.',
-    'cta.sub':'Essayez-le gratuitement pendant 7 jours. Sans carte, sans engagement.','cta.btn':'🚀 Créer mon compte gratuit →',
-    'cta.badge1':'✓ Sans carte bancaire','cta.badge2':'✓ En ligne en moins d\'une heure','cta.badge3':'✓ Résiliez quand vous voulez','cta.badge4':'✓ Support inclus',
+    'cta.sub':'Essayez-le gratuitement pendant 7 jours. Sans contrat, sans surprise.','cta.btn':'🚀 Créer mon compte gratuit →',
+    'cta.badge1':'✓ 7 jours gratuits inclus','cta.badge2':'✓ En ligne en moins d\'une heure','cta.badge3':'✓ Résiliez quand vous voulez','cta.badge4':'✓ Support inclus',
     'footer.terms':'Conditions d\'utilisation','footer.privacy':'Confidentialité','footer.legal':'Mentions légales','footer.start':'Commencer gratis','footer.login':'Accéder au panneau','footer.copy':'© 2026 Sara Bot',
-    'sectors.label':'Pour votre entreprise','sectors.h2':'Fonctionne pour tout commerce qui vend',
-    'sectors.sub':'De la pizzeria du samedi soir au technicien en pièces détachées. Si vous avez des clients qui écrivent sur WhatsApp, Sara Bot est fait pour vous.',
-    'sectors.tab1':'🍕 Restaurant','sectors.tab2':'🌸 Fleuriste','sectors.tab3':'💆 Institut de beauté','sectors.tab4':'💡 Électronique / Pièces','sectors.tab5':'🍰 Pâtisserie',
+    'sectors.label':'Pour votre entreprise','sectors.h2':'Fonctionne pour tout commerce ou professionnel',
+    'sectors.sub':'Restaurants, fleuristes, instituts de beauté, médecins, techniciens, avocats — si vos clients écrivent sur WhatsApp, Sara Bot est fait pour vous.',
+    'sectors.tab1':'🍕 Restaurant','sectors.tab2':'🌸 Fleuriste','sectors.tab3':'💆 Institut de beauté','sectors.tab4':'💡 Électronique / Pièces','sectors.tab5':'🍰 Pâtisserie','sectors.tab6':'🩺 Médecin / Professionnel',
     'faq.label':'Questions fréquentes','faq.h2':'Tout ce que vous devez savoir',
     'faq1.q':'Faut-il savoir programmer pour le configurer ?',
     'faq1.a':'Non. Tout se configure depuis un panneau web avec des formulaires et des boutons. L\'assistant d\'activation vous guide étape par étape de l\'inscription jusqu\'à la première commande, sans aucune connaissance technique.',
@@ -1061,12 +1075,12 @@ const TR = {
     'hero.h1':'Gerencie seu negócio.<br/><em>O bot atende seus clientes.</em>',
     'hero.sub':'Pedidos, agendamentos, catálogo, clientes — tudo em um painel. Seu bot de IA no WhatsApp recebe pedidos, responde dúvidas e agenda horários 24/7, sem você precisar ficar no celular.',
     'hero.btn1':'🚀 Começar 7 dias grátis','hero.btn2':'Ver como funciona',
-    'hero.note':'Sem cartão de crédito · <strong>7 dias grátis</strong> · Cancele quando quiser',
+    'hero.note':'<strong>7 dias grátis</strong> · Cancele quando quiser',
     'problem.label':'O problema','problem.h2':'Quanto tempo você passa respondendo as mesmas mensagens todo dia?',
     'problem.sub':'Todo negócio no WhatsApp tem o mesmo problema: o dono acaba sendo o operador de chat.',
     'problem.before_label':'❌ Antes do Sara Bot',
     'problem.before1':'Você responde "tem isso?" 30 vezes por dia','problem.before2':'Um pedido chega às 23h e você não vê',
-    'problem.before3':'No sábado à noite o celular não para','problem.before4':'Você perde agendamentos porque ninguém os registra',
+    'problem.before3':'No sábado à noite as mensagens do WhatsApp não param','problem.before4':'Você perde agendamentos porque ninguém os registra',
     'problem.before5':'Você não sabe quanto vendeu essa semana','problem.before6':'Se você não está = o negócio para',
     'problem.after_label':'✅ Com Sara Bot',
     'problem.after1':'O bot responde, mostra fotos, recebe o pedido','problem.after2':'Você recebe notificação só quando há um novo pedido',
@@ -1098,14 +1112,14 @@ const TR = {
     'pricing.pro.f1':'Tudo do Starter','pricing.pro.f2':'5.000 conversas/mês','pricing.pro.f3':'Agenda de horários automática',
     'pricing.pro.f4':'Serviços com preço por hora','pricing.pro.f5':'Analytics completo + exportação CSV',
     'pricing.pro.f6':'Catálogo de serviços separado','pricing.pro.f7':'Suporte prioritário',
-    'pricing.note':'7 dias grátis em qualquer plano · Sem cartão · Cancele quando quiser · Cobrança mensal',
+    'pricing.note':'7 dias grátis em qualquer plano · Cancele quando quiser · Cobrança mensal',
     'cta.h2':'No sábado à noite o bot trabalha.<br/>Você descansa.',
-    'cta.sub':'Experimente grátis por 7 dias. Sem cartão, sem compromisso.','cta.btn':'🚀 Criar minha conta grátis →',
-    'cta.badge1':'✓ Sem cartão de crédito','cta.badge2':'✓ Ativo em menos de uma hora','cta.badge3':'✓ Cancele quando quiser','cta.badge4':'✓ Suporte incluído',
+    'cta.sub':'Experimente grátis por 7 dias. Sem contratos, sem surpresas.','cta.btn':'🚀 Criar minha conta grátis →',
+    'cta.badge1':'✓ 7 dias grátis incluídos','cta.badge2':'✓ Ativo em menos de uma hora','cta.badge3':'✓ Cancele quando quiser','cta.badge4':'✓ Suporte incluído',
     'footer.terms':'Termos de serviço','footer.privacy':'Privacidade','footer.legal':'Aviso legal','footer.start':'Começar grátis','footer.login':'Entrar no painel','footer.copy':'© 2026 Sara Bot',
-    'sectors.label':'Para o seu negócio','sectors.h2':'Funciona para qualquer negócio que vende',
-    'sectors.sub':'Da pizzaria da noite de sábado ao técnico de peças. Se você tem clientes que escrevem no WhatsApp, Sara Bot é para você.',
-    'sectors.tab1':'🍕 Restaurante','sectors.tab2':'🌸 Floricultura','sectors.tab3':'💆 Salão de beleza','sectors.tab4':'💡 Eletrônica / Peças','sectors.tab5':'🍰 Confeitaria',
+    'sectors.label':'Para o seu negócio','sectors.h2':'Funciona para qualquer negócio ou profissional',
+    'sectors.sub':'Restaurantes, floristas, salões de beleza, médicos, técnicos, advogados — se seus clientes escrevem no WhatsApp, Sara Bot é para você.',
+    'sectors.tab1':'🍕 Restaurante','sectors.tab2':'🌸 Floricultura','sectors.tab3':'💆 Salão de beleza','sectors.tab4':'💡 Eletrônica / Peças','sectors.tab5':'🍰 Confeitaria','sectors.tab6':'🩺 Médico / Profissional',
     'faq.label':'Perguntas frequentes','faq.h2':'Tudo o que você precisa saber',
     'faq1.q':'Preciso saber programar para configurar?',
     'faq1.a':'Não. Tudo é configurado por um painel web com formulários e botões. O assistente de ativação te guia passo a passo do cadastro até o primeiro pedido, sem nenhum conhecimento técnico.',
