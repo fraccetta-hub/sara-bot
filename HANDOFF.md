@@ -272,6 +272,31 @@
 - `public/admin/i18n.js`: chiave `help.nl.info` aggiunta; tutti `help.*` aggiornati in ES/EN/IT/DE/FR/PT — esempi in linguaggio naturale, nessun comando rigido, STOP al posto di FIN per uscire dal takeover
 - Nota: anche `routes/superadmin.js GET /tenants/:id` già fixato in questa sessione (commit precedente incluso nel push)
 
+## COSA È STATO FATTO (sessione 2026-06-20 — superadmin view + email/username)
+
+### Superadmin modal → read-only info view (commit 997f8c0)
+- Modal edit rimpiazzato con vista read-only: nome, email, username, WhatsApp merchant, Bot ID (Meta), stato Meta, sezioni attive, piano (moneda/prezzo/scadenza), paese, data registrazione
+- Azioni rimaste: impersonate, toggle active (nel modal), reset password
+- Rimosso: form editing, import-from-images dal modal
+- `toggleFromModal()` nuovo — toggle + chiude modal + ricarica lista
+
+### Email separata da username (commit 997f8c0)
+- `routes/register.js`: salva `email` + `country` al signup
+- `routes/admin.js` `GET /settings`: espone `login_slug`, `email`, `name`
+- `routes/admin.js` `POST /change-email`: valida formato + unicità, aggiorna colonna `email`
+- `routes/admin.js` `POST /change-username`: valida formato (`[a-z0-9_.-]+`) + unicità, aggiorna `login_slug`
+- `routes/admin.js` forgot-password: cerca per colonna `email` prima, fallback `login_slug` (backward compat); manda reset a `email` reale
+- `routes/superadmin.js` GET /tenants + GET /tenants/:id: include `email`, `country`
+- `public/admin/index.html` settings: nuova card "Account" — cambia email + username con feedback i18n
+- `public/admin/i18n.js`: chiavi `settings.account.*` + `err.invalid_email/email_taken/username_*` in ES/EN/IT/DE/FR/PT
+
+**Migration Supabase richiesta (non ancora eseguita):**
+```sql
+ALTER TABLE tenants ADD COLUMN IF NOT EXISTS email TEXT;
+ALTER TABLE tenants ADD COLUMN IF NOT EXISTS country TEXT;
+UPDATE tenants SET email = login_slug WHERE email IS NULL;
+```
+
 ## PROSSIME PRIORITÀ (sessione successiva)
 1. **Migration Supabase** — `ALTER TABLE tenants ADD COLUMN IF NOT EXISTS merchant_pending_json jsonb DEFAULT NULL;` (richiesta per pending persistence)
 2. **Stripe** — configurare env vars reali su Render + testare flow completo con account business
