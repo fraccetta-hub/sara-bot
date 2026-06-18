@@ -1,16 +1,25 @@
-const nodemailer = require('nodemailer');
+const axios = require('axios');
 
-const transporter = nodemailer.createTransport({
-  host:   process.env.SMTP_HOST,
-  port:   parseInt(process.env.SMTP_PORT || '587'),
-  secure: process.env.SMTP_SECURE === 'true',
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-});
+const FROM_EMAIL = 'info@sarabot.pro';
+const FROM_NAME  = 'Sara Bot';
 
-const FROM = process.env.SMTP_FROM || 'Sara Bot <info@sarabot.pro>';
+async function sendMail({ to, subject, html }) {
+  await axios.post(
+    'https://api.brevo.com/v3/smtp/email',
+    {
+      sender:   { name: FROM_NAME, email: FROM_EMAIL },
+      to:       [{ email: to }],
+      subject,
+      htmlContent: html,
+    },
+    {
+      headers: {
+        'api-key':      process.env.BREVO_API_KEY,
+        'Content-Type': 'application/json',
+      },
+    }
+  );
+}
 
 // ── Welcome email translations ─────────────────────────────────────────────────
 const T = {
@@ -103,22 +112,17 @@ function buildHtml(t, businessName, panelUrl) {
 }
 
 async function sendWelcome({ email, businessName, lang = 'es' }) {
-  if (!process.env.SMTP_HOST || !process.env.SMTP_USER) {
-    console.warn('[mailer] SMTP not configured — skipping welcome email');
+  if (!process.env.BREVO_API_KEY) {
+    console.warn('[mailer] BREVO_API_KEY not configured — skipping welcome email');
     return;
   }
   const t = T[lang] || T.es;
   const panelUrl = `${process.env.APP_URL}/admin/index.html`;
   try {
-    await transporter.sendMail({
-      from: FROM,
-      to: email,
-      subject: t.subject,
-      html: buildHtml(t, businessName, panelUrl),
-    });
+    await sendMail({ to: email, subject: t.subject, html: buildHtml(t, businessName, panelUrl) });
     console.log(`[mailer] Welcome email sent to ${email}`);
   } catch (err) {
-    console.error('[mailer] Failed to send welcome email:', err.message);
+    console.error('[mailer] Failed to send welcome email:', err.response?.data || err.message);
   }
 }
 
@@ -200,21 +204,16 @@ function buildResetHtml(tr, businessName, resetUrl) {
 }
 
 async function sendPasswordReset({ email, businessName, resetUrl, lang = 'es' }) {
-  if (!process.env.SMTP_HOST || !process.env.SMTP_USER) {
-    console.warn('[mailer] SMTP not configured — skipping password reset email');
+  if (!process.env.BREVO_API_KEY) {
+    console.warn('[mailer] BREVO_API_KEY not configured — skipping password reset email');
     return;
   }
   const tr = TR[lang] || TR.es;
   try {
-    await transporter.sendMail({
-      from: FROM,
-      to: email,
-      subject: tr.subject,
-      html: buildResetHtml(tr, businessName, resetUrl),
-    });
+    await sendMail({ to: email, subject: tr.subject, html: buildResetHtml(tr, businessName, resetUrl) });
     console.log(`[mailer] Password reset email sent to ${email}`);
   } catch (err) {
-    console.error('[mailer] Failed to send password reset email:', err.message);
+    console.error('[mailer] Failed to send password reset email:', err.response?.data || err.message);
   }
 }
 
