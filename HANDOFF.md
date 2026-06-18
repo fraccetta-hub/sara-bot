@@ -312,16 +312,41 @@ ALTER TABLE tenants ADD COLUMN IF NOT EXISTS bot_phone_number TEXT;
 UPDATE tenants SET email = login_slug WHERE email IS NULL;
 ```
 
+## COSA È STATO FATTO (sessione 2026-06-19 — import/export audit + ZIP bulk images)
+
+### Import/export — audit e fix (commit 9dea353)
+- **Export colonne inglese**: prodotti (`name,category,price,stock,active,description,image_url,created_at`) e servizi (stesso schema + `price_type,duration_min`)
+- **Prezzi decimali**: import CSV ora usa `parseFloat` + strip solo `[^\d.,]` → supporta `€4,99`, `4.99`, `1.500`
+- **AI foto import**: prompt passa valuta del tenant (`plan_currency`) e consente decimali (era "número entero" hardcoded)
+- **URL esterna rimossa** dal form prodotto — solo upload file; nessun link esterno che si rompe
+- **ZIP bulk images**: `POST /admin/products/bulk-images` — accetta ZIP (max 50MB), estrae immagini, fuzzy-match nome file → nome prodotto (soglia 50%, match esatto=100, inclusione=90, overlap parole>2char), carica su Supabase Storage, aggiorna DB; bottone "📦 Imágenes ZIP" + modal con istruzioni + report matched/unmatched
+- **Valuta dinamica nel bot**: `services/claude.js` — `formatPrice()` con `CURRENCY_SYMBOL` + `CURRENCY_LOCALE` per 10 valute; sostituisce "Gs"/"es-PY" hardcoded; EUR merchant vede `€4,99`, USD vede `$29.99`, PYG vede `15.000 Gs`
+- **`/settings` espone `plan_currency`**: frontend può mostrare simbolo valuta corretto
+- **i18n**: chiavi `zip.*` + `products.bulkImages` in ES/EN/IT/DE/FR/PT
+
+**Flusso ZIP per merchant:**
+1. Esporta CSV catalogo → vede colonna `name` con nomi esatti
+2. Rinomina foto con nome prodotto (`rosa-roja.jpg`, `torta-chocolate.jpg`)
+3. Fa ZIP → carica da tab Productos → bottone "📦 Imágenes ZIP"
+4. Modal mostra risultati: foto assegnate (con %) e non matchate
+
+**Security hardening ZIP (commit 5911b29 + 75a05dd):**
+- `zipRateLimit`: 10 upload/ora per tenant
+- `handleZipUpload` wrapper: `MulterError LIMIT_FILE_SIZE` → JSON 413 (non crash Express)
+- MAX_ZIP_ENTRIES = 300: rifiuta prima di estrarre se troppi file
+- ZIP bomb guard: somma `entry.header.size` (non compresso) prima di qualsiasi `getData()` — rifiuta se totale > 200MB
+- Per-entry cap: skip se immagine decompressa > 8MB
+- Magic bytes check (`detectImageMime`): valida JPEG/PNG/GIF/WebP dai primi 12 byte — rifiuta file con estensione giusta ma contenuto non-immagine; usa mime reale (non da estensione) per upload
+- Modal UI (commit 1d62470): pannello limiti visibile in 6 lingue (formati, 300 img max, 50MB ZIP, 8MB/img)
+
 ## PROSSIME PRIORITÀ (sessione successiva)
 1. **Migration Supabase** — `ALTER TABLE tenants ADD COLUMN IF NOT EXISTS merchant_pending_json jsonb DEFAULT NULL;` (richiesta per pending persistence)
 2. **Stripe** — configurare env vars reali su Render + testare flow completo con account business
-3. **Bot supporto** — risposta automatica FAQ/supporto nella sezione support del pannello admin
-4. **Email** — finire config Cloudflare send + Brevo receive
-5. **Sara risposte** — tuning qualità risposte ai clienti finali
-6. **Costi/margini** — calcolo reale token AI + infra + limiti piano + definire piani starter/pro
-7. **Fatturazione** — capire come mandare fatture ai merchant
-8. **GDPR compliance** — audit cosa manca (DPA, retention policy, right-to-erasure flow)
-9. **Go-to-market** — pubblicità, test, vendita
+3. **Sara risposte** — tuning qualità risposte ai clienti finali
+4. **Costi/margini** — calcolo reale token AI + infra + limiti piano + definire piani starter/pro
+5. **Fatturazione** — capire come mandare fatture ai merchant
+6. **GDPR compliance** — audit cosa manca (DPA, retention policy, right-to-erasure flow)
+7. **Go-to-market** — pubblicità, test, vendita
 
 ## COSA NON FUNZIONA / IN SOSPESO
 - **Env vars mancanti su Render** — da aggiungere in Render → Environment prima che il wizard funzioni:
@@ -354,7 +379,7 @@ UPDATE tenants SET email = login_slug WHERE email IS NULL;
 
 ## COME RIPRENDERE
 Primo messaggio da mandare a Claude nella prossima sessione:
-"Leggi HANDOFF.md. Sessione precedente: merchant NL bot completato (linguaggio naturale, appuntamenti, ordini, servizi, takeover, persistence DB). Prima cosa: eseguire migration Supabase `merchant_pending_json`. Poi priorità 2: Stripe con account business reale."
+"Leggi HANDOFF.md. Sessione precedente: import/export audit completato (ZIP bulk images, prezzi decimali, valuta dinamica nel bot, export inglese). Prima cosa: migration Supabase `merchant_pending_json`. Poi: Stripe con account business reale."
 
 ## ERRORI NOTI / TRAPPOLE
 - NON leggere/query tabella prod `tenants` con `select('*')` o colonne sensibili senza autorizzazione esplicita utente per quella lettura specifica — bloccato da permission classifier (dati merchant: token WhatsApp, telefoni). `superadmin GET /tenants/:id` ora usa campi espliciti sicuri.
