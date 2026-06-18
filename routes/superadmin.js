@@ -17,10 +17,10 @@ const SUPER_JWT_SECRET = process.env.SUPERADMIN_JWT_SECRET;
 // ─── Auth middleware ──────────────────────────────────────────────────────────
 
 function requireSuper(req, res, next) {
-  const auth = req.headers.authorization;
-  if (!auth?.startsWith('Bearer ')) return res.status(401).json({ error: 'No autorizado' });
+  const token = req.cookies?.sara_super_token || req.headers.authorization?.replace('Bearer ', '');
+  if (!token) return res.status(401).json({ error: 'No autorizado' });
   try {
-    req.admin = jwt.verify(auth.slice(7), SUPER_JWT_SECRET);
+    req.admin = jwt.verify(token, SUPER_JWT_SECRET);
     next();
   } catch {
     res.status(401).json({ error: 'Token inválido o expirado' });
@@ -43,7 +43,19 @@ router.post('/login', async (req, res) => {
   }
 
   const token = jwt.sign({ role: 'superadmin' }, SUPER_JWT_SECRET, { expiresIn: '8h' });
-  res.json({ token });
+  res.cookie('sara_super_token', token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    maxAge: 8 * 60 * 60 * 1000,
+  });
+  res.json({ ok: true });
+});
+
+// ─── POST /superadmin/logout ──────────────────────────────────────────────────
+router.post('/logout', (req, res) => {
+  res.clearCookie('sara_super_token', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict' });
+  res.json({ ok: true });
 });
 
 // ─── GET /superadmin/stats ────────────────────────────────────────────────────
@@ -219,7 +231,13 @@ router.post('/tenants/:id/impersonate', requireSuper, async (req, res) => {
     JWT_SECRET,
     { expiresIn: '2h' }
   );
-  res.json({ token, tenantName: tenant.name });
+  res.cookie('sara_token', token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    maxAge: 2 * 60 * 60 * 1000,
+  });
+  res.json({ tenantName: tenant.name });
 });
 
 // ─── GET /superadmin/tenants/:id/products ────────────────────────────────────

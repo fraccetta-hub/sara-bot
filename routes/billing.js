@@ -195,6 +195,12 @@ router.get('/success', async (req, res) => {
       JWT_SECRET,
       { expiresIn: '90d' }
     );
+    res.cookie('sara_token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 90 * 24 * 60 * 60 * 1000,
+    });
 
     res.send(`<!DOCTYPE html>
 <html lang="${h(lang)}">
@@ -252,7 +258,6 @@ router.get('/success', async (req, res) => {
   </div>
 </div>
 <script>
-  localStorage.setItem('sara_token', ${JSON.stringify(token)});
   function goPanel() { window.location.href = '/admin/index.html'; }
 </script>
 </body>
@@ -266,11 +271,11 @@ router.get('/success', async (req, res) => {
 // ── POST /billing/cancel ──────────────────────────────────────────────────────
 // Called from admin panel to cancel subscription at period end (not immediately)
 router.post('/cancel', async (req, res) => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader) return res.status(401).json({ error: 'No autorizado.' });
+  const token = req.cookies?.sara_token || req.headers.authorization?.replace('Bearer ', '');
+  if (!token) return res.status(401).json({ error: 'No autorizado.' });
 
   try {
-    const decoded  = jwt.verify(authHeader.replace('Bearer ', ''), JWT_SECRET);
+    const decoded  = jwt.verify(token, JWT_SECRET);
     const tenantId = decoded.tenantId;
 
     const { data: tenant } = await supabase
@@ -295,11 +300,11 @@ router.post('/cancel', async (req, res) => {
 // ── POST /billing/reactivate ──────────────────────────────────────────────────
 // Re-enable subscription if it was set to cancel_at_period_end but user changed mind
 router.post('/reactivate', async (req, res) => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader) return res.status(401).json({ error: 'No autorizado.' });
+  const token = req.cookies?.sara_token || req.headers.authorization?.replace('Bearer ', '');
+  if (!token) return res.status(401).json({ error: 'No autorizado.' });
 
   try {
-    const decoded  = jwt.verify(authHeader.replace('Bearer ', ''), JWT_SECRET);
+    const decoded  = jwt.verify(token, JWT_SECRET);
     const tenantId = decoded.tenantId;
 
     const { data: tenant } = await supabase

@@ -556,21 +556,21 @@
 </div>
 
 <script>
-let TOKEN = localStorage.getItem('sara_super_token') || '';
+let TOKEN = '';
 let allTenants = [];
 let editingTenantId = null;
 let activeSupportTenantId = null;
 let supportListPollTimer = null;
 let supportChatPollTimer = null;
 
-window.onload = () => {
-  if (TOKEN) showDashboard();
+window.onload = async () => {
+  const res = await fetch('/superadmin/stats', { credentials: 'same-origin' }).catch(() => null);
+  if (res && res.ok) showDashboard();
   else window.location.replace('/admin/index.html');
 };
 
-function logout() {
-  TOKEN = '';
-  localStorage.removeItem('sara_super_token');
+async function logout() {
+  await fetch('/superadmin/logout', { method: 'POST', credentials: 'same-origin' }).catch(() => {});
   window.location.replace('/admin/index.html');
 }
 
@@ -770,7 +770,7 @@ async function runAiImport() {
 
     const res = await fetch(`/superadmin/tenants/${editingTenantId}/import-from-images`, {
       method: 'POST',
-      headers: { 'Authorization': 'Bearer ' + TOKEN },
+      credentials: 'same-origin',
       body: formData
     });
     const data = await res.json();
@@ -823,7 +823,8 @@ async function confirmAiImport() {
     const replace = document.getElementById('importReplaceCheck').checked;
     const res = await fetch(`/superadmin/tenants/${editingTenantId}/import-confirm`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + TOKEN },
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ rows: importAiRows, mode: replace ? 'replace' : 'append' })
     });
     const data = await res.json();
@@ -895,9 +896,7 @@ async function saveTenant() {
 // ── Impersonate ────────────────────────────────────────────────────────────────
 async function impersonate() {
   const res = await api(`/superadmin/tenants/${editingTenantId}/impersonate`, 'POST');
-  // Open admin panel in new tab with the merchant token pre-loaded
-  const url = `/admin/index.html?token=${encodeURIComponent(res.token)}&name=${encodeURIComponent(res.tenantName)}`;
-  window.open(url, '_blank');
+  window.open(`/admin/index.html?name=${encodeURIComponent(res.tenantName)}`, '_blank');
 }
 
 // ── Reset password ─────────────────────────────────────────────────────────────
@@ -1215,9 +1214,8 @@ setInterval(async () => {
 }, 30000);
 
 // ── API helper ─────────────────────────────────────────────────────────────────
-async function api(path, method = 'GET', body = null, auth = true) {
-  const opts = { method, headers: { 'Content-Type': 'application/json' } };
-  if (auth && TOKEN) opts.headers['Authorization'] = 'Bearer ' + TOKEN;
+async function api(path, method = 'GET', body = null) {
+  const opts = { method, credentials: 'same-origin', headers: { 'Content-Type': 'application/json' } };
   if (body) opts.body = JSON.stringify(body);
   const res  = await fetch(path, opts);
   const data = await res.json();

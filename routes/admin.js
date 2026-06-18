@@ -31,10 +31,10 @@ const JWT_SECRET = process.env.ADMIN_JWT_SECRET;
 const ALWAYS_ALLOWED = ['/admin/support', '/admin/settings'];
 
 async function requireAuth(req, res, next) {
-  const auth = req.headers.authorization;
-  if (!auth?.startsWith('Bearer ')) return res.status(401).json({ error: 'No autorizado', errorCode: 'unauthorized' });
+  const token = req.cookies?.sara_token || req.headers.authorization?.replace('Bearer ', '');
+  if (!token) return res.status(401).json({ error: 'No autorizado', errorCode: 'unauthorized' });
   try {
-    req.tenant = jwt.verify(auth.slice(7), JWT_SECRET);
+    req.tenant = jwt.verify(token, JWT_SECRET);
   } catch {
     return res.status(401).json({ error: 'Token inválido o expirado', errorCode: 'token_expired' });
   }
@@ -166,7 +166,27 @@ router.post('/login', async (req, res) => {
   );
 
   const needsSetup = !tenant.phone_number_id;
-  res.json({ token, tenantName: tenant.name, botName: tenant.bot_name, needsSetup });
+  res.cookie('sara_token', token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    maxAge: 12 * 60 * 60 * 1000,
+  });
+  res.json({ tenantName: tenant.name, botName: tenant.bot_name, needsSetup });
+});
+
+// ─── GET /admin/me ────────────────────────────────────────────────────────────
+router.get('/me', requireAuth, async (req, res) => {
+  const { data: tenant } = await supabase
+    .from('tenants').select('name, bot_name, phone_number_id').eq('id', req.tenant.tenantId).single();
+  if (!tenant) return res.status(401).json({ error: 'Tenant not found' });
+  res.json({ tenantName: tenant.name, botName: tenant.bot_name, needsSetup: !tenant.phone_number_id });
+});
+
+// ─── POST /admin/logout ───────────────────────────────────────────────────────
+router.post('/logout', (req, res) => {
+  res.clearCookie('sara_token', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict' });
+  res.json({ ok: true });
 });
 
 // ─── POST /admin/forgot-password ─────────────────────────────────────────────

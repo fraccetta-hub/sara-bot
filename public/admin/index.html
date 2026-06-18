@@ -1931,7 +1931,7 @@ function applyTabGating() {
 }
 
 // ── State ──────────────────────────────────────────────────────────────────────
-let TOKEN = localStorage.getItem('sara_token') || '';
+let TOKEN = '';
 let products = [];
 let editingProductId = null;
 let deletingProductId = null;
@@ -1949,35 +1949,37 @@ window.onload = () => {
     return;
   }
 
-  // Support impersonation: superadmin passes ?token=xxx&name=yyy
-  const urlToken = params.get('token');
-  const urlName  = params.get('name');
-  if (urlToken) {
-    TOKEN = urlToken;
-    localStorage.setItem('sara_token', TOKEN);
-    if (urlName) {
-      document.getElementById('navTenant').textContent = decodeURIComponent(urlName);
-      document.getElementById('navTitle').textContent  = 'Sara Bot';
-    }
-    // Clean URL without reload
-    window.history.replaceState({}, '', '/admin/index.html');
-    showDashboard();
-    return;
-  }
+  // Support impersonation: superadmin passes ?name=yyy (token now set via cookie server-side)
+  const urlName = params.get('name');
+
   applyTranslations();
-  if (TOKEN) {
-    showDashboard();
-    if (params.get('paid') === 'ok') {
+
+  // Check if already authenticated via cookie
+  try {
+    const me = await fetch('/admin/me', { credentials: 'same-origin' });
+    if (me.ok) {
+      const data = await me.json();
+      document.getElementById('navTenant').textContent = urlName ? decodeURIComponent(urlName) : (data.tenantName || 'Mi negocio');
+      document.getElementById('navTitle').textContent  = data.botName || 'Sara Bot';
       window.history.replaceState({}, '', '/admin/index.html');
-      setTimeout(() => {
-        const el = document.createElement('div');
-        el.className = 'fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-green-600 text-white text-sm font-semibold px-5 py-3 rounded-xl shadow-lg';
-        el.textContent = t('billing.renewed');
-        document.body.appendChild(el);
-        setTimeout(() => el.remove(), 6000);
-      }, 800);
+      if (data.needsSetup) {
+        document.getElementById('loginPage').classList.add('hidden');
+        showOnboarding();
+      } else {
+        showDashboard();
+        if (params.get('paid') === 'ok') {
+          window.history.replaceState({}, '', '/admin/index.html');
+          setTimeout(() => {
+            const el = document.createElement('div');
+            el.className = 'fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-green-600 text-white text-sm font-semibold px-5 py-3 rounded-xl shadow-lg';
+            el.textContent = t('billing.renewed');
+            document.body.appendChild(el);
+            setTimeout(() => el.remove(), 6000);
+          }, 800);
+        }
+      }
     }
-  }
+  } catch (_) {}
 };
 
 // ── Auth ───────────────────────────────────────────────────────────────────────
@@ -2003,7 +2005,6 @@ async function login() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Contraseña incorrecta');
-      localStorage.setItem('sara_super_token', data.token);
       window.location.href = '/superadmin/index.html';
     } catch (e) {
       errEl.textContent = errMsg(e);
@@ -2017,8 +2018,6 @@ async function login() {
   try {
     if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = '…'; }
     const res = await api('/admin/login', 'POST', { username: userId, password }, false);
-    TOKEN = res.token;
-    localStorage.setItem('sara_token', TOKEN);
     document.getElementById('navTenant').textContent = res.tenantName || 'Mi negocio';
     document.getElementById('navTitle').textContent  = res.botName  || 'Sara Bot';
     if (res.needsSetup) {
@@ -2046,9 +2045,9 @@ async function login() {
   }
 }
 
-function logout() {
+async function logout() {
+  await fetch('/admin/logout', { method: 'POST', credentials: 'same-origin' }).catch(() => {});
   TOKEN = '';
-  localStorage.removeItem('sara_token');
   document.getElementById('dashPage').classList.add('hidden');
   document.getElementById('loginPage').classList.remove('hidden');
 }
@@ -2577,7 +2576,7 @@ async function saveProduct() {
       formData.append('image', imageFile);
       const res = await fetch(`/admin/products/${saved.id}/image`, {
         method: 'POST',
-        headers: { Authorization: 'Bearer ' + TOKEN },
+        credentials: 'same-origin',
         body: formData
       });
       if (!res.ok) {
@@ -2672,8 +2671,7 @@ async function loadOrders() {
 // ── Export orders as CSV ──────────────────────────────────────────────────────
 async function exportOrders() {
   try {
-    const TOKEN = localStorage.getItem('sara_token');
-    const res = await fetch('/admin/orders/export', { headers: { Authorization: `Bearer ${TOKEN}` } });
+    const res = await fetch('/admin/orders/export', { credentials: 'same-origin' });
     if (!res.ok) throw new Error('Error al exportar');
     const blob = await res.blob();
     const url = URL.createObjectURL(blob);
@@ -2690,8 +2688,7 @@ async function exportOrders() {
 // ── Export products catalog as CSV ───────────────────────────────────────────
 async function exportProducts() {
   try {
-    const TOKEN = localStorage.getItem('sara_token');
-    const res = await fetch('/admin/products/export', { headers: { Authorization: `Bearer ${TOKEN}` } });
+    const res = await fetch('/admin/products/export', { credentials: 'same-origin' });
     if (!res.ok) throw new Error('Error');
     const blob = await res.blob();
     const url = URL.createObjectURL(blob);
@@ -2704,8 +2701,7 @@ async function exportProducts() {
 // ── Export services as CSV ────────────────────────────────────────────────────
 async function exportServices() {
   try {
-    const TOKEN = localStorage.getItem('sara_token');
-    const res = await fetch('/admin/services/export', { headers: { Authorization: `Bearer ${TOKEN}` } });
+    const res = await fetch('/admin/services/export', { credentials: 'same-origin' });
     if (!res.ok) throw new Error('Error');
     const blob = await res.blob();
     const url = URL.createObjectURL(blob);
@@ -2718,8 +2714,7 @@ async function exportServices() {
 // ── Export customers as CSV ───────────────────────────────────────────────────
 async function exportCustomers() {
   try {
-    const TOKEN = localStorage.getItem('sara_token');
-    const res = await fetch('/admin/customers/export', { headers: { Authorization: `Bearer ${TOKEN}` } });
+    const res = await fetch('/admin/customers/export', { credentials: 'same-origin' });
     if (!res.ok) throw new Error('Error');
     const blob = await res.blob();
     const url = URL.createObjectURL(blob);
@@ -2897,11 +2892,10 @@ async function deleteAccount() {
     return;
   }
   try {
-    const TOKEN = localStorage.getItem('sara_token');
-    const res = await fetch('/admin/account', { method: 'DELETE', headers: { Authorization: `Bearer ${TOKEN}` } });
+    const res = await fetch('/admin/account', { method: 'DELETE', credentials: 'same-origin' });
     if (!res.ok) { const d = await res.json(); throw new Error(d.error); }
     alert(t('settings.danger.deleted'));
-    localStorage.removeItem('sara_token');
+    await fetch('/admin/logout', { method: 'POST', credentials: 'same-origin' }).catch(() => {});
     window.location.href = '/admin';
   } catch (e) {
     msg.textContent = 'Error: ' + e.message;
@@ -3083,7 +3077,7 @@ async function redeemPromo() {
   if (!code) return;
   btn.disabled = true;
   try {
-    const d = await api('/admin/redeem-promo', { method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+TOKEN}, body: JSON.stringify({ code }) });
+    const d = await api('/admin/redeem-promo', 'POST', { code });
     const parts = [];
     if (d.discountApplied > 0) parts.push(`-${d.discountApplied} en tu precio mensual`);
     if (d.monthsAdded  > 0)   parts.push(`+${d.monthsAdded} mes${d.monthsAdded>1?'es':''} al plan`);
@@ -3322,7 +3316,7 @@ async function saveWpProfile() {
   try {
     const res = await fetch('/admin/whatsapp-profile', {
       method: 'POST',
-      headers: { 'Authorization': 'Bearer ' + TOKEN },
+      credentials: 'same-origin',
       body: formData
     });
     const data = await res.json();
@@ -3392,9 +3386,9 @@ function errMsg(e) { return e.code ? (t('err.' + e.code) || e.message) : e.messa
 async function api(path, method = 'GET', body = null, auth = true) {
   const opts = {
     method,
+    credentials: 'same-origin',
     headers: { 'Content-Type': 'application/json' },
   };
-  if (auth && TOKEN) opts.headers['Authorization'] = 'Bearer ' + TOKEN;
   if (body) opts.body = JSON.stringify(body);
   const res  = await fetch(path, opts);
   const data = await res.json();
@@ -3532,7 +3526,6 @@ async function uploadServiceImg(input) {
     if (file) {
       const form = new FormData();
       form.append('image', file);
-      const token = localStorage.getItem('sara_token');
       // Preview locally
       const reader = new FileReader();
       reader.onload = e => {
@@ -3547,9 +3540,8 @@ async function uploadServiceImg(input) {
   }
   const form = new FormData();
   form.append('image', file);
-  const token = localStorage.getItem('sara_token');
   const res   = await fetch(`/admin/services/${editingServiceId}/image`, {
-    method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: form
+    method: 'POST', credentials: 'same-origin', body: form
   });
   const data = await res.json();
   if (data.image_url) {
@@ -3589,9 +3581,8 @@ async function saveService() {
       if (window._pendingServiceImg) {
         const form = new FormData();
         form.append('image', window._pendingServiceImg);
-        const token = localStorage.getItem('sara_token');
         await fetch(`/admin/services/${saved.id}/image`, {
-          method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: form
+          method: 'POST', credentials: 'same-origin', body: form
         });
         window._pendingServiceImg = null;
       }
@@ -3867,9 +3858,8 @@ async function sendUploadedImg(input) {
   const form = new FormData();
   form.append('image', file);
   try {
-    const token = localStorage.getItem('sara_token');
     const res   = await fetch(`/admin/chats/${currentChatPhone}/send-image`, {
-      method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: form
+      method: 'POST', credentials: 'same-origin', body: form
     });
     if (!res.ok) throw new Error((await res.json()).error);
     await refreshChat();
@@ -4101,7 +4091,7 @@ async function runPhotosImport() {
     importPhotoFiles.forEach(f => formData.append('images', f));
     const res = await fetch('/admin/import-from-images', {
       method: 'POST',
-      headers: { 'Authorization': 'Bearer ' + TOKEN },
+      credentials: 'same-origin',
       body: formData
     });
     if (!res.ok) { const e = await res.json(); throw new Error(e.error); }

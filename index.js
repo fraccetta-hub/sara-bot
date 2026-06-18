@@ -16,6 +16,7 @@ if (missingEnv.length) {
 }
 
 const express = require('express');
+const cookieParser = require('cookie-parser');
 const path = require('path');
 const fs = require('fs');
 const { createClient } = require('@supabase/supabase-js');
@@ -50,6 +51,8 @@ app.use((req, res, next) => {
   res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
   next();
 });
+
+app.use(cookieParser());
 
 // ── Stripe webhook needs raw body — must be registered BEFORE express.json() ──
 app.use('/billing/webhook', express.raw({ type: 'application/json' }));
