@@ -156,10 +156,12 @@
 - `services/mailer.js`: riscritto da SMTP (bloccato da Render) → Brevo HTTP API (`axios` POST a `api.brevo.com/v3/smtp/email`)
 - `BREVO_API_KEY` aggiunta su Render — niente più SMTP vars
 - Header email: sfondo verde → sfondo bianco con bordino verde — logo trasparente ora visibile
+- Footer "messaggio automatico, non rispondere" aggiunto in ES/EN/IT/DE/FR/PT su tutte le email
 - Rate limit `/forgot-password`: 5 richieste/IP/ora via `express-rate-limit`
 - Fix vulnerabilità: `multer` + `nodemailer` aggiornati (`npm audit fix`)
 - Email operative: welcome (nuove iscrizioni) + password reset — testate e funzionanti
 - Lingua email: segue `currentLang` del pannello al momento della richiesta
+- Email da aggiungere (quando si fa Stripe): pagamento fallito, cancellazione abbonamento, eliminazione account
 
 ## COSA È STATO FATTO (sessione 2026-06-18 — security hardening + forgot password)
 
