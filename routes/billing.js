@@ -271,7 +271,7 @@ router.get('/success', async (req, res) => {
 // ── POST /billing/cancel ──────────────────────────────────────────────────────
 // Called from admin panel to cancel subscription at period end (not immediately)
 router.post('/cancel', async (req, res) => {
-  const token = req.cookies?.sara_token || req.headers.authorization?.replace('Bearer ', '');
+  const token = req.cookies?.sara_token;
   if (!token) return res.status(401).json({ error: 'No autorizado.' });
 
   try {
@@ -300,7 +300,7 @@ router.post('/cancel', async (req, res) => {
 // ── POST /billing/reactivate ──────────────────────────────────────────────────
 // Re-enable subscription if it was set to cancel_at_period_end but user changed mind
 router.post('/reactivate', async (req, res) => {
-  const token = req.cookies?.sara_token || req.headers.authorization?.replace('Bearer ', '');
+  const token = req.cookies?.sara_token;
   if (!token) return res.status(401).json({ error: 'No autorizado.' });
 
   try {

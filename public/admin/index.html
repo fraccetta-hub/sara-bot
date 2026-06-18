@@ -1931,7 +1931,6 @@ function applyTabGating() {
 }
 
 // ── State ──────────────────────────────────────────────────────────────────────
-let TOKEN = '';
 let products = [];
 let editingProductId = null;
 let deletingProductId = null;
@@ -2047,7 +2046,6 @@ async function login() {
 
 async function logout() {
   await fetch('/admin/logout', { method: 'POST', credentials: 'same-origin' }).catch(() => {});
-  TOKEN = '';
   document.getElementById('dashPage').classList.add('hidden');
   document.getElementById('loginPage').classList.remove('hidden');
 }
@@ -3383,7 +3381,7 @@ async function changePassword() {
 // ── API helper ─────────────────────────────────────────────────────────────────
 function errMsg(e) { return e.code ? (t('err.' + e.code) || e.message) : e.message; }
 
-async function api(path, method = 'GET', body = null, auth = true) {
+async function api(path, method = 'GET', body = null) {
   const opts = {
     method,
     credentials: 'same-origin',

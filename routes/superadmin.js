@@ -17,7 +17,7 @@ const SUPER_JWT_SECRET = process.env.SUPERADMIN_JWT_SECRET;
 // ─── Auth middleware ──────────────────────────────────────────────────────────
 
 function requireSuper(req, res, next) {
-  const token = req.cookies?.sara_super_token || req.headers.authorization?.replace('Bearer ', '');
+  const token = req.cookies?.sara_super_token;
   if (!token) return res.status(401).json({ error: 'No autorizado' });
   try {
     req.admin = jwt.verify(token, SUPER_JWT_SECRET);
@@ -51,6 +51,9 @@ router.post('/login', async (req, res) => {
   });
   res.json({ ok: true });
 });
+
+// ─── GET /superadmin/me ───────────────────────────────────────────────────────
+router.get('/me', requireSuper, (req, res) => res.json({ ok: true }));
 
 // ─── POST /superadmin/logout ──────────────────────────────────────────────────
 router.post('/logout', (req, res) => {

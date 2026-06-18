@@ -556,7 +556,6 @@
 </div>
 
 <script>
-let TOKEN = '';
 let allTenants = [];
 let editingTenantId = null;
 let activeSupportTenantId = null;
@@ -564,7 +563,7 @@ let supportListPollTimer = null;
 let supportChatPollTimer = null;
 
 window.onload = async () => {
-  const res = await fetch('/superadmin/stats', { credentials: 'same-origin' }).catch(() => null);
+  const res = await fetch('/superadmin/me', { credentials: 'same-origin' }).catch(() => null);
   if (res && res.ok) showDashboard();
   else window.location.replace('/admin/index.html');
 };

@@ -31,7 +31,7 @@ const JWT_SECRET = process.env.ADMIN_JWT_SECRET;
 const ALWAYS_ALLOWED = ['/admin/support', '/admin/settings'];
 
 async function requireAuth(req, res, next) {
-  const token = req.cookies?.sara_token || req.headers.authorization?.replace('Bearer ', '');
+  const token = req.cookies?.sara_token;
   if (!token) return res.status(401).json({ error: 'No autorizado', errorCode: 'unauthorized' });
   try {
     req.tenant = jwt.verify(token, JWT_SECRET);
