@@ -297,18 +297,15 @@
         </div>
       </div>
       <div class="border-t border-gray-100 pt-3">
-        <p class="text-xs text-gray-400 mb-0.5">🔢 Phone Number ID (Meta)</p>
-        <p id="eInfoPhone" class="text-gray-500 font-mono text-xs break-all">—</p>
-      </div>
-      <div class="border-t border-gray-100 pt-3">
-        <p class="text-xs text-gray-400 mb-1.5">Conexión Meta</p>
+        <p class="text-xs text-gray-400 mb-1">Conexión Meta</p>
         <p id="eInfoMeta" class="text-sm">—</p>
+        <p id="eInfoPhone" class="text-gray-400 font-mono text-xs mt-1 break-all"></p>
       </div>
       <div class="border-t border-gray-100 pt-3">
         <p class="text-xs text-gray-400 mb-1.5">Secciones activas</p>
         <div id="eInfoSections" class="flex gap-2 flex-wrap"></div>
       </div>
-      <div class="border-t border-gray-100 pt-3 grid grid-cols-3 gap-3">
+      <div class="border-t border-gray-100 pt-3 grid grid-cols-2 gap-3">
         <div>
           <p class="text-xs text-gray-400 mb-0.5">Moneda</p>
           <p id="eInfoCurrency" class="text-gray-700">—</p>
@@ -316,10 +313,6 @@
         <div>
           <p class="text-xs text-gray-400 mb-0.5">Precio/mes</p>
           <p id="eInfoPrice" class="text-gray-700">—</p>
-        </div>
-        <div>
-          <p class="text-xs text-gray-400 mb-0.5">Vence</p>
-          <p id="eInfoExpires" class="text-gray-700">—</p>
         </div>
       </div>
       <div class="border-t border-gray-100 pt-3 grid grid-cols-2 gap-3">
@@ -342,10 +335,6 @@
         <button onclick="impersonate()" title="Entrar al panel del comerciante"
           class="flex-1 bg-blue-50 text-blue-600 hover:bg-blue-100 py-2 rounded-lg text-xs font-semibold transition">
           🔑 Impersonar
-        </button>
-        <button onclick="resetPassword()" title="Resetear contraseña a sara1234"
-          class="flex-1 bg-yellow-50 text-yellow-700 hover:bg-yellow-100 py-2 rounded-lg text-xs font-semibold transition">
-          🔄 Reset contraseña
         </button>
         <button onclick="closeEditModal()"
           class="flex-1 bg-gray-50 text-gray-500 hover:bg-gray-100 py-2 rounded-lg text-xs font-semibold transition">

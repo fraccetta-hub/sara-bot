@@ -284,9 +284,12 @@
 
 ## COSA È STATO FATTO (sessione 2026-06-20 — superadmin view + email/username)
 
-### Superadmin modal → read-only info view (commit 997f8c0)
-- Modal edit rimpiazzato con vista read-only: nome, email, username, WhatsApp merchant, Bot ID (Meta), stato Meta, sezioni attive, piano (moneda/prezzo/scadenza), paese, data registrazione
-- Azioni rimaste: impersonate, toggle active (nel modal), reset password
+### Superadmin modal → read-only info view (commit 997f8c0 → completato sessione corrente)
+- Modal edit rimpiazzato con vista read-only: nome, email, username, WhatsApp merchant, WhatsApp Bot (`bot_phone_number`), Phone Number ID (sotto Conexión Meta), stato Meta, sezioni attive, piano (moneda/prezzo), paese, data registrazione
+- "Vence" (scadenza piano) rimosso — pagamento ricorrente Stripe, non ha scadenza fissa
+- Phone Number ID accorpato sotto riga Conexión Meta (era riga separata, ora testo grigio sotto stato)
+- Bottone "Reset contraseña" rimosso — l'utente resetta via email autonomamente
+- Azioni rimaste: impersonate (blu) + chiudi (grigio), toggle attivo/inattivo full-width sopra
 - Rimosso: form editing, import-from-images dal modal; bottoni duplicati rimossi (tenuti stile blu/giallo originali)
 - `toggleFromModal()` nuovo — toggle + chiude modal + ricarica lista
 - `bot_phone_number` salvato al wizard connect (OAuth + manuale) da `display_phone_number` Meta API — mostrato nel modal superadmin; tenant esistenti vedranno "—" finché non riconnettono
