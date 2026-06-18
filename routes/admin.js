@@ -9,6 +9,7 @@ const { uploadImageBuffer } = require('../services/storage');
 const { sendMessage, sendImage } = require('../services/whatsapp');
 
 const crypto = require('crypto');
+const AdmZip = require('adm-zip');
 const { sendPasswordReset } = require('../services/mailer');
 const { rateLimit } = require('express-rate-limit');
 
@@ -21,6 +22,7 @@ const forgotPasswordLimiter = rateLimit({
 });
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 const uploadCatalog = multer({ storage: multer.memoryStorage(), limits: { fileSize: 4 * 1024 * 1024, files: 6 } });
+const uploadZip = multer({ storage: multer.memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } });
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -275,7 +277,7 @@ router.get('/settings', requireAuth, async (req, res) => {
              delivery_type, delivery_base_fee, delivery_zone_km,
              delivery_zone_outer_fee, delivery_per_km,
              delivery_min_order, delivery_disabled_dates,
-             active, plan_expires, phone_number_id, whatsapp_token_refresh_error`)
+             active, plan_expires, plan_currency, phone_number_id, whatsapp_token_refresh_error`)
     .eq('id', req.tenant.tenantId)
     .single();
   if (error) return res.status(500).json({ error: error.message });
@@ -893,8 +895,8 @@ router.post('/import-preview', requireAuth, async (req, res) => {
       const name  = cells[COL.name]?.trim();
       if (!name) continue; // skip empty rows
 
-      const priceRaw = cells[COL.price]?.replace(/[^\d]/g, '') || '0';
-      const price    = parseInt(priceRaw) || 0;
+      const priceRaw = cells[COL.price]?.replace(/[^\d.,]/g, '').replace(',', '.') || '0';
+      const price    = parseFloat(priceRaw) || 0;
       const typeRaw  = cells[COL.price_type]?.toLowerCase().trim() || 'fixed';
       const type     = typeRaw === 'hourly' || typeRaw === 'hora' || typeRaw === 'por_hora' ? 'hourly' : 'fixed';
       const avail    = cells[COL.available]?.toLowerCase().trim();
@@ -978,6 +980,10 @@ router.post('/import-from-images', requireAuth, uploadCatalog.array('images', 6)
   if (!req.files || req.files.length === 0)
     return res.status(400).json({ error: 'No se enviaron imágenes' });
 
+  const { data: t } = await supabase.from('tenants')
+    .select('plan_currency').eq('id', req.tenant.tenantId).single();
+  const currency = t?.plan_currency || 'USD';
+
   const content = [{
     type: 'text',
     text: `Analizá estas ${req.files.length} imágenes de un catálogo de negocios (menú, lista de precios, catálogo de WhatsApp Business, etc.).
@@ -985,7 +991,7 @@ router.post('/import-from-images', requireAuth, uploadCatalog.array('images', 6)
 Extraé TODOS los productos o servicios que puedas ver, con:
 - name: nombre del producto/servicio (obligatorio)
 - category: categoría (si hay, sino inferí una razonable)
-- price_guarani: precio como número entero (si no hay precio pon 0)
+- price_guarani: precio en ${currency} como número (puede tener decimales, ej: 4.99; si no hay precio pon 0)
 - description: descripción breve si hay (sino dejar vacío)
 
 Respondé ÚNICAMENTE con un JSON válido, sin texto adicional, en este formato:
@@ -1014,6 +1020,81 @@ Respondé ÚNICAMENTE con un JSON válido, sin texto adicional, en este formato:
     console.error('[import-from-images]', e.message);
     res.status(500).json({ error: e.message });
   }
+});
+
+// ─── POST /admin/products/bulk-images — ZIP upload, fuzzy match filenames ────
+function normalizeName(s) {
+  return s.toLowerCase()
+    .replace(/\.[^.]+$/, '')
+    .replace(/[áàä]/g,'a').replace(/[éèë]/g,'e').replace(/[íìï]/g,'i')
+    .replace(/[óòö]/g,'o').replace(/[úùü]/g,'u').replace(/ñ/g,'n')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
+
+function matchScore(filename, productName) {
+  const a = normalizeName(filename);
+  const b = normalizeName(productName);
+  if (a === b) return 1;
+  if (a.includes(b) || b.includes(a)) return 0.9;
+  const wa = a.split(' ').filter(w => w.length > 2);
+  const wb = new Set(b.split(' ').filter(w => w.length > 2));
+  if (!wa.length || !wb.size) return 0;
+  const hits = wa.filter(w => wb.has(w)).length;
+  return hits / Math.max(wa.length, wb.size);
+}
+
+router.post('/products/bulk-images', requireAuth, uploadZip.single('zipfile'), async (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'No ZIP file received' });
+
+  const ALLOWED_MIME = new Set(['image/jpeg','image/png','image/webp','image/gif']);
+  const MIN_SCORE = 0.5;
+
+  let zip;
+  try {
+    zip = new AdmZip(req.file.buffer);
+  } catch {
+    return res.status(400).json({ error: 'Invalid ZIP file' });
+  }
+
+  const { data: products, error } = await supabase
+    .from('products').select('id, name').eq('tenant_id', req.tenant.tenantId);
+  if (error) return res.status(500).json({ error: error.message });
+  if (!products?.length) return res.status(400).json({ error: 'No products found. Add products first.' });
+
+  const entries = zip.getEntries().filter(e =>
+    !e.isDirectory && !e.entryName.startsWith('__MACOSX') && !e.entryName.startsWith('.')
+  );
+
+  const matched = [], unmatched = [];
+
+  for (const entry of entries) {
+    const filename = entry.entryName.replace(/.*[\\/]/, '');
+    const mime = filename.match(/\.png$/i) ? 'image/png'
+               : filename.match(/\.webp$/i) ? 'image/webp'
+               : filename.match(/\.gif$/i)  ? 'image/gif'
+               : 'image/jpeg';
+    if (!ALLOWED_MIME.has(mime)) continue;
+
+    let best = null, bestScore = 0;
+    for (const p of products) {
+      const s = matchScore(filename, p.name);
+      if (s > bestScore) { bestScore = s; best = p; }
+    }
+
+    if (!best || bestScore < MIN_SCORE) { unmatched.push(filename); continue; }
+
+    try {
+      const buffer = entry.getData();
+      const imageUrl = await uploadImageBuffer(buffer, filename, mime, req.tenant.tenantId);
+      await supabase.from('products').update({ image_url: imageUrl }).eq('id', best.id);
+      matched.push({ filename, productId: best.id, productName: best.name, score: Math.round(bestScore * 100) });
+    } catch (e) {
+      unmatched.push(filename + ' (upload error: ' + e.message + ')');
+    }
+  }
+
+  res.json({ matched, unmatched });
 });
 
 // Helper: parse a single CSV line respecting quoted fields
@@ -1571,10 +1652,10 @@ router.get('/products/export', requireAuth, async (req, res) => {
       ? `"${s.replace(/"/g, '""')}"` : s;
   };
 
-  const headers = ['nombre','categoria','precio_guarani','stock','activo','descripcion','imagen_url','creado_en'];
+  const headers = ['name','category','price','stock','active','description','image_url','created_at'];
   const rows = (data || []).map(p => [
     p.name, p.category, p.price_guarani, p.stock_qty ?? '',
-    p.is_available ? 'si' : 'no', p.description, p.image_url,
+    p.is_available ? 'yes' : 'no', p.description, p.image_url,
     p.created_at ? new Date(p.created_at).toISOString().slice(0,19).replace('T',' ') : '',
   ].map(escape).join(','));
 
@@ -1601,10 +1682,10 @@ router.get('/services/export', requireAuth, async (req, res) => {
       ? `"${s.replace(/"/g, '""')}"` : s;
   };
 
-  const headers = ['nombre','categoria','tipo','precio_guarani','duracion_min','activo','descripcion','imagen_url','creado_en'];
+  const headers = ['name','category','price_type','price','duration_min','active','description','image_url','created_at'];
   const rows = (data || []).map(s => [
     s.name, s.category, s.price_type, s.price_guarani, s.duration_min ?? '',
-    s.is_available ? 'si' : 'no', s.description, s.image_url,
+    s.is_available ? 'yes' : 'no', s.description, s.image_url,
     s.created_at ? new Date(s.created_at).toISOString().slice(0,19).replace('T',' ') : '',
   ].map(escape).join(','));
 

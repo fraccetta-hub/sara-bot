@@ -3,6 +3,26 @@ const { isDeliveryDisabledToday, describeDelivery } = require('./geo');
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
+const CURRENCY_SYMBOL = {
+  PYG: 'Gs', USD: '$', EUR: '€', ARS: '$', BRL: 'R$',
+  MXN: '$', CLP: '$', COP: '$', UYU: '$U', PEN: 'S/',
+};
+const CURRENCY_LOCALE = {
+  PYG: 'es-PY', USD: 'en-US', EUR: 'de-DE', ARS: 'es-AR',
+  BRL: 'pt-BR', MXN: 'es-MX', CLP: 'es-CL', COP: 'es-CO',
+  UYU: 'es-UY', PEN: 'es-PE',
+};
+
+function formatPrice(amount, currency) {
+  const sym = CURRENCY_SYMBOL[currency] || currency || 'Gs';
+  const loc = CURRENCY_LOCALE[currency] || 'es-PY';
+  const isInt = ['PYG','CLP','COP'].includes(currency);
+  const formatted = isInt
+    ? Math.round(amount).toLocaleString(loc)
+    : parseFloat(amount).toLocaleString(loc, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return currency === 'PYG' ? `${formatted} ${sym}` : `${sym}${formatted}`;
+}
+
 const MAX_HISTORY = 20;
 
 // Static per-tenant content — identical across consecutive messages in the same
@@ -12,9 +32,10 @@ function buildStaticSystemPrompt(tenant, stock, services = []) {
   const botName = tenant.bot_name || 'Sara';
   const personality = tenant.bot_personality || 'cálida, profesional y entusiasta';
 
+  const currency = tenant.plan_currency || 'PYG';
   const catalog = (tenant.products_enabled !== false && stock.length)
     ? stock.map(p =>
-        `• ${p.name}${p.sku ? ` [SKU:${p.sku}]` : ''} [${p.category}] — ${p.price_guarani.toLocaleString('es-PY')} Gs` +
+        `• ${p.name}${p.sku ? ` [SKU:${p.sku}]` : ''} [${p.category}] — ${formatPrice(p.price_guarani, currency)}` +
         (p.stock_qty === null ? '' : p.stock_qty > 0 ? ` (${p.stock_qty} disponibles)` : ' (AGOTADO)') +
         (p.description ? ` — ${p.description}` : '') +
         (p.image_url ? ' [tiene foto]' : '')
@@ -24,8 +45,8 @@ function buildStaticSystemPrompt(tenant, stock, services = []) {
   const servicesCatalog = (tenant.services_enabled && services.length)
     ? services.map(s => {
         const price = s.price_type === 'hourly'
-          ? `${s.price_guarani.toLocaleString('es-PY')} Gs/hora`
-          : `${s.price_guarani.toLocaleString('es-PY')} Gs`;
+          ? `${formatPrice(s.price_guarani, currency)}/hora`
+          : formatPrice(s.price_guarani, currency);
         const dur = s.duration_min ? ` (${s.duration_min} min)` : '';
         return `• ${s.name} [${s.category || 'Servicio'}] — ${price}${dur}` +
           (s.description ? ` — ${s.description}` : '') +

@@ -496,6 +496,10 @@
             class="px-4 py-2 rounded-lg text-sm font-semibold border border-gray-200 text-gray-600 hover:bg-gray-50 flex items-center gap-1" data-i18n="products.export">
             ⬇ Exportar CSV
           </button>
+          <button onclick="openZipModal()"
+            class="px-4 py-2 rounded-lg text-sm font-semibold border border-gray-200 text-gray-600 hover:bg-gray-50 flex items-center gap-1" data-i18n="products.bulkImages">
+            📦 Imágenes ZIP
+          </button>
           <button onclick="openProductModal(null)"
             class="btn-green px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-1" data-i18n="products.new">
             + Nuevo producto
@@ -1505,6 +1509,44 @@
   </div>
 </div>
 
+<!-- ════ ZIP IMAGES MODAL ════ -->
+<div id="zipModal" class="hidden fixed inset-0 modal-bg flex items-center justify-center z-50 px-4">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 max-h-screen overflow-y-auto">
+    <div class="flex items-center justify-between mb-4">
+      <h3 data-i18n="zip.title" class="text-base font-semibold text-gray-800">📦 Carga masiva de imágenes</h3>
+      <button onclick="closeZipModal()" class="text-gray-400 hover:text-gray-600 text-xl leading-none">✕</button>
+    </div>
+    <div id="zipInstructions" class="bg-blue-50 rounded-xl p-4 mb-4 text-sm text-blue-800 space-y-1">
+      <p class="font-semibold" data-i18n="zip.how">📌 Cómo usar:</p>
+      <ol class="list-decimal list-inside space-y-1 text-xs text-blue-700">
+        <li data-i18n="zip.s1">Exportá el CSV del catálogo para ver los nombres exactos de tus productos.</li>
+        <li data-i18n="zip.s2">Renombrá cada foto con el nombre del producto (ej: <code>rosa-roja.jpg</code>).</li>
+        <li data-i18n="zip.s3">Comprimí todas las fotos en un archivo ZIP.</li>
+        <li data-i18n="zip.s4">Subí el ZIP acá — las fotos se asignan automáticamente.</li>
+      </ol>
+    </div>
+    <div id="zipDropzone" onclick="document.getElementById('zipFileInput').click()" class="border-2 border-dashed border-gray-200 rounded-xl py-8 text-center cursor-pointer hover:border-green-400 transition mb-4">
+      <span class="text-3xl">📦</span>
+      <p id="zipDropText" data-i18n="zip.drop" class="text-sm text-gray-500 mt-2">Tocá para seleccionar un archivo ZIP</p>
+      <p class="text-xs text-gray-400 mt-1" data-i18n="zip.hint">Máx. 50 MB</p>
+      <input id="zipFileInput" type="file" accept=".zip,application/zip" class="hidden" onchange="handleZipFile(this)"/>
+    </div>
+    <div id="zipError" class="hidden bg-red-50 text-red-700 text-sm rounded-lg px-4 py-2 mb-3"></div>
+    <div id="zipResults" class="hidden">
+      <div id="zipMatched" class="mb-3"></div>
+      <div id="zipUnmatched" class="mb-3"></div>
+    </div>
+    <div class="flex gap-3 mt-2">
+      <button onclick="closeZipModal()" data-i18n="modal.product.cancel" class="flex-1 border border-gray-200 py-2 rounded-lg text-sm font-semibold text-gray-600 hover:bg-gray-50">Cancelar</button>
+      <button id="zipUploadBtn" onclick="uploadZip()" disabled
+        data-i18n="zip.upload"
+        class="flex-1 btn-green py-2 rounded-lg text-sm font-semibold disabled:opacity-40 disabled:cursor-not-allowed">
+        Subir ZIP
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- ════ PRODUCT MODAL ════ -->
 <div id="productModal" class="hidden fixed inset-0 modal-bg flex items-center justify-center z-50 px-4">
   <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 max-h-screen overflow-y-auto">
@@ -1568,15 +1610,6 @@
           <span data-i18n="modal.product.uploadHint" class="text-xs text-gray-400 mt-0.5">JPG, PNG — máx. 10 MB</span>
           <input id="pImageFile" type="file" accept="image/*" class="hidden" onchange="previewImage(this)"/>
         </label>
-        <!-- Fallback URL -->
-        <div class="flex items-center gap-2 mt-2">
-          <div class="flex-1 h-px bg-gray-100"></div>
-          <span data-i18n="modal.product.orUrl" class="text-xs text-gray-400">o pegá una URL</span>
-          <div class="flex-1 h-px bg-gray-100"></div>
-        </div>
-        <input id="pImage" type="url" placeholder="https://..."
-          class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mt-2"
-          oninput="previewFromUrl(this.value)"/>
       </div>
     </div>
     <div class="flex gap-3 mt-6">
@@ -2504,7 +2537,6 @@ function openProductModal(id) {
   document.getElementById('pStock').value    = unlimited ? '' : (p?.stock_qty ?? '');
   document.getElementById('pStock').disabled = unlimited;
   document.getElementById('pDesc').value     = p?.description   || '';
-  document.getElementById('pImage').value    = p?.image_url     || '';
   document.getElementById('pImageFile').value = '';
   document.getElementById('modalError').classList.add('hidden');
   // Show existing image preview if available
@@ -2561,11 +2593,10 @@ async function saveProduct() {
   const name          = document.getElementById('pName').value.trim();
   const category      = document.getElementById('pCategory').value.trim();
   const sku           = document.getElementById('pSku').value.trim() || null;
-  const price_guarani = parseInt(document.getElementById('pPrice').value);
+  const price_guarani = parseFloat(document.getElementById('pPrice').value);
   const unlimited     = document.getElementById('pUnlimited').checked;
   const stock_qty     = unlimited ? null : (parseInt(document.getElementById('pStock').value) || 0);
   const description   = document.getElementById('pDesc').value.trim() || null;
-  const image_url     = document.getElementById('pImage').value.trim() || null;
   const imageFile     = document.getElementById('pImageFile').files?.[0] || null;
   const errEl         = document.getElementById('modalError');
   errEl.classList.add('hidden');
@@ -2582,9 +2613,9 @@ async function saveProduct() {
   try {
     let saved;
     if (editingProductId) {
-      saved = await api(`/admin/products/${editingProductId}`, 'PUT', { name, category, sku, price_guarani, stock_qty, description, image_url });
+      saved = await api(`/admin/products/${editingProductId}`, 'PUT', { name, category, sku, price_guarani, stock_qty, description });
     } else {
-      saved = await api('/admin/products', 'POST', { name, category, sku, price_guarani, stock_qty, description, image_url });
+      saved = await api('/admin/products', 'POST', { name, category, sku, price_guarani, stock_qty, description });
     }
 
     // Upload image file if one was selected
@@ -3996,6 +4027,82 @@ function escHtml(s) {
 // ══════════════════════════════════════════════════════════════════════════════
 
 const TEMPLATE_SHEET_URL = 'https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms/edit';
+
+// ══ ZIP BULK IMAGES ══════════════════════════════════════════════════════════
+let _zipFile = null;
+
+function openZipModal() {
+  _zipFile = null;
+  document.getElementById('zipFileInput').value = '';
+  document.getElementById('zipUploadBtn').disabled = true;
+  document.getElementById('zipError').classList.add('hidden');
+  document.getElementById('zipResults').classList.add('hidden');
+  document.getElementById('zipModal').classList.remove('hidden');
+}
+
+function closeZipModal() {
+  _zipFile = null;
+  document.getElementById('zipModal').classList.add('hidden');
+}
+
+function handleZipFile(input) {
+  const file = input.files?.[0];
+  if (!file) return;
+  _zipFile = file;
+  document.getElementById('zipUploadBtn').disabled = false;
+  document.getElementById('zipError').classList.add('hidden');
+  document.getElementById('zipResults').classList.add('hidden');
+  document.getElementById('zipDropText').textContent = file.name;
+}
+
+async function uploadZip() {
+  if (!_zipFile) return;
+  const btn = document.getElementById('zipUploadBtn');
+  const errEl = document.getElementById('zipError');
+  errEl.classList.add('hidden');
+  btn.disabled = true;
+  btn.textContent = '⏳ Procesando...';
+
+  try {
+    const form = new FormData();
+    form.append('zipfile', _zipFile);
+    const res = await fetch('/admin/products/bulk-images', {
+      method: 'POST', credentials: 'same-origin', body: form
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Error');
+
+    const matchedEl = document.getElementById('zipMatched');
+    const unmatchedEl = document.getElementById('zipUnmatched');
+
+    if (data.matched.length) {
+      matchedEl.innerHTML = `<p class="text-sm font-semibold text-green-700 mb-1">✅ ${data.matched.length} foto${data.matched.length > 1 ? 's' : ''} asignada${data.matched.length > 1 ? 's' : ''}:</p>` +
+        `<ul class="text-xs text-gray-600 space-y-0.5 max-h-40 overflow-y-auto">` +
+        data.matched.map(m => `<li>📸 <b>${m.filename}</b> → ${m.productName} <span class="text-gray-400">(${m.score}%)</span></li>`).join('') +
+        `</ul>`;
+    } else {
+      matchedEl.innerHTML = `<p class="text-sm text-gray-500">No se encontraron coincidencias. Verificá que los nombres de archivo coincidan con los nombres de productos.</p>`;
+    }
+
+    if (data.unmatched.length) {
+      unmatchedEl.innerHTML = `<p class="text-sm font-semibold text-orange-600 mb-1 mt-3">⚠️ ${data.unmatched.length} sin coincidencia:</p>` +
+        `<ul class="text-xs text-gray-400 space-y-0.5 max-h-24 overflow-y-auto">` +
+        data.unmatched.map(f => `<li>${f}</li>`).join('') +
+        `</ul>`;
+    } else {
+      unmatchedEl.innerHTML = '';
+    }
+
+    document.getElementById('zipResults').classList.remove('hidden');
+    if (data.matched.length) loadProducts();
+  } catch (e) {
+    errEl.textContent = e.message;
+    errEl.classList.remove('hidden');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = t('zip.upload') || 'Subir ZIP';
+  }
+}
 
 let importPreviewRows = [];
 let importSource = 'sheets'; // 'sheets' | 'csv' | 'photos'
