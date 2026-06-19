@@ -608,6 +608,16 @@ ALTER TABLE conversations ADD COLUMN IF NOT EXISTS last_nudge_at TIMESTAMPTZ;
 | Disclaimer | ✅ | — | ✅ | ✅ |
 | DPA | — (B2B) | ✅ | ✅ | ✅ |
 
+## COSA È STATO FATTO (sessione 2026-06-19 — UI per-piano + label menu ristorante)
+
+### Tab gating per piano + label "Menù" ristorante (commit 7e02fc6 + corrente)
+- Admin panel: tab visibili in base ai moduli del piano (`products_enabled`, `services_enabled`, `appointments_enabled`, `restaurant_enabled`) — già funzionava via `applyTabVisibility`
+- Ristorante: tab "Productos" → "🍽️ Menù" (chiave `tab.menu` in ES/EN/IT/DE/FR/PT)
+- Ristorante: tutti i testi del tab prodotti → terminologia menu: titolo "Menú", "+ Nuevo ítem", colonna "Plato", "Platos activos", import title/hint/found (7 chiavi `menu.*` in 6 lingue)
+- Meccanismo: `isRestaurantPlan` global + `applyMenuLabels()` chiamata da `applyTranslations()` e `applyTabVisibility()` — swap i18n key su `data-i18n` originali, override post-translate
+- Superadmin modal: "Secciones activas" (4 badge moduli) → "Suscripción" con badge unico nome piano (Shop/Bookings/Restaurant/Pro derivato da flags)
+- Superadmin lista tenant: badge piano inline sotto nome (es. `Sara · desde 01/01/2026 · 🍽️ Restaurant`)
+
 ## PROSSIME PRIORITÀ (sessione successiva)
 1. **Stripe test** — testare flow completo iscrizione end-to-end (scegli piano → Stripe checkout → webhook → tenant attivo)
 2. **Fatturazione** — capire come mandare fatture ai merchant

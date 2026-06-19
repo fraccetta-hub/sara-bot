@@ -583,11 +583,15 @@ function renderTenants(list) {
            🔑 Token error
          </span>`
       : '';
+    const planBadge = t.restaurant_enabled ? '🍽️ Restaurant'
+      : (t.products_enabled && t.services_enabled && t.appointments_enabled) ? '⭐ Pro'
+      : (t.services_enabled && t.appointments_enabled) ? '📅 Bookings'
+      : t.products_enabled ? '📦 Shop' : null;
     return `
     <tr class="hover:bg-gray-50 transition border-t border-gray-50">
       <td class="px-4 py-3">
         <div class="font-medium text-gray-800">${t.name}${tokenBadge}</div>
-        <div class="text-xs text-gray-400">${t.bot_name || 'Sara'} · desde ${new Date(t.created_at).toLocaleDateString('es-PY')}</div>
+        <div class="text-xs text-gray-400">${t.bot_name || 'Sara'} · desde ${new Date(t.created_at).toLocaleDateString('es-PY')}${planBadge ? ` · <span class="text-green-600 font-medium">${planBadge}</span>` : ''}</div>
         ${expiryHint}
       </td>
       <td class="px-4 py-3 text-gray-400 text-xs hidden md:table-cell font-mono">${t.phone_number_id}</td>
