@@ -1250,6 +1250,12 @@
         <div>
           <h3 class="font-medium text-gray-800 mb-1">🕐 Horarios del local</h3>
           <p class="text-xs text-gray-400 mb-4">Definí los días y horarios de atención. Los turnos solo se pueden reservar en estos horarios.</p>
+          <div class="flex items-center gap-2 mb-2">
+            <label data-i18n="appt.capacity" class="text-sm text-gray-600">Citas en paralelo por horario</label>
+            <input type="number" id="apptCapacity" min="1" max="50" value="1" onchange="saveApptCapacity()"
+              class="w-20 border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-300">
+          </div>
+          <p data-i18n="appt.capacityHint" class="text-xs text-gray-400 mb-4">Cuántas citas podés atender a la vez en el mismo horario (ej: 1 para una sola sala, 3 si tenés 3 sillones).</p>
           <div id="businessHoursForm" class="space-y-2"></div>
           <div id="bhMsg" class="hidden rounded-lg px-4 py-2 text-sm mt-3"></div>
           <button onclick="saveBusinessHours()" class="btn-green w-full py-2 rounded-lg text-sm font-semibold mt-4">Guardar horarios</button>
@@ -1906,6 +1912,7 @@
 
 let currentLang = localStorage.getItem('sara_lang') || 'es';
 let isRestaurantPlan = false;
+let planProductsEnabled = true, planServicesEnabled = false, planAppointmentsEnabled = false;
 
 function t(key) {
   return (TR[currentLang] && TR[currentLang][key] !== undefined)
@@ -2004,6 +2011,34 @@ function renderHelp() {
         ${item(t('help.orders.fin'))}
       </div>
       <div class="mt-3 p-3 bg-purple-50 border border-purple-100 rounded-lg text-sm text-purple-800">${t('help.orders.takeover')}</div>
+    </div>
+    ${(planAppointmentsEnabled || planServicesEnabled) ? `
+    <div class="bg-white rounded-xl shadow-sm p-5">
+      <h3 class="font-semibold text-gray-800 mb-3">${t('help.appts.title')}</h3>
+      <div class="space-y-2">
+        ${planAppointmentsEnabled ? item(t('help.appts.view')) : ''}
+        ${planAppointmentsEnabled ? item(t('help.appts.book')) : ''}
+        ${planAppointmentsEnabled ? item(t('help.appts.manage')) : ''}
+        ${planAppointmentsEnabled ? item(t('help.appts.block')) : ''}
+        ${planServicesEnabled ? item(t('help.appts.services')) : ''}
+      </div>
+    </div>` : ''}
+    ${isRestaurantPlan ? `
+    <div class="bg-white rounded-xl shadow-sm p-5">
+      <h3 class="font-semibold text-gray-800 mb-3">${t('help.restaurant.title')}</h3>
+      <div class="space-y-2 text-sm text-gray-700">
+        <div class="p-2 rounded-lg bg-gray-50">${t('help.restaurant.auto')}</div>
+        <div class="p-2 rounded-lg bg-gray-50">${t('help.restaurant.big')}</div>
+        <div class="p-2 rounded-lg bg-gray-50">${t('help.restaurant.manage')}</div>
+      </div>
+    </div>` : ''}
+    <div class="bg-white rounded-xl shadow-sm p-5">
+      <h3 class="font-semibold text-gray-800 mb-3">${t('help.extra.title')}</h3>
+      <div class="space-y-2">
+        ${item(t('help.extra.closures'))}
+        ${item(t('help.extra.offers'))}
+        ${item(t('help.extra.broadcast'))}
+      </div>
     </div>
     <div class="bg-white rounded-xl shadow-sm p-5">
       <h3 class="font-semibold text-gray-800 mb-3">${t('help.other.title')}</h3>
@@ -2552,6 +2587,9 @@ function showTokenErrorBanner() {
 // ── Tab visibility (based on enabled sections) ─────────────────────────────────
 function applyTabVisibility(productsEnabled, servicesEnabled, appointmentsEnabled, restaurantEnabled) {
   isRestaurantPlan = !!restaurantEnabled;
+  planProductsEnabled = productsEnabled !== false;
+  planServicesEnabled = !!servicesEnabled;
+  planAppointmentsEnabled = !!appointmentsEnabled;
   const tabP = document.getElementById('tabProducts');
   const tabS = document.getElementById('tabServices');
   const tabA = document.getElementById('tabAppointments');
@@ -5045,7 +5083,16 @@ async function initCalendar() {
   if (!calWeekStart) calWeekStart = getMonday(new Date());
   // Load services for the appointment modal
   calServices = await api('/admin/services').catch(() => []);
+  const st = await api('/admin/settings').catch(() => null);
+  const capEl = document.getElementById('apptCapacity');
+  if (capEl && st) capEl.value = st.appointment_capacity || 1;
   await loadCalendarData();
+}
+
+async function saveApptCapacity() {
+  const cap = Math.max(1, parseInt(document.getElementById('apptCapacity').value) || 1);
+  document.getElementById('apptCapacity').value = cap;
+  await api('/admin/settings', 'PUT', { appointment_capacity: cap });
 }
 
 function calPrev()    { calWeekStart.setDate(calWeekStart.getDate() - 7); loadCalendarData(); }

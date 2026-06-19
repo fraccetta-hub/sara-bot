@@ -746,10 +746,21 @@ ALTER TABLE tenants
   ADD COLUMN IF NOT EXISTS account_deletion_expires TIMESTAMPTZ;
 ```
 
+## COSA È STATO FATTO (sessione 2026-06-20 — help tab estesa per feature mancanti)
+
+### Tab Help aggiornata — sezioni gated per piano (`public/admin/index.html` `renderHelp()`)
+- Mancavano le feature aggiunte di recente. Aggiunte 3 sezioni condizionali:
+  - **📅 Appuntamenti e servizi** (se `appointments_enabled` o `services_enabled`): vedi agenda, prenota, annulla/sposta, blocca orario/ferie, gestione servizi (prezzo/durata)
+  - **🍽️ Prenotazioni tavolo** (se `restaurant_enabled`): Sara prende prenotazioni (persone/data/ora/zona), assegna tavolo più piccolo libero, gruppi grandi → avviso WhatsApp manuale, gestione dal tab Restaurante
+  - **🏷️ Chiusure, offerte e diffusione** (sempre): chiusure/ferie NL, offerte/sconti NL, broadcast marketing dal tab Clienti
+- Gating: nuovi globali `planProductsEnabled` / `planServicesEnabled` / `planAppointmentsEnabled` settati in `applyTabVisibility` (oltre a `isRestaurantPlan` esistente)
+- i18n: 14 chiavi nuove `help.appts.*` / `help.restaurant.*` / `help.extra.*` in tutte e 6 le lingue (ES/EN/IT/DE/FR/PT) — verificato 6/chiave
+- Sezioni esistenti (catalogo, foto, ordini, takeover, chat panel) invariate
+- Migration `account_deletion_*` già eseguita su Supabase ✅
+
 ## PROSSIME PRIORITÀ (sessione successiva)
-1. **Eseguire migration** `account_deletion_token` / `account_deletion_expires` su Supabase
-2. **Fatturazione** — capire come mandare fatture ai merchant
-3. **Go-to-market** — pubblicità, test, vendita
+1. **Fatturazione** — capire come mandare fatture ai merchant
+2. **Go-to-market** — pubblicità, test, vendita
 
 ## IDEE FUTURE (non ancora pianificate)
 
