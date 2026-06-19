@@ -663,10 +663,23 @@ ALTER TABLE conversations ADD COLUMN IF NOT EXISTS last_nudge_at TIMESTAMPTZ;
 - FULL-WIDTH sotto: Orari+Chiusure (già split interno 2-col), Offerte, Delivery (condizionale)
 - Delivery card interna compattata: Indirizzo+Tipo tarifa affiancati; Costo+Minimo affiancati; zone/km fields in grid-cols-2
 
+## COSA È STATO FATTO (sessione 2026-06-19 — Stripe + register redesign)
+
+### Stripe — COMPLETATO ✅
+- Account LLC collegato in test mode — env var già settate su Render (STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, STRIPE_PRICE_SHOP/BOOKINGS/RESTAURANT/PRO)
+- Flow end-to-end testato e funzionante: signup → Stripe checkout → webhook → tenant attivo
+
+### Register page — redesign UX (commit dd52deb + aa99fab)
+- **Step 1**: 7 settori liberi → 4 settori legati ai piani con etichetta tipo (solo prodotti / solo servizi / cibo e bevande / prodotti+servizi) + esempi concreti di lavoro per ogni settore in ES/EN/IT/DE/FR/PT
+- **Auto-piano**: selezione settore → pre-seleziona piano corrispondente in step 4 + banner "consigliamo questo piano"
+- **Step 2**: rimosso campo "nome titolare" (non necessario per bot setup)
+- **Step 3**: testo warning WhatsApp ingrandito (text-sm invece di text-xs)
+- **Step 4**: badge "più popolare" spostato da Pro → Restaurant (come landing); feature list aggiornate con stesse voci della landing (5/6/7/9 feature per piano); piani in griglia 2 colonne su desktop
+- **Layout**: max-w-lg → max-w-2xl (più largo su desktop)
+
 ## PROSSIME PRIORITÀ (sessione successiva)
-1. **Stripe test** — testare flow completo iscrizione end-to-end (scegli piano → Stripe checkout → webhook → tenant attivo)
-2. **Fatturazione** — capire come mandare fatture ai merchant
-3. **Go-to-market** — pubblicità, test, vendita
+1. **Fatturazione** — capire come mandare fatture ai merchant
+2. **Go-to-market** — pubblicità, test, vendita
 
 ## IDEE FUTURE (non ancora pianificate)
 
@@ -701,7 +714,7 @@ ALTER TABLE conversations ADD COLUMN IF NOT EXISTS last_nudge_at TIMESTAMPTZ;
 
 ## COME RIPRENDERE
 Primo messaggio da mandare a Claude nella prossima sessione:
-"Leggi HANDOFF.md. Sessione precedente: landing page pricing completata (badge prova, esempi attività, feature crescenti 5/6/7/9). Prossimo: testare flow Stripe end-to-end (signup → checkout → webhook → tenant attivo)."
+"Leggi HANDOFF.md. Sessione precedente: Stripe test mode verificato end-to-end (LLC account). Register redesign completato (4 settori piano-linked, layout largo, restaurant popular, feature da landing). Prossimo: fatturazione merchant o go-to-market."
 
 ## ERRORI NOTI / TRAPPOLE
 - NON leggere/query tabella prod `tenants` con `select('*')` o colonne sensibili senza autorizzazione esplicita utente per quella lettura specifica — bloccato da permission classifier (dati merchant: token WhatsApp, telefoni). `superadmin GET /tenants/:id` ora usa campi espliciti sicuri.
