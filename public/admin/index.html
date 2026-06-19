@@ -729,17 +729,14 @@
         </div>
       </div>
 
-      <!-- Reservations -->
+      <!-- Meal service bands -->
       <div class="bg-white rounded-xl shadow-sm p-5">
-        <div class="flex items-center justify-between mb-3">
-          <div class="flex items-center gap-3">
-            <h3 data-i18n="restaurant.reservations" class="font-semibold text-gray-800">Reservas</h3>
-            <input type="date" id="resvDate" onchange="loadReservations()"
-              class="border border-gray-200 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-green-300">
-          </div>
-          <button onclick="openResvModal(null)" class="btn-green px-3 py-1.5 rounded-lg text-sm font-semibold">+ <span data-i18n="restaurant.addResv">Nueva reserva</span></button>
+        <div class="flex items-center justify-between mb-1">
+          <h3 data-i18n="restaurant.bands" class="font-semibold text-gray-800">Franjas de servicio</h3>
+          <button onclick="addMealBand()" class="btn-green px-3 py-1.5 rounded-lg text-sm font-semibold">+ <span data-i18n="restaurant.addBand">Agregar franja</span></button>
         </div>
-        <div id="resvList" class="space-y-2 text-sm"></div>
+        <p data-i18n="restaurant.bandsHint" class="text-xs text-gray-400 mb-3">Definí los turnos de servicio (ej: Almuerzo 12:00–15:00, Cena 19:30–23:00). Sara solo acepta reservas dentro de estas franjas.</p>
+        <div id="mealBandsList" class="space-y-2"></div>
       </div>
     </div>
 
@@ -851,6 +848,9 @@
     <!-- ── APPOINTMENTS TAB ── -->
     <div id="sectionAppointments" class="hidden">
 
+     <!-- Appointment calendar (non-restaurant tenants) -->
+     <div id="apptCalendarWrap">
+
       <!-- Toolbar -->
       <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
         <div class="flex items-center gap-2">
@@ -882,6 +882,22 @@
         <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-yellow-400 inline-block"></span> <span data-i18n="appt.legend.pending">Pendiente</span></span>
         <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-red-300 inline-block"></span> <span data-i18n="appt.legend.blocked">Bloqueado</span></span>
         <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-gray-200 inline-block"></span> <span data-i18n="appt.legend.outside">Fuera de horario</span></span>
+      </div>
+     </div><!-- /apptCalendarWrap -->
+
+      <!-- Reservations day view (restaurant tenants) -->
+      <div id="reservationsView" class="hidden">
+        <div class="bg-white rounded-xl shadow-sm p-5">
+          <div class="flex items-center justify-between mb-3 flex-wrap gap-3">
+            <div class="flex items-center gap-3">
+              <h3 data-i18n="restaurant.reservations" class="font-semibold text-gray-800">Reservas</h3>
+              <input type="date" id="resvDate" onchange="loadReservations()"
+                class="border border-gray-200 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-green-300">
+            </div>
+            <button onclick="openResvModal(null)" class="btn-green px-3 py-1.5 rounded-lg text-sm font-semibold">+ <span data-i18n="restaurant.addResv">Nueva reserva</span></button>
+          </div>
+          <div id="resvList" class="space-y-2 text-sm"></div>
+        </div>
       </div>
     </div>
 
@@ -1970,7 +1986,12 @@ function applyTranslations() {
   // Tabs (have IDs already)
   ['chats','products','services','orders','appointments','settings','help'].forEach(tab => {
     const el = document.getElementById('tab' + cap(tab));
-    if (el) el.textContent = t('tab.' + tab);
+    if (!el) return;
+    // Restaurant tenants relabel Products→Menu and Appointments→Reservations
+    let key = 'tab.' + tab;
+    if (isRestaurantPlan && tab === 'products')     key = 'tab.menu';
+    if (isRestaurantPlan && tab === 'appointments') key = 'tab.reservations';
+    el.textContent = t(key);
   });
   // Language picker active state (settings panel — larger flag buttons)
   ['es','en','de','it','fr'].forEach(lang => {
@@ -2623,6 +2644,7 @@ function applyTabVisibility(productsEnabled, servicesEnabled, appointmentsEnable
   applyMenuLabels();
   if (tabS) tabS.style.display = servicesEnabled     ? '' : 'none';
   if (tabA) tabA.style.display = appointmentsEnabled ? '' : 'none';
+  if (tabA) tabA.textContent  = t(restaurantEnabled ? 'tab.reservations' : 'tab.appointments');
   if (tabR) tabR.classList.toggle('hidden', !restaurantEnabled);
 
   // If current active tab is now hidden, redirect to chats
@@ -2679,7 +2701,7 @@ function switchTab(tab) {
   if (tab === 'plan')         loadPlan();
   if (tab === 'services')     loadServices();
   if (tab === 'restaurant')   loadRestaurant();
-  if (tab === 'appointments') initCalendar();
+  if (tab === 'appointments') { if (isRestaurantPlan) initReservationsView(); else initCalendar(); }
   if (tab === 'support')      { loadSupportMessages(); startSupportPoll(); }
   else                        stopSupportPoll();
   if (tab === 'chats')        { loadChatList(); startChatListPoll(); }
@@ -3211,7 +3233,7 @@ async function exportCustomers() {
 }
 
 // ── Restaurant ────────────────────────────────────────────────────────────────
-let _rZones = [], _rTables = [];
+let _rZones = [], _rTables = [], _mealBands = [];
 
 async function loadRestaurant() {
   const [settings, zones, tables] = await Promise.all([
@@ -3221,12 +3243,50 @@ async function loadRestaurant() {
   ]);
   _rZones  = zones  || [];
   _rTables = tables || [];
+  _mealBands = Array.isArray(settings.restaurant_meal_bands) ? settings.restaurant_meal_bands : [];
   document.getElementById('restaurantEnabled').checked = !!settings.restaurant_enabled;
   document.getElementById('restaurantSlotDuration').value = settings.restaurant_slot_duration || 90;
   renderZones();
   renderTables();
-  const today = new Date().toISOString().slice(0,10);
-  document.getElementById('resvDate').value = today;
+  renderMealBands();
+}
+
+// Meal service bands (lunch/dinner windows) — stored as JSON on the tenant
+function renderMealBands() {
+  const el = document.getElementById('mealBandsList');
+  if (!el) return;
+  if (!_mealBands.length) {
+    el.innerHTML = `<p class="text-gray-400 py-3 text-center text-sm">${t('restaurant.noBands')}</p>`;
+    return;
+  }
+  el.innerHTML = _mealBands.map((b, i) => `
+    <div class="flex items-center gap-2 flex-wrap">
+      <input type="text" value="${escHtml(b.label || '')}" placeholder="${t('restaurant.bandLabelPh')}" onchange="updateMealBand(${i},'label',this.value)"
+        class="flex-1 min-w-[120px] border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-300">
+      <input type="time" value="${b.start || '12:00'}" onchange="updateMealBand(${i},'start',this.value)"
+        class="border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-300">
+      <span class="text-gray-400">–</span>
+      <input type="time" value="${b.end || '15:00'}" onchange="updateMealBand(${i},'end',this.value)"
+        class="border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-300">
+      <button onclick="removeMealBand(${i})" class="text-red-400 hover:text-red-600 text-sm px-1">🗑️</button>
+    </div>`).join('');
+}
+function addMealBand() { _mealBands.push({ label: '', start: '12:00', end: '15:00' }); renderMealBands(); }
+function updateMealBand(i, field, val) { if (_mealBands[i]) { _mealBands[i][field] = val; saveMealBands(); } }
+function removeMealBand(i) { _mealBands.splice(i, 1); renderMealBands(); saveMealBands(); }
+async function saveMealBands() {
+  await api('/admin/restaurant/settings', 'PUT', { restaurant_meal_bands: _mealBands });
+}
+
+// Reservations view (restaurant tenants) — lives in the Appointments tab
+async function initReservationsView() {
+  document.getElementById('apptCalendarWrap')?.classList.add('hidden');
+  document.getElementById('reservationsView')?.classList.remove('hidden');
+  if (!_rTables.length) {
+    _rTables = await api('/admin/restaurant/tables').catch(() => []) || [];
+    _rZones  = await api('/admin/restaurant/zones').catch(() => []) || [];
+  }
+  document.getElementById('resvDate').value = new Date().toISOString().slice(0,10);
   await loadReservations();
 }
 
@@ -5172,6 +5232,8 @@ function getMonday(d) {
 }
 
 async function initCalendar() {
+  document.getElementById('reservationsView')?.classList.add('hidden');
+  document.getElementById('apptCalendarWrap')?.classList.remove('hidden');
   if (!calWeekStart) calWeekStart = getMonday(new Date());
   // Load services for the appointment modal
   calServices = await api('/admin/services').catch(() => []);

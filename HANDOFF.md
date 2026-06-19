@@ -35,9 +35,20 @@
 - i18n: `appt.capacity` + `appt.capacityHint` in 6 lingue.
 - **Restaurant resta table-based** (parallelismo = tavoli liberi) — non usa appointment_capacity.
 
-### Epic prenotazioni — FASI PENDENTI (non ancora fatte)
-- **Fase 2**: merge vista — per tenant ristorante, tab Turnos → "Prenotazioni", calendario mostra `reservations`; rimuovere lista prenotazioni dal tab Ristorante.
-- **Fase 3**: tab Ristorante diventa config — fasce orarie pranzo/cena + durata per prenotazione; eliminare duplicazione Turnos/Restaurante.
+### Fase 2 — merge vista prenotazioni nel tab appuntamenti (FATTA)
+- Tenant ristorante: tab "Turnos" → relabel "📅 Prenotazioni" (`tab.reservations`). `applyTabVisibility` + `applyTranslations` ora restaurant-aware per Products→Menu e Appointments→Prenotazioni (fix anche relabel menu al cambio lingua).
+- `sectionAppointments`: calendario appuntamenti wrappato in `#apptCalendarWrap`; nuovo `#reservationsView` (date picker + lista + "Nueva reserva") spostato qui dal tab Ristorante.
+- `switchTab('appointments')`: ristorante → `initReservationsView()` (mostra reservationsView, nasconde calendario, carica tavoli/zone se mancanti, loadReservations); altrimenti `initCalendar()` (mostra calendario, nasconde reservationsView).
+- Lista prenotazioni RIMOSSA dal tab Ristorante.
+
+### Fase 3 — tab Ristorante = config (FATTA)
+- Tab Ristorante: enable + durata mesa + zone + tavoli + **fasce di servizio** (nuovo). Niente più lista prenotazioni.
+- **Migration ✅ (da eseguire)**: `ALTER TABLE tenants ADD COLUMN IF NOT EXISTS restaurant_meal_bands JSONB NOT NULL DEFAULT '[]'::jsonb;` (Migration 12). Formato: `[{label,start,end}]`.
+- `public/admin/index.html`: card "Franjas de servicio" (`#mealBandsList`) — add/edit/remove franja (label + start + end), salva su `/admin/restaurant/settings`. Funzioni `renderMealBands/addMealBand/updateMealBand/removeMealBand/saveMealBands`, stato `_mealBands`.
+- `routes/admin.js`: `/settings` GET espone `restaurant_meal_bands`; `/restaurant/settings` PUT lo accetta (sanitizza: solo {label≤40, start, end} con start/end presenti).
+- `services/claude.js`: `buildRestaurantStaticBlock(zones, tables, mealBands)` — aggiunge "FRANJAS DE RESERVA" + regola "SOLO reservas dentro de estas franjas". Passato `tenant.restaurant_meal_bands` (getTenantConfig `select('*')`).
+- i18n: `tab.reservations`, `restaurant.bands/addBand/bandsHint/noBands/bandLabelPh` in 6 lingue.
+- Restaurant resta table-based per il parallelismo (le fasce delimitano gli orari, i tavoli il numero simultaneo).
 
 ## COSA È STATO FATTO (sessioni precedenti + 2026-06-17)
 - **#3** — `routes/admin.js` + `routes/superadmin.js`: Opus → `claude-haiku-4-5-20251001` per import catalogo da foto

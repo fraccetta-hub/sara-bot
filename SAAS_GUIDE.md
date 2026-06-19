@@ -100,6 +100,10 @@ Tenant con `restaurant_enabled = true` vedono il tab Productos come **vista Menu
 - **Invio menu al cliente**: il menu è SEMPRE generato dal catalogo live, mai una foto cartacea caricata (evita staleness). Sara emette il tag `<SEND_MENU>` quando il cliente chiede la carta; `routes/webhook.js` `buildMenuText()` costruisce il messaggio testo formattato dai products attivi e lo invia. Zero token AI (costruito nel backend), zero storage.
 - Foto del singolo piatto su richiesta → meccanismo `<SHOW_IMAGE>` + `products.image_url`.
 
+### Tab admin ristorante (dal 2026-06-20)
+- Tenant ristorante: il tab "Turnos" diventa "📅 Prenotazioni" e mostra le `reservations` (vista giornaliera, calendario). Il tab "Restaurante" è solo configurazione.
+- Tab Restaurante = config: enable, durata prenotazione, zone, tavoli (creazione in blocco per capienza+quantità), **fasce di servizio** (`tenants.restaurant_meal_bands` JSON — pranzo/cena con start/end). Sara accetta reservas solo dentro le fasce.
+
 ## Billing SaaS (Stripe)
 
 `routes/billing.js` gestisce l'intero ciclo di vita abbonamento:

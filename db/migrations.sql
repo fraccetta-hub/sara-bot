@@ -62,6 +62,10 @@ ALTER TABLE products
 ALTER TABLE tenants
   ADD COLUMN IF NOT EXISTS appointment_capacity INTEGER NOT NULL DEFAULT 1;
 
+-- Migration 12: Restaurant meal service bands (lunch/dinner windows). JSON: [{label,start,end}]
+ALTER TABLE tenants
+  ADD COLUMN IF NOT EXISTS restaurant_meal_bands JSONB NOT NULL DEFAULT '[]'::jsonb;
+
 -- ============================================================
 -- PRIMA DI TUTTO: crea il bucket per le foto su Supabase Storage
 -- Supabase Dashboard → Storage → New bucket

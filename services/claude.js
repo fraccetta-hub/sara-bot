@@ -130,7 +130,7 @@ function matchOffer(offers, name, category, scopeProduct, scopeCategory, scopeAl
   ) || null;
 }
 
-function buildRestaurantStaticBlock(zones, tables) {
+function buildRestaurantStaticBlock(zones, tables, mealBands = []) {
   if (!zones.length && !tables.length) return '';
   const byZone = {};
   for (const t of tables) {
@@ -141,9 +141,15 @@ function buildRestaurantStaticBlock(zones, tables) {
     .map(([z, ts]) => `• ${z}: ${ts.join(', ')}`)
     .join('\n');
   const maxSingle = tables.reduce((m, t) => Math.max(m, t.capacity), 0);
+  const bandsStr = (mealBands || []).filter(b => b.start && b.end)
+    .map(b => `• ${b.label || 'Servicio'}: ${b.start}–${b.end}`).join('\n');
+  const bandsBlock = bandsStr
+    ? `\nFRANJAS DE RESERVA (SOLO aceptás reservas dentro de estos horarios):\n${bandsStr}\nSi el cliente pide un horario fuera de estas franjas, explicá amablemente cuáles son los turnos disponibles y ofrecé el más cercano.`
+    : '';
   return `\nRESERVAS DE MESA — CAPACIDAD DEL LOCAL:
 ${zonesStr}
 Mesa más grande: ${maxSingle} personas. Grupos de más de ${maxSingle} personas → no confirmés directamente, usá <RESERVATION:{"status":"pending_merchant",...}> y decile al cliente que el titular lo contactará para coordinar.
+${bandsBlock}
 
 CÓMO GESTIONAR RESERVAS:
 R1. Preguntá primero cuántas personas, luego fecha y hora, luego si prefiere alguna zona (si hay más de una).
@@ -195,7 +201,7 @@ function buildStaticSystemPrompt(tenant, stock, services = [], offers = [], rest
     : null;
 
   const restaurantBlock = tenant.restaurant_enabled
-    ? buildRestaurantStaticBlock(restaurantZones, restaurantTables)
+    ? buildRestaurantStaticBlock(restaurantZones, restaurantTables, tenant.restaurant_meal_bands || [])
     : '';
 
   const menuRule = tenant.restaurant_enabled

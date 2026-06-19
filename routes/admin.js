@@ -279,7 +279,7 @@ router.get('/settings', requireAuth, async (req, res) => {
              delivery_zone_outer_fee, delivery_per_km,
              delivery_min_order, delivery_disabled_dates,
              address, google_review_url,
-             restaurant_enabled, restaurant_slot_duration, appointment_capacity,
+             restaurant_enabled, restaurant_slot_duration, restaurant_meal_bands, appointment_capacity,
              active, plan_expires, plan_currency, plan_price, phone_number_id, whatsapp_token_refresh_error,
              stripe_subscription_status, subscription_cancel_at_period_end`)
     .eq('id', req.tenant.tenantId)
@@ -2442,10 +2442,15 @@ router.delete('/customers/:phone', requireAuth, async (req, res) => {
 // ─── Restaurant: settings (enable/disable + slot duration) ───────────────────
 
 router.put('/restaurant/settings', requireAuth, async (req, res) => {
-  const { restaurant_enabled, restaurant_slot_duration } = req.body;
+  const { restaurant_enabled, restaurant_slot_duration, restaurant_meal_bands } = req.body;
   const updates = {};
   if (restaurant_enabled !== undefined) updates.restaurant_enabled = Boolean(restaurant_enabled);
   if (restaurant_slot_duration) updates.restaurant_slot_duration = parseInt(restaurant_slot_duration);
+  if (Array.isArray(restaurant_meal_bands)) {
+    updates.restaurant_meal_bands = restaurant_meal_bands
+      .filter(b => b && b.start && b.end)
+      .map(b => ({ label: String(b.label || '').slice(0, 40), start: b.start, end: b.end }));
+  }
   const { error } = await supabase.from('tenants').update(updates).eq('id', req.tenant.tenantId);
   if (error) return res.status(500).json({ error: error.message });
   res.json({ ok: true });
