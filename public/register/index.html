@@ -35,48 +35,6 @@
 </head>
 <body class="font-sans">
 
-<!-- ══ Disclaimer modal (before Stripe) ══════════════════════════════════ -->
-<div id="disclaimerModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 hidden">
-  <div class="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 fade-in">
-    <div class="text-center mb-5">
-      <div class="text-4xl mb-3">⚠️</div>
-      <h2 class="text-lg font-bold text-gray-800 mb-1" data-i18n="disc.title">Antes de continuar al pago</h2>
-      <p class="text-sm text-gray-500" data-i18n="disc.sub">Asegurate de tener esto listo para activar tu bot:</p>
-    </div>
-    <div class="space-y-3 mb-5">
-      <div class="flex items-start gap-3 bg-blue-50 border border-blue-100 rounded-xl p-3">
-        <span class="text-xl flex-shrink-0">📘</span>
-        <div>
-          <p class="text-sm font-semibold text-gray-800" data-i18n="disc.fb.title">Cuenta de Facebook Business</p>
-          <p class="text-xs text-gray-500 mt-0.5" data-i18n-html="disc.fb.text">Necesitás una cuenta de Facebook para conectar el número WhatsApp Business a través de la API de Meta. Si no la tenés, creala en <strong>business.facebook.com</strong> antes de continuar.</p>
-        </div>
-      </div>
-      <div class="flex items-start gap-3 bg-amber-50 border border-amber-100 rounded-xl p-3">
-        <span class="text-xl flex-shrink-0">📱</span>
-        <div>
-          <p class="text-sm font-semibold text-gray-800" data-i18n="disc.phone.title">Número dedicado para el negocio</p>
-          <p class="text-xs text-gray-500 mt-0.5" data-i18n-html="disc.phone.text">Idealmente usá un número que <strong>no esté en uso con WhatsApp</strong> (ni personal ni Business). Si migrás tu número actual, <strong>perdés el acceso a la app de WhatsApp y todas tus conversaciones anteriores</strong>.</p>
-        </div>
-      </div>
-      <div class="flex items-start gap-3 bg-green-50 border border-green-100 rounded-xl p-3">
-        <span class="text-xl flex-shrink-0">💳</span>
-        <div>
-          <p class="text-sm font-semibold text-gray-800" data-i18n="disc.card.title">Tarjeta de crédito/débito</p>
-          <p class="text-xs text-gray-500 mt-0.5" data-i18n="disc.card.text">Se guarda ahora para el cobro automático al día 8. Los primeros 7 días son completamente gratis.</p>
-        </div>
-      </div>
-    </div>
-    <p class="text-xs text-gray-400 text-center mb-4" data-i18n="disc.note">Podés pagar ahora y conectar WhatsApp después — el panel ya está disponible desde el día 1.</p>
-    <div class="flex gap-3">
-      <button onclick="document.getElementById('disclaimerModal').classList.add('hidden')" class="flex-1 py-2.5 border border-gray-200 text-gray-600 font-semibold rounded-xl text-sm hover:bg-gray-50 transition" data-i18n="disc.back">
-        ← Volver
-      </button>
-      <button onclick="proceedToStripe()" class="flex-1 py-2.5 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-xl text-sm transition" data-i18n="disc.btn">
-        Entendido, pagar →
-      </button>
-    </div>
-  </div>
-</div>
 
 <!-- ══ Header ══════════════════════════════════════════════════════════════ -->
 <header class="bg-white border-b border-gray-100 px-4 py-3 flex items-center justify-between sticky top-0 z-20 shadow-sm">
@@ -741,12 +699,7 @@ async function checkEmail(input) {
 // ── Disclaimer → Stripe ───────────────────────────────────────────────────────
 function showDisclaimer() {
   if (!validateStep(3) || !validateStep(4)) return;
-  document.getElementById('disclaimerModal').classList.remove('hidden');
-}
-
-async function proceedToStripe() {
-  document.getElementById('disclaimerModal').classList.add('hidden');
-  await submitRegistration();
+  submitRegistration();
 }
 
 // ── Submit ────────────────────────────────────────────────────────────────────
