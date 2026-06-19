@@ -453,10 +453,12 @@ router.post('/support/:tenantId/read', requireSuper, (req, res) => {
 
 // ─── GET /superadmin/support — list all tenants with support messages ─────────
 router.get('/support', requireSuper, async (req, res) => {
-  // Get all support messages with tenant info
+  // No PostgREST embed here: it requires a declared FK relationship between
+  // support_messages and tenants, which isn't guaranteed in prod. Resolve names
+  // with a separate query so the list never 500s on a missing relationship.
   const { data, error } = await supabase
     .from('support_messages')
-    .select('id, tenant_id, role, content, created_at, tenants(name)')
+    .select('id, tenant_id, role, content, created_at')
     .order('created_at', { ascending: false });
   if (error) return res.status(500).json({ error: error.message });
 
@@ -467,14 +469,24 @@ router.get('/support', requireSuper, async (req, res) => {
     if (!byTenant[tid]) {
       byTenant[tid] = {
         tenant_id: tid,
-        tenant_name: msg.tenants?.name || tid,
+        tenant_name: tid,
         messages: [],
         unread: 0,
         last_at: null,
+        last_message: null,
       };
     }
     byTenant[tid].messages.push(msg);
-    if (!byTenant[tid].last_at) byTenant[tid].last_at = msg.created_at;
+    if (!byTenant[tid].last_at) {
+      byTenant[tid].last_at = msg.created_at;
+      byTenant[tid].last_message = msg.content;
+    }
+  }
+
+  const ids = Object.keys(byTenant);
+  if (ids.length) {
+    const { data: tens } = await supabase.from('tenants').select('id, name').in('id', ids);
+    for (const tt of (tens || [])) if (byTenant[tt.id]) byTenant[tt.id].tenant_name = tt.name || tt.id;
   }
 
   // Count unread = merchant messages after the last support reply OR last read timestamp

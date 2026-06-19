@@ -16,6 +16,17 @@ ALTER TABLE tenants
 ALTER TABLE tenants
   ADD COLUMN IF NOT EXISTS subscription_cancel_at_period_end BOOLEAN DEFAULT false;
 
+-- Migration: support chat (merchant ↔ bot ↔ superadmin). Was created manually
+-- before; documented here with the FK so PostgREST embeds resolve correctly.
+CREATE TABLE IF NOT EXISTS support_messages (
+  id         UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id  UUID        NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  role       TEXT        NOT NULL CHECK (role IN ('merchant','assistant','support')),
+  content    TEXT        NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_support_messages_tenant ON support_messages(tenant_id, created_at);
+
 -- Migration 9: Promo codes
 CREATE TABLE IF NOT EXISTS promo_codes (
   id                   UUID          PRIMARY KEY DEFAULT gen_random_uuid(),

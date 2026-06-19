@@ -794,6 +794,21 @@ ALTER TABLE tenants
   ADD COLUMN IF NOT EXISTS subscription_cancel_at_period_end BOOLEAN DEFAULT false;
 ```
 
+## COSA È STATO FATTO (sessione 2026-06-20 — fix superadmin support chat "cargando")
+
+### Bug: chat support superadmin bloccata su "Cargando..."
+- Causa: `GET /superadmin/support` usava embed PostgREST `select('... tenants(name)')` che richiede una FK dichiarata `support_messages.tenant_id → tenants`. In prod la tabella è stata creata a mano, probabilmente senza FK → PostgREST 500 → `loadSupportList()` ingoia l'errore in console → lista resta "Cargando..."
+- Fix (`routes/superadmin.js`): rimosso l'embed. Ora fetch `support_messages` semplice + query separata `tenants.select('id,name').in('id', ids)` per i nomi. Mai più 500 sulla relazione. Aggiunto anche `last_message` nella risposta (il frontend lo usava ma il backend non lo popolava).
+- `db/migrations.sql`: documentata la tabella `support_messages` (CREATE IF NOT EXISTS) con FK a tenants + CHECK `role IN ('merchant','assistant','support')` + indice — così nuovi ambienti hanno la relazione corretta per gli embed.
+
+### Sospetto residuo: bot support admin non risponde
+- Se la tabella `support_messages` esistente ha un CHECK su `role` che NON include `'assistant'` (creata prima del support bot), ogni insert della risposta bot fallisce nel catch → nessuna risposta.
+- `CREATE IF NOT EXISTS` non altera una tabella già esistente. Se il bot non risponde dopo il deploy, eseguire su Supabase:
+```sql
+ALTER TABLE support_messages DROP CONSTRAINT IF EXISTS support_messages_role_check;
+ALTER TABLE support_messages ADD  CONSTRAINT support_messages_role_check CHECK (role IN ('merchant','assistant','support'));
+```
+
 ## PROSSIME PRIORITÀ (sessione successiva)
 1. **Eseguire migration** `subscription_cancel_at_period_end` su Supabase
 2. **Fatturazione** — capire come mandare fatture ai merchant
