@@ -524,6 +524,23 @@ ALTER TABLE conversations ADD COLUMN IF NOT EXISTS last_nudge_at TIMESTAMPTZ;
 - Costo Brevo/mese
 - Stima messaggi medi/tenant per definire limiti piano
 
+## COSA È STATO FATTO (sessione 2026-06-19 — sistema prenotazioni ristorante)
+
+### Restaurant reservation system — COMPLETATO (commit d15f86a)
+- Tabelle `restaurant_zones`, `restaurant_tables`, `reservations` + colonne `restaurant_enabled`, `restaurant_slot_duration` su `tenants` — migration eseguita su Supabase
+- `services/stock.js`: `getRestaurantZones`, `getRestaurantTables`, `getUpcomingReservations`, `invalidateRestaurant`
+- `services/claude.js`: `buildRestaurantStaticBlock` (zone+tavoli nel prompt statico), `buildReservationsBlock` (prenotazioni next 7gg nel prompt dinamico), parsing tag `RESERVATION`
+- `routes/admin.js`: CRUD completo zone/tavoli/prenotazioni + `PUT /restaurant/settings`; `GET /settings` espone campi restaurant
+- `routes/webhook.js`: caricamento dati restaurant (keyword-gated), gestione tag RESERVATION — assegna tavolo più piccolo libero, escalation a merchant per gruppi grandi
+- Admin UI: tab 🍽️ Restaurante (nascosta finché non attivata) — toggle enable, slot duration, CRUD zone, CRUD tavoli per zona, vista giornaliera prenotazioni con cambio status
+- i18n: `restaurant.*` in ES/EN/IT/DE/FR/PT
+
+### Flusso Sara ristorante
+1. Cliente chiede tavolo → Sara raccoglie n. persone, data, ora, preferenza zona
+2. Verifica disponibilità in prompt dinamico (prenotazioni esistenti 7gg)
+3. Gruppo ≤ tavolo singolo → conferma + tag `<RESERVATION:JSON>` → backend assegna tavolo libero più piccolo
+4. Gruppo > tavolo singolo max → `status: pending_merchant` → notifica WhatsApp merchant
+
 ## PROSSIME PRIORITÀ (sessione successiva)
 1. **Stripe** — configurare env vars reali su Render + testare flow completo con account business
 3. **Costi/margini** — completare con costi infra (Render + Supabase + Brevo) → definire prezzi piani Stripe
