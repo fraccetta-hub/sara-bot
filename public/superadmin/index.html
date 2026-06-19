@@ -645,6 +645,7 @@ async function openEditModal(id) {
     { key: 'products_enabled',     label: '📦 Productos' },
     { key: 'services_enabled',     label: '🛠 Servicios' },
     { key: 'appointments_enabled', label: '📅 Turnos' },
+    { key: 'restaurant_enabled',   label: '🍽️ Restaurante' },
   ];
   document.getElementById('eInfoSections').innerHTML = sections.map(s =>
     `<span class="px-2 py-1 rounded-full text-xs font-medium ${t[s.key] ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-400'}">${s.label}</span>`
