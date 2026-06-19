@@ -589,7 +589,9 @@ ALTER TABLE conversations ADD COLUMN IF NOT EXISTS last_nudge_at TIMESTAMPTZ;
 - `public/register/i18n.js`: `s4.legal` aggiornato con link DPA in tutte e 6 le lingue
 - `public/legal/privacy.html`: §5 aggiornato con right-to-erasure strumento + link DPA in ES/EN/IT/DE/FR
 - Retention conversations 90gg già attiva in `index.js` (cleanup cron)
-- **Brevo come sub-processor mancante** da privacy/DPA — da aggiungere (elabora email transazionali)
+- Brevo SAS aggiunto come sub-processor in privacy.html e dpa.html (ES/EN/IT/DE/FR) — commit e73f6c4
+- `/legal/dpa` route aggiunta in index.js (era mancante — file servito solo come /legal/dpa.html)
+- PII scrub: `senderPhone` rimosso dal log audio transcription in webhook.js
 
 ## PROSSIME PRIORITÀ (sessione successiva)
 1. **Stripe test** — testare flow completo iscrizione end-to-end (scegli piano → Stripe checkout → webhook → tenant attivo)
