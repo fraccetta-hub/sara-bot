@@ -625,6 +625,14 @@ ALTER TABLE conversations ADD COLUMN IF NOT EXISTS last_nudge_at TIMESTAMPTZ;
 - Gira solo quando tab Clientes è visibile (check `sectionClients.classList`)
 - Rileva in automatico: cancellazioni account, nuove iscrizioni, cambio piano
 
+## COSA È STATO FATTO (sessione 2026-06-19 — broadcast security + bug fixes)
+
+### Broadcast — protezioni (commit 6d13245)
+- `broadcastRateLimit`: 1 richiesta/ora per tenant (express-rate-limit keyed su tenantId)
+- `broadcastInProgress` Set: guard contro chiamate parallele (doppio click, bot) — blocca prima che il rate limiter scatti
+- Loop in `try/finally` → Set svuotato anche su crash
+- Fix token: `broadcastToken = tenant.whatsapp_token || process.env.WHATSAPP_TOKEN` (commit d241b41) — "Sin Meta" tenant usano token globale come il webhook
+
 ## PROSSIME PRIORITÀ (sessione successiva)
 1. **Stripe test** — testare flow completo iscrizione end-to-end (scegli piano → Stripe checkout → webhook → tenant attivo)
 2. **Fatturazione** — capire come mandare fatture ai merchant
