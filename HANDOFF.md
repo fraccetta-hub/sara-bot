@@ -571,21 +571,30 @@ ALTER TABLE conversations ADD COLUMN IF NOT EXISTS last_nudge_at TIMESTAMPTZ;
 
 ## COSA È STATO FATTO (sessione 2026-06-19 — landing page pricing UX)
 
-### Landing page pricing — aggiornata (commit 88d1856)
+### Landing page pricing — aggiornata (commit 88d1856 + e4564f4)
 - Layout: 4 colonne desktop, 2x2 tablet, 1 colonna mobile (era auto-fit 3+1)
-- Rimosso subtitle "Nessun costo per conversazione..." + descrizioni piani (troppo lunghe)
-- Feature lists accorciate e rinominate: "1 numero WhatsApp Business" → "Il tuo bot personalizzato" su tutti i piani
-- Shop: Catalogo prodotti, Gestionale ordini, Gestionale consegne, Pannello chat, Supporto incluso
-- Bookings: Catalogo servizi, Agenda 24/7, Promemoria automatici, Pannello chat, Supporto incluso
-- Restaurant: Menu, Prenotazioni tavoli 24/7, Gestione zone/mesas, Pannello chat, Supporto incluso
-- Pro: espanso a 9 feature (prodotti+servizi+agenda+promemoria+consegne+ordini+chat+supporto)
-- Tutte le modifiche in 6 lingue (ES/EN/IT/DE/FR/PT)
+- Badge "7 giorni di prova gratis" verde prominente sopra la griglia (era testo piccolo)
+- Esempi attività commerciale sotto ogni nome piano (Tiendas·Floristerías..., Peluquerías·Médicos..., etc.)
+- Feature lists a crescita progressiva: Shop=5, Bookings=6, Restaurant=7, Pro=9 — percepzione differenza prezzo
+- Rimossa scritta piccola pricing.note ("7 días gratis en cualquier plan · Cancelás...")
+- TR aggiornata in 6 lingue per: pricing.trial, pricing.*.example, f1-f7/f9 corretti per ogni piano
+
+## COSA È STATO FATTO (sessione 2026-06-19 — GDPR compliance, commit 1f7738e)
+
+### GDPR compliance — COMPLETATO
+- `public/legal/dpa.html`: DPA (Data Processing Agreement) in ES/EN/IT/DE/FR — sub-processor list, obblighi processor, clausole SCCs, strumento erasure
+- `routes/admin.js`: `DELETE /admin/customers/:phone` — cancella tutti i dati di un cliente finale (conversations, orders, waitlist, appointments, reservations)
+- `public/admin/index.html`: bottone 🗑️ in chat header + `eraseCustomerData()` — conferma + call API + chiude chat
+- `public/admin/i18n.js`: chiavi `chat.erase.*` in ES/EN/IT/DE/FR/PT
+- `public/register/i18n.js`: `s4.legal` aggiornato con link DPA in tutte e 6 le lingue
+- `public/legal/privacy.html`: §5 aggiornato con right-to-erasure strumento + link DPA in ES/EN/IT/DE/FR
+- Retention conversations 90gg già attiva in `index.js` (cleanup cron)
+- **Brevo come sub-processor mancante** da privacy/DPA — da aggiungere (elabora email transazionali)
 
 ## PROSSIME PRIORITÀ (sessione successiva)
 1. **Stripe test** — testare flow completo iscrizione end-to-end (scegli piano → Stripe checkout → webhook → tenant attivo)
 2. **Fatturazione** — capire come mandare fatture ai merchant
-5. **GDPR compliance** — audit cosa manca (DPA, retention policy, right-to-erasure flow)
-6. **Go-to-market** — pubblicità, test, vendita
+3. **Go-to-market** — pubblicità, test, vendita
 
 ## IDEE FUTURE (non ancora pianificate)
 
@@ -620,7 +629,7 @@ ALTER TABLE conversations ADD COLUMN IF NOT EXISTS last_nudge_at TIMESTAMPTZ;
 
 ## COME RIPRENDERE
 Primo messaggio da mandare a Claude nella prossima sessione:
-"Leggi HANDOFF.md. Sessione precedente: Sara UX completata (personality-first, closures, offers, business hours, push notifiche, cross-sell, catalogo limitato, indirizzo, note cliente, review request). Migrations tutte eseguite. Prossimo: Stripe con account business reale, poi cron features Sara."
+"Leggi HANDOFF.md. Sessione precedente: landing page pricing completata (badge prova, esempi attività, feature crescenti 5/6/7/9). Prossimo: testare flow Stripe end-to-end (signup → checkout → webhook → tenant attivo)."
 
 ## ERRORI NOTI / TRAPPOLE
 - NON leggere/query tabella prod `tenants` con `select('*')` o colonne sensibili senza autorizzazione esplicita utente per quella lettura specifica — bloccato da permission classifier (dati merchant: token WhatsApp, telefoni). `superadmin GET /tenants/:id` ora usa campi espliciti sicuri.
