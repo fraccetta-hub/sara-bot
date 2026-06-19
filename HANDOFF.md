@@ -438,6 +438,11 @@ CREATE TABLE IF NOT EXISTS offers (
 - **Webhook `handleCustomerMessage`**: `getBusinessHours` aggiunto al `Promise.all` parallelo; `isFirstMessage = history.length === 0` calcolato prima di chiamare `chat()`; entrambi passati a `chat()`
 - **Push notifiche cliente per cambio stato ordine**: `notifyCustomerOrderStatus()` helper — manda messaggio automatico al cliente (non al merchant) quando stato ordine cambia a `preparing`/`delivering`/`delivered`; stringhe multilingua aggiunte in MT (`cust_status_preparing/delivering/delivered` in ES/EN/IT/DE/FR/PT); chiamato in entrambi i path (single-match + pending-candidate)
 
+## COSA È STATO FATTO (sessione 2026-06-19 — catalog UX rule)
+
+### Sara — regola catalogo (commit a18d37e)
+- Regola 14 in `buildStaticSystemPrompt`: Sara non dumpa mai tutto il catalogo. "Che avete?" → 2-3 esempi + "cerchi qualcosa in particolare?". Categoria specifica → max 3-4 prodotti + chiede follow-up. Evita wall of text e token sprecati.
+
 ## PROSSIME PRIORITÀ (sessione successiva)
 1. **Stripe** — configurare env vars reali su Render + testare flow completo con account business
 2. **Costi/margini** — calcolo reale token AI + infra + limiti piano + definire piani starter/pro
