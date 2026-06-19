@@ -345,6 +345,72 @@ UPDATE tenants SET email = login_slug WHERE email IS NULL;
 - Magic bytes check (`detectImageMime`): valida JPEG/PNG/GIF/WebP dai primi 12 byte — rifiuta file con estensione giusta ma contenuto non-immagine; usa mime reale (non da estensione) per upload
 - Modal UI (commit 1d62470): pannello limiti visibile in 6 lingue (formati, 300 img max, 50MB ZIP, 8MB/img)
 
+## COSA È STATO FATTO (sessione 2026-06-19 — UX cliente Sara + offerte + chiusure)
+
+### Sara bot — miglioramenti esperienza cliente (commits 1036611, 42e8b45, 832d3f1, ad7b496)
+- **Prompt personality-first**: `buildStaticSystemPrompt` ristrutturato — personalità è identità primaria, regole operative vengono dopo; regole stile WhatsApp aggiunte (messaggi corti, una domanda, no "¡Perfecto!", usa il nome, foto proattiva, offri alternativa se esaurito)
+- **Stato ordine**: Sara vede ordine attivo del cliente nel dynamic prompt → risponde a "dov'è il mio ordine?"
+- **Memoria acquisti**: ultimi 3 ordini consegnati nel dynamic prompt → "vuoi lo stesso di sempre?"
+- **Foto proattiva**: Sara manda foto prodotto appena il cliente mostra interesse, senza aspettare richiesta esplicita
+- **Occasion awareness per paese**: `getNearbyOccasion(country)` — Festa della Mamma diversa per PY/MX/AR/IT/ES/FR/GB; Sara menziona occasione solo se catalogo è rilevante (fioraio sì, dentista no)
+- **Lista d'attesa esauriti**: tag `<WAITLIST:prodotto>` — cliente dice "avisami" → salva in tabella `waitlist` → quando merchant aggiorna stock a >0, notifica automatica a tutti i clienti in attesa
+- **`services/claude.js`**: `buildDynamicSystemPrompt` ora accetta `customerContext`, `closures`, `offers`
+
+### Chiusure aziendali (commit a152636)
+- Tabella `business_closures (tenant_id, start_date, end_date, label)`
+- Admin UI: sezione "🏖️ Cierres y Vacaciones" in Settings — crea/elimina chiusure con date range + etichetta
+- Sara: vede chiusure nel dynamic prompt, avvisa clienti con data riapertura
+- Appuntamenti: slot dei giorni in chiusura esclusi automaticamente dal calcolo 14 giorni
+- Delivery: se oggi in chiusura, Sara informa che non si consegna
+- Merchant NL: `create_closure` ("siamo in ferie dal 1 al 20 agosto") + `delete_closure`
+- Cache: `getBusinessClosures` con TTL 45s, `invalidateClosures` dopo ogni modifica
+
+### Offerte e sconti (commit 4d75824)
+- Tabella `offers (tenant_id, label, discount_type: percent|fixed, discount_value, scope, scope_target, valid_from, valid_to, is_active)`
+- Scope: `all_products`, `category`, `product`, `all_services`, `service_category`, `service`
+- `buildStaticSystemPrompt`: applica sconto al prezzo nel catalogo → Sara mostra prezzo scontato + originale + etichetta
+- Admin UI: sezione "🏷️ Ofertas y Descuentos" — form con tipo/valore/scope/date + lista con eliminazione
+- Merchant NL: `create_offer` ("20% su tutte le rose fino a domenica") + `delete_offer`
+- Cache: `getOffers` con TTL 45s, `invalidateOffers` dopo ogni modifica
+
+### Migration SQL richieste (da eseguire in Supabase SQL Editor se non già fatto)
+```sql
+-- Waitlist
+CREATE TABLE IF NOT EXISTS waitlist (
+  id            BIGSERIAL PRIMARY KEY,
+  tenant_id     UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  customer_phone TEXT NOT NULL,
+  product_name  TEXT NOT NULL,
+  created_at    TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE (tenant_id, customer_phone, product_name)
+);
+
+-- Business closures
+CREATE TABLE IF NOT EXISTS business_closures (
+  id         BIGSERIAL PRIMARY KEY,
+  tenant_id  UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  start_date DATE NOT NULL,
+  end_date   DATE NOT NULL,
+  label      TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Offers
+CREATE TABLE IF NOT EXISTS offers (
+  id             BIGSERIAL PRIMARY KEY,
+  tenant_id      UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  label          TEXT NOT NULL,
+  discount_type  TEXT NOT NULL CHECK (discount_type IN ('percent','fixed')),
+  discount_value NUMERIC(10,2) NOT NULL,
+  scope          TEXT NOT NULL CHECK (scope IN ('all_products','category','product','all_services','service_category','service')),
+  scope_target   TEXT,
+  valid_from     DATE,
+  valid_to       DATE,
+  is_active      BOOLEAN DEFAULT TRUE,
+  created_at     TIMESTAMPTZ DEFAULT NOW()
+);
+```
+
 ## PROSSIME PRIORITÀ (sessione successiva)
 1. **Stripe** — configurare env vars reali su Render + testare flow completo con account business
 2. **Costi/margini** — calcolo reale token AI + infra + limiti piano + definire piani starter/pro
@@ -354,23 +420,8 @@ UPDATE tenants SET email = login_slug WHERE email IS NULL;
 
 ## IDEE FUTURE (non ancora pianificate)
 
-### Offerte / sconti
-Permettere al merchant di configurare offerte su:
-- Singolo prodotto o servizio
-- Categoria prodotti o categoria servizi
-- Tutti i prodotti / tutti i servizi
-- Con date di validità (es. "Black Friday 28-30 novembre")
-Sara menzionerebbe l'offerta attiva durante la conversazione con il cliente.
-Schema DB ipotetico: tabella `offers` (tenant_id, target_type: product|category|all, target_id, discount_pct, valid_from, valid_to, label).
-
-### Chiusure aziendali (ferie / festività)
-Attualmente `appointment_blocks` gestisce blocchi puntuali, ma manca un concetto di chiusura aziendale per fasce di giorni (es. "ferie 1-20 agosto", "chiuso a Natale").
-Serve per:
-- Bloccare appuntamenti automaticamente nell'intervallo
-- Sara risponde "siamo in ferie fino al X, puoi prenotare da quella data"
-- Delivery: avvisare che non si consegna in quel periodo
-Schema ipotetico: tabella `business_closures` (tenant_id, start_date, end_date, reason) oppure estendere `appointment_blocks` con flag `is_holiday`.
-Nota: ogni business ha festività diverse (un alimentari apre a Natale, un dermatologo no) — deve essere configurabile dal merchant, non automatico.
+### Offerte / sconti — ✅ IMPLEMENTATO sessione 2026-06-19
+### Chiusure aziendali — ✅ IMPLEMENTATO sessione 2026-06-19
 
 ## COSA NON FUNZIONA / IN SOSPESO
 - **Env vars mancanti su Render** — da aggiungere in Render → Environment prima che il wizard funzioni:
