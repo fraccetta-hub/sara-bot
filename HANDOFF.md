@@ -653,6 +653,16 @@ ALTER TABLE conversations ADD COLUMN IF NOT EXISTS last_nudge_at TIMESTAMPTZ;
 - Il cron continua a loggare il fallimento e a settare `whatsapp_token_refresh_error` in DB → banner/card "Ricollegare WhatsApp" nel pannello admin invariati
 - `notifySuperadmin` (alert chat supporto) non toccato
 
+## COSA È STATO FATTO (sessione corrente 2026-06-19 — settings tab layout)
+
+### Settings tab — layout refactor (commit 8ad08d0)
+- Problema: griglia `grid-cols-2` con `md:col-span-2` su molte card causava righe con spazio vuoto a destra (`h2`, `Account`, `Business info` erano soli nella loro riga)
+- Fix: `sectionSettings` diventa `space-y-5`; due div espliciti `LEFT` / `RIGHT` con `space-y-5` indipendenti dentro un `grid-cols-2`; card full-width (Orari+Chiusure, Offerte, Delivery) messe sotto il grid block
+- LEFT: Lingua, Account, Telefono, Info negocio, Password, Legal
+- RIGHT: Bot personality, Profilo WA, Istruzioni pagamento, Regole negocio
+- FULL-WIDTH sotto: Orari+Chiusure (già split interno 2-col), Offerte, Delivery (condizionale)
+- Delivery card interna compattata: Indirizzo+Tipo tarifa affiancati; Costo+Minimo affiancati; zone/km fields in grid-cols-2
+
 ## PROSSIME PRIORITÀ (sessione successiva)
 1. **Stripe test** — testare flow completo iscrizione end-to-end (scegli piano → Stripe checkout → webhook → tenant attivo)
 2. **Fatturazione** — capire come mandare fatture ai merchant
