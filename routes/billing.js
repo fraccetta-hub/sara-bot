@@ -10,8 +10,10 @@ const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY
 const JWT_SECRET = process.env.ADMIN_JWT_SECRET;
 
 const PRICE_IDS = {
-  starter: process.env.STRIPE_PRICE_STARTER,
-  pro:     process.env.STRIPE_PRICE_PRO,
+  shop:       process.env.STRIPE_PRICE_SHOP,
+  bookings:   process.env.STRIPE_PRICE_BOOKINGS,
+  restaurant: process.env.STRIPE_PRICE_RESTAURANT,
+  pro:        process.env.STRIPE_PRICE_PRO,
 };
 
 // ── POST /billing/create-checkout ─────────────────────────────────────────────
