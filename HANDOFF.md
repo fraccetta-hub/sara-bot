@@ -443,6 +443,30 @@ CREATE TABLE IF NOT EXISTS offers (
 ### Sara — regola catalogo (commit a18d37e)
 - Regola 14 in `buildStaticSystemPrompt`: Sara non dumpa mai tutto il catalogo. "Che avete?" → 2-3 esempi + "cerchi qualcosa in particolare?". Categoria specifica → max 3-4 prodotti + chiede follow-up. Evita wall of text e token sprecati.
 
+## COSA È STATO FATTO (sessione 2026-06-19 — UX features 2+8+11)
+
+### Feature 2 — Indirizzo negocio (commit 87c8943)
+- `tenants.address` esposto in GET/PUT `/admin/settings`; iniettato nel static prompt → Sara risponde a "dove siete?"
+- Admin UI: card "📍 Información del negocio" in Settings con campo indirizzo + link Google Reviews; i18n ES/EN/IT/DE/FR/PT
+
+### Feature 8 — Note cliente (commit 87c8943)
+- `conversations.customer_notes TEXT`: `PATCH /admin/chats/:phone/notes` salva note private
+- Chat panel: strip gialla con campo note; si auto-salva `onchange`; `refreshChat()` la popola ad ogni refresh
+- `buildDynamicSystemPrompt` accetta `customerNotes` → iniettato come contesto privato ("non menzionarlo esplicitamente")
+- `chat()` passa `customerNotes: convRow?.customer_notes` dal convRow già caricato (select('*'))
+
+### Feature 11 — Review request post-consegna (commit 87c8943)
+- `tenants.google_review_url TEXT` in settings
+- `notifyCustomerOrderStatus(order, status, phoneNumberId, token, tenant)`: quando `status==='delivered'` e `tenant.google_review_url` settato, manda secondo messaggio con link recensione
+- Entrambi i path (single-match + pending-candidate) passano `tenant`
+
+### Migration SQL richieste (da eseguire in Supabase)
+```sql
+ALTER TABLE tenants ADD COLUMN IF NOT EXISTS address TEXT;
+ALTER TABLE tenants ADD COLUMN IF NOT EXISTS google_review_url TEXT;
+ALTER TABLE conversations ADD COLUMN IF NOT EXISTS customer_notes TEXT;
+```
+
 ## PROSSIME PRIORITÀ (sessione successiva)
 1. **Stripe** — configurare env vars reali su Render + testare flow completo con account business
 2. **Costi/margini** — calcolo reale token AI + infra + limiti piano + definire piani starter/pro
