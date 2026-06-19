@@ -375,7 +375,7 @@ router.get('/products', requireAuth, async (req, res) => {
 // ─── POST /admin/products ─────────────────────────────────────────────────────
 
 router.post('/products', requireAuth, async (req, res) => {
-  const { name, category, price_guarani, stock_qty, description, image_url, sku } = req.body;
+  const { name, category, price_guarani, stock_qty, description, image_url, sku, allergens } = req.body;
   if (!name || !price_guarani)
     return res.status(400).json({ error: 'Nombre y precio son obligatorios' });
 
@@ -388,6 +388,7 @@ router.post('/products', requireAuth, async (req, res) => {
       name, category, price_guarani,
       stock_qty: unlimited ? null : (stock_qty || 0),
       description, image_url,
+      allergens: allergens || null,
       sku: sku || null,
       is_available: unlimited ? true : (stock_qty || 0) > 0
     })
@@ -400,7 +401,7 @@ router.post('/products', requireAuth, async (req, res) => {
 // ─── PUT /admin/products/:id ──────────────────────────────────────────────────
 
 router.put('/products/:id', requireAuth, async (req, res) => {
-  const { name, category, price_guarani, stock_qty, description, image_url, is_available, sku } = req.body;
+  const { name, category, price_guarani, stock_qty, description, image_url, is_available, sku, allergens } = req.body;
 
   const updates = {};
   if (name          !== undefined) updates.name          = name;
@@ -409,6 +410,7 @@ router.put('/products/:id', requireAuth, async (req, res) => {
   if (description   !== undefined) updates.description   = description;
   if (image_url     !== undefined) updates.image_url     = image_url;
   if (sku           !== undefined) updates.sku           = sku || null;
+  if (allergens     !== undefined) updates.allergens     = allergens || null;
   if (stock_qty     !== undefined) {
     // null = unlimited stock (always available)
     updates.stock_qty    = stock_qty === null ? null : stock_qty;
@@ -1004,6 +1006,7 @@ router.post('/import-confirm', requireAuth, async (req, res) => {
           price_type:    r.price_type    || 'fixed',
           duration_min:  r.duration_min  || null,
           stock_qty:     r.stock_qty     ?? 99,
+          allergens:     r.allergens     || null,
           image_url:     r.image_url     || null,
           is_available:  r.is_available  ?? true,
         }));
@@ -1026,12 +1029,22 @@ router.post('/import-from-images', requireAuth, uploadCatalog.array('images', 6)
     return res.status(400).json({ error: 'No se enviaron imágenes' });
 
   const { data: t } = await supabase.from('tenants')
-    .select('plan_currency').eq('id', req.tenant.tenantId).single();
+    .select('plan_currency, restaurant_enabled').eq('id', req.tenant.tenantId).single();
   const currency = t?.plan_currency || 'USD';
 
-  const content = [{
-    type: 'text',
-    text: `Analizá estas ${req.files.length} imágenes de un catálogo de negocios (menú, lista de precios, catálogo de WhatsApp Business, etc.).
+  const promptText = t?.restaurant_enabled
+    ? `Analizá estas ${req.files.length} imágenes del menú de un restaurante (carta de platos, lista de precios, etc.).
+
+Extraé TODOS los platos y bebidas que puedas ver, con:
+- name: nombre del plato/bebida (obligatorio)
+- category: la SECCIÓN del menú a la que pertenece (Entradas, Primeros, Carnes, Pastas, Postres, Bebidas, etc.). Usá el encabezado de sección impreso en el menú; si no hay, inferí uno razonable.
+- price_guarani: precio en ${currency} como número (puede tener decimales, ej: 4.99; si no hay precio pon 0)
+- description: descripción del plato si la hay (ingredientes, corte de carne, cocción). Si no hay, dejá vacío.
+- allergens: alérgenos si están indicados (gluten, lácteos, frutos secos, mariscos, huevo, etc.) como texto separado por comas. Si no se indican, dejá vacío.
+
+Respondé ÚNICAMENTE con un JSON válido, sin texto adicional, en este formato:
+{"products":[{"name":"...","category":"...","price_guarani":0,"description":"...","allergens":"..."}]}`
+    : `Analizá estas ${req.files.length} imágenes de un catálogo de negocios (menú, lista de precios, catálogo de WhatsApp Business, etc.).
 
 Extraé TODOS los productos o servicios que puedas ver, con:
 - name: nombre del producto/servicio (obligatorio)
@@ -1040,8 +1053,9 @@ Extraé TODOS los productos o servicios que puedas ver, con:
 - description: descripción breve si hay (sino dejar vacío)
 
 Respondé ÚNICAMENTE con un JSON válido, sin texto adicional, en este formato:
-{"products":[{"name":"...","category":"...","price_guarani":0,"description":"..."}]}`
-  }];
+{"products":[{"name":"...","category":"...","price_guarani":0,"description":"..."}]}`;
+
+  const content = [{ type: 'text', text: promptText }];
 
   for (const file of req.files) {
     content.push({
@@ -1689,17 +1703,26 @@ router.post('/support', requireAuth, async (req, res) => {
 
   // Auto-reply via Claude Haiku
   try {
-    const { data: history } = await supabase
+    const { data: recent } = await supabase
       .from('support_messages')
       .select('role, content')
       .eq('tenant_id', req.tenant.tenantId)
-      .order('created_at', { ascending: true })
+      .order('created_at', { ascending: false })
       .limit(20);
 
-    const messages = (history || []).map(m => ({
-      role: m.role === 'merchant' ? 'user' : 'assistant',
-      content: m.content,
-    }));
+    const history = (recent || []).reverse();
+
+    // Anthropic requires strictly alternating user/assistant roles starting with user.
+    // merchant -> user; bot (assistant) + superadmin (support) -> assistant.
+    const messages = [];
+    for (const m of history) {
+      const role = m.role === 'merchant' ? 'user' : 'assistant';
+      const last = messages[messages.length - 1];
+      if (last && last.role === role) last.content += '\n' + m.content;
+      else messages.push({ role, content: m.content });
+    }
+    while (messages.length && messages[0].role === 'assistant') messages.shift();
+    if (!messages.length) messages.push({ role: 'user', content: content.trim() });
 
     const aiRes = await anthropic.messages.create({
       model: 'claude-haiku-4-5-20251001',
