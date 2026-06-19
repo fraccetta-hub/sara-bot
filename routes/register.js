@@ -30,7 +30,7 @@ router.post('/', async (req, res) => {
   const {
     business_name, sector, country, language,
     owner_name, email, phone, password,
-    plan,          // 'starter' | 'pro'
+    plan,          // 'shop' | 'bookings' | 'restaurant' | 'pro'
   } = req.body;
 
   // ── Validation ──────────────────────────────────────────────────────────────
@@ -59,7 +59,7 @@ router.post('/', async (req, res) => {
       return res.status(200).json({
         tenant_id: existing.id,
         email,
-        plan: existing.plan || 'starter',
+        plan: existing.plan || 'shop',
         resumed: true,
       });
     }
@@ -88,12 +88,13 @@ router.post('/', async (req, res) => {
     admin_password_hash:  passHash,
     active:               false,      // activated after Stripe payment confirmed
     plan_status:          'pending_payment',
-    plan:                 plan || 'starter',
+    plan:                 plan || 'shop',
     plan_expires:         trialExpiry(),
     plan_currency:        currency,
-    products_enabled:     true,
-    services_enabled:     plan === 'pro',
-    appointments_enabled: plan === 'pro',
+    products_enabled:     ['shop','pro','restaurant'].includes(plan),
+    services_enabled:     ['bookings','pro'].includes(plan),
+    appointments_enabled: ['bookings','pro','restaurant'].includes(plan),
+    restaurant_enabled:   plan === 'restaurant',
   };
 
   const { data: tenant, error } = await supabase
@@ -108,7 +109,7 @@ router.post('/', async (req, res) => {
   res.status(201).json({
     tenant_id: tenant.id,
     email,
-    plan: plan || 'starter',
+    plan: plan || 'shop',
   });
 });
 
