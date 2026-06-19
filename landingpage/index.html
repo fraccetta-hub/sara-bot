@@ -210,7 +210,9 @@ section { padding: 80px 5%; }
 @media(max-width:640px){ .step-item::after { display: none; } }
 
 /* ── PRICING ── */
-.pricing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; max-width: 800px; margin: 0 auto; }
+.pricing-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; max-width: 1100px; margin: 0 auto; }
+@media(max-width:900px){ .pricing-grid { grid-template-columns: repeat(2, 1fr); } }
+@media(max-width:520px){ .pricing-grid { grid-template-columns: 1fr; } }
 .price-card {
   border: 1.5px solid var(--border); border-radius: 18px; padding: 28px;
   background: #fff; position: relative;
@@ -613,47 +615,43 @@ footer a:hover { color: var(--dark); }
     <div class="center">
       <div class="section-label" data-i18n="pricing.label">Planes</div>
       <h2 class="section-title" data-i18n="pricing.h2">Un precio simple, sin sorpresas</h2>
-      <p class="section-sub" style="margin:0 auto 48px" data-i18n="pricing.sub">Sin costo por conversación, sin límite de productos. Pagás el mismo precio cada mes.</p>
     </div>
     <div class="pricing-grid">
       <div class="price-card">
         <div class="price-name">🛍️ SHOP</div>
-        <div style="margin-bottom:4px"><span class="price-amount">$24.99</span><span class="price-period" data-i18n="pricing.per_month">/mes</span></div>
-        <div class="price-desc" data-i18n="pricing.shop.desc">Para negocios que venden productos — tiendas, floristerías, pastelerías.</div>
+        <div style="margin-bottom:16px"><span class="price-amount">$24.99</span><span class="price-period" data-i18n="pricing.per_month">/mes</span></div>
         <ul class="price-features">
-          <li data-i18n="pricing.shop.f1">1 número WhatsApp Business</li>
-          <li data-i18n="pricing.shop.f2">Catálogo ilimitado con fotos</li>
-          <li data-i18n="pricing.shop.f3">Gestión de pedidos en tiempo real</li>
-          <li data-i18n="pricing.shop.f4">Delivery configurado (zona o km)</li>
-          <li data-i18n="pricing.shop.f5">Panel de chats y takeover manual</li>
+          <li data-i18n="pricing.shop.f1">Tu bot personalizado</li>
+          <li data-i18n="pricing.shop.f2">Catálogo de productos</li>
+          <li data-i18n="pricing.shop.f3">Gestional de pedidos</li>
+          <li data-i18n="pricing.shop.f4">Gestional de entregas</li>
+          <li data-i18n="pricing.shop.f5">Panel de chats y takeover</li>
           <li data-i18n="pricing.shop.f6">Soporte incluido</li>
         </ul>
         <a href="/register/index.html" class="price-btn outline" data-i18n="pricing.btn_free">Empezar gratis →</a>
       </div>
       <div class="price-card">
         <div class="price-name">📅 BOOKINGS</div>
-        <div style="margin-bottom:4px"><span class="price-amount">$29.99</span><span class="price-period" data-i18n="pricing.per_month">/mes</span></div>
-        <div class="price-desc" data-i18n="pricing.bookings.desc">Para peluquerías, médicos, consultorios y cualquier negocio con turnos.</div>
+        <div style="margin-bottom:16px"><span class="price-amount">$29.99</span><span class="price-period" data-i18n="pricing.per_month">/mes</span></div>
         <ul class="price-features">
-          <li data-i18n="pricing.bookings.f1">1 número WhatsApp Business</li>
+          <li data-i18n="pricing.bookings.f1">Tu bot personalizado</li>
           <li data-i18n="pricing.bookings.f2">Catálogo de servicios</li>
           <li data-i18n="pricing.bookings.f3">Agenda de turnos automática 24/7</li>
-          <li data-i18n="pricing.bookings.f4">Recordatorios de cita automáticos</li>
-          <li data-i18n="pricing.bookings.f5">Panel de chats y takeover manual</li>
+          <li data-i18n="pricing.bookings.f4">Recordatorios automáticos</li>
+          <li data-i18n="pricing.bookings.f5">Panel de chats y takeover</li>
           <li data-i18n="pricing.bookings.f6">Soporte incluido</li>
         </ul>
         <a href="/register/index.html" class="price-btn outline" data-i18n="pricing.btn_free">Empezar gratis →</a>
       </div>
       <div class="price-card">
         <div class="price-name">🍽️ RESTAURANT</div>
-        <div style="margin-bottom:4px"><span class="price-amount">$39.99</span><span class="price-period" data-i18n="pricing.per_month">/mes</span></div>
-        <div class="price-desc" data-i18n="pricing.restaurant.desc">Para restaurantes y bares — menú, reservas de mesa y pedidos automáticos.</div>
+        <div style="margin-bottom:16px"><span class="price-amount">$39.99</span><span class="price-period" data-i18n="pricing.per_month">/mes</span></div>
         <ul class="price-features">
-          <li data-i18n="pricing.restaurant.f1">1 número WhatsApp Business</li>
+          <li data-i18n="pricing.restaurant.f1">Tu bot personalizado</li>
           <li data-i18n="pricing.restaurant.f2">Menú con fotos y precios</li>
-          <li data-i18n="pricing.restaurant.f3">Reserva de mesas automática 24/7</li>
+          <li data-i18n="pricing.restaurant.f3">Reserva de mesas 24/7</li>
           <li data-i18n="pricing.restaurant.f4">Gestión de zonas y mesas</li>
-          <li data-i18n="pricing.restaurant.f5">Panel de chats y takeover manual</li>
+          <li data-i18n="pricing.restaurant.f5">Panel de chats y takeover</li>
           <li data-i18n="pricing.restaurant.f6">Soporte incluido</li>
         </ul>
         <a href="/register/index.html" class="price-btn outline" data-i18n="pricing.btn_free">Empezar gratis →</a>
@@ -661,14 +659,17 @@ footer a:hover { color: var(--dark); }
       <div class="price-card featured">
         <div class="price-popular" data-i18n="pricing.popular">⭐ Más popular</div>
         <div class="price-name">🚀 PRO</div>
-        <div style="margin-bottom:4px"><span class="price-amount">$44.99</span><span class="price-period" data-i18n="pricing.per_month">/mes</span></div>
-        <div class="price-desc" data-i18n="pricing.pro.desc">Para negocios que venden productos y ofrecen servicios con turnos.</div>
+        <div style="margin-bottom:16px"><span class="price-amount">$44.99</span><span class="price-period" data-i18n="pricing.per_month">/mes</span></div>
         <ul class="price-features">
-          <li data-i18n="pricing.pro.f1">Catálogo de productos y servicios</li>
-          <li data-i18n="pricing.pro.f2">Agenda de turnos integrada</li>
-          <li data-i18n="pricing.pro.f3">Pedidos y gestión de stock</li>
-          <li data-i18n="pricing.pro.f4">Panel de chats y takeover manual</li>
-          <li data-i18n="pricing.pro.f5">Soporte prioritario</li>
+          <li data-i18n="pricing.pro.f1">Tu bot personalizado</li>
+          <li data-i18n="pricing.pro.f2">Catálogo de productos</li>
+          <li data-i18n="pricing.pro.f3">Catálogo de servicios</li>
+          <li data-i18n="pricing.pro.f4">Agenda de turnos automática 24/7</li>
+          <li data-i18n="pricing.pro.f5">Recordatorios automáticos</li>
+          <li data-i18n="pricing.pro.f6">Gestional de entregas</li>
+          <li data-i18n="pricing.pro.f7">Gestional de pedidos</li>
+          <li data-i18n="pricing.pro.f8">Panel de chats y takeover</li>
+          <li data-i18n="pricing.pro.f9">Soporte incluido</li>
         </ul>
         <a href="/register/index.html" class="price-btn primary" data-i18n="pricing.btn_free">Empezar gratis →</a>
       </div>
@@ -793,18 +794,15 @@ const TR = {
     'pricing.label':'Planes','pricing.h2':'Un precio simple, sin sorpresas',
     'pricing.sub':'Sin costo por conversación, sin límite de productos. Pagás el mismo precio cada mes.',
     'pricing.per_month':'/mes','pricing.popular':'⭐ Más popular','pricing.btn_free':'Empezar gratis →',
-    'pricing.shop.desc':'Para negocios que venden productos — tiendas, floristerías, pastelerías.',
-    'pricing.shop.f1':'1 número WhatsApp Business','pricing.shop.f2':'Catálogo ilimitado con fotos','pricing.shop.f3':'Gestión de pedidos en tiempo real',
-    'pricing.shop.f4':'Delivery configurado (zona o km)','pricing.shop.f5':'Panel de chats y takeover manual','pricing.shop.f6':'Soporte incluido',
-    'pricing.bookings.desc':'Para peluquerías, médicos, consultorios y cualquier negocio con turnos.',
-    'pricing.bookings.f1':'1 número WhatsApp Business','pricing.bookings.f2':'Catálogo de servicios','pricing.bookings.f3':'Agenda de turnos automática 24/7',
-    'pricing.bookings.f4':'Recordatorios de cita automáticos','pricing.bookings.f5':'Panel de chats y takeover manual','pricing.bookings.f6':'Soporte incluido',
-    'pricing.restaurant.desc':'Para restaurantes y bares — menú, reservas de mesa y pedidos automáticos.',
-    'pricing.restaurant.f1':'1 número WhatsApp Business','pricing.restaurant.f2':'Menú con fotos y precios','pricing.restaurant.f3':'Reserva de mesas automática 24/7',
-    'pricing.restaurant.f4':'Gestión de zonas y mesas','pricing.restaurant.f5':'Panel de chats y takeover manual','pricing.restaurant.f6':'Soporte incluido',
-    'pricing.pro.desc':'Para negocios que venden productos y ofrecen servicios con turnos.',
-    'pricing.pro.f1':'Catálogo de productos y servicios','pricing.pro.f2':'Agenda de turnos integrada','pricing.pro.f3':'Pedidos y gestión de stock',
-    'pricing.pro.f4':'Panel de chats y takeover manual','pricing.pro.f5':'Soporte prioritario',
+    'pricing.shop.f1':'Tu bot personalizado','pricing.shop.f2':'Catálogo de productos','pricing.shop.f3':'Gestional de pedidos',
+    'pricing.shop.f4':'Gestional de entregas','pricing.shop.f5':'Panel de chats y takeover','pricing.shop.f6':'Soporte incluido',
+    'pricing.bookings.f1':'Tu bot personalizado','pricing.bookings.f2':'Catálogo de servicios','pricing.bookings.f3':'Agenda de turnos automática 24/7',
+    'pricing.bookings.f4':'Recordatorios automáticos','pricing.bookings.f5':'Panel de chats y takeover','pricing.bookings.f6':'Soporte incluido',
+    'pricing.restaurant.f1':'Tu bot personalizado','pricing.restaurant.f2':'Menú con fotos y precios','pricing.restaurant.f3':'Reserva de mesas 24/7',
+    'pricing.restaurant.f4':'Gestión de zonas y mesas','pricing.restaurant.f5':'Panel de chats y takeover','pricing.restaurant.f6':'Soporte incluido',
+    'pricing.pro.f1':'Tu bot personalizado','pricing.pro.f2':'Catálogo de productos','pricing.pro.f3':'Catálogo de servicios',
+    'pricing.pro.f4':'Agenda de turnos automática 24/7','pricing.pro.f5':'Recordatorios automáticos','pricing.pro.f6':'Gestional de entregas',
+    'pricing.pro.f7':'Gestional de pedidos','pricing.pro.f8':'Panel de chats y takeover','pricing.pro.f9':'Soporte incluido',
     'pricing.note':'7 días gratis en cualquier plan · Cancelás cuando querés · Facturación mensual',
     'cta.h2':'El sábado a la noche, el bot trabaja.<br/>Vos descansás.',
     'cta.sub':'Probalo 7 días gratis. Sin contratos, sin sorpresas.','cta.btn':'🚀 Crear mi cuenta gratis →',
@@ -864,18 +862,15 @@ const TR = {
     'pricing.label':'Plans','pricing.h2':'Simple pricing, no surprises',
     'pricing.sub':'No per-conversation charge, no product limit. Same price every month.',
     'pricing.per_month':'/mo','pricing.popular':'⭐ Most popular','pricing.btn_free':'Start free →',
-    'pricing.shop.desc':'For businesses selling products — shops, florists, bakeries.',
-    'pricing.shop.f1':'1 WhatsApp Business number','pricing.shop.f2':'Unlimited catalog with photos','pricing.shop.f3':'Real-time order management',
-    'pricing.shop.f4':'Delivery setup (zone or km)','pricing.shop.f5':'Chat panel & manual takeover','pricing.shop.f6':'Support included',
-    'pricing.bookings.desc':'For barbers, doctors, clinics and any appointment-based business.',
-    'pricing.bookings.f1':'1 WhatsApp Business number','pricing.bookings.f2':'Services catalog','pricing.bookings.f3':'Automatic appointment scheduling 24/7',
-    'pricing.bookings.f4':'Automatic appointment reminders','pricing.bookings.f5':'Chat panel & manual takeover','pricing.bookings.f6':'Support included',
-    'pricing.restaurant.desc':'For restaurants and bars — menu, table reservations and automatic orders.',
-    'pricing.restaurant.f1':'1 WhatsApp Business number','pricing.restaurant.f2':'Menu with photos and prices','pricing.restaurant.f3':'Automatic table reservations 24/7',
-    'pricing.restaurant.f4':'Zone and table management','pricing.restaurant.f5':'Chat panel & manual takeover','pricing.restaurant.f6':'Support included',
-    'pricing.pro.desc':'For businesses that sell products and offer appointment-based services.',
-    'pricing.pro.f1':'Products and services catalog','pricing.pro.f2':'Built-in appointment scheduling','pricing.pro.f3':'Orders and stock management',
-    'pricing.pro.f4':'Chat panel & manual takeover','pricing.pro.f5':'Priority support',
+    'pricing.shop.f1':'Your personalized bot','pricing.shop.f2':'Products catalog','pricing.shop.f3':'Order management',
+    'pricing.shop.f4':'Delivery management','pricing.shop.f5':'Chat panel & takeover','pricing.shop.f6':'Support included',
+    'pricing.bookings.f1':'Your personalized bot','pricing.bookings.f2':'Services catalog','pricing.bookings.f3':'Automatic scheduling 24/7',
+    'pricing.bookings.f4':'Automatic reminders','pricing.bookings.f5':'Chat panel & takeover','pricing.bookings.f6':'Support included',
+    'pricing.restaurant.f1':'Your personalized bot','pricing.restaurant.f2':'Menu with photos and prices','pricing.restaurant.f3':'Table reservations 24/7',
+    'pricing.restaurant.f4':'Zone and table management','pricing.restaurant.f5':'Chat panel & takeover','pricing.restaurant.f6':'Support included',
+    'pricing.pro.f1':'Your personalized bot','pricing.pro.f2':'Products catalog','pricing.pro.f3':'Services catalog',
+    'pricing.pro.f4':'Automatic scheduling 24/7','pricing.pro.f5':'Automatic reminders','pricing.pro.f6':'Delivery management',
+    'pricing.pro.f7':'Order management','pricing.pro.f8':'Chat panel & takeover','pricing.pro.f9':'Support included',
     'pricing.note':'7 days free on any plan · Cancel anytime · Monthly billing',
     'cta.h2':'Saturday night the bot works.<br/>You rest.',
     'cta.sub':'Try it free for 7 days. No contracts, no surprises.','cta.btn':'🚀 Create my free account →',
@@ -935,18 +930,15 @@ const TR = {
     'pricing.label':'Piani','pricing.h2':'Un prezzo semplice, nessuna sorpresa',
     'pricing.sub':'Nessun costo per conversazione, nessun limite di prodotti. Stesso prezzo ogni mese.',
     'pricing.per_month':'/mese','pricing.popular':'⭐ Più popolare','pricing.btn_free':'Inizia gratis →',
-    'pricing.shop.desc':'Per negozi, fioristi, pasticcerie — vendita prodotti e gestione ordini.',
-    'pricing.shop.f1':'1 numero WhatsApp Business','pricing.shop.f2':'Catalogo illimitato con foto','pricing.shop.f3':'Gestione ordini in tempo reale',
-    'pricing.shop.f4':'Consegne configurate (zona o km)','pricing.shop.f5':'Pannello chat e takeover manuale','pricing.shop.f6':'Supporto incluso',
-    'pricing.bookings.desc':'Per barbieri, medici, studi e qualsiasi attività con appuntamenti.',
-    'pricing.bookings.f1':'1 numero WhatsApp Business','pricing.bookings.f2':'Catalogo servizi','pricing.bookings.f3':'Agenda appuntamenti automatica 24/7',
-    'pricing.bookings.f4':'Promemoria appuntamento automatici','pricing.bookings.f5':'Pannello chat e takeover manuale','pricing.bookings.f6':'Supporto incluso',
-    'pricing.restaurant.desc':'Per ristoranti e bar — menu, prenotazioni tavoli e ordini automatici.',
-    'pricing.restaurant.f1':'1 numero WhatsApp Business','pricing.restaurant.f2':'Menu con foto e prezzi','pricing.restaurant.f3':'Prenotazioni tavoli automatiche 24/7',
-    'pricing.restaurant.f4':'Gestione zone e tavoli','pricing.restaurant.f5':'Pannello chat e takeover manuale','pricing.restaurant.f6':'Supporto incluso',
-    'pricing.pro.desc':'Per attività che vendono prodotti e offrono servizi con appuntamenti.',
-    'pricing.pro.f1':'Catalogo prodotti e servizi','pricing.pro.f2':'Agenda appuntamenti integrata','pricing.pro.f3':'Ordini e gestione stock',
-    'pricing.pro.f4':'Pannello chat e takeover manuale','pricing.pro.f5':'Supporto prioritario',
+    'pricing.shop.f1':'Il tuo bot personalizzato','pricing.shop.f2':'Catalogo prodotti','pricing.shop.f3':'Gestionale ordini',
+    'pricing.shop.f4':'Gestionale consegne','pricing.shop.f5':'Pannello chat e takeover','pricing.shop.f6':'Supporto incluso',
+    'pricing.bookings.f1':'Il tuo bot personalizzato','pricing.bookings.f2':'Catalogo servizi','pricing.bookings.f3':'Agenda appuntamenti automatica 24/7',
+    'pricing.bookings.f4':'Promemoria automatici','pricing.bookings.f5':'Pannello chat e takeover','pricing.bookings.f6':'Supporto incluso',
+    'pricing.restaurant.f1':'Il tuo bot personalizzato','pricing.restaurant.f2':'Menu con foto e prezzi','pricing.restaurant.f3':'Prenotazioni tavoli 24/7',
+    'pricing.restaurant.f4':'Gestione zone e tavoli','pricing.restaurant.f5':'Pannello chat e takeover','pricing.restaurant.f6':'Supporto incluso',
+    'pricing.pro.f1':'Il tuo bot personalizzato','pricing.pro.f2':'Catalogo prodotti','pricing.pro.f3':'Catalogo servizi',
+    'pricing.pro.f4':'Agenda appuntamenti automatica 24/7','pricing.pro.f5':'Promemoria automatici','pricing.pro.f6':'Gestionale consegne',
+    'pricing.pro.f7':'Gestionale ordini','pricing.pro.f8':'Pannello chat e takeover','pricing.pro.f9':'Supporto incluso',
     'pricing.note':'7 giorni gratis su qualsiasi piano · Disdici quando vuoi · Fatturazione mensile',
     'cta.h2':'Il sabato sera il bot lavora.<br/>Tu riposi.',
     'cta.sub':'Provalo 7 giorni gratis. Nessun contratto, nessuna sorpresa.','cta.btn':'🚀 Crea il mio account gratis →',
@@ -1006,18 +998,15 @@ const TR = {
     'pricing.label':'Pläne','pricing.h2':'Einfache Preise, keine Überraschungen',
     'pricing.sub':'Kein Preis pro Gespräch, kein Produktlimit. Jeden Monat derselbe Preis.',
     'pricing.per_month':'/Monat','pricing.popular':'⭐ Am beliebtesten','pricing.btn_free':'Kostenlos starten →',
-    'pricing.shop.desc':'Für Läden, Floristen, Bäckereien — Produktverkauf und Bestellverwaltung.',
-    'pricing.shop.f1':'1 WhatsApp Business-Nummer','pricing.shop.f2':'Unbegrenzter Katalog mit Fotos','pricing.shop.f3':'Echtzeit-Bestellverwaltung',
-    'pricing.shop.f4':'Lieferung konfiguriert (Zone oder km)','pricing.shop.f5':'Chat-Panel & manuelles Takeover','pricing.shop.f6':'Support inklusive',
-    'pricing.bookings.desc':'Für Friseure, Ärzte, Kliniken und alle terminbasierten Unternehmen.',
-    'pricing.bookings.f1':'1 WhatsApp Business-Nummer','pricing.bookings.f2':'Dienstleistungskatalog','pricing.bookings.f3':'Automatische Terminplanung 24/7',
-    'pricing.bookings.f4':'Automatische Terminerinnerungen','pricing.bookings.f5':'Chat-Panel & manuelles Takeover','pricing.bookings.f6':'Support inklusive',
-    'pricing.restaurant.desc':'Für Restaurants und Bars — Menü, Tischreservierungen und automatische Bestellungen.',
-    'pricing.restaurant.f1':'1 WhatsApp Business-Nummer','pricing.restaurant.f2':'Menü mit Fotos und Preisen','pricing.restaurant.f3':'Automatische Tischreservierungen 24/7',
-    'pricing.restaurant.f4':'Zonen- und Tischverwaltung','pricing.restaurant.f5':'Chat-Panel & manuelles Takeover','pricing.restaurant.f6':'Support inklusive',
-    'pricing.pro.desc':'Für Unternehmen, die Produkte verkaufen und terminbasierte Dienste anbieten.',
-    'pricing.pro.f1':'Produkt- und Dienstleistungskatalog','pricing.pro.f2':'Integrierte Terminplanung','pricing.pro.f3':'Bestellungen und Lagerverwaltung',
-    'pricing.pro.f4':'Chat-Panel & manuelles Takeover','pricing.pro.f5':'Prioritäts-Support',
+    'pricing.shop.f1':'Dein personalisierter Bot','pricing.shop.f2':'Produktkatalog','pricing.shop.f3':'Bestellverwaltung',
+    'pricing.shop.f4':'Lieferverwaltung','pricing.shop.f5':'Chat-Panel & Takeover','pricing.shop.f6':'Support inklusive',
+    'pricing.bookings.f1':'Dein personalisierter Bot','pricing.bookings.f2':'Dienstleistungskatalog','pricing.bookings.f3':'Automatische Terminplanung 24/7',
+    'pricing.bookings.f4':'Automatische Erinnerungen','pricing.bookings.f5':'Chat-Panel & Takeover','pricing.bookings.f6':'Support inklusive',
+    'pricing.restaurant.f1':'Dein personalisierter Bot','pricing.restaurant.f2':'Menü mit Fotos und Preisen','pricing.restaurant.f3':'Tischreservierungen 24/7',
+    'pricing.restaurant.f4':'Zonen- und Tischverwaltung','pricing.restaurant.f5':'Chat-Panel & Takeover','pricing.restaurant.f6':'Support inklusive',
+    'pricing.pro.f1':'Dein personalisierter Bot','pricing.pro.f2':'Produktkatalog','pricing.pro.f3':'Dienstleistungskatalog',
+    'pricing.pro.f4':'Automatische Terminplanung 24/7','pricing.pro.f5':'Automatische Erinnerungen','pricing.pro.f6':'Lieferverwaltung',
+    'pricing.pro.f7':'Bestellverwaltung','pricing.pro.f8':'Chat-Panel & Takeover','pricing.pro.f9':'Support inklusive',
     'pricing.note':'7 Tage gratis auf jedem Plan · Jederzeit kündbar · Monatliche Abrechnung',
     'cta.h2':'Samstagabend arbeitet der Bot.<br/>Du ruhst dich aus.',
     'cta.sub':'7 Tage kostenlos testen. Keine Verträge, keine Überraschungen.','cta.btn':'🚀 Mein Konto kostenlos erstellen →',
@@ -1077,18 +1066,15 @@ const TR = {
     'pricing.label':'Plans','pricing.h2':'Un prix simple, sans surprises',
     'pricing.sub':'Aucun coût par conversation, aucune limite de produits. Le même prix chaque mois.',
     'pricing.per_month':'/mois','pricing.popular':'⭐ Le plus populaire','pricing.btn_free':'Commencer gratis →',
-    'pricing.shop.desc':'Pour les boutiques, fleuristes, pâtisseries — vente de produits et gestion des commandes.',
-    'pricing.shop.f1':'1 numéro WhatsApp Business','pricing.shop.f2':'Catalogue illimité avec photos','pricing.shop.f3':'Gestion des commandes en temps réel',
-    'pricing.shop.f4':'Livraison configurée (zone ou km)','pricing.shop.f5':'Panneau de chats & prise en main manuelle','pricing.shop.f6':'Support inclus',
-    'pricing.bookings.desc':'Pour coiffeurs, médecins, cabinets et toute activité sur rendez-vous.',
-    'pricing.bookings.f1':'1 numéro WhatsApp Business','pricing.bookings.f2':'Catalogue de services','pricing.bookings.f3':'Agenda de rendez-vous automatique 24h/24',
-    'pricing.bookings.f4':'Rappels de rendez-vous automatiques','pricing.bookings.f5':'Panneau de chats & prise en main manuelle','pricing.bookings.f6':'Support inclus',
-    'pricing.restaurant.desc':'Pour restaurants et bars — menu, réservations de table et commandes automatiques.',
-    'pricing.restaurant.f1':'1 numéro WhatsApp Business','pricing.restaurant.f2':'Menu avec photos et prix','pricing.restaurant.f3':'Réservations de table automatiques 24h/24',
-    'pricing.restaurant.f4':'Gestion des zones et des tables','pricing.restaurant.f5':'Panneau de chats & prise en main manuelle','pricing.restaurant.f6':'Support inclus',
-    'pricing.pro.desc':'Pour les activités qui vendent des produits et proposent des services sur rendez-vous.',
-    'pricing.pro.f1':'Catalogue produits et services','pricing.pro.f2':'Agenda de rendez-vous intégré','pricing.pro.f3':'Commandes et gestion du stock',
-    'pricing.pro.f4':'Panneau de chats & prise en main manuelle','pricing.pro.f5':'Support prioritaire',
+    'pricing.shop.f1':'Ton bot personnalisé','pricing.shop.f2':'Catalogue de produits','pricing.shop.f3':'Gestion des commandes',
+    'pricing.shop.f4':'Gestion des livraisons','pricing.shop.f5':'Panneau de chats & takeover','pricing.shop.f6':'Support inclus',
+    'pricing.bookings.f1':'Ton bot personnalisé','pricing.bookings.f2':'Catalogue de services','pricing.bookings.f3':'Agenda de rendez-vous automatique 24h/24',
+    'pricing.bookings.f4':'Rappels automatiques','pricing.bookings.f5':'Panneau de chats & takeover','pricing.bookings.f6':'Support inclus',
+    'pricing.restaurant.f1':'Ton bot personnalisé','pricing.restaurant.f2':'Menu avec photos et prix','pricing.restaurant.f3':'Réservations de table 24h/24',
+    'pricing.restaurant.f4':'Gestion des zones et tables','pricing.restaurant.f5':'Panneau de chats & takeover','pricing.restaurant.f6':'Support inclus',
+    'pricing.pro.f1':'Ton bot personnalisé','pricing.pro.f2':'Catalogue de produits','pricing.pro.f3':'Catalogue de services',
+    'pricing.pro.f4':'Agenda de rendez-vous automatique 24h/24','pricing.pro.f5':'Rappels automatiques','pricing.pro.f6':'Gestion des livraisons',
+    'pricing.pro.f7':'Gestion des commandes','pricing.pro.f8':'Panneau de chats & takeover','pricing.pro.f9':'Support inclus',
     'pricing.note':'7 jours gratuits sur tous les plans · Résiliez quand vous voulez · Facturation mensuelle',
     'cta.h2':'Le samedi soir le bot travaille.<br/>Vous vous reposez.',
     'cta.sub':'Essayez-le gratuitement pendant 7 jours. Sans contrat, sans surprise.','cta.btn':'🚀 Créer mon compte gratuit →',
@@ -1148,18 +1134,15 @@ const TR = {
     'pricing.label':'Planos','pricing.h2':'Um preço simples, sem surpresas',
     'pricing.sub':'Sem custo por conversa, sem limite de produtos. Mesmo preço todo mês.',
     'pricing.per_month':'/mês','pricing.popular':'⭐ Mais popular','pricing.btn_free':'Começar grátis →',
-    'pricing.shop.desc':'Para lojas, floristas, confeitarias — venda de produtos e gestão de pedidos.',
-    'pricing.shop.f1':'1 número WhatsApp Business','pricing.shop.f2':'Catálogo ilimitado com fotos','pricing.shop.f3':'Gestão de pedidos em tempo real',
-    'pricing.shop.f4':'Entrega configurada (zona ou km)','pricing.shop.f5':'Painel de chats e takeover manual','pricing.shop.f6':'Suporte incluído',
-    'pricing.bookings.desc':'Para barbearias, médicos, clínicas e qualquer negócio com agendamento.',
-    'pricing.bookings.f1':'1 número WhatsApp Business','pricing.bookings.f2':'Catálogo de serviços','pricing.bookings.f3':'Agendamento automático 24/7',
-    'pricing.bookings.f4':'Lembretes de consulta automáticos','pricing.bookings.f5':'Painel de chats e takeover manual','pricing.bookings.f6':'Suporte incluído',
-    'pricing.restaurant.desc':'Para restaurantes e bares — cardápio, reservas de mesa e pedidos automáticos.',
-    'pricing.restaurant.f1':'1 número WhatsApp Business','pricing.restaurant.f2':'Cardápio com fotos e preços','pricing.restaurant.f3':'Reservas de mesa automáticas 24/7',
-    'pricing.restaurant.f4':'Gestão de zonas e mesas','pricing.restaurant.f5':'Painel de chats e takeover manual','pricing.restaurant.f6':'Suporte incluído',
-    'pricing.pro.desc':'Para negócios que vendem produtos e oferecem serviços com agendamento.',
-    'pricing.pro.f1':'Catálogo de produtos e serviços','pricing.pro.f2':'Agenda de horários integrada','pricing.pro.f3':'Pedidos e gestão de estoque',
-    'pricing.pro.f4':'Painel de chats e takeover manual','pricing.pro.f5':'Suporte prioritário',
+    'pricing.shop.f1':'Seu bot personalizado','pricing.shop.f2':'Catálogo de produtos','pricing.shop.f3':'Gestão de pedidos',
+    'pricing.shop.f4':'Gestão de entregas','pricing.shop.f5':'Painel de chats e takeover','pricing.shop.f6':'Suporte incluído',
+    'pricing.bookings.f1':'Seu bot personalizado','pricing.bookings.f2':'Catálogo de serviços','pricing.bookings.f3':'Agendamento automático 24/7',
+    'pricing.bookings.f4':'Lembretes automáticos','pricing.bookings.f5':'Painel de chats e takeover','pricing.bookings.f6':'Suporte incluído',
+    'pricing.restaurant.f1':'Seu bot personalizado','pricing.restaurant.f2':'Cardápio com fotos e preços','pricing.restaurant.f3':'Reservas de mesa 24/7',
+    'pricing.restaurant.f4':'Gestão de zonas e mesas','pricing.restaurant.f5':'Painel de chats e takeover','pricing.restaurant.f6':'Suporte incluído',
+    'pricing.pro.f1':'Seu bot personalizado','pricing.pro.f2':'Catálogo de produtos','pricing.pro.f3':'Catálogo de serviços',
+    'pricing.pro.f4':'Agendamento automático 24/7','pricing.pro.f5':'Lembretes automáticos','pricing.pro.f6':'Gestão de entregas',
+    'pricing.pro.f7':'Gestão de pedidos','pricing.pro.f8':'Painel de chats e takeover','pricing.pro.f9':'Suporte incluído',
     'pricing.note':'7 dias grátis em qualquer plano · Cancele quando quiser · Cobrança mensal',
     'cta.h2':'No sábado à noite o bot trabalha.<br/>Você descansa.',
     'cta.sub':'Experimente grátis por 7 dias. Sem contratos, sem surpresas.','cta.btn':'🚀 Criar minha conta grátis →',
