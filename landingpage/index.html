@@ -223,6 +223,9 @@ section { padding: 80px 5%; }
 .price-amount { font-size: 2.4rem; font-weight: 900; letter-spacing: -.04em; color: var(--dark); line-height: 1; }
 .price-period { font-size: .82rem; color: var(--gray); }
 .price-desc { font-size: .8rem; color: var(--gray); margin: 12px 0 20px; line-height: 1.5; }
+.price-example { font-size: .78rem; color: var(--gray); margin: 4px 0 16px; font-style: italic; }
+.pricing-trial { text-align: center; margin-bottom: 36px; }
+.pricing-trial-badge { display: inline-block; background: var(--green); color: #fff; font-weight: 700; font-size: 1rem; padding: 10px 28px; border-radius: 99px; letter-spacing: -.01em; }
 .price-features { list-style: none; margin-bottom: 24px; }
 .price-features li { font-size: .82rem; padding: 5px 0; border-bottom: 1px solid var(--border); display: flex; gap: 8px; }
 .price-features li::before { content: '✓'; color: var(--green); font-weight: 700; flex-shrink: 0; }
@@ -616,9 +619,13 @@ footer a:hover { color: var(--dark); }
       <div class="section-label" data-i18n="pricing.label">Planes</div>
       <h2 class="section-title" data-i18n="pricing.h2">Un precio simple, sin sorpresas</h2>
     </div>
+    <div class="pricing-trial">
+      <span class="pricing-trial-badge" data-i18n="pricing.trial">🎁 7 días de prueba gratis — sin cargo hasta el día 8</span>
+    </div>
     <div class="pricing-grid">
       <div class="price-card">
         <div class="price-name">🛍️ SHOP</div>
+        <div class="price-example" data-i18n="pricing.shop.example">Tiendas · Floristerías · Pastelerías</div>
         <div style="margin-bottom:16px"><span class="price-amount">$24.99</span><span class="price-period" data-i18n="pricing.per_month">/mes</span></div>
         <ul class="price-features">
           <li data-i18n="pricing.shop.f1">Tu bot personalizado</li>
@@ -626,55 +633,57 @@ footer a:hover { color: var(--dark); }
           <li data-i18n="pricing.shop.f3">Gestional de pedidos</li>
           <li data-i18n="pricing.shop.f4">Gestional de entregas</li>
           <li data-i18n="pricing.shop.f5">Panel de chats y takeover</li>
-          <li data-i18n="pricing.shop.f6">Soporte incluido</li>
         </ul>
         <a href="/register/index.html" class="price-btn outline" data-i18n="pricing.btn_free">Empezar gratis →</a>
       </div>
       <div class="price-card">
         <div class="price-name">📅 BOOKINGS</div>
+        <div class="price-example" data-i18n="pricing.bookings.example">Peluquerías · Médicos · Consultorios</div>
         <div style="margin-bottom:16px"><span class="price-amount">$29.99</span><span class="price-period" data-i18n="pricing.per_month">/mes</span></div>
         <ul class="price-features">
           <li data-i18n="pricing.bookings.f1">Tu bot personalizado</li>
           <li data-i18n="pricing.bookings.f2">Catálogo de servicios</li>
-          <li data-i18n="pricing.bookings.f3">Agenda de turnos automática 24/7</li>
+          <li data-i18n="pricing.bookings.f3">Agenda de turnos 24/7</li>
           <li data-i18n="pricing.bookings.f4">Recordatorios automáticos</li>
-          <li data-i18n="pricing.bookings.f5">Panel de chats y takeover</li>
-          <li data-i18n="pricing.bookings.f6">Soporte incluido</li>
+          <li data-i18n="pricing.bookings.f5">Historial de citas</li>
+          <li data-i18n="pricing.bookings.f6">Panel de chats y takeover</li>
         </ul>
         <a href="/register/index.html" class="price-btn outline" data-i18n="pricing.btn_free">Empezar gratis →</a>
       </div>
       <div class="price-card">
         <div class="price-name">🍽️ RESTAURANT</div>
+        <div class="price-example" data-i18n="pricing.restaurant.example">Restaurantes · Bares · Cafeterías</div>
         <div style="margin-bottom:16px"><span class="price-amount">$39.99</span><span class="price-period" data-i18n="pricing.per_month">/mes</span></div>
         <ul class="price-features">
           <li data-i18n="pricing.restaurant.f1">Tu bot personalizado</li>
-          <li data-i18n="pricing.restaurant.f2">Menú con fotos y precios</li>
+          <li data-i18n="pricing.restaurant.f2">Menú digital con fotos</li>
           <li data-i18n="pricing.restaurant.f3">Reserva de mesas 24/7</li>
           <li data-i18n="pricing.restaurant.f4">Gestión de zonas y mesas</li>
-          <li data-i18n="pricing.restaurant.f5">Panel de chats y takeover</li>
-          <li data-i18n="pricing.restaurant.f6">Soporte incluido</li>
+          <li data-i18n="pricing.restaurant.f5">Gestional de pedidos en mesa</li>
+          <li data-i18n="pricing.restaurant.f6">Historial de reservas</li>
+          <li data-i18n="pricing.restaurant.f7">Panel de chats y takeover</li>
         </ul>
         <a href="/register/index.html" class="price-btn outline" data-i18n="pricing.btn_free">Empezar gratis →</a>
       </div>
       <div class="price-card featured">
         <div class="price-popular" data-i18n="pricing.popular">⭐ Más popular</div>
         <div class="price-name">🚀 PRO</div>
+        <div class="price-example" data-i18n="pricing.pro.example">Spa · Estéticas · Negocios mixtos</div>
         <div style="margin-bottom:16px"><span class="price-amount">$44.99</span><span class="price-period" data-i18n="pricing.per_month">/mes</span></div>
         <ul class="price-features">
           <li data-i18n="pricing.pro.f1">Tu bot personalizado</li>
           <li data-i18n="pricing.pro.f2">Catálogo de productos</li>
           <li data-i18n="pricing.pro.f3">Catálogo de servicios</li>
-          <li data-i18n="pricing.pro.f4">Agenda de turnos automática 24/7</li>
+          <li data-i18n="pricing.pro.f4">Agenda de turnos 24/7</li>
           <li data-i18n="pricing.pro.f5">Recordatorios automáticos</li>
           <li data-i18n="pricing.pro.f6">Gestional de entregas</li>
           <li data-i18n="pricing.pro.f7">Gestional de pedidos</li>
           <li data-i18n="pricing.pro.f8">Panel de chats y takeover</li>
-          <li data-i18n="pricing.pro.f9">Soporte incluido</li>
+          <li data-i18n="pricing.pro.f9">Soporte prioritario</li>
         </ul>
         <a href="/register/index.html" class="price-btn primary" data-i18n="pricing.btn_free">Empezar gratis →</a>
       </div>
     </div>
-    <p class="pricing-note" data-i18n="pricing.note">7 días gratis en cualquier plan · Cancelás cuando querés · Facturación mensual</p>
   </div>
 </section>
 
@@ -794,16 +803,20 @@ const TR = {
     'pricing.label':'Planes','pricing.h2':'Un precio simple, sin sorpresas',
     'pricing.sub':'Sin costo por conversación, sin límite de productos. Pagás el mismo precio cada mes.',
     'pricing.per_month':'/mes','pricing.popular':'⭐ Más popular','pricing.btn_free':'Empezar gratis →',
+    'pricing.trial':'🎁 7 días de prueba gratis — sin cargo hasta el día 8',
+    'pricing.shop.example':'Tiendas · Floristerías · Pastelerías',
+    'pricing.bookings.example':'Peluquerías · Médicos · Consultorios',
+    'pricing.restaurant.example':'Restaurantes · Bares · Cafeterías',
+    'pricing.pro.example':'Spa · Estéticas · Negocios mixtos',
     'pricing.shop.f1':'Tu bot personalizado','pricing.shop.f2':'Catálogo de productos','pricing.shop.f3':'Gestional de pedidos',
-    'pricing.shop.f4':'Gestional de entregas','pricing.shop.f5':'Panel de chats y takeover','pricing.shop.f6':'Soporte incluido',
-    'pricing.bookings.f1':'Tu bot personalizado','pricing.bookings.f2':'Catálogo de servicios','pricing.bookings.f3':'Agenda de turnos automática 24/7',
-    'pricing.bookings.f4':'Recordatorios automáticos','pricing.bookings.f5':'Panel de chats y takeover','pricing.bookings.f6':'Soporte incluido',
-    'pricing.restaurant.f1':'Tu bot personalizado','pricing.restaurant.f2':'Menú con fotos y precios','pricing.restaurant.f3':'Reserva de mesas 24/7',
-    'pricing.restaurant.f4':'Gestión de zonas y mesas','pricing.restaurant.f5':'Panel de chats y takeover','pricing.restaurant.f6':'Soporte incluido',
+    'pricing.shop.f4':'Gestional de entregas','pricing.shop.f5':'Panel de chats y takeover',
+    'pricing.bookings.f1':'Tu bot personalizado','pricing.bookings.f2':'Catálogo de servicios','pricing.bookings.f3':'Agenda de turnos 24/7',
+    'pricing.bookings.f4':'Recordatorios automáticos','pricing.bookings.f5':'Historial de citas','pricing.bookings.f6':'Panel de chats y takeover',
+    'pricing.restaurant.f1':'Tu bot personalizado','pricing.restaurant.f2':'Menú digital con fotos','pricing.restaurant.f3':'Reserva de mesas 24/7',
+    'pricing.restaurant.f4':'Gestión de zonas y mesas','pricing.restaurant.f5':'Gestional de pedidos en mesa','pricing.restaurant.f6':'Historial de reservas','pricing.restaurant.f7':'Panel de chats y takeover',
     'pricing.pro.f1':'Tu bot personalizado','pricing.pro.f2':'Catálogo de productos','pricing.pro.f3':'Catálogo de servicios',
-    'pricing.pro.f4':'Agenda de turnos automática 24/7','pricing.pro.f5':'Recordatorios automáticos','pricing.pro.f6':'Gestional de entregas',
-    'pricing.pro.f7':'Gestional de pedidos','pricing.pro.f8':'Panel de chats y takeover','pricing.pro.f9':'Soporte incluido',
-    'pricing.note':'7 días gratis en cualquier plan · Cancelás cuando querés · Facturación mensual',
+    'pricing.pro.f4':'Agenda de turnos 24/7','pricing.pro.f5':'Recordatorios automáticos','pricing.pro.f6':'Gestional de entregas',
+    'pricing.pro.f7':'Gestional de pedidos','pricing.pro.f8':'Panel de chats y takeover','pricing.pro.f9':'Soporte prioritario',
     'cta.h2':'El sábado a la noche, el bot trabaja.<br/>Vos descansás.',
     'cta.sub':'Probalo 7 días gratis. Sin contratos, sin sorpresas.','cta.btn':'🚀 Crear mi cuenta gratis →',
     'cta.badge1':'✓ 7 días gratis incluidos','cta.badge2':'✓ Activo en menos de una hora','cta.badge3':'✓ Cancelás cuando querés','cta.badge4':'✓ Soporte incluido',
@@ -862,16 +875,20 @@ const TR = {
     'pricing.label':'Plans','pricing.h2':'Simple pricing, no surprises',
     'pricing.sub':'No per-conversation charge, no product limit. Same price every month.',
     'pricing.per_month':'/mo','pricing.popular':'⭐ Most popular','pricing.btn_free':'Start free →',
+    'pricing.trial':'🎁 7-day free trial — no charge until day 8',
+    'pricing.shop.example':'Shops · Flower shops · Bakeries',
+    'pricing.bookings.example':'Salons · Doctors · Clinics',
+    'pricing.restaurant.example':'Restaurants · Bars · Cafés',
+    'pricing.pro.example':'Spas · Beauty centers · Mixed businesses',
     'pricing.shop.f1':'Your personalized bot','pricing.shop.f2':'Products catalog','pricing.shop.f3':'Order management',
-    'pricing.shop.f4':'Delivery management','pricing.shop.f5':'Chat panel & takeover','pricing.shop.f6':'Support included',
-    'pricing.bookings.f1':'Your personalized bot','pricing.bookings.f2':'Services catalog','pricing.bookings.f3':'Automatic scheduling 24/7',
-    'pricing.bookings.f4':'Automatic reminders','pricing.bookings.f5':'Chat panel & takeover','pricing.bookings.f6':'Support included',
-    'pricing.restaurant.f1':'Your personalized bot','pricing.restaurant.f2':'Menu with photos and prices','pricing.restaurant.f3':'Table reservations 24/7',
-    'pricing.restaurant.f4':'Zone and table management','pricing.restaurant.f5':'Chat panel & takeover','pricing.restaurant.f6':'Support included',
+    'pricing.shop.f4':'Delivery management','pricing.shop.f5':'Chat panel & takeover',
+    'pricing.bookings.f1':'Your personalized bot','pricing.bookings.f2':'Services catalog','pricing.bookings.f3':'Scheduling 24/7',
+    'pricing.bookings.f4':'Automatic reminders','pricing.bookings.f5':'Appointment history','pricing.bookings.f6':'Chat panel & takeover',
+    'pricing.restaurant.f1':'Your personalized bot','pricing.restaurant.f2':'Digital menu with photos','pricing.restaurant.f3':'Table reservations 24/7',
+    'pricing.restaurant.f4':'Zone and table management','pricing.restaurant.f5':'Table order management','pricing.restaurant.f6':'Reservation history','pricing.restaurant.f7':'Chat panel & takeover',
     'pricing.pro.f1':'Your personalized bot','pricing.pro.f2':'Products catalog','pricing.pro.f3':'Services catalog',
-    'pricing.pro.f4':'Automatic scheduling 24/7','pricing.pro.f5':'Automatic reminders','pricing.pro.f6':'Delivery management',
-    'pricing.pro.f7':'Order management','pricing.pro.f8':'Chat panel & takeover','pricing.pro.f9':'Support included',
-    'pricing.note':'7 days free on any plan · Cancel anytime · Monthly billing',
+    'pricing.pro.f4':'Scheduling 24/7','pricing.pro.f5':'Automatic reminders','pricing.pro.f6':'Delivery management',
+    'pricing.pro.f7':'Order management','pricing.pro.f8':'Chat panel & takeover','pricing.pro.f9':'Priority support',
     'cta.h2':'Saturday night the bot works.<br/>You rest.',
     'cta.sub':'Try it free for 7 days. No contracts, no surprises.','cta.btn':'🚀 Create my free account →',
     'cta.badge1':'✓ 7 days free included','cta.badge2':'✓ Live in under an hour','cta.badge3':'✓ Cancel anytime','cta.badge4':'✓ Support included',
@@ -930,16 +947,20 @@ const TR = {
     'pricing.label':'Piani','pricing.h2':'Un prezzo semplice, nessuna sorpresa',
     'pricing.sub':'Nessun costo per conversazione, nessun limite di prodotti. Stesso prezzo ogni mese.',
     'pricing.per_month':'/mese','pricing.popular':'⭐ Più popolare','pricing.btn_free':'Inizia gratis →',
+    'pricing.trial':'🎁 7 giorni di prova gratis — nessun addebito fino all\'8° giorno',
+    'pricing.shop.example':'Negozi · Fioraie · Pasticcerie',
+    'pricing.bookings.example':'Parrucchieri · Medici · Studi',
+    'pricing.restaurant.example':'Ristoranti · Bar · Caffetterie',
+    'pricing.pro.example':'Spa · Centri estetici · Attività miste',
     'pricing.shop.f1':'Il tuo bot personalizzato','pricing.shop.f2':'Catalogo prodotti','pricing.shop.f3':'Gestionale ordini',
-    'pricing.shop.f4':'Gestionale consegne','pricing.shop.f5':'Pannello chat e takeover','pricing.shop.f6':'Supporto incluso',
-    'pricing.bookings.f1':'Il tuo bot personalizzato','pricing.bookings.f2':'Catalogo servizi','pricing.bookings.f3':'Agenda appuntamenti automatica 24/7',
-    'pricing.bookings.f4':'Promemoria automatici','pricing.bookings.f5':'Pannello chat e takeover','pricing.bookings.f6':'Supporto incluso',
-    'pricing.restaurant.f1':'Il tuo bot personalizzato','pricing.restaurant.f2':'Menu con foto e prezzi','pricing.restaurant.f3':'Prenotazioni tavoli 24/7',
-    'pricing.restaurant.f4':'Gestione zone e tavoli','pricing.restaurant.f5':'Pannello chat e takeover','pricing.restaurant.f6':'Supporto incluso',
+    'pricing.shop.f4':'Gestionale consegne','pricing.shop.f5':'Pannello chat e takeover',
+    'pricing.bookings.f1':'Il tuo bot personalizzato','pricing.bookings.f2':'Catalogo servizi','pricing.bookings.f3':'Agenda appuntamenti 24/7',
+    'pricing.bookings.f4':'Promemoria automatici','pricing.bookings.f5':'Storico appuntamenti','pricing.bookings.f6':'Pannello chat e takeover',
+    'pricing.restaurant.f1':'Il tuo bot personalizzato','pricing.restaurant.f2':'Menu digitale con foto','pricing.restaurant.f3':'Prenotazioni tavoli 24/7',
+    'pricing.restaurant.f4':'Gestione zone e tavoli','pricing.restaurant.f5':'Gestione ordini al tavolo','pricing.restaurant.f6':'Storico prenotazioni','pricing.restaurant.f7':'Pannello chat e takeover',
     'pricing.pro.f1':'Il tuo bot personalizzato','pricing.pro.f2':'Catalogo prodotti','pricing.pro.f3':'Catalogo servizi',
-    'pricing.pro.f4':'Agenda appuntamenti automatica 24/7','pricing.pro.f5':'Promemoria automatici','pricing.pro.f6':'Gestionale consegne',
-    'pricing.pro.f7':'Gestionale ordini','pricing.pro.f8':'Pannello chat e takeover','pricing.pro.f9':'Supporto incluso',
-    'pricing.note':'7 giorni gratis su qualsiasi piano · Disdici quando vuoi · Fatturazione mensile',
+    'pricing.pro.f4':'Agenda appuntamenti 24/7','pricing.pro.f5':'Promemoria automatici','pricing.pro.f6':'Gestionale consegne',
+    'pricing.pro.f7':'Gestionale ordini','pricing.pro.f8':'Pannello chat e takeover','pricing.pro.f9':'Supporto prioritario',
     'cta.h2':'Il sabato sera il bot lavora.<br/>Tu riposi.',
     'cta.sub':'Provalo 7 giorni gratis. Nessun contratto, nessuna sorpresa.','cta.btn':'🚀 Crea il mio account gratis →',
     'cta.badge1':'✓ 7 giorni gratis inclusi','cta.badge2':'✓ Operativo in meno di un\'ora','cta.badge3':'✓ Disdici quando vuoi','cta.badge4':'✓ Supporto incluso',
@@ -998,16 +1019,20 @@ const TR = {
     'pricing.label':'Pläne','pricing.h2':'Einfache Preise, keine Überraschungen',
     'pricing.sub':'Kein Preis pro Gespräch, kein Produktlimit. Jeden Monat derselbe Preis.',
     'pricing.per_month':'/Monat','pricing.popular':'⭐ Am beliebtesten','pricing.btn_free':'Kostenlos starten →',
+    'pricing.trial':'🎁 7 Tage kostenlos testen — keine Kosten bis Tag 8',
+    'pricing.shop.example':'Läden · Blumenläden · Bäckereien',
+    'pricing.bookings.example':'Friseure · Ärzte · Praxen',
+    'pricing.restaurant.example':'Restaurants · Bars · Cafés',
+    'pricing.pro.example':'Spas · Beautycenter · Mischbetriebe',
     'pricing.shop.f1':'Dein personalisierter Bot','pricing.shop.f2':'Produktkatalog','pricing.shop.f3':'Bestellverwaltung',
-    'pricing.shop.f4':'Lieferverwaltung','pricing.shop.f5':'Chat-Panel & Takeover','pricing.shop.f6':'Support inklusive',
-    'pricing.bookings.f1':'Dein personalisierter Bot','pricing.bookings.f2':'Dienstleistungskatalog','pricing.bookings.f3':'Automatische Terminplanung 24/7',
-    'pricing.bookings.f4':'Automatische Erinnerungen','pricing.bookings.f5':'Chat-Panel & Takeover','pricing.bookings.f6':'Support inklusive',
-    'pricing.restaurant.f1':'Dein personalisierter Bot','pricing.restaurant.f2':'Menü mit Fotos und Preisen','pricing.restaurant.f3':'Tischreservierungen 24/7',
-    'pricing.restaurant.f4':'Zonen- und Tischverwaltung','pricing.restaurant.f5':'Chat-Panel & Takeover','pricing.restaurant.f6':'Support inklusive',
+    'pricing.shop.f4':'Lieferverwaltung','pricing.shop.f5':'Chat-Panel & Takeover',
+    'pricing.bookings.f1':'Dein personalisierter Bot','pricing.bookings.f2':'Dienstleistungskatalog','pricing.bookings.f3':'Terminplanung 24/7',
+    'pricing.bookings.f4':'Automatische Erinnerungen','pricing.bookings.f5':'Terminhistorie','pricing.bookings.f6':'Chat-Panel & Takeover',
+    'pricing.restaurant.f1':'Dein personalisierter Bot','pricing.restaurant.f2':'Digitale Speisekarte mit Fotos','pricing.restaurant.f3':'Tischreservierungen 24/7',
+    'pricing.restaurant.f4':'Zonen- und Tischverwaltung','pricing.restaurant.f5':'Tischbestellverwaltung','pricing.restaurant.f6':'Reservierungshistorie','pricing.restaurant.f7':'Chat-Panel & Takeover',
     'pricing.pro.f1':'Dein personalisierter Bot','pricing.pro.f2':'Produktkatalog','pricing.pro.f3':'Dienstleistungskatalog',
-    'pricing.pro.f4':'Automatische Terminplanung 24/7','pricing.pro.f5':'Automatische Erinnerungen','pricing.pro.f6':'Lieferverwaltung',
-    'pricing.pro.f7':'Bestellverwaltung','pricing.pro.f8':'Chat-Panel & Takeover','pricing.pro.f9':'Support inklusive',
-    'pricing.note':'7 Tage gratis auf jedem Plan · Jederzeit kündbar · Monatliche Abrechnung',
+    'pricing.pro.f4':'Terminplanung 24/7','pricing.pro.f5':'Automatische Erinnerungen','pricing.pro.f6':'Lieferverwaltung',
+    'pricing.pro.f7':'Bestellverwaltung','pricing.pro.f8':'Chat-Panel & Takeover','pricing.pro.f9':'Prioritäts-Support',
     'cta.h2':'Samstagabend arbeitet der Bot.<br/>Du ruhst dich aus.',
     'cta.sub':'7 Tage kostenlos testen. Keine Verträge, keine Überraschungen.','cta.btn':'🚀 Mein Konto kostenlos erstellen →',
     'cta.badge1':'✓ 7 Tage gratis inklusive','cta.badge2':'✓ In weniger als einer Stunde live','cta.badge3':'✓ Jederzeit kündbar','cta.badge4':'✓ Support inklusive',
@@ -1066,16 +1091,20 @@ const TR = {
     'pricing.label':'Plans','pricing.h2':'Un prix simple, sans surprises',
     'pricing.sub':'Aucun coût par conversation, aucune limite de produits. Le même prix chaque mois.',
     'pricing.per_month':'/mois','pricing.popular':'⭐ Le plus populaire','pricing.btn_free':'Commencer gratis →',
+    'pricing.trial':'🎁 7 jours d\'essai gratuits — aucun débit avant le jour 8',
+    'pricing.shop.example':'Boutiques · Fleuristes · Pâtisseries',
+    'pricing.bookings.example':'Salons · Médecins · Cabinets',
+    'pricing.restaurant.example':'Restaurants · Bars · Cafés',
+    'pricing.pro.example':'Spas · Instituts de beauté · Activités mixtes',
     'pricing.shop.f1':'Ton bot personnalisé','pricing.shop.f2':'Catalogue de produits','pricing.shop.f3':'Gestion des commandes',
-    'pricing.shop.f4':'Gestion des livraisons','pricing.shop.f5':'Panneau de chats & takeover','pricing.shop.f6':'Support inclus',
-    'pricing.bookings.f1':'Ton bot personnalisé','pricing.bookings.f2':'Catalogue de services','pricing.bookings.f3':'Agenda de rendez-vous automatique 24h/24',
-    'pricing.bookings.f4':'Rappels automatiques','pricing.bookings.f5':'Panneau de chats & takeover','pricing.bookings.f6':'Support inclus',
-    'pricing.restaurant.f1':'Ton bot personnalisé','pricing.restaurant.f2':'Menu avec photos et prix','pricing.restaurant.f3':'Réservations de table 24h/24',
-    'pricing.restaurant.f4':'Gestion des zones et tables','pricing.restaurant.f5':'Panneau de chats & takeover','pricing.restaurant.f6':'Support inclus',
+    'pricing.shop.f4':'Gestion des livraisons','pricing.shop.f5':'Panneau de chats & takeover',
+    'pricing.bookings.f1':'Ton bot personnalisé','pricing.bookings.f2':'Catalogue de services','pricing.bookings.f3':'Agenda 24h/24',
+    'pricing.bookings.f4':'Rappels automatiques','pricing.bookings.f5':'Historique des rendez-vous','pricing.bookings.f6':'Panneau de chats & takeover',
+    'pricing.restaurant.f1':'Ton bot personnalisé','pricing.restaurant.f2':'Menu digital avec photos','pricing.restaurant.f3':'Réservations de table 24h/24',
+    'pricing.restaurant.f4':'Gestion des zones et tables','pricing.restaurant.f5':'Gestion des commandes en table','pricing.restaurant.f6':'Historique des réservations','pricing.restaurant.f7':'Panneau de chats & takeover',
     'pricing.pro.f1':'Ton bot personnalisé','pricing.pro.f2':'Catalogue de produits','pricing.pro.f3':'Catalogue de services',
-    'pricing.pro.f4':'Agenda de rendez-vous automatique 24h/24','pricing.pro.f5':'Rappels automatiques','pricing.pro.f6':'Gestion des livraisons',
-    'pricing.pro.f7':'Gestion des commandes','pricing.pro.f8':'Panneau de chats & takeover','pricing.pro.f9':'Support inclus',
-    'pricing.note':'7 jours gratuits sur tous les plans · Résiliez quand vous voulez · Facturation mensuelle',
+    'pricing.pro.f4':'Agenda 24h/24','pricing.pro.f5':'Rappels automatiques','pricing.pro.f6':'Gestion des livraisons',
+    'pricing.pro.f7':'Gestion des commandes','pricing.pro.f8':'Panneau de chats & takeover','pricing.pro.f9':'Support prioritaire',
     'cta.h2':'Le samedi soir le bot travaille.<br/>Vous vous reposez.',
     'cta.sub':'Essayez-le gratuitement pendant 7 jours. Sans contrat, sans surprise.','cta.btn':'🚀 Créer mon compte gratuit →',
     'cta.badge1':'✓ 7 jours gratuits inclus','cta.badge2':'✓ En ligne en moins d\'une heure','cta.badge3':'✓ Résiliez quand vous voulez','cta.badge4':'✓ Support inclus',
@@ -1134,16 +1163,20 @@ const TR = {
     'pricing.label':'Planos','pricing.h2':'Um preço simples, sem surpresas',
     'pricing.sub':'Sem custo por conversa, sem limite de produtos. Mesmo preço todo mês.',
     'pricing.per_month':'/mês','pricing.popular':'⭐ Mais popular','pricing.btn_free':'Começar grátis →',
+    'pricing.trial':'🎁 7 dias de teste grátis — sem cobrança até o dia 8',
+    'pricing.shop.example':'Lojas · Floriculturas · Padarias',
+    'pricing.bookings.example':'Salões · Médicos · Consultórios',
+    'pricing.restaurant.example':'Restaurantes · Bares · Cafés',
+    'pricing.pro.example':'Spas · Centros de estética · Negócios mistos',
     'pricing.shop.f1':'Seu bot personalizado','pricing.shop.f2':'Catálogo de produtos','pricing.shop.f3':'Gestão de pedidos',
-    'pricing.shop.f4':'Gestão de entregas','pricing.shop.f5':'Painel de chats e takeover','pricing.shop.f6':'Suporte incluído',
-    'pricing.bookings.f1':'Seu bot personalizado','pricing.bookings.f2':'Catálogo de serviços','pricing.bookings.f3':'Agendamento automático 24/7',
-    'pricing.bookings.f4':'Lembretes automáticos','pricing.bookings.f5':'Painel de chats e takeover','pricing.bookings.f6':'Suporte incluído',
-    'pricing.restaurant.f1':'Seu bot personalizado','pricing.restaurant.f2':'Cardápio com fotos e preços','pricing.restaurant.f3':'Reservas de mesa 24/7',
-    'pricing.restaurant.f4':'Gestão de zonas e mesas','pricing.restaurant.f5':'Painel de chats e takeover','pricing.restaurant.f6':'Suporte incluído',
+    'pricing.shop.f4':'Gestão de entregas','pricing.shop.f5':'Painel de chats e takeover',
+    'pricing.bookings.f1':'Seu bot personalizado','pricing.bookings.f2':'Catálogo de serviços','pricing.bookings.f3':'Agendamento 24/7',
+    'pricing.bookings.f4':'Lembretes automáticos','pricing.bookings.f5':'Histórico de agendamentos','pricing.bookings.f6':'Painel de chats e takeover',
+    'pricing.restaurant.f1':'Seu bot personalizado','pricing.restaurant.f2':'Cardápio digital com fotos','pricing.restaurant.f3':'Reservas de mesa 24/7',
+    'pricing.restaurant.f4':'Gestão de zonas e mesas','pricing.restaurant.f5':'Gestão de pedidos na mesa','pricing.restaurant.f6':'Histórico de reservas','pricing.restaurant.f7':'Painel de chats e takeover',
     'pricing.pro.f1':'Seu bot personalizado','pricing.pro.f2':'Catálogo de produtos','pricing.pro.f3':'Catálogo de serviços',
-    'pricing.pro.f4':'Agendamento automático 24/7','pricing.pro.f5':'Lembretes automáticos','pricing.pro.f6':'Gestão de entregas',
-    'pricing.pro.f7':'Gestão de pedidos','pricing.pro.f8':'Painel de chats e takeover','pricing.pro.f9':'Suporte incluído',
-    'pricing.note':'7 dias grátis em qualquer plano · Cancele quando quiser · Cobrança mensal',
+    'pricing.pro.f4':'Agendamento 24/7','pricing.pro.f5':'Lembretes automáticos','pricing.pro.f6':'Gestão de entregas',
+    'pricing.pro.f7':'Gestão de pedidos','pricing.pro.f8':'Painel de chats e takeover','pricing.pro.f9':'Suporte prioritário',
     'cta.h2':'No sábado à noite o bot trabalha.<br/>Você descansa.',
     'cta.sub':'Experimente grátis por 7 dias. Sem contratos, sem surpresas.','cta.btn':'🚀 Criar minha conta grátis →',
     'cta.badge1':'✓ 7 dias grátis incluídos','cta.badge2':'✓ Ativo em menos de uma hora','cta.badge3':'✓ Cancele quando quiser','cta.badge4':'✓ Suporte incluído',
