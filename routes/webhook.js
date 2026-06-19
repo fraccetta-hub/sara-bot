@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { createClient } = require('@supabase/supabase-js');
-const { getTenantConfig, getStock, decrementStock, getServices, invalidateStock, invalidateServices } = require('../services/stock');
+const { getTenantConfig, getStock, decrementStock, getServices, getBusinessClosures, invalidateStock, invalidateServices, invalidateClosures } = require('../services/stock');
 const { sendMessage, sendImage, notifyMerchant } = require('../services/whatsapp');
 const { chat } = require('../services/claude');
 const { downloadAndStore, uploadImageBuffer } = require('../services/storage');
@@ -242,6 +242,10 @@ const MT = {
   block_added:      { es:(s,e)=>`🔒 Bloqueo agregado:\nDe ${s}\nHasta ${e}`, it:(s,e)=>`🔒 Blocco aggiunto:\nDa ${s}\nA ${e}`, en:(s,e)=>`🔒 Block added:\nFrom ${s}\nTo ${e}`, fr:(s,e)=>`🔒 Blocage ajouté:\nDe ${s}\nÀ ${e}`, de:(s,e)=>`🔒 Sperre hinzugefügt:\nVon ${s}\nBis ${e}`, pt:(s,e)=>`🔒 Bloqueio adicionado:\nDe ${s}\nAté ${e}` },
   block_removed:    { es:()=>`✅ Bloqueo eliminado.`, it:()=>`✅ Blocco rimosso.`, en:()=>`✅ Block removed.`, fr:()=>`✅ Blocage supprimé.`, de:()=>`✅ Sperre entfernt.`, pt:()=>`✅ Bloqueio removido.` },
   block_not_found:  { es:()=>`⚠️ No encontré ese bloqueo.`, it:()=>`⚠️ Blocco non trovato.`, en:()=>`⚠️ Block not found.`, fr:()=>`⚠️ Blocage introuvable.`, de:()=>`⚠️ Sperre nicht gefunden.`, pt:()=>`⚠️ Bloqueio não encontrado.` },
+  closure_missing:  { es:()=>`Necesito fecha de inicio y fin del cierre. Ej: "vacaciones del 1 al 20 de agosto"`, it:()=>`Ho bisogno di data inizio e fine chiusura. Es: "ferie dal 1 al 20 agosto"`, en:()=>`I need start and end date of the closure. E.g. "holidays Aug 1-20"`, fr:()=>`J'ai besoin des dates de début et fin. Ex: "vacances du 1 au 20 août"`, de:()=>`Ich brauche Anfangs- und Enddatum. Z.B. "Urlaub 1.-20. August"`, pt:()=>`Preciso da data de início e fim. Ex: "férias de 1 a 20 de agosto"` },
+  closure_added:    { es:(s,e,l)=>`🏖️ Cierre registrado${l}:\n📅 ${s} → ${e}`, it:(s,e,l)=>`🏖️ Chiusura registrata${l}:\n📅 ${s} → ${e}`, en:(s,e,l)=>`🏖️ Closure saved${l}:\n📅 ${s} → ${e}`, fr:(s,e,l)=>`🏖️ Fermeture enregistrée${l}:\n📅 ${s} → ${e}`, de:(s,e,l)=>`🏖️ Schließung gespeichert${l}:\n📅 ${s} → ${e}`, pt:(s,e,l)=>`🏖️ Encerramento registrado${l}:\n📅 ${s} → ${e}` },
+  closure_removed:  { es:(l)=>`✅ Cierre eliminado: ${l}`, it:(l)=>`✅ Chiusura eliminata: ${l}`, en:(l)=>`✅ Closure removed: ${l}`, fr:(l)=>`✅ Fermeture supprimée: ${l}`, de:(l)=>`✅ Schließung entfernt: ${l}`, pt:(l)=>`✅ Encerramento removido: ${l}` },
+  closure_not_found:{ es:()=>`⚠️ No encontré ese cierre.`, it:()=>`⚠️ Chiusura non trovata.`, en:()=>`⚠️ Closure not found.`, fr:()=>`⚠️ Fermeture introuvable.`, de:()=>`⚠️ Schließung nicht gefunden.`, pt:()=>`⚠️ Encerramento não encontrado.` },
   svc_list_header:  { es:(n)=>`💼 *${n} servicios:*`, it:(n)=>`💼 *${n} servizi:*`, en:(n)=>`💼 *${n} services:*`, fr:(n)=>`💼 *${n} services:*`, de:(n)=>`💼 *${n} Dienstleistungen:*`, pt:(n)=>`💼 *${n} serviços:*` },
   svc_none:         { es:()=>`💼 No tenés servicios cargados.`, it:()=>`💼 Nessun servizio configurato.`, en:()=>`💼 No services configured.`, fr:()=>`💼 Aucun service configuré.`, de:()=>`💼 Keine Dienstleistungen konfiguriert.`, pt:()=>`💼 Nenhum serviço configurado.` },
   svc_added:        { es:n=>`✅ Servicio *${n}* agregado.`, it:n=>`✅ Servizio *${n}* aggiunto.`, en:n=>`✅ Service *${n}* added.`, fr:n=>`✅ Service *${n}* ajouté.`, de:n=>`✅ Dienstleistung *${n}* hinzugefügt.`, pt:n=>`✅ Serviço *${n}* adicionado.` },
@@ -290,6 +294,7 @@ Actions: update_stock, set_stock, set_price, mark_unavailable, mark_available, a
 get_orders, confirm_order, cancel_order, update_order_status, chat_takeover, name_customer,
 get_appointments, add_appointment, cancel_appointment, reschedule_appointment,
 block_time, unblock_time,
+create_closure, delete_closure,
 get_services, update_service, add_service,
 unknown.
 
@@ -310,6 +315,8 @@ cancel_appointment: {"customer_query":"...","start_at":"ISO or null"}
 reschedule_appointment: {"customer_query":"...","current_start":"ISO or null","new_start":"ISO"}
 block_time: {"start_at":"ISO","end_at":"ISO","reason":null}
 unblock_time: {"start_at":"ISO or null","reason_query":null}
+create_closure: {"start_date":"YYYY-MM-DD","end_date":"YYYY-MM-DD","label":"..."} — multi-day business closure (ferie, vacanze, festività). Use when merchant says "siamo chiusi dal X al Y", "ferie agosto", "vacaciones semana santa"
+delete_closure: {"label_query":"...","start_date":"YYYY-MM-DD or null"} — remove a business closure by label or date
 update_service: {"updates":{"price_guarani":null,"duration_min":null,"is_available":null,"name":null,"category":null,"description":null}}
 add_service: {"name":"...","category":null,"price":0,"duration_min":null,"price_type":"fixed"}
 
@@ -857,6 +864,32 @@ async function handleMerchantMessage(tenant, messageText, phoneNumberId, token) 
     return;
   }
 
+  if (intent.action === 'create_closure') {
+    const { start_date, end_date, label } = intent.params || {};
+    if (!start_date || !end_date) {
+      await sendMessage(tenant.merchant_phone, mt(lang, 'closure_missing'), phoneNumberId, token);
+      return;
+    }
+    await supabase.from('business_closures').insert({ tenant_id: tenant.id, start_date, end_date, label: label || null });
+    invalidateClosures(tenant.id);
+    const labelStr = label ? ` — ${label}` : '';
+    await sendMessage(tenant.merchant_phone, mt(lang, 'closure_added', start_date, end_date, labelStr), phoneNumberId, token);
+    return;
+  }
+
+  if (intent.action === 'delete_closure') {
+    const { label_query, start_date } = intent.params || {};
+    let q = supabase.from('business_closures').select('id,start_date,end_date,label').eq('tenant_id', tenant.id);
+    if (start_date) q = q.lte('start_date', start_date).gte('end_date', start_date);
+    if (label_query) q = q.ilike('label', `%${label_query}%`);
+    const { data: found } = await q.order('start_date').limit(1);
+    if (!found?.length) { await sendMessage(tenant.merchant_phone, mt(lang, 'closure_not_found'), phoneNumberId, token); return; }
+    await supabase.from('business_closures').delete().eq('id', found[0].id);
+    invalidateClosures(tenant.id);
+    await sendMessage(tenant.merchant_phone, mt(lang, 'closure_removed', found[0].label || found[0].start_date), phoneNumberId, token);
+    return;
+  }
+
   // ── Services ──────────────────────────────────────────────────────────────
   if (intent.action === 'get_services') {
     if (!allServices.length) { await sendMessage(tenant.merchant_phone, mt(lang, 'svc_none'), phoneNumberId, token); return; }
@@ -1175,9 +1208,10 @@ async function handleCustomerMessage(tenant, customerPhone, messageText, locatio
       return { role: msg.role, content: typeof content === 'string' ? content : String(content) };
     });
   // ── Customer context: active order + past orders ────────────────────────────
-  const [stock, services, activeOrderRes, pastOrdersRes] = await Promise.all([
+  const [stock, services, closures, activeOrderRes, pastOrdersRes] = await Promise.all([
     getStock(tenant.id),
     getServices(tenant.id),
+    getBusinessClosures(tenant.id),
     supabase.from('orders')
       .select('id,status,items_json,total_guarani,created_at')
       .eq('tenant_id', tenant.id)
@@ -1239,7 +1273,8 @@ async function handleCustomerMessage(tenant, customerPhone, messageText, locatio
         const d = new Date(today); d.setDate(d.getDate() + i);
         const dateStr = d.toISOString().slice(0, 10);
         const bh = bhMap[d.getDay()];
-        if (!bh || bh.is_closed) { byDate[dateStr] = []; continue; }
+        const inClosure = closures.some(c => dateStr >= c.start_date && dateStr <= c.end_date);
+        if (!bh || bh.is_closed || inClosure) { byDate[dateStr] = []; continue; }
 
         const [oh, om] = bh.open_time.split(':').map(Number);
         const [ch, cm] = bh.close_time.split(':').map(Number);
@@ -1314,6 +1349,7 @@ async function handleCustomerMessage(tenant, customerPhone, messageText, locatio
     imageData: imageData || null,
     appointmentSlots,
     customerContext,
+    closures,
   });
 
   if (offTopic) {

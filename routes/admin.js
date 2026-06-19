@@ -11,6 +11,7 @@ const { sendMessage, sendImage } = require('../services/whatsapp');
 const crypto = require('crypto');
 const AdmZip = require('adm-zip');
 const { sendPasswordReset } = require('../services/mailer');
+const { invalidateClosures } = require('../services/stock');
 const { rateLimit } = require('express-rate-limit');
 
 const forgotPasswordLimiter = rateLimit({
@@ -1192,6 +1193,36 @@ router.put('/business-hours', requireAuth, async (req, res) => {
   const { error } = await supabase.from('business_hours')
     .upsert(rows, { onConflict: 'tenant_id,day_of_week' });
   if (error) return res.status(500).json({ error: error.message });
+  res.json({ ok: true });
+});
+
+// ─── GET /admin/business-closures ────────────────────────────────────────────
+router.get('/business-closures', requireAuth, async (req, res) => {
+  const { data, error } = await supabase
+    .from('business_closures').select('*')
+    .eq('tenant_id', req.tenant.tenantId)
+    .order('start_date');
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
+router.post('/business-closures', requireAuth, async (req, res) => {
+  const { start_date, end_date, label } = req.body;
+  if (!start_date || !end_date) return res.status(400).json({ error: 'start_date and end_date required' });
+  if (end_date < start_date) return res.status(400).json({ error: 'end_date must be >= start_date' });
+  const { data, error } = await supabase.from('business_closures').insert({
+    tenant_id: req.tenant.tenantId, start_date, end_date, label: label || null,
+  }).select().single();
+  if (error) return res.status(500).json({ error: error.message });
+  invalidateClosures(req.tenant.tenantId);
+  res.json(data);
+});
+
+router.delete('/business-closures/:id', requireAuth, async (req, res) => {
+  const { error } = await supabase.from('business_closures')
+    .delete().eq('id', req.params.id).eq('tenant_id', req.tenant.tenantId);
+  if (error) return res.status(500).json({ error: error.message });
+  invalidateClosures(req.tenant.tenantId);
   res.json({ ok: true });
 });
 

@@ -178,7 +178,7 @@ REGLAS OPERATIVAS:
 
 // Per-conversation dynamic content — varies message to message (delivery state,
 // appointment slot availability, customer context). Kept out of the cached block on purpose.
-function buildDynamicSystemPrompt(tenant, convState = {}, appointmentSlots = null, customerContext = null) {
+function buildDynamicSystemPrompt(tenant, convState = {}, appointmentSlots = null, customerContext = null, closures = []) {
   // ── Delivery block ──────────────────────────────────────────────────────────
   let deliveryBlock = '';
   if (tenant.delivery_enabled) {
@@ -289,17 +289,28 @@ A8. Después de emitir la reserva, informá al cliente que el local confirmará 
     if (parts.length) customerBlock = `\nCONTEXTO DEL CLIENTE:\n${parts.join('\n')}`;
   }
 
+  // ── Business closures ───────────────────────────────────────────────────────
+  let closuresBlock = '';
+  if (closures.length) {
+    const today = new Date().toISOString().slice(0, 10);
+    const isClosedToday = closures.some(c => today >= c.start_date && today <= c.end_date);
+    const lines = closures.map(c =>
+      `• ${c.start_date} → ${c.end_date}${c.label ? ` (${c.label})` : ''}`
+    ).join('\n');
+    closuresBlock = `\nCIERRES PROGRAMADOS:\n${lines}${isClosedToday ? '\n⚠️ HOY EL LOCAL ESTÁ CERRADO por cierre programado. Informá al cliente con amabilidad y decile cuándo vuelven a atender.' : ''}`;
+  }
+
   // ── Date and occasion awareness ─────────────────────────────────────────────
   const todayStr = new Date().toLocaleDateString('es', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
   const occasion = getNearbyOccasion(tenant.country);
   const dateBlock = `\nFECHA ACTUAL: ${todayStr}${occasion ? `\nOCASIÓN PRÓXIMA: ${occasion} — SOLO mencionala si hay productos o servicios en el catálogo que tengan sentido para regalar o celebrar esta ocasión (flores, dulces, ropa, spa, etc.). Si el negocio es un consultorio médico, dentista, ferretería, o cualquier rubro donde la ocasión no aplica, NO la menciones.` : ''}`;
 
-  return `${deliveryBlock}\n${appointmentsBlock}\n${customerBlock}\n${dateBlock}`.trim();
+  return `${deliveryBlock}\n${appointmentsBlock}\n${closuresBlock}\n${customerBlock}\n${dateBlock}`.trim();
 }
 
-async function chat({ tenant, stock, services, history, userMessage, convState, imageData, appointmentSlots, customerContext }) {
+async function chat({ tenant, stock, services, history, userMessage, convState, imageData, appointmentSlots, customerContext, closures }) {
   const staticPrompt  = buildStaticSystemPrompt(tenant, stock, services || []);
-  const dynamicPrompt = buildDynamicSystemPrompt(tenant, convState || {}, appointmentSlots || null, customerContext || null);
+  const dynamicPrompt = buildDynamicSystemPrompt(tenant, convState || {}, appointmentSlots || null, customerContext || null, closures || []);
 
   // Static catalog/rules block is cached (only changes when the merchant edits
   // products/config) — avoids re-billing it at full price on every message.

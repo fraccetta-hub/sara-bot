@@ -93,8 +93,28 @@ async function getServices(tenantId) {
   return result;
 }
 
+async function getBusinessClosures(tenantId) {
+  const key = `closures:${tenantId}`;
+  const hit = cacheGet(key);
+  if (hit) return hit;
+
+  const today = new Date().toISOString().slice(0, 10);
+  const { data, error } = await supabase
+    .from('business_closures')
+    .select('*')
+    .eq('tenant_id', tenantId)
+    .gte('end_date', today)
+    .order('start_date');
+
+  if (error) { console.error('getBusinessClosures error:', error.message); return []; }
+  const result = data || [];
+  cacheSet(key, result);
+  return result;
+}
+
 function invalidateStock(tenantId) { cache.delete(`stock:${tenantId}`); }
 function invalidateServices(tenantId) { cache.delete(`services:${tenantId}`); }
 function invalidateTenant(phoneNumberId) { cache.delete(`tenant:${phoneNumberId}`); }
+function invalidateClosures(tenantId) { cache.delete(`closures:${tenantId}`); }
 
-module.exports = { getTenantConfig, getStock, decrementStock, getServices, invalidateStock, invalidateServices, invalidateTenant };
+module.exports = { getTenantConfig, getStock, decrementStock, getServices, getBusinessClosures, invalidateStock, invalidateServices, invalidateTenant, invalidateClosures };
