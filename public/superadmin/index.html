@@ -794,7 +794,11 @@ async function loadSupportList() {
         <div class="text-xs text-gray-400 mt-0.5 truncate">${escHtml(t.last_message || '')}</div>
         <div class="text-[10px] text-gray-300 mt-0.5">${t.last_at ? new Date(t.last_at).toLocaleString('es-PY') : ''}</div>
       </div>`).join('');
-  } catch(e) { console.error('[support] loadSupportList error:', e.message); }
+  } catch(e) {
+    console.error('[support] loadSupportList error:', e.message);
+    const el = document.getElementById('supportList');
+    if (el) el.innerHTML = `<div class="text-center py-8 text-red-400 text-xs px-3">⚠️ ${escHtml(e.message || 'Error')}${e.status ? ' ('+e.status+')' : ''}</div>`;
+  }
 }
 
 async function openSupportChat(tenantId, tenantName) {
@@ -832,7 +836,11 @@ async function renderSupportMessages() {
       </div>`;
     }).join('');
     if (atBottom || msgs.length === 0) el.scrollTop = el.scrollHeight;
-  } catch(e) { console.error('[support] renderSupportMessages error:', e.message); }
+  } catch(e) {
+    console.error('[support] renderSupportMessages error:', e.message);
+    const el = document.getElementById('supportChatMsgs');
+    if (el) el.innerHTML = `<div class="text-center py-4 text-red-400 text-xs">⚠️ ${escHtml(e.message || 'Error')}</div>`;
+  }
 }
 
 async function sendSupportReply() {
@@ -1045,8 +1053,11 @@ async function api(path, method = 'GET', body = null) {
   const opts = { method, credentials: 'same-origin', headers: { 'Content-Type': 'application/json' } };
   if (body) opts.body = JSON.stringify(body);
   const res  = await fetch(path, opts);
-  const data = await res.json();
-  if (!res.ok) { const e = new Error(data.error || 'Error'); e.status = res.status; throw e; }
+  const text = await res.text();
+  let data;
+  try { data = text ? JSON.parse(text) : {}; }
+  catch { const e = new Error(`HTTP ${res.status}: ${text.slice(0, 200)}`); e.status = res.status; throw e; }
+  if (!res.ok) { const e = new Error(data.error || `HTTP ${res.status}`); e.status = res.status; throw e; }
   return data;
 }
 </script>
