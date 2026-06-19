@@ -747,12 +747,17 @@
         <input type="hidden" id="tableModalId">
         <div class="space-y-3">
           <div>
-            <label data-i18n="restaurant.tableLabel" class="block text-xs text-gray-500 mb-1">Etiqueta (ej: T1, Mesa Ventana)</label>
+            <label data-i18n="restaurant.tableLabel" class="block text-xs text-gray-500 mb-1">Etiqueta (opcional)</label>
             <input id="tableModalLabel" type="text" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-300">
           </div>
           <div>
             <label data-i18n="restaurant.tableCapacity" class="block text-xs text-gray-500 mb-1">Capacidad (personas)</label>
             <input id="tableModalCapacity" type="number" min="1" max="50" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-300">
+          </div>
+          <div id="tableQtyRow">
+            <label data-i18n="restaurant.tableQuantity" class="block text-xs text-gray-500 mb-1">Cantidad de mesas</label>
+            <input id="tableModalQuantity" type="number" min="1" max="200" value="1" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-300">
+            <p data-i18n="restaurant.tableQuantityHint" class="text-[11px] text-gray-400 mt-1">Crea varias mesas de esta capacidad de una vez. La etiqueta se numera automáticamente.</p>
           </div>
           <div>
             <label data-i18n="restaurant.tableZone" class="block text-xs text-gray-500 mb-1">Zona</label>
@@ -3279,6 +3284,9 @@ function openTableModal(id) {
   document.getElementById('tableModalLabel').value    = tbl?.label    || '';
   document.getElementById('tableModalCapacity').value = tbl?.capacity || '';
   document.getElementById('tableModalZone').value     = tbl?.zone_id  || '';
+  document.getElementById('tableModalQuantity').value = '1';
+  // Quantity (bulk) only when creating new tables, not when editing one
+  document.getElementById('tableQtyRow').classList.toggle('hidden', !!id);
   document.getElementById('tableModal').classList.remove('hidden');
 }
 function closeTableModal() { document.getElementById('tableModal').classList.add('hidden'); }
@@ -3287,9 +3295,10 @@ async function saveTable() {
   const label    = document.getElementById('tableModalLabel').value.trim();
   const capacity = document.getElementById('tableModalCapacity').value;
   const zone_id  = document.getElementById('tableModalZone').value || null;
-  if (!label || !capacity) return;
+  const quantity = parseInt(document.getElementById('tableModalQuantity').value) || 1;
+  if (!capacity) return;
   if (id) await api(`/admin/restaurant/tables/${id}`, 'PUT', { label, capacity, zone_id });
-  else    await api('/admin/restaurant/tables', 'POST', { label, capacity, zone_id });
+  else    await api('/admin/restaurant/tables', 'POST', { label, capacity, zone_id, quantity });
   closeTableModal();
   _rTables = await api('/admin/restaurant/tables');
   renderTables();

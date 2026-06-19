@@ -2260,14 +2260,36 @@ router.get('/restaurant/tables', requireAuth, async (req, res) => {
 });
 
 router.post('/restaurant/tables', requireAuth, async (req, res) => {
-  const { label, capacity, zone_id } = req.body;
-  if (!label?.trim() || !capacity) return res.status(400).json({ error: 'Etiqueta y capacidad requeridas' });
-  const { data, error } = await supabase.from('restaurant_tables')
-    .insert({ tenant_id: req.tenant.tenantId, label: label.trim(), capacity: parseInt(capacity), zone_id: zone_id || null })
-    .select().single();
+  const { label, capacity, zone_id, quantity } = req.body;
+  if (!capacity) return res.status(400).json({ error: 'Capacidad requerida' });
+  const cap = parseInt(capacity);
+  const zid = zone_id || null;
+  const qty = Math.max(1, Math.min(parseInt(quantity) || 1, 200));
+
+  // Single table with an explicit label → keep label as typed
+  if (qty === 1 && label?.trim()) {
+    const { data, error } = await supabase.from('restaurant_tables')
+      .insert({ tenant_id: req.tenant.tenantId, label: label.trim(), capacity: cap, zone_id: zid })
+      .select().single();
+    if (error) return res.status(500).json({ error: error.message });
+    invalidateRestaurant(req.tenant.tenantId);
+    return res.json(data);
+  }
+
+  // Bulk create (or single without label) → auto-number labels continuing the prefix sequence
+  const prefix = label?.trim() || 'Mesa';
+  const { data: existing } = await supabase.from('restaurant_tables')
+    .select('label').eq('tenant_id', req.tenant.tenantId);
+  const re = new RegExp('^' + prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s+(\\d+)$');
+  let maxN = 0;
+  (existing || []).forEach(t => { const m = t.label?.match(re); if (m) maxN = Math.max(maxN, parseInt(m[1])); });
+  const rows = Array.from({ length: qty }, (_, i) => ({
+    tenant_id: req.tenant.tenantId, label: `${prefix} ${maxN + 1 + i}`, capacity: cap, zone_id: zid
+  }));
+  const { error } = await supabase.from('restaurant_tables').insert(rows);
   if (error) return res.status(500).json({ error: error.message });
   invalidateRestaurant(req.tenant.tenantId);
-  res.json(data);
+  res.json({ ok: true, created: qty });
 });
 
 router.put('/restaurant/tables/:id', requireAuth, async (req, res) => {

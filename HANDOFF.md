@@ -9,7 +9,7 @@
 
 ### Menu ristorante — vista dedicata + invio menu da Sara
 - **Data model**: riusata tabella `products` (no tabella nuova). Aggiunta UNA colonna `allergens TEXT`. Stock irrilevante per ristorante → nascosto in UI, item sempre disponibile (`stock_qty = null`).
-- **Migration richiesta**: `ALTER TABLE products ADD COLUMN IF NOT EXISTS allergens TEXT;` (Migration 10 in `db/migrations.sql`)
+- **Migration ✅ ESEGUITA (2026-06-20)**: `ALTER TABLE products ADD COLUMN IF NOT EXISTS allergens TEXT;` (Migration 10 in `db/migrations.sql`)
 - **Vista Menu** (`public/admin/index.html`): quando `isRestaurantPlan`, il tab Productos/Menu rende `renderMenu()` invece della tabella prodotti. Piatti raggruppati per categoria, colonne `Piatto | Descrizione | Allergeni | Prezzo | Stato | Azioni` — niente stock/SKU. `#menuView` nuovo container, `#productsTableWrap` nascosto in modalità ristorante.
 - **Modal piatto**: campo allergeni (`#pAllergens`) visibile solo ristorante; `#stockRow` + `#skuField` nascosti in ristorante. `saveProduct`/`openProductModal` gestiscono `allergens`; stock forzato a `null` per ristorante.
 - **Backend** (`routes/admin.js`): POST/PUT `/products` accettano `allergens`. `import-confirm` bulk insert passa `allergens`.
@@ -19,6 +19,12 @@
   - `routes/webhook.js`: destruttura `sendMenu`; `buildMenuText(stock, tenant)` costruisce menu testo formattato (raggruppato per categoria, prezzo via `formatPrice`, descrizione, allergeni) e lo manda dopo la reply. Zero token AI (costruito nel backend).
 - **i18n**: chiavi `menu.col.dish/desc/allergens/price/status/actions`, `menu.active/inactive`, `menu.noCategory`, `menu.allergens/allergensPh` in ES/EN/IT/DE/FR/PT (`public/admin/i18n.js`).
 - **Foto singolo piatto**: meccanismo esistente `<SHOW_IMAGE>` + `products.image_url` invariato.
+
+### Tavoli ristorante — creazione in blocco (bulk)
+- Problema: ristoranti con molti coperti non possono inserire i tavoli uno a uno.
+- `routes/admin.js` `POST /restaurant/tables`: accetta `quantity`. `quantity=1` + label esplicita → comportamento singolo (label come digitata). Altrimenti bulk: prefisso = label o `"Mesa"`, etichette auto-numerate continuando la sequenza esistente (`${prefix} N`, regex su label esistenti per trovare max). Cap 200 tavoli/op.
+- `public/admin/index.html`: modal tavolo — campo `#tableModalQuantity` + hint (`#tableQtyRow`), visibile solo in creazione (nascosto in edit). Label ora opzionale. `saveTable` invia `quantity` in POST.
+- i18n: `restaurant.tableQuantity` + `restaurant.tableQuantityHint` in 6 lingue; `restaurant.tableLabel` → "(opcional)".
 
 ## COSA È STATO FATTO (sessioni precedenti + 2026-06-17)
 - **#3** — `routes/admin.js` + `routes/superadmin.js`: Opus → `claude-haiku-4-5-20251001` per import catalogo da foto
