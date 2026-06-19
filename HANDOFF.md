@@ -340,13 +340,31 @@ UPDATE tenants SET email = login_slug WHERE email IS NULL;
 - Modal UI (commit 1d62470): pannello limiti visibile in 6 lingue (formati, 300 img max, 50MB ZIP, 8MB/img)
 
 ## PROSSIME PRIORITÀ (sessione successiva)
-1. **Migration Supabase** — `ALTER TABLE tenants ADD COLUMN IF NOT EXISTS merchant_pending_json jsonb DEFAULT NULL;` (richiesta per pending persistence)
-2. **Stripe** — configurare env vars reali su Render + testare flow completo con account business
-3. **Sara risposte** — tuning qualità risposte ai clienti finali
-4. **Costi/margini** — calcolo reale token AI + infra + limiti piano + definire piani starter/pro
-5. **Fatturazione** — capire come mandare fatture ai merchant
-6. **GDPR compliance** — audit cosa manca (DPA, retention policy, right-to-erasure flow)
-7. **Go-to-market** — pubblicità, test, vendita
+1. **Stripe** — configurare env vars reali su Render + testare flow completo con account business
+2. **Costi/margini** — calcolo reale token AI + infra + limiti piano + definire piani starter/pro
+3. **Fatturazione** — capire come mandare fatture ai merchant
+4. **GDPR compliance** — audit cosa manca (DPA, retention policy, right-to-erasure flow)
+5. **Go-to-market** — pubblicità, test, vendita
+
+## IDEE FUTURE (non ancora pianificate)
+
+### Offerte / sconti
+Permettere al merchant di configurare offerte su:
+- Singolo prodotto o servizio
+- Categoria prodotti o categoria servizi
+- Tutti i prodotti / tutti i servizi
+- Con date di validità (es. "Black Friday 28-30 novembre")
+Sara menzionerebbe l'offerta attiva durante la conversazione con il cliente.
+Schema DB ipotetico: tabella `offers` (tenant_id, target_type: product|category|all, target_id, discount_pct, valid_from, valid_to, label).
+
+### Chiusure aziendali (ferie / festività)
+Attualmente `appointment_blocks` gestisce blocchi puntuali, ma manca un concetto di chiusura aziendale per fasce di giorni (es. "ferie 1-20 agosto", "chiuso a Natale").
+Serve per:
+- Bloccare appuntamenti automaticamente nell'intervallo
+- Sara risponde "siamo in ferie fino al X, puoi prenotare da quella data"
+- Delivery: avvisare che non si consegna in quel periodo
+Schema ipotetico: tabella `business_closures` (tenant_id, start_date, end_date, reason) oppure estendere `appointment_blocks` con flag `is_holiday`.
+Nota: ogni business ha festività diverse (un alimentari apre a Natale, un dermatologo no) — deve essere configurabile dal merchant, non automatico.
 
 ## COSA NON FUNZIONA / IN SOSPESO
 - **Env vars mancanti su Render** — da aggiungere in Render → Environment prima che il wizard funzioni:
