@@ -486,7 +486,7 @@ ALTER TABLE conversations ADD COLUMN IF NOT EXISTS customer_notes TEXT;
 - UI in tab Clientes: select periodo + textarea + pulsante viola + feedback count
 - i18n `broadcast.*` + `err.missing_message/message_too_long` in ES/EN/IT/DE/FR/PT
 
-### Migration SQL — DA ESEGUIRE in Supabase
+### Migration SQL — ✅ ESEGUITE (2026-06-19)
 ```sql
 ALTER TABLE appointments ADD COLUMN IF NOT EXISTS reminder_sent_at TIMESTAMPTZ;
 ALTER TABLE conversations ADD COLUMN IF NOT EXISTS last_nudge_at TIMESTAMPTZ;
@@ -525,8 +525,7 @@ ALTER TABLE conversations ADD COLUMN IF NOT EXISTS last_nudge_at TIMESTAMPTZ;
 - Stima messaggi medi/tenant per definire limiti piano
 
 ## PROSSIME PRIORITÀ (sessione successiva)
-1. **Migration Supabase** — eseguire le 2 migration pendenti (reminder_sent_at, last_nudge_at)
-2. **Stripe** — configurare env vars reali su Render + testare flow completo con account business
+1. **Stripe** — configurare env vars reali su Render + testare flow completo con account business
 3. **Costi/margini** — completare con costi infra (Render + Supabase + Brevo) → definire prezzi piani Stripe
 4. **Fatturazione** — capire come mandare fatture ai merchant
 5. **GDPR compliance** — audit cosa manca (DPA, retention policy, right-to-erasure flow)
