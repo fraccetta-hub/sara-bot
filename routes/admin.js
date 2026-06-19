@@ -1881,9 +1881,22 @@ router.get('/customers/export', requireAuth, async (req, res) => {
   res.send('﻿' + csv);
 });
 
+const broadcastRateLimit = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 1,
+  keyGenerator: (req) => req.tenant?.tenantId || req.ip,
+  standardHeaders: true, legacyHeaders: false,
+  handler: (req, res) => res.status(429).json({ ok: false, errorCode: 'rate_limit' }),
+});
+const broadcastInProgress = new Set();
+
 // ─── POST /admin/broadcast — send message to all recent customers ─────────────
 
-router.post('/broadcast', requireAuth, async (req, res) => {
+router.post('/broadcast', requireAuth, broadcastRateLimit, async (req, res) => {
+  const tenantId = req.tenant.tenantId;
+  if (broadcastInProgress.has(tenantId))
+    return res.status(429).json({ ok: false, errorCode: 'rate_limit' });
+
   const { message, days_active = 30 } = req.body;
   if (!message?.trim()) return res.status(400).json({ ok: false, errorCode: 'missing_message' });
   if (message.trim().length > 1000) return res.status(400).json({ ok: false, errorCode: 'message_too_long' });
@@ -1911,11 +1924,16 @@ router.post('/broadcast', requireAuth, async (req, res) => {
   res.json({ ok: true, count: phones.length });
 
   // Fire-and-forget: send at ~1 msg/s to avoid Meta rate limits
+  broadcastInProgress.add(tenantId);
   const { sendMessage } = require('../services/whatsapp');
   const text = message.trim();
-  for (const phone of phones) {
-    await sendMessage(phone, text, tenant.phone_number_id, broadcastToken).catch(() => {});
-    await new Promise(r => setTimeout(r, 1100));
+  try {
+    for (const phone of phones) {
+      await sendMessage(phone, text, tenant.phone_number_id, broadcastToken).catch(() => {});
+      await new Promise(r => setTimeout(r, 1100));
+    }
+  } finally {
+    broadcastInProgress.delete(tenantId);
   }
 });
 
