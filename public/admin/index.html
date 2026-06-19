@@ -3011,7 +3011,6 @@ function previewImage(input) {
   if (!input.files?.[0]) return;
   const url = URL.createObjectURL(input.files[0]);
   showImagePreview(url);
-  document.getElementById('pImage').value = ''; // clear URL field
 }
 
 function previewFromUrl(url) {
@@ -3032,7 +3031,6 @@ function clearImage() {
   document.getElementById('imagePreview').src = '';
   document.getElementById('imagePreviewWrap').classList.add('hidden');
   document.getElementById('uploadZone').classList.remove('hidden');
-  document.getElementById('pImage').value = '';
   document.getElementById('pImageFile').value = '';
 }
 

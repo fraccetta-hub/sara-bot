@@ -5,6 +5,13 @@
 - Fase attuale: email transazionali operative (Brevo HTTP API). Prossimo: Stripe env vars + META_CONFIG_ID.
 - Ultimo commit stabile: `3c91d96` — "security: rate limit forgot-password (5/h per IP), fix multer+nodemailer vulns"
 
+## COSA È STATO FATTO (sessione 2026-06-20 — bugfix modal prodotto/piatto)
+
+### Bug "+ Nuevo piatto/producto" non apriva il modal
+- `openProductModal` → `clearImage()` faceva `document.getElementById('pImage').value=''` ma `#pImage` (vecchio campo URL immagine) era stato rimosso in una sessione passata → `clearImage`/`previewImage` avevano riferimenti orfani → throw "Cannot set properties of null" → modal mai aperto (sia ristorante che shop). Diagnosi riprodotta servendo `public/` e chiamando `openProductModal(null)` in preview.
+- Fix: rimossi i 2 `getElementById('pImage')` orfani in `clearImage` e `previewImage` (`public/admin/index.html`). Verificato in preview: modal apre sia restaurant (allergeni visibili, stock/sku nascosti) sia shop (stock visibile).
+- Pattern [[feedback-dom-js-sync]]: rimuovere i ref JS quando si elimina un elemento HTML.
+
 ## COSA È STATO FATTO (sessione 2026-06-20 — menu ristorante)
 
 ### Menu ristorante — vista dedicata + invio menu da Sara
