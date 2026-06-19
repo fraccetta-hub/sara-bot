@@ -518,11 +518,12 @@ ALTER TABLE conversations ADD COLUMN IF NOT EXISTS last_nudge_at TIMESTAMPTZ;
 
 **Cache miss rate 30% → moltiplica ×1.3 → ancora < $3/tenant/mese anche per uso molto alto.**
 
-### Mancano (da completare con i dati dell'utente)
-- Costo Render/mese
-- Costo Supabase/mese (free o Pro $25)
-- Costo Brevo/mese
-- Stima messaggi medi/tenant per definire limiti piano
+### Infrastruttura (sessione 2026-06-19 — COMPLETATO)
+- Render: istanza paid ~$7/mese (Hobby workspace, no Pro workspace)
+- Supabase: Pro $25/mese (free si pausa — obbligatorio per prod)
+- Brevo: free (300 email/giorno, sufficiente per centinaia di tenant)
+- **Totale fisso: ~$32/mese**
+- Break-even: 2 clienti paganti qualsiasi piano
 
 ## COSA È STATO FATTO (sessione 2026-06-19 — sistema prenotazioni ristorante)
 
@@ -549,10 +550,28 @@ ALTER TABLE conversations ADD COLUMN IF NOT EXISTS last_nudge_at TIMESTAMPTZ;
 - `public/superadmin/index.html`: badge `🍽️ Restaurante` aggiunto in "Secciones activas" del modal tenant
 - Pushato su Render (origin/main — 6 commit totali)
 
+## COSA È STATO FATTO (sessione 2026-06-19 — pricing + Stripe test)
+
+### Pricing — DEFINITO E IMPLEMENTATO (commit fdf017f, e699632)
+- 4 piani: Shop $24.99, Bookings $29.99, Restaurant $39.99, Pro $44.99
+- Moduli per piano: Shop=products; Bookings=services+appointments; Restaurant=products+appointments+restaurant; Pro=products+services+appointments
+- `routes/billing.js`: PRICE_IDS aggiornato con 4 env vars
+- `routes/register.js`: moduli abilitati automaticamente al signup per piano
+- `public/register/index.html`: 4 card piano, currency map, selectPlan aggiornati
+- `public/register/i18n.js`: chiavi s4.shop/bookings/restaurant/pro in 6 lingue
+- `landingpage/index.html`: 4 card pricing + TR in 6 lingue
+
+### Stripe test mode — CONFIGURATO
+- 4 prodotti creati in Stripe test mode con price_id
+- `STRIPE_PRICE_SHOP`, `STRIPE_PRICE_BOOKINGS`, `STRIPE_PRICE_RESTAURANT`, `STRIPE_PRICE_PRO` aggiunti su Render
+- `STRIPE_SECRET_KEY` (test) aggiunta su Render
+- `STRIPE_WEBHOOK_SECRET` aggiunto su Render
+- Webhook endpoint: `https://sara-bot-tcl6.onrender.com/billing/webhook`
+- Events: `customer.subscription.created/updated/deleted`, `invoice.payment_failed`, `customer.subscription.trial_will_end`
+
 ## PROSSIME PRIORITÀ (sessione successiva)
-1. **Stripe** — configurare env vars reali su Render + testare flow completo con account business
-3. **Costi/margini** — completare con costi infra (Render + Supabase + Brevo) → definire prezzi piani Stripe
-4. **Fatturazione** — capire come mandare fatture ai merchant
+1. **Stripe test** — testare flow completo iscrizione end-to-end (scegli piano → Stripe checkout → webhook → tenant attivo)
+2. **Fatturazione** — capire come mandare fatture ai merchant
 5. **GDPR compliance** — audit cosa manca (DPA, retention policy, right-to-erasure flow)
 6. **Go-to-market** — pubblicità, test, vendita
 
@@ -569,12 +588,7 @@ ALTER TABLE conversations ADD COLUMN IF NOT EXISTS last_nudge_at TIMESTAMPTZ;
   - `META_APP_SECRET` = chiave segreta app (visibile in Meta Developer → Settings → Basic → "Chiave segreta")
   - `META_CONFIG_ID` = Configuration ID da Facebook Login for Business → Configurations (da creare se non esiste ancora)
 - **META_CONFIG_ID non ancora creato** — va su Meta Developer → Facebook Login for Business → Configurations → crea nuova configurazione → copia ID
-- **Stripe env vars mancanti su Render** — da configurare su stripe.com + aggiungere in Render → Environment:
-  - `STRIPE_SECRET_KEY=sk_live_...`
-  - `STRIPE_WEBHOOK_SECRET=whsec_...` (da Stripe Dashboard → Developers → Webhooks → endpoint `https://sarabot.pro/billing/webhook`)
-  - `STRIPE_PRICE_STARTER=price_...`
-  - `STRIPE_PRICE_PRO=price_...`
-  - Webhook Stripe: events `customer.subscription.created/updated/deleted` + `invoice.payment_failed`
+- **Stripe in TEST mode** — configurato e funzionante in test. Per andare live: sostituire `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, e i 4 `STRIPE_PRICE_*` con valori live su Render.
 
 ## DECISIONI TECNICHE PRESE (non riaprire)
 - Modello chat cliente: `claude-haiku-4-5-20251001` (non cambiato, va bene per chat conversazionale).
