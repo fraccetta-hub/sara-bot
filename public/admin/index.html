@@ -1000,7 +1000,7 @@
     </div>
 
     <!-- ── SETTINGS TAB ── -->
-    <div id="sectionSettings" class="hidden max-w-xl space-y-5">
+    <div id="sectionSettings" class="hidden max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-5 items-start">
       <h2 data-i18n="settings.title" class="text-lg font-semibold text-gray-800">Ajustes</h2>
 
       <!-- Language selector -->
@@ -1042,52 +1042,33 @@
         </div>
       </div>
 
-      <!-- Active sections (read-only, populated by loadSettings) -->
-      <div class="bg-white rounded-xl shadow-sm p-6">
-        <h3 data-i18n="settings.sections.title" class="font-medium text-gray-800 mb-1">🗂 Secciones activas</h3>
-        <p data-i18n="settings.sections.desc" class="text-xs text-gray-400 mb-4">Estas son las secciones habilitadas en tu plan.</p>
-        <div class="space-y-3">
-          <div id="sectionBadgeProducts" class="flex items-center gap-3 rounded-xl px-4 py-3 border-2 transition">
-            <span class="text-xl">📦</span>
-            <div class="flex-1">
-              <p data-i18n="settings.sections.products" class="text-sm font-semibold">📦 Productos</p>
-              <p data-i18n="settings.sections.products.desc" class="text-xs">Venta de artículos físicos con stock</p>
-            </div>
-            <span id="sectionBadgeProductsIcon" class="text-lg"></span>
+      <!-- Business hours + closures merged -->
+      <div class="bg-white rounded-xl shadow-sm p-6 md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <h3 class="font-medium text-gray-800 mb-1">🕐 Horarios del local</h3>
+          <p class="text-xs text-gray-400 mb-4">Definí los días y horarios de atención. Los turnos solo se pueden reservar en estos horarios.</p>
+          <div id="businessHoursForm" class="space-y-2">
+            <!-- rendered by JS -->
           </div>
-          <div id="sectionBadgeServices" class="flex items-center gap-3 rounded-xl px-4 py-3 border-2 transition">
-            <span class="text-xl">🛠</span>
-            <div class="flex-1">
-              <p data-i18n="settings.sections.services" class="text-sm font-semibold">🛠 Servicios</p>
-              <p data-i18n="settings.sections.services.desc" class="text-xs">Servicios con precio fijo o por hora</p>
-            </div>
-            <span id="sectionBadgeServicesIcon" class="text-lg"></span>
-          </div>
-          <div id="sectionBadgeAppointments" class="flex items-center gap-3 rounded-xl px-4 py-3 border-2 transition">
-            <span class="text-xl">📅</span>
-            <div class="flex-1">
-              <p class="text-sm font-semibold">📅 Turnos</p>
-              <p class="text-xs">Sistema de reservas y agenda de citas</p>
-            </div>
-            <span id="sectionBadgeAppointmentsIcon" class="text-lg"></span>
-          </div>
+          <div id="bhMsg" class="hidden rounded-lg px-4 py-2 text-sm mt-3"></div>
+          <button onclick="saveBusinessHours()" class="btn-green w-full py-2 rounded-lg text-sm font-semibold mt-4">Guardar horarios</button>
         </div>
-        <p data-i18n="settings.sections.contactAdmin" class="text-xs text-gray-400 mt-3 text-center">Para activar más secciones, contactá al administrador.</p>
-      </div>
-
-      <!-- Business hours -->
-      <div class="bg-white rounded-xl shadow-sm p-6">
-        <h3 class="font-medium text-gray-800 mb-1">🕐 Horarios del local</h3>
-        <p class="text-xs text-gray-400 mb-4">Definí los días y horarios de atención. Los turnos solo se pueden reservar en estos horarios.</p>
-        <div id="businessHoursForm" class="space-y-2">
-          <!-- rendered by JS -->
+        <div>
+          <h3 data-i18n="settings.closures.title" class="font-medium text-gray-800 mb-1">🏖️ Cierres y Vacaciones</h3>
+          <p data-i18n="settings.closures.desc" class="text-xs text-gray-400 mb-4">Fechas en las que el local estará cerrado. Sara lo informará a los clientes y no se tomarán turnos ni delivery en ese período.</p>
+          <div id="closuresList" class="space-y-2 mb-4"></div>
+          <div class="flex gap-2 flex-wrap">
+            <input id="closureStart" type="date" class="border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
+            <input id="closureEnd" type="date" class="border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
+            <input id="closureLabel" type="text" data-i18n-placeholder="settings.closures.label_ph" placeholder="Ej: Vacaciones" class="border border-gray-200 rounded-lg px-3 py-2 text-sm flex-1 min-w-32"/>
+            <button onclick="addClosure()" class="btn-green px-4 py-2 rounded-lg text-sm font-semibold" data-i18n="settings.closures.add">Agregar</button>
+          </div>
+          <div id="closureMsg" class="hidden rounded-lg px-4 py-2 text-sm mt-3"></div>
         </div>
-        <div id="bhMsg" class="hidden rounded-lg px-4 py-2 text-sm mt-3"></div>
-        <button onclick="saveBusinessHours()" class="btn-green w-full py-2 rounded-lg text-sm font-semibold mt-4">Guardar horarios</button>
       </div>
 
       <!-- Offers -->
-      <div class="bg-white rounded-xl shadow-sm p-6">
+      <div class="bg-white rounded-xl shadow-sm p-6 md:col-span-2">
         <h3 data-i18n="settings.offers.title" class="font-medium text-gray-800 mb-1">🏷️ Ofertas y Descuentos</h3>
         <p data-i18n="settings.offers.desc" class="text-xs text-gray-400 mb-4">Sara menciona los precios con descuento automáticamente en la conversación.</p>
         <div id="offersList" class="space-y-2 mb-4"></div>
@@ -1120,22 +1101,8 @@
         <div id="offerMsg" class="hidden rounded-lg px-4 py-2 text-sm mt-3"></div>
       </div>
 
-      <!-- Business closures -->
-      <div class="bg-white rounded-xl shadow-sm p-6">
-        <h3 data-i18n="settings.closures.title" class="font-medium text-gray-800 mb-1">🏖️ Cierres y Vacaciones</h3>
-        <p data-i18n="settings.closures.desc" class="text-xs text-gray-400 mb-4">Fechas en las que el local estará cerrado. Sara lo informará a los clientes y no se tomarán turnos ni delivery en ese período.</p>
-        <div id="closuresList" class="space-y-2 mb-4"></div>
-        <div class="flex gap-2 flex-wrap">
-          <input id="closureStart" type="date" class="border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
-          <input id="closureEnd" type="date" class="border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
-          <input id="closureLabel" type="text" data-i18n-placeholder="settings.closures.label_ph" placeholder="Ej: Vacaciones" class="border border-gray-200 rounded-lg px-3 py-2 text-sm flex-1 min-w-32"/>
-          <button onclick="addClosure()" class="btn-green px-4 py-2 rounded-lg text-sm font-semibold" data-i18n="settings.closures.add">Agregar</button>
-        </div>
-        <div id="closureMsg" class="hidden rounded-lg px-4 py-2 text-sm mt-3"></div>
-      </div>
-
       <!-- Bot personality -->
-      <div class="bg-white rounded-xl shadow-sm p-6">
+      <div class="bg-white rounded-xl shadow-sm p-6 md:col-span-2">
         <h3 data-i18n="settings.bot.title" class="font-medium text-gray-800 mb-1">🤖 Personalidad de tu asistente</h3>
         <p data-i18n="settings.bot.desc" class="text-xs text-gray-400 mb-4">Esto define cómo habla Sara con tus clientes.</p>
         <div id="settingsMsg" class="hidden rounded-lg px-4 py-2 text-sm mb-4"></div>
@@ -1163,7 +1130,7 @@
       </div>
 
       <!-- WhatsApp Profile -->
-      <div class="bg-white rounded-xl shadow-sm p-6">
+      <div class="bg-white rounded-xl shadow-sm p-6 md:col-span-2">
         <h3 class="font-medium text-gray-800 mb-1">👤 Perfil de WhatsApp del bot</h3>
         <p class="text-xs text-gray-400 mb-4">Foto de perfil y descripción que ven tus clientes al chatear. Se actualiza directamente en WhatsApp.</p>
         <div id="wpProfileMsg" class="hidden rounded-lg px-4 py-2 text-sm mb-4"></div>
@@ -1228,7 +1195,7 @@
       </div>
 
       <!-- Custom instructions -->
-      <div class="bg-white rounded-xl shadow-sm p-6">
+      <div class="bg-white rounded-xl shadow-sm p-6 md:col-span-2">
         <h3 data-i18n="settings.rules.title" class="font-medium text-gray-800 mb-1">📋 Reglas del negocio</h3>
         <p class="text-xs text-gray-400 mb-3">
           <span data-i18n="settings.rules.desc">Escribí en lenguaje natural cualquier regla, restricción o información especial de tu negocio. Sara las seguirá siempre.</span><br>
@@ -1264,7 +1231,8 @@
         </button>
       </div>
 
-      <!-- Delivery settings -->
+      <!-- Delivery settings — only for plans with products (Shop/Restaurant/Pro) -->
+      <div id="deliverySection" class="md:col-span-2 hidden">
       <div class="bg-white rounded-xl shadow-sm p-6">
         <h3 data-i18n="settings.delivery.title" class="font-medium text-gray-800 mb-1">🚚 Envíos a domicilio</h3>
         <p data-i18n="settings.delivery.desc" class="text-xs text-gray-400 mb-4">Configurá si ofrecés entregas, la dirección de tu local y el costo.</p>
@@ -1344,6 +1312,7 @@
           Guardar configuración de envíos
         </button>
       </div>
+      </div><!-- /deliverySection -->
 
       <!-- Change password -->
       <div class="bg-white rounded-xl shadow-sm p-6">
@@ -2572,26 +2541,9 @@ function applyTabVisibility(productsEnabled, servicesEnabled, appointmentsEnable
     }
   }
 
-  // Update read-only section badges in Settings
-  const applyBadge = (badgeId, iconId, enabled) => {
-    const card = document.getElementById(badgeId);
-    const icon = document.getElementById(iconId);
-    if (!card) return;
-    if (enabled) {
-      card.className = 'flex items-center gap-3 rounded-xl px-4 py-3 border-2 border-green-200 bg-green-50 transition';
-      card.querySelectorAll('p')[0].className = 'text-sm font-semibold text-green-800';
-      card.querySelectorAll('p')[1].className = 'text-xs text-green-600';
-      if (icon) icon.textContent = '✅';
-    } else {
-      card.className = 'flex items-center gap-3 rounded-xl px-4 py-3 border-2 border-gray-100 bg-gray-50 opacity-50 transition';
-      card.querySelectorAll('p')[0].className = 'text-sm font-semibold text-gray-400';
-      card.querySelectorAll('p')[1].className = 'text-xs text-gray-400';
-      if (icon) icon.textContent = '🔒';
-    }
-  };
-  applyBadge('sectionBadgeProducts',     'sectionBadgeProductsIcon',     productsEnabled);
-  applyBadge('sectionBadgeServices',     'sectionBadgeServicesIcon',     servicesEnabled);
-  applyBadge('sectionBadgeAppointments', 'sectionBadgeAppointmentsIcon', appointmentsEnabled);
+  // Show delivery section only for plans with products (Shop/Restaurant/Pro)
+  const ds = document.getElementById('deliverySection');
+  if (ds) ds.classList.toggle('hidden', !productsEnabled);
 }
 
 // ── Tab switching ──────────────────────────────────────────────────────────────
