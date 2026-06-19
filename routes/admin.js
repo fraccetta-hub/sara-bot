@@ -348,6 +348,14 @@ router.post('/change-username', requireAuth, async (req, res) => {
   res.json({ ok: true });
 });
 
+// ─── GET /admin/catalog-template ─────────────────────────────────────────────
+
+router.get('/catalog-template', requireAuth, (req, res) => {
+  const path = require('path');
+  const file = path.join(__dirname, '../public/catalog_template.xlsx');
+  res.download(file, 'catalogo_template.xlsx');
+});
+
 // ─── GET /admin/products ──────────────────────────────────────────────────────
 
 router.get('/products', requireAuth, async (req, res) => {

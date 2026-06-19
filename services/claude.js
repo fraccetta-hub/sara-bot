@@ -31,6 +31,31 @@ function nthSunday(year, month0, n) {
   return firstSun + (n - 1) * 7;
 }
 
+function getOpenStatus(businessHours) {
+  if (!businessHours?.length) return null;
+  const now = new Date();
+  const dow = now.getDay();
+  const nowMin = now.getHours() * 60 + now.getMinutes();
+  const bh = businessHours.find(h => h.day_of_week === dow);
+
+  if (bh && !bh.is_closed && bh.open_time && bh.close_time) {
+    const [oh, om] = bh.open_time.split(':').map(Number);
+    const [ch, cm] = bh.close_time.split(':').map(Number);
+    if (nowMin >= oh * 60 + om && nowMin < ch * 60 + cm) return { open: true };
+  }
+
+  // Find next opening
+  for (let i = 1; i <= 7; i++) {
+    const d = new Date(now); d.setDate(d.getDate() + i);
+    const next = businessHours.find(h => h.day_of_week === d.getDay());
+    if (next && !next.is_closed && next.open_time) {
+      const label = d.toLocaleDateString('es', { weekday: 'long' }) + ' a las ' + next.open_time;
+      return { open: false, nextOpen: label };
+    }
+  }
+  return { open: false, nextOpen: null };
+}
+
 function getNearbyOccasion(country) {
   const now = new Date();
   const m = now.getMonth() + 1;
@@ -200,12 +225,13 @@ REGLAS OPERATIVAS:
 9. Si el cliente menciona su nombre por primera vez: <CUSTOMER_NAME:NOMBRE_DEL_CLIENTE>
 10. Si el cliente no confirma o solo pregunta, NO incluyas el bloque <ORDER>.
 11. Si el cliente pide que lo avises cuando un producto agotado vuelva a estar disponible, respondé afirmativamente y agregá: <WAITLIST:NOMBRE_EXACTO_DEL_PRODUCTO>
-12. Si el cliente envía una imagen o mensaje sin ninguna relación con los productos o servicios del local, respondé ÚNICAMENTE con: <OFF_TOPIC>`;
+12. Si el cliente envía una imagen o mensaje sin ninguna relación con los productos o servicios del local, respondé ÚNICAMENTE con: <OFF_TOPIC>
+13. CROSS-SELL (opcional): cuando el cliente eligió un producto y está por confirmar, podés sugerir naturalmente 1 producto o servicio complementario del catálogo — solo si tiene sentido real. Máximo 1 sugerencia, nunca en el primer mensaje ni de forma forzada.`;
 }
 
 // Per-conversation dynamic content — varies message to message (delivery state,
 // appointment slot availability, customer context). Kept out of the cached block on purpose.
-function buildDynamicSystemPrompt(tenant, convState = {}, appointmentSlots = null, customerContext = null, closures = []) {
+function buildDynamicSystemPrompt(tenant, convState = {}, appointmentSlots = null, customerContext = null, closures = [], businessHours = [], isFirstMessage = false) {
   // ── Delivery block ──────────────────────────────────────────────────────────
   let deliveryBlock = '';
   if (tenant.delivery_enabled) {
@@ -332,7 +358,20 @@ A8. Después de emitir la reserva, informá al cliente que el local confirmará 
   const occasion = getNearbyOccasion(tenant.country);
   const dateBlock = `\nFECHA ACTUAL: ${todayStr}${occasion ? `\nOCASIÓN PRÓXIMA: ${occasion} — SOLO mencionala si hay productos o servicios en el catálogo que tengan sentido para regalar o celebrar esta ocasión (flores, dulces, ropa, spa, etc.). Si el negocio es un consultorio médico, dentista, ferretería, o cualquier rubro donde la ocasión no aplica, NO la menciones.` : ''}`;
 
-  return `${deliveryBlock}\n${appointmentsBlock}\n${closuresBlock}\n${customerBlock}\n${dateBlock}`.trim();
+  // ── Business hours / out-of-hours ──────────────────────────────────────────
+  let hoursBlock = '';
+  const openStatus = getOpenStatus(businessHours);
+  if (openStatus && !openStatus.open) {
+    const nextStr = openStatus.nextOpen ? ` Próxima apertura: ${openStatus.nextOpen}.` : '';
+    hoursBlock = `\n⚠️ FUERA DE HORARIO: el local está cerrado ahora.${nextStr} Podés recibir pedidos y reservas, pero avisá al cliente que serán confirmados en horario laboral.`;
+  }
+
+  // ── First message ───────────────────────────────────────────────────────────
+  const firstMsgBlock = isFirstMessage
+    ? `\nPRIMER MENSAJE DEL CLIENTE: es la primera vez que escribe. Presentate brevemente (tu nombre y el nombre del local) y preguntá en qué podés ayudar. Sé cálida pero muy concisa — máximo 2 líneas.`
+    : '';
+
+  return `${deliveryBlock}\n${appointmentsBlock}\n${closuresBlock}\n${hoursBlock}\n${firstMsgBlock}\n${customerBlock}\n${dateBlock}`.trim();
 }
 
 async function chat({ tenant, stock, services, history, userMessage, convState, imageData, appointmentSlots, customerContext, closures, offers }) {

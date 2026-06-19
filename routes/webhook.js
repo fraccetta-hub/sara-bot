@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { createClient } = require('@supabase/supabase-js');
-const { getTenantConfig, getStock, decrementStock, getServices, getOffers, getBusinessClosures, invalidateStock, invalidateServices, invalidateClosures, invalidateOffers } = require('../services/stock');
+const { getTenantConfig, getStock, decrementStock, getServices, getOffers, getBusinessClosures, getBusinessHours, invalidateStock, invalidateServices, invalidateClosures, invalidateOffers, invalidateBusinessHours } = require('../services/stock');
 const { sendMessage, sendImage, notifyMerchant } = require('../services/whatsapp');
 const { chat } = require('../services/claude');
 const { downloadAndStore, uploadImageBuffer } = require('../services/storage');
@@ -272,11 +272,23 @@ const MT = {
   no_takeover:      { es:()=>`⚠️ No hay ningún chat en modo takeover activo.`, it:()=>`⚠️ Nessuna chat in modalità takeover.`, en:()=>`⚠️ No active takeover chat.`, fr:()=>`⚠️ Aucun chat en prise en charge.`, de:()=>`⚠️ Kein aktiver Takeover-Chat.`, pt:()=>`⚠️ Nenhum chat em takeover.` },
   catalog_empty:    { es:()=>`📦 No tenés productos cargados todavía.`, it:()=>`📦 Nessun prodotto nel catalogo.`, en:()=>`📦 No products loaded yet.`, fr:()=>`📦 Aucun produit chargé.`, de:()=>`📦 Noch keine Produkte geladen.`, pt:()=>`📦 Nenhum produto carregado ainda.` },
   unknown:          { es:()=>`No entendí. Podés pedirme:\n• ver catálogo\n• actualizar/agregar/quitar stock\n• cambiar precio\n• marcar agotado o disponible\n• agregar producto\n• confirmar/cancelar pedido\n• tomar/terminar chat`, it:()=>`Non ho capito. Puoi chiedermi:\n• vedere il catalogo\n• aggiornare/aggiungere/togliere stock\n• cambiare prezzo\n• segnare esaurito o disponibile\n• aggiungere prodotto\n• confermare/annullare ordine\n• prendere/terminare chat`, en:()=>`Didn't understand. You can ask:\n• view catalog\n• update/add/remove stock\n• change price\n• mark unavailable or available\n• add product\n• confirm/cancel order\n• take/end chat`, fr:()=>`Pas compris. Vous pouvez demander:\n• voir le catalogue\n• mettre à jour/ajouter/retirer du stock\n• changer le prix\n• marquer épuisé ou disponible\n• ajouter un produit\n• confirmer/annuler commande\n• prendre/terminer chat`, de:()=>`Nicht verstanden. Sie können:\n• Katalog anzeigen\n• Bestand aktualisieren/hinzufügen/entfernen\n• Preis ändern\n• Als ausverkauft/verfügbar markieren\n• Produkt hinzufügen\n• Bestellung bestätigen/stornieren\n• Chat übernehmen/beenden`, pt:()=>`Não entendi. Pode pedir:\n• ver catálogo\n• atualizar/adicionar/remover estoque\n• mudar preço\n• marcar esgotado ou disponível\n• adicionar produto\n• confirmar/cancelar pedido\n• assumir/terminar chat` },
+  // Customer-facing order status push notifications (sent to buyer's phone)
+  cust_status_preparing: { es:id=>`🍳 ¡Tu pedido *#${id}* está siendo preparado! Te avisamos cuando esté en camino.`, it:id=>`🍳 Il tuo ordine *#${id}* è in preparazione! Ti avvisiamo quando parte.`, en:id=>`🍳 Your order *#${id}* is being prepared! We'll let you know when it's on its way.`, fr:id=>`🍳 Votre commande *#${id}* est en cours de préparation! Nous vous préviendrons quand elle sera en route.`, de:id=>`🍳 Deine Bestellung *#${id}* wird vorbereitet! Wir benachrichtigen dich wenn sie unterwegs ist.`, pt:id=>`🍳 Seu pedido *#${id}* está sendo preparado! Avisaremos quando sair.` },
+  cust_status_delivering: { es:id=>`🚚 ¡Tu pedido *#${id}* está en camino! En breve llegará a tu dirección.`, it:id=>`🚚 Il tuo ordine *#${id}* è in consegna! Arriverà presto.`, en:id=>`🚚 Your order *#${id}* is on its way! It'll arrive at your address shortly.`, fr:id=>`🚚 Votre commande *#${id}* est en route! Elle arrivera bientôt.`, de:id=>`🚚 Deine Bestellung *#${id}* ist unterwegs! Sie kommt bald an.`, pt:id=>`🚚 Seu pedido *#${id}* saiu para entrega! Chegará em breve.` },
+  cust_status_delivered:  { es:id=>`✅ ¡Tu pedido *#${id}* fue entregado! Gracias por tu compra 🙏`, it:id=>`✅ Il tuo ordine *#${id}* è stato consegnato! Grazie per il tuo acquisto 🙏`, en:id=>`✅ Your order *#${id}* has been delivered! Thank you for your purchase 🙏`, fr:id=>`✅ Votre commande *#${id}* a été livrée! Merci pour votre achat 🙏`, de:id=>`✅ Deine Bestellung *#${id}* wurde geliefert! Danke für deinen Einkauf 🙏`, pt:id=>`✅ Seu pedido *#${id}* foi entregue! Obrigado pela sua compra 🙏` },
 };
 
 function mt(lang, key, ...args) {
   const l = MT[key]?.[lang] ? lang : 'es';
   return MT[key][l](...args);
+}
+
+async function notifyCustomerOrderStatus(order, status, phoneNumberId, token) {
+  const custNotifyKey = `cust_status_${status}`;
+  if (!MT[custNotifyKey] || !order.customer_phone) return;
+  const shortId = order.id.substring(0, 8).toUpperCase();
+  const msg = MT[custNotifyKey].es(shortId);
+  await sendMessage(order.customer_phone, msg, phoneNumberId, token).catch(() => {});
 }
 
 async function parseMerchantIntent(messageText, products, services) {
@@ -556,6 +568,7 @@ async function handleMerchantMessage(tenant, messageText, phoneNumberId, token) 
           } else if (pending.action === 'update_order_status') {
             await supabase.from('orders').update({ status: pending.params.status }).eq('id', chosen.id);
             await sendMessage(tenant.merchant_phone, mt(pending.lang, 'order_status_upd', chosen.id.substring(0,8).toUpperCase(), pending.params.status), phoneNumberId, token);
+            await notifyCustomerOrderStatus(chosen, pending.params.status, phoneNumberId, token);
           } else if (pending.action === 'confirm_order') {
             await confirmOrder(tenant, chosen, phoneNumberId, token);
           } else if (pending.action === 'cancel_order') {
@@ -723,6 +736,7 @@ async function handleMerchantMessage(tenant, messageText, phoneNumberId, token) 
     if (orders.length === 1) {
       await supabase.from('orders').update({ status }).eq('id', orders[0].id);
       await sendMessage(tenant.merchant_phone, mt(lang, 'order_status_upd', orders[0].id.substring(0,8).toUpperCase(), status), phoneNumberId, token);
+      await notifyCustomerOrderStatus(orders[0], status, phoneNumberId, token);
       return;
     }
     const list = orders.map((o,i) => `${i+1}. *#${o.id.substring(0,8).toUpperCase()}* +${o.customer_phone} (${o.status})`).join('\n');
@@ -1248,11 +1262,12 @@ async function handleCustomerMessage(tenant, customerPhone, messageText, locatio
       return { role: msg.role, content: typeof content === 'string' ? content : String(content) };
     });
   // ── Customer context: active order + past orders ────────────────────────────
-  const [stock, services, closures, offers, activeOrderRes, pastOrdersRes] = await Promise.all([
+  const [stock, services, closures, offers, businessHours, activeOrderRes, pastOrdersRes] = await Promise.all([
     getStock(tenant.id),
     getServices(tenant.id),
     getBusinessClosures(tenant.id),
     getOffers(tenant.id),
+    getBusinessHours(tenant.id),
     supabase.from('orders')
       .select('id,status,items_json,total_guarani,created_at')
       .eq('tenant_id', tenant.id)
@@ -1381,6 +1396,7 @@ async function handleCustomerMessage(tenant, customerPhone, messageText, locatio
   }
 
   // ── Normal text message → Claude ───────────────────────────────────────────
+  const isFirstMessage = history.length === 0;
   const { reply, order, imageProductName, customerName,
           deliveryChoice, deliveryAddress, offTopic, updatedHistory,
           appointmentRequest, waitlistProduct } = await chat({
@@ -1392,6 +1408,8 @@ async function handleCustomerMessage(tenant, customerPhone, messageText, locatio
     customerContext,
     closures,
     offers,
+    businessHours,
+    isFirstMessage,
   });
 
   if (offTopic) {
