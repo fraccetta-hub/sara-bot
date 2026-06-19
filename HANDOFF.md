@@ -460,7 +460,7 @@ CREATE TABLE IF NOT EXISTS offers (
 - `notifyCustomerOrderStatus(order, status, phoneNumberId, token, tenant)`: quando `status==='delivered'` e `tenant.google_review_url` settato, manda secondo messaggio con link recensione
 - Entrambi i path (single-match + pending-candidate) passano `tenant`
 
-### Migration SQL richieste (da eseguire in Supabase)
+### Migration SQL — ✅ ESEGUITE (2026-06-19)
 ```sql
 ALTER TABLE tenants ADD COLUMN IF NOT EXISTS address TEXT;
 ALTER TABLE tenants ADD COLUMN IF NOT EXISTS google_review_url TEXT;
@@ -469,15 +469,18 @@ ALTER TABLE conversations ADD COLUMN IF NOT EXISTS customer_notes TEXT;
 
 ## PROSSIME PRIORITÀ (sessione successiva)
 1. **Stripe** — configurare env vars reali su Render + testare flow completo con account business
-2. **Costi/margini** — calcolo reale token AI + infra + limiti piano + definire piani starter/pro
-3. **Fatturazione** — capire come mandare fatture ai merchant
-4. **GDPR compliance** — audit cosa manca (DPA, retention policy, right-to-erasure flow)
-5. **Go-to-market** — pubblicità, test, vendita
+2. **Sara cron features** — reminder appuntamento 24h prima (node-cron), nudge carrello abbandonato (conversations senza ORDER nelle ultime 2h), broadcast marketing da admin panel
+3. **Costi/margini** — calcolo reale token AI + infra + limiti piano + definire piani starter/pro
+4. **Fatturazione** — capire come mandare fatture ai merchant
+5. **GDPR compliance** — audit cosa manca (DPA, retention policy, right-to-erasure flow)
+6. **Go-to-market** — pubblicità, test, vendita
 
 ## IDEE FUTURE (non ancora pianificate)
 
 ### Offerte / sconti — ✅ IMPLEMENTATO sessione 2026-06-19
 ### Chiusure aziendali — ✅ IMPLEMENTATO sessione 2026-06-19
+### Indirizzo + review request — ✅ IMPLEMENTATO sessione 2026-06-19
+### Note cliente private — ✅ IMPLEMENTATO sessione 2026-06-19
 
 ## COSA NON FUNZIONA / IN SOSPESO
 - **Env vars mancanti su Render** — da aggiungere in Render → Environment prima che il wizard funzioni:
@@ -510,7 +513,7 @@ ALTER TABLE conversations ADD COLUMN IF NOT EXISTS customer_notes TEXT;
 
 ## COME RIPRENDERE
 Primo messaggio da mandare a Claude nella prossima sessione:
-"Leggi HANDOFF.md. Sessione precedente: import/export audit completato (ZIP bulk images, prezzi decimali, valuta dinamica nel bot, export inglese). Prima cosa: migration Supabase `merchant_pending_json`. Poi: Stripe con account business reale."
+"Leggi HANDOFF.md. Sessione precedente: Sara UX completata (personality-first, closures, offers, business hours, push notifiche, cross-sell, catalogo limitato, indirizzo, note cliente, review request). Migrations tutte eseguite. Prossimo: Stripe con account business reale, poi cron features Sara."
 
 ## ERRORI NOTI / TRAPPOLE
 - NON leggere/query tabella prod `tenants` con `select('*')` o colonne sensibili senza autorizzazione esplicita utente per quella lettura specifica — bloccato da permission classifier (dati merchant: token WhatsApp, telefoni). `superadmin GET /tenants/:id` ora usa campi espliciti sicuri.
