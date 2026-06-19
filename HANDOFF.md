@@ -569,6 +569,18 @@ ALTER TABLE conversations ADD COLUMN IF NOT EXISTS last_nudge_at TIMESTAMPTZ;
 - Webhook endpoint: `https://sara-bot-tcl6.onrender.com/billing/webhook`
 - Events: `customer.subscription.created/updated/deleted`, `invoice.payment_failed`, `customer.subscription.trial_will_end`
 
+## COSA È STATO FATTO (sessione 2026-06-19 — landing page pricing UX)
+
+### Landing page pricing — aggiornata (commit 88d1856)
+- Layout: 4 colonne desktop, 2x2 tablet, 1 colonna mobile (era auto-fit 3+1)
+- Rimosso subtitle "Nessun costo per conversazione..." + descrizioni piani (troppo lunghe)
+- Feature lists accorciate e rinominate: "1 numero WhatsApp Business" → "Il tuo bot personalizzato" su tutti i piani
+- Shop: Catalogo prodotti, Gestionale ordini, Gestionale consegne, Pannello chat, Supporto incluso
+- Bookings: Catalogo servizi, Agenda 24/7, Promemoria automatici, Pannello chat, Supporto incluso
+- Restaurant: Menu, Prenotazioni tavoli 24/7, Gestione zone/mesas, Pannello chat, Supporto incluso
+- Pro: espanso a 9 feature (prodotti+servizi+agenda+promemoria+consegne+ordini+chat+supporto)
+- Tutte le modifiche in 6 lingue (ES/EN/IT/DE/FR/PT)
+
 ## PROSSIME PRIORITÀ (sessione successiva)
 1. **Stripe test** — testare flow completo iscrizione end-to-end (scegli piano → Stripe checkout → webhook → tenant attivo)
 2. **Fatturazione** — capire come mandare fatture ai merchant
