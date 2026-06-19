@@ -807,7 +807,7 @@ ALTER TABLE tenants
 
 ## COSA È STATO FATTO (sessione 2026-06-20 — fix superadmin support chat "cargando")
 
-### ✅ CAUSA REALE (commit 56e8bc5): `escHtml` non definito in superadmin/index.html
+### ✅ CAUSA REALE (commit 56e8bc5): `escHtml` non definito in superadmin/index.html — RISOLTO E CONFERMATO FUNZIONANTE
 - `loadSupportList` / `renderSupportMessages` chiamano `escHtml()` ma la funzione NON era mai definita in `public/superadmin/index.html` → ogni render lanciava ReferenceError → catch silenzioso → lista bloccata su "Cargando" da sempre.
 - Indizio diagnostico: il badge unread mostrava "5" mentre la lista era vuota → il poll del badge non usa `escHtml` (funzionava); solo la lista falliva.
 - Fix: definita `escHtml` in superadmin (identica all'admin), function declaration hoisted.
