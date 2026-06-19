@@ -916,6 +916,21 @@
     <!-- ── SUPPORT TAB ── -->
     <div id="sectionSupport" class="hidden max-w-2xl space-y-4">
 
+      <!-- Token error card — visible when token refresh failed (dismissible banner may be closed) -->
+      <div id="tokenErrorCard" class="hidden bg-orange-50 border border-orange-200 rounded-xl p-5">
+        <div class="flex items-start gap-3 mb-4">
+          <span class="text-2xl">⚠️</span>
+          <div>
+            <h3 data-i18n="wiz.token_error_title" class="font-semibold text-gray-800 text-sm"></h3>
+            <p data-i18n="wiz.token_error_desc" class="text-xs text-gray-500 mt-1 leading-relaxed"></p>
+          </div>
+        </div>
+        <button onclick="reconnectWhatsApp()"
+          class="w-full py-2.5 rounded-xl text-sm font-semibold bg-orange-500 hover:bg-orange-600 text-white transition"
+          data-i18n="wiz.token_reconnect">
+        </button>
+      </div>
+
       <!-- Resume wizard banner — only visible when WhatsApp not connected -->
       <div id="wizResumeBanner" class="hidden bg-amber-50 border border-amber-200 rounded-xl p-5">
         <div class="flex items-start gap-3 mb-4">
@@ -2540,7 +2555,10 @@ async function showDashboard() {
     document.getElementById('statProducts').textContent = stats.activeProducts + '/' + stats.totalProducts;
     applyTabVisibility(settings.products_enabled !== false, !!settings.services_enabled, !!settings.appointments_enabled, !!settings.restaurant_enabled);
     if (settings.products_enabled !== false) loadProducts();
-    if (settings.whatsapp_token_refresh_error) showTokenErrorBanner();
+    const hasTokenError = !!settings.whatsapp_token_refresh_error;
+    if (hasTokenError) showTokenErrorBanner();
+    const tokenErrorCard = document.getElementById('tokenErrorCard');
+    if (tokenErrorCard) tokenErrorCard.classList.toggle('hidden', !hasTokenError);
   } catch (e) {
     if (e.status === 401) logout();
   }
