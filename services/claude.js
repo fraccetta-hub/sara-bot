@@ -292,7 +292,7 @@ A8. Después de emitir la reserva, informá al cliente que el local confirmará 
   // ── Date and occasion awareness ─────────────────────────────────────────────
   const todayStr = new Date().toLocaleDateString('es', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
   const occasion = getNearbyOccasion(tenant.country);
-  const dateBlock = `\nFECHA ACTUAL: ${todayStr}${occasion ? `\nOCASIÓN PRÓXIMA: ${occasion} — si el cliente busca algo para regalar o celebrar, podés mencionarlo naturalmente.` : ''}`;
+  const dateBlock = `\nFECHA ACTUAL: ${todayStr}${occasion ? `\nOCASIÓN PRÓXIMA: ${occasion} — SOLO mencionala si hay productos o servicios en el catálogo que tengan sentido para regalar o celebrar esta ocasión (flores, dulces, ropa, spa, etc.). Si el negocio es un consultorio médico, dentista, ferretería, o cualquier rubro donde la ocasión no aplica, NO la menciones.` : ''}`;
 
   return `${deliveryBlock}\n${appointmentsBlock}\n${customerBlock}\n${dateBlock}`.trim();
 }
