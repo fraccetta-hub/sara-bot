@@ -43,7 +43,7 @@
 
 ### Fase 3 — tab Ristorante = config (FATTA)
 - Tab Ristorante: enable + durata mesa + zone + tavoli + **fasce di servizio** (nuovo). Niente più lista prenotazioni.
-- **Migration ✅ (da eseguire)**: `ALTER TABLE tenants ADD COLUMN IF NOT EXISTS restaurant_meal_bands JSONB NOT NULL DEFAULT '[]'::jsonb;` (Migration 12). Formato: `[{label,start,end}]`.
+- **Migration ✅ ESEGUITA (2026-06-20)**: `ALTER TABLE tenants ADD COLUMN IF NOT EXISTS restaurant_meal_bands JSONB NOT NULL DEFAULT '[]'::jsonb;` (Migration 12). Formato: `[{label,start,end}]`.
 - `public/admin/index.html`: card "Franjas de servicio" (`#mealBandsList`) — add/edit/remove franja (label + start + end), salva su `/admin/restaurant/settings`. Funzioni `renderMealBands/addMealBand/updateMealBand/removeMealBand/saveMealBands`, stato `_mealBands`.
 - `routes/admin.js`: `/settings` GET espone `restaurant_meal_bands`; `/restaurant/settings` PUT lo accetta (sanitizza: solo {label≤40, start, end} con start/end presenti).
 - `services/claude.js`: `buildRestaurantStaticBlock(zones, tables, mealBands)` — aggiunge "FRANJAS DE RESERVA" + regola "SOLO reservas dentro de estas franjas". Passato `tenant.restaurant_meal_bands` (getTenantConfig `select('*')`).
