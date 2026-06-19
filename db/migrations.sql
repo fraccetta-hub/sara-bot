@@ -34,6 +34,10 @@ CREATE TABLE IF NOT EXISTS promo_redemptions (
   UNIQUE (promo_code_id, tenant_id)
 );
 
+-- Migration 10: Restaurant menu — allergens per dish (reuses products table)
+ALTER TABLE products
+  ADD COLUMN IF NOT EXISTS allergens TEXT;   -- free text, e.g. "gluten, lácteos, frutos secos"
+
 -- ============================================================
 -- PRIMA DI TUTTO: crea il bucket per le foto su Supabase Storage
 -- Supabase Dashboard → Storage → New bucket

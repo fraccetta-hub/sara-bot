@@ -91,6 +91,15 @@ Sara include `<SHOW_IMAGE>` nella risposta; webhook intercetta e invia foto prim
 
 ---
 
+## Menu ristorante
+
+Tenant con `restaurant_enabled = true` vedono il tab Productos come **vista Menu** dedicata: piatti raggruppati per categoria (= sezione menu), colonne `Piatto | Descrizione | Allergeni | Prezzo | Stato | Azioni`. Niente stock/SKU.
+
+- I piatti vivono nella tabella `products` (riuso, no tabella dedicata). Colonna extra `allergens TEXT`. Stock ignorato (`stock_qty = null` → sempre disponibile).
+- **Import foto menu**: `POST /admin/import-from-images` usa prompt vision menu-aware se `restaurant_enabled` — estrae nome, categoria (sezione), descrizione, allergeni per piatto. Riusa pipeline Haiku + import-confirm.
+- **Invio menu al cliente**: il menu è SEMPRE generato dal catalogo live, mai una foto cartacea caricata (evita staleness). Sara emette il tag `<SEND_MENU>` quando il cliente chiede la carta; `routes/webhook.js` `buildMenuText()` costruisce il messaggio testo formattato dai products attivi e lo invia. Zero token AI (costruito nel backend), zero storage.
+- Foto del singolo piatto su richiesta → meccanismo `<SHOW_IMAGE>` + `products.image_url`.
+
 ## Billing SaaS (Stripe)
 
 `routes/billing.js` gestisce l'intero ciclo di vita abbonamento:

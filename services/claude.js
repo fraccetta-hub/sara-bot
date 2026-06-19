@@ -172,6 +172,7 @@ function buildStaticSystemPrompt(tenant, stock, services = [], offers = [], rest
         return `• ${p.name}${p.sku ? ` [SKU:${p.sku}]` : ''} [${p.category}] — ${priceStr}` +
           (p.stock_qty === null ? '' : p.stock_qty > 0 ? ` (${p.stock_qty} disponibles)` : ' (AGOTADO)') +
           (p.description ? ` — ${p.description}` : '') +
+          (p.allergens ? ` ⚠️ ${p.allergens}` : '') +
           (p.image_url ? ' [tiene foto]' : '') +
           offerNote;
       }).join('\n')
@@ -195,6 +196,10 @@ function buildStaticSystemPrompt(tenant, stock, services = [], offers = [], rest
 
   const restaurantBlock = tenant.restaurant_enabled
     ? buildRestaurantStaticBlock(restaurantZones, restaurantTables)
+    : '';
+
+  const menuRule = tenant.restaurant_enabled
+    ? `\n15. MENÚ: si el cliente pide ver el menú, la carta o "qué platos tienen" en general, NO lo escribas vos. Acompañá con una frase corta (ej: "Te paso nuestra carta 👇") y agregá al final <SEND_MENU>. El menú se arma y se envía automáticamente desde el catálogo actualizado. Solo describí o mostrá foto de un plato puntual cuando el cliente pregunte por ese plato específico.`
     : '';
 
   const addressBlock = tenant.address
@@ -260,7 +265,7 @@ REGLAS OPERATIVAS:
 11. Si el cliente pide que lo avises cuando un producto agotado vuelva a estar disponible, respondé afirmativamente y agregá: <WAITLIST:NOMBRE_EXACTO_DEL_PRODUCTO>
 12. Si el cliente envía una imagen o mensaje sin ninguna relación con los productos o servicios del local, respondé ÚNICAMENTE con: <OFF_TOPIC>
 13. CROSS-SELL (opcional): cuando el cliente eligió un producto y está por confirmar, podés sugerir naturalmente 1 producto o servicio complementario del catálogo — solo si tiene sentido real. Máximo 1 sugerencia, nunca en el primer mensaje ni de forma forzada.
-14. CATÁLOGO: nunca listes todos los productos de una vez. Si el cliente pide "qué tienen", "todo el catálogo" o "qué [categoría] tienen": mencioná 2-3 ejemplos representativos y preguntá "¿buscás algo en particular?" o similar. Si pide una categoría específica, mostrá máximo 3-4 de esa categoría y preguntá si quiere algo concreto o ver más opciones.`;
+14. CATÁLOGO: nunca listes todos los productos de una vez. Si el cliente pide "qué tienen", "todo el catálogo" o "qué [categoría] tienen": mencioná 2-3 ejemplos representativos y preguntá "¿buscás algo en particular?" o similar. Si pide una categoría específica, mostrá máximo 3-4 de esa categoría y preguntá si quiere algo concreto o ver más opciones.${menuRule}`;
 }
 
 // Per-conversation dynamic content — varies message to message (delivery state,
@@ -495,6 +500,13 @@ async function chat({ tenant, stock, services, history, userMessage, convState, 
     cleanReply = cleanReply.replace(/<SHOW_IMAGE:.+?>/, '').trim();
   }
 
+  // Extract SEND_MENU tag (restaurant: full menu sent from catalog, built in webhook)
+  let sendMenu = false;
+  if (cleanReply.includes('<SEND_MENU>')) {
+    sendMenu = true;
+    cleanReply = cleanReply.replace(/<SEND_MENU>\s*/g, '').trim();
+  }
+
   // Extract CUSTOMER_NAME tag
   let customerName = null;
   const nameMatch = cleanReply.match(/<CUSTOMER_NAME:(.+?)>/);
@@ -569,7 +581,7 @@ async function chat({ tenant, stock, services, history, userMessage, convState, 
     { role: 'assistant', content: rawReply }
   ].slice(-MAX_HISTORY);
 
-  return { reply: cleanReply, order, imageProductName, customerName, deliveryChoice, deliveryAddress, offTopic, updatedHistory, appointmentRequest, waitlistProduct, reservationRequest };
+  return { reply: cleanReply, order, imageProductName, customerName, deliveryChoice, deliveryAddress, offTopic, updatedHistory, appointmentRequest, waitlistProduct, reservationRequest, sendMenu };
 }
 
-module.exports = { chat };
+module.exports = { chat, formatPrice };

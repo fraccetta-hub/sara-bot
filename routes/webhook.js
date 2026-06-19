@@ -3,7 +3,7 @@ const router = express.Router();
 const { createClient } = require('@supabase/supabase-js');
 const { getTenantConfig, getStock, decrementStock, getServices, getOffers, getBusinessClosures, getBusinessHours, getRestaurantZones, getRestaurantTables, getUpcomingReservations, invalidateStock, invalidateServices, invalidateClosures, invalidateOffers, invalidateBusinessHours } = require('../services/stock');
 const { sendMessage, sendImage, notifyMerchant } = require('../services/whatsapp');
-const { chat } = require('../services/claude');
+const { chat, formatPrice } = require('../services/claude');
 const { downloadAndStore, uploadImageBuffer } = require('../services/storage');
 const { haversineKm, geocode, calcDeliveryFee } = require('../services/geo');
 const { check: rateCheck, blockMessage } = require('../services/ratelimit');
@@ -1420,7 +1420,7 @@ async function handleCustomerMessage(tenant, customerPhone, messageText, locatio
   const isFirstMessage = history.length === 0;
   const { reply, order, imageProductName, customerName,
           deliveryChoice, deliveryAddress, offTopic, updatedHistory,
-          appointmentRequest, waitlistProduct, reservationRequest } = await chat({
+          appointmentRequest, waitlistProduct, reservationRequest, sendMenu } = await chat({
     tenant, stock, services, history,
     userMessage: messageText,
     convState,
@@ -1672,6 +1672,36 @@ async function handleCustomerMessage(tenant, customerPhone, messageText, locatio
   }
 
   await sendMessage(customerPhone, reply, phoneNumberId, token);
+
+  // ── Send full menu (restaurant) ─────────────────────────────────────────────
+  if (sendMenu) {
+    const menuText = buildMenuText(stock, tenant);
+    if (menuText) await sendMessage(customerPhone, menuText, phoneNumberId, token);
+  }
+}
+
+// Build a formatted WhatsApp menu from the live product catalog (restaurant).
+// stock already contains only available products, ordered by category.
+function buildMenuText(stock, tenant) {
+  if (!stock || !stock.length) return null;
+  const currency = tenant.plan_currency || 'PYG';
+  const groups = new Map();
+  for (const p of stock) {
+    const cat = p.category || 'Otros';
+    if (!groups.has(cat)) groups.set(cat, []);
+    groups.get(cat).push(p);
+  }
+  const lines = [`🍽️ *${tenant.name}*\n`];
+  for (const [cat, items] of groups) {
+    lines.push(`*${cat.toUpperCase()}*`);
+    for (const p of items) {
+      lines.push(`• *${p.name}* — ${formatPrice(p.price_guarani, currency)}`);
+      if (p.description) lines.push(`  ${p.description}`);
+      if (p.allergens)   lines.push(`  ⚠️ ${p.allergens}`);
+    }
+    lines.push('');
+  }
+  return lines.join('\n').trim();
 }
 
 // ─── Takeover helpers ─────────────────────────────────────────────────────────
