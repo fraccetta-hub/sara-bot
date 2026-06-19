@@ -679,6 +679,14 @@ ALTER TABLE conversations ADD COLUMN IF NOT EXISTS last_nudge_at TIMESTAMPTZ;
 - **Settori**: etichetta tipo attività ("solo prodotti / solo servizi / cibo e bevande / prodotti+servizi") + esempi concreti (Abbigliamento · Pasticceria · Medico · Dentista · Pizzeria · Estetica con prodotti...) in tutte e 6 le lingue
 - **Modal disclaimer rimosso**: bottone "Continuar al pago" → Stripe diretto (avviso numero WhatsApp già in step 3, Facebook/carta sono prerequisiti ovvi)
 
+## COSA È STATO FATTO (sessione 2026-06-19 — fix login flash definitivo, commit 6c160b3)
+
+### Bug fix loginPage flash — FIX DEFINITIVO
+- Root cause reale: `loginPage` non aveva `hidden` nell'HTML → visibile prima che JS partisse (window.onload)
+- Fix precedente (nasconderla in window.onload prima del fetch) non bastava perché window.onload si attiva dopo il render
+- Fix definitivo: `hidden` aggiunto direttamente al div `loginPage` nell'HTML → mai visibile al browser prima di JS
+- Mostrata esplicitamente solo nei rami `else` / `catch` di window.onload se non autenticato
+
 ## PROSSIME PRIORITÀ (sessione successiva)
 1. **Fatturazione** — capire come mandare fatture ai merchant
 2. **Go-to-market** — pubblicità, test, vendita
