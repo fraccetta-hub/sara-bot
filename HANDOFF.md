@@ -712,6 +712,17 @@ ALTER TABLE conversations ADD COLUMN IF NOT EXISTS last_nudge_at TIMESTAMPTZ;
 - Resto invariato e funzionante: escalation `[ESCALATE]` → `notifySuperadmin` Telegram (rispondi col reply Telegram → arriva al merchant via role `support`); chat visibile in superadmin panel (`GET /superadmin/support`)
 - Telegram escalation confermato funzionante (env già settati e testati)
 
+## COSA È STATO FATTO (sessione 2026-06-20 — plan tab redesign, commit d75c620)
+
+### Admin plan tab — redesign (public/admin/index.html + i18n.js)
+- Rimosso pulsante "Pagar con MercadoPago" (`mpPayBtn`) + funzione JS `startMpCheckout()`
+- Rimosso pulsante "Contatta supporto per rinnovare"
+- Rimossa griglia "Planes disponibles" (Starter/Pro/Enterprise — completamente obsoleta)
+- Aggiunto link testo discreto "Vuoi cambiare piano? Contatta il supporto" → `switchTab('support')`
+- Rimossi chiavi i18n obsoleti: `plan.pay.btn/processing/error/not_configured`, `plan.status.renew`, `plan.plans.title`, `plan.plans.chat_support`
+- Aggiunta chiave `plan.change.plan` in ES/EN/IT/DE/FR/PT
+- Rimane: status abbonamento (`planStatusBox`) + codice promozionale
+
 ## PROSSIME PRIORITÀ (sessione successiva)
 1. **Fatturazione** — capire come mandare fatture ai merchant
 2. **Go-to-market** — pubblicità, test, vendita
