@@ -669,13 +669,15 @@ ALTER TABLE conversations ADD COLUMN IF NOT EXISTS last_nudge_at TIMESTAMPTZ;
 - Account LLC collegato in test mode — env var già settate su Render (STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, STRIPE_PRICE_SHOP/BOOKINGS/RESTAURANT/PRO)
 - Flow end-to-end testato e funzionante: signup → Stripe checkout → webhook → tenant attivo
 
-### Register page — redesign UX (commit dd52deb + aa99fab)
+### Register page — redesign UX (commit dd52deb + aa99fab + 9f9674e)
 - **Step 1**: 7 settori liberi → 4 settori legati ai piani con etichetta tipo (solo prodotti / solo servizi / cibo e bevande / prodotti+servizi) + esempi concreti di lavoro per ogni settore in ES/EN/IT/DE/FR/PT
 - **Auto-piano**: selezione settore → pre-seleziona piano corrispondente in step 4 + banner "consigliamo questo piano"
 - **Step 2**: rimosso campo "nome titolare" (non necessario per bot setup)
 - **Step 3**: testo warning WhatsApp ingrandito (text-sm invece di text-xs)
 - **Step 4**: badge "più popolare" spostato da Pro → Restaurant (come landing); feature list aggiornate con stesse voci della landing (5/6/7/9 feature per piano); piani in griglia 2 colonne su desktop
 - **Layout**: max-w-lg → max-w-2xl (più largo su desktop)
+- **Settori**: etichetta tipo attività ("solo prodotti / solo servizi / cibo e bevande / prodotti+servizi") + esempi concreti (Abbigliamento · Pasticceria · Medico · Dentista · Pizzeria · Estetica con prodotti...) in tutte e 6 le lingue
+- **Modal disclaimer rimosso**: bottone "Continuar al pago" → Stripe diretto (avviso numero WhatsApp già in step 3, Facebook/carta sono prerequisiti ovvi)
 
 ## PROSSIME PRIORITÀ (sessione successiva)
 1. **Fatturazione** — capire come mandare fatture ai merchant
