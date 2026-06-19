@@ -177,7 +177,7 @@ async function processIncoming(body) {
           phoneNumberId, token);
         return;
       }
-      console.log(`[webhook] Audio transcribed (${senderPhone}): "${transcription}"`);
+      console.log(`[webhook] Audio transcribed (len=${transcription.length})`);
       await handleCustomerMessage(tenant, senderPhone, transcription, null, null, waProfileName, phoneNumberId, token);
     } catch (e) {
       console.error('[webhook] Audio transcription error:', e.message);
