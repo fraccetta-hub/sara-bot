@@ -25,31 +25,65 @@ function formatPrice(amount, currency) {
 
 const MAX_HISTORY = 20;
 
-function getNearbyOccasion() {
+function nthSunday(year, month0, n) {
+  const firstDow = new Date(year, month0, 1).getDay();
+  const firstSun = firstDow === 0 ? 1 : 8 - firstDow;
+  return firstSun + (n - 1) * 7;
+}
+
+function getNearbyOccasion(country) {
   const now = new Date();
   const m = now.getMonth() + 1;
   const d = now.getDate();
   const y = now.getFullYear();
+  const c = (country || '').toUpperCase();
 
-  if (m === 2 && d >= 12 && d <= 14) return 'San Valentín (14 de febrero)';
-  if (m === 3 && d === 8) return 'Día de la Mujer (8 de marzo)';
-  if (m === 12 && d >= 22 && d <= 25) return 'Navidad';
-  if (m === 12 && d >= 29 || (m === 1 && d <= 2)) return 'Año Nuevo';
+  // Universal fixed dates (±3 days window)
+  const near = (tm, td) => m === tm && d >= td - 3 && d <= td;
+  if (near(2, 14)) return 'San Valentín (14 de febrero)';
+  if (near(3, 8))  return 'Día de la Mujer (8 de marzo)';
+  if (near(12, 25)) return 'Navidad';
+  if ((m === 12 && d >= 29) || (m === 1 && d <= 2)) return 'Año Nuevo';
 
-  // Mother's Day: 2nd Sunday of May
+  // ── Día de la Madre ─────────────────────────────────────────────────────────
+  // Fixed-date countries
+  if (['MX'].includes(c) && near(5, 10)) return 'Día de la Madre (10 de mayo)';
+  if (['PY'].includes(c) && near(5, 15)) return 'Día de la Madre (15 de mayo)';
+  // 3rd Sunday of October: Argentina
+  if (['AR'].includes(c) && m === 10) {
+    const sun = nthSunday(y, 9, 3);
+    if (d >= sun - 3 && d <= sun) return `Día de la Madre (${sun} de octubre)`;
+  }
+  // 1st Sunday of May: Spain, Portugal
+  if (['ES','PT'].includes(c) && m === 5) {
+    const sun = nthSunday(y, 4, 1);
+    if (d >= sun - 3 && d <= sun) return `Día de la Madre (${sun} de mayo)`;
+  }
+  // Last Sunday of May: France (unless Pentecost — simplification)
+  if (['FR'].includes(c) && m === 5) {
+    const sun = nthSunday(y, 4, 5) <= 31 ? nthSunday(y, 4, 5) : nthSunday(y, 4, 4);
+    if (d >= sun - 3 && d <= sun) return `Fête des Mères (${sun} mai)`;
+  }
+  // Mothering Sunday UK: 4th Sunday of Lent (roughly 3 weeks before Easter) — approximate mid-March
+  if (['GB','UK'].includes(c) && m === 3) {
+    // Approximation: 3rd Sunday of March
+    const sun = nthSunday(y, 2, 3);
+    if (d >= sun - 3 && d <= sun) return `Mother's Day (${sun} marzo)`;
+  }
+  // 2nd Sunday of May: IT, DE, US, BR, PY fallback, and default
   if (m === 5) {
-    const firstDow = new Date(y, 4, 1).getDay();
-    const firstSun = firstDow === 0 ? 1 : 8 - firstDow;
-    const secondSun = firstSun + 7;
-    if (d >= secondSun - 3 && d <= secondSun) return `Día de la Madre (${secondSun} de mayo)`;
+    const sun = nthSunday(y, 4, 2);
+    if (d >= sun - 3 && d <= sun) return `Día de la Madre (${sun} de mayo)`;
   }
 
-  // Father's Day: 3rd Sunday of June
+  // ── Día del Padre ────────────────────────────────────────────────────────────
+  // March 19 (San Giuseppe): Italy, Spain
+  if (['IT','ES'].includes(c) && near(3, 19)) return 'Festa del Papà (19 de marzo)';
+  // Ascension Thursday: Germany (≈ 39 days after Easter — too complex, use 2nd Sunday June as fallback)
+  // 3rd Sunday of June: most countries
   if (m === 6) {
-    const firstDow = new Date(y, 5, 1).getDay();
-    const firstSun = firstDow === 0 ? 1 : 8 - firstDow;
-    const thirdSun = firstSun + 14;
-    if (d >= thirdSun - 3 && d <= thirdSun) return `Día del Padre (${thirdSun} de junio)`;
+    const sun = nthSunday(y, 5, 3);
+    if (d >= sun - 3 && d <= sun) return `Día del Padre (${sun} de junio)`;
   }
 
   return null;
@@ -257,7 +291,7 @@ A8. Después de emitir la reserva, informá al cliente que el local confirmará 
 
   // ── Date and occasion awareness ─────────────────────────────────────────────
   const todayStr = new Date().toLocaleDateString('es', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-  const occasion = getNearbyOccasion();
+  const occasion = getNearbyOccasion(tenant.country);
   const dateBlock = `\nFECHA ACTUAL: ${todayStr}${occasion ? `\nOCASIÓN PRÓXIMA: ${occasion} — si el cliente busca algo para regalar o celebrar, podés mencionarlo naturalmente.` : ''}`;
 
   return `${deliveryBlock}\n${appointmentsBlock}\n${customerBlock}\n${dateBlock}`.trim();
