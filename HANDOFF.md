@@ -593,6 +593,21 @@ ALTER TABLE conversations ADD COLUMN IF NOT EXISTS last_nudge_at TIMESTAMPTZ;
 - `/legal/dpa` route aggiunta in index.js (era mancante — file servito solo come /legal/dpa.html)
 - PII scrub: `senderPhone` rimosso dal log audio transcription in webhook.js
 
+## COSA È STATO FATTO (sessione 2026-06-19 — legal doc visibility, commit caa8af9)
+
+### Visibilità documenti legali — COMPLETATO
+- `landingpage/index.html`: footer URL fix `.html` → clean (`/legal/terms`, `/legal/privacy`, `/legal/disclaimer`)
+- `public/admin/index.html`: DPA link aggiunto in login footer + sezione Settings → Legal
+- `public/admin/i18n.js`: chiave `settings.legal.dpa` in ES/EN/IT/DE/FR/PT
+
+**Mappa finale visibilità:**
+| Doc | Landing | Register step 4 | Admin login | Admin settings |
+|-----|---------|-----------------|-------------|----------------|
+| Terms | ✅ | ✅ | ✅ | ✅ |
+| Privacy | ✅ | ✅ | ✅ | ✅ |
+| Disclaimer | ✅ | — | ✅ | ✅ |
+| DPA | — (B2B) | ✅ | ✅ | ✅ |
+
 ## PROSSIME PRIORITÀ (sessione successiva)
 1. **Stripe test** — testare flow completo iscrizione end-to-end (scegli piano → Stripe checkout → webhook → tenant attivo)
 2. **Fatturazione** — capire come mandare fatture ai merchant
