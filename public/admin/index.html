@@ -1021,56 +1021,203 @@
     </div>
 
     <!-- ── SETTINGS TAB ── -->
-    <div id="sectionSettings" class="hidden max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-5 items-start">
+    <div id="sectionSettings" class="hidden max-w-4xl space-y-5">
       <h2 data-i18n="settings.title" class="text-lg font-semibold text-gray-800">Ajustes</h2>
 
-      <!-- Language selector -->
-      <div class="bg-white rounded-xl shadow-sm p-6">
-        <h3 data-i18n="settings.language.title" class="font-medium text-gray-800 mb-1">🌐 Idioma del panel</h3>
-        <p data-i18n="settings.language.desc" class="text-xs text-gray-400 mb-4">Elegí el idioma de la interfaz de administración.</p>
-        <div class="flex gap-2 flex-wrap">
-          <button id="lang_es" onclick="setLang('es')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border-2 transition">ES</button>
-          <button id="lang_en" onclick="setLang('en')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border-2 transition">EN</button>
-          <button id="lang_de" onclick="setLang('de')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border-2 transition">DE</button>
-          <button id="lang_it" onclick="setLang('it')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border-2 transition">IT</button>
-          <button id="lang_fr" onclick="setLang('fr')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border-2 transition">FR</button>
-          <button id="lang_pt" onclick="setLang('pt')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border-2 transition">PT</button>
-        </div>
-      </div>
+      <!-- Two explicit columns — no gaps from col-span mixing -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5 items-start">
 
-      <!-- Account: email + username -->
-      <div class="bg-white rounded-xl shadow-sm p-6">
-        <h3 data-i18n="settings.account.title" class="font-medium text-gray-800 mb-1">👤 Cuenta</h3>
-        <p data-i18n="settings.account.desc" class="text-xs text-gray-400 mb-4">Cambiá tu email y el nombre de usuario que usás para iniciar sesión.</p>
+        <!-- LEFT: small/account cards -->
+        <div class="space-y-5">
 
-        <div id="accountMsg" class="hidden rounded-lg px-4 py-2 text-sm mb-3"></div>
+          <div class="bg-white rounded-xl shadow-sm p-6">
+            <h3 data-i18n="settings.language.title" class="font-medium text-gray-800 mb-1">🌐 Idioma del panel</h3>
+            <p data-i18n="settings.language.desc" class="text-xs text-gray-400 mb-4">Elegí el idioma de la interfaz de administración.</p>
+            <div class="flex gap-2 flex-wrap">
+              <button id="lang_es" onclick="setLang('es')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border-2 transition">ES</button>
+              <button id="lang_en" onclick="setLang('en')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border-2 transition">EN</button>
+              <button id="lang_de" onclick="setLang('de')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border-2 transition">DE</button>
+              <button id="lang_it" onclick="setLang('it')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border-2 transition">IT</button>
+              <button id="lang_fr" onclick="setLang('fr')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border-2 transition">FR</button>
+              <button id="lang_pt" onclick="setLang('pt')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border-2 transition">PT</button>
+            </div>
+          </div>
 
-        <!-- Email -->
-        <label data-i18n="settings.account.email" class="block text-xs font-medium text-gray-500 mb-1">Email</label>
-        <div class="flex gap-2 mb-4">
-          <input id="aEmail" type="email" class="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
-          <button onclick="changeEmail()" data-i18n="settings.account.saveEmail"
-            class="btn-green px-4 py-2 rounded-lg text-sm font-semibold shrink-0">Guardar</button>
-        </div>
+          <div class="bg-white rounded-xl shadow-sm p-6">
+            <h3 data-i18n="settings.account.title" class="font-medium text-gray-800 mb-1">👤 Cuenta</h3>
+            <p data-i18n="settings.account.desc" class="text-xs text-gray-400 mb-4">Cambiá tu email y el nombre de usuario que usás para iniciar sesión.</p>
+            <div id="accountMsg" class="hidden rounded-lg px-4 py-2 text-sm mb-3"></div>
+            <label data-i18n="settings.account.email" class="block text-xs font-medium text-gray-500 mb-1">Email</label>
+            <div class="flex gap-2 mb-4">
+              <input id="aEmail" type="email" class="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
+              <button onclick="changeEmail()" data-i18n="settings.account.saveEmail"
+                class="btn-green px-4 py-2 rounded-lg text-sm font-semibold shrink-0">Guardar</button>
+            </div>
+            <label data-i18n="settings.account.username" class="block text-xs font-medium text-gray-500 mb-1">Usuario (login)</label>
+            <p data-i18n="settings.account.usernameHint" class="text-xs text-gray-400 mb-2">Solo letras minúsculas, números, puntos y guiones. Se usa para iniciar sesión.</p>
+            <div class="flex gap-2">
+              <input id="aUsername" type="text" class="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono"/>
+              <button onclick="changeUsername()" data-i18n="settings.account.saveUsername"
+                class="btn-green px-4 py-2 rounded-lg text-sm font-semibold shrink-0">Guardar</button>
+            </div>
+          </div>
 
-        <!-- Username -->
-        <label data-i18n="settings.account.username" class="block text-xs font-medium text-gray-500 mb-1">Usuario (login)</label>
-        <p data-i18n="settings.account.usernameHint" class="text-xs text-gray-400 mb-2">Solo letras minúsculas, números, puntos y guiones. Se usa para iniciar sesión.</p>
-        <div class="flex gap-2">
-          <input id="aUsername" type="text" class="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono"/>
-          <button onclick="changeUsername()" data-i18n="settings.account.saveUsername"
-            class="btn-green px-4 py-2 rounded-lg text-sm font-semibold shrink-0">Guardar</button>
-        </div>
-      </div>
+          <div class="bg-white rounded-xl shadow-sm p-6">
+            <h3 data-i18n="settings.phone.title" class="font-medium text-gray-800 mb-1">📲 Tu número de WhatsApp</h3>
+            <p data-i18n="settings.phone.desc" class="text-xs text-gray-400 mb-3">Sara te avisa aquí cuando llega un pedido nuevo. Formato internacional sin + ni espacios (ej: 595981123456).</p>
+            <div id="merchantPhoneMsg" class="hidden rounded-lg px-4 py-2 text-sm mb-3"></div>
+            <input id="sMerchantPhone" type="tel" placeholder="595981123456"
+              class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-3"/>
+            <button onclick="saveMerchantPhone()" data-i18n="settings.phone.save"
+              class="btn-green w-full py-2 rounded-lg text-sm font-semibold">Guardar número</button>
+          </div>
 
-      <!-- Business hours + closures merged -->
-      <div class="bg-white rounded-xl shadow-sm p-6 md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="bg-white rounded-xl shadow-sm p-6">
+            <h3 data-i18n="settings.bizinfo.title" class="font-medium text-gray-800 mb-1">📍 Información del negocio</h3>
+            <p data-i18n="settings.bizinfo.desc" class="text-xs text-gray-400 mb-3">Sara usa estos datos para responder preguntas sobre dónde encontrarte y pedir reseñas.</p>
+            <div id="businessInfoMsg" class="hidden rounded-lg px-4 py-2 text-sm mb-3"></div>
+            <label class="block text-xs font-medium text-gray-600 mb-1" data-i18n="settings.bizinfo.address">Dirección del local</label>
+            <input id="sAddress" type="text" data-i18n-ph="settings.bizinfo.address_ph"
+              placeholder="Av. España 1234, Asunción"
+              class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-3"/>
+            <label class="block text-xs font-medium text-gray-600 mb-1" data-i18n="settings.bizinfo.review_url">Link Google Reviews</label>
+            <input id="sGoogleReviewUrl" type="url" data-i18n-ph="settings.bizinfo.review_url_ph"
+              placeholder="https://g.page/r/..."
+              class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-3"/>
+            <p class="text-xs text-gray-400 mb-3" data-i18n="settings.bizinfo.review_hint">Sara pide una reseña automáticamente después de cada entrega.</p>
+            <button onclick="saveBusinessInfo()" data-i18n="settings.bizinfo.save"
+              class="btn-green w-full py-2 rounded-lg text-sm font-semibold">Guardar info</button>
+          </div>
+
+          <div class="bg-white rounded-xl shadow-sm p-6">
+            <h3 data-i18n="settings.password.title" class="font-medium text-gray-800 mb-3">🔒 Cambiar contraseña</h3>
+            <div id="pwdMsg" class="hidden rounded-lg px-4 py-2 text-sm mb-3"></div>
+            <input id="newPwd" type="password" data-i18n-ph="settings.password.placeholder" placeholder="Nueva contraseña (mín. 6 caracteres)"
+              class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-3"/>
+            <button onclick="changePassword()" data-i18n="settings.password.save"
+              class="btn-green w-full py-2 rounded-lg text-sm font-semibold">Guardar contraseña</button>
+          </div>
+
+          <div class="bg-white rounded-xl shadow-sm p-6">
+            <h3 data-i18n="settings.legal.title" class="font-medium text-gray-800 mb-3">📄 Legal</h3>
+            <div class="space-y-2">
+              <a href="/legal/terms" target="_blank"
+                class="flex items-center justify-between px-4 py-3 rounded-lg border border-gray-100 hover:bg-gray-50 transition">
+                <span class="text-sm text-gray-700" data-i18n="settings.legal.terms">📋 Términos de Servicio</span>
+                <span class="text-gray-400 text-xs">↗</span>
+              </a>
+              <a href="/legal/privacy" target="_blank"
+                class="flex items-center justify-between px-4 py-3 rounded-lg border border-gray-100 hover:bg-gray-50 transition">
+                <span class="text-sm text-gray-700" data-i18n="settings.legal.privacy">🔒 Política de Privacidad</span>
+                <span class="text-gray-400 text-xs">↗</span>
+              </a>
+              <a href="/legal/disclaimer" target="_blank"
+                class="flex items-center justify-between px-4 py-3 rounded-lg border border-gray-100 hover:bg-gray-50 transition">
+                <span class="text-sm text-gray-700" data-i18n="settings.legal.disclaimer">⚠️ Disclaimer</span>
+                <span class="text-gray-400 text-xs">↗</span>
+              </a>
+              <a href="/legal/dpa" target="_blank"
+                class="flex items-center justify-between px-4 py-3 rounded-lg border border-gray-100 hover:bg-gray-50 transition">
+                <span class="text-sm text-gray-700" data-i18n="settings.legal.dpa">📝 Acuerdo de Tratamiento de Datos (DPA)</span>
+                <span class="text-gray-400 text-xs">↗</span>
+              </a>
+            </div>
+            <p class="text-xs text-gray-400 mt-3" data-i18n="settings.legal.note">Al usar este servicio aceptás los términos y condiciones.</p>
+          </div>
+
+        </div><!-- /LEFT -->
+
+        <!-- RIGHT: content-heavy cards -->
+        <div class="space-y-5">
+
+          <div class="bg-white rounded-xl shadow-sm p-6">
+            <h3 data-i18n="settings.bot.title" class="font-medium text-gray-800 mb-1">🤖 Personalidad de tu asistente</h3>
+            <p data-i18n="settings.bot.desc" class="text-xs text-gray-400 mb-4">Esto define cómo habla Sara con tus clientes.</p>
+            <div id="settingsMsg" class="hidden rounded-lg px-4 py-2 text-sm mb-4"></div>
+            <label data-i18n="settings.bot.name" class="block text-sm font-medium text-gray-700 mb-1">Nombre del bot</label>
+            <input id="sBotName" type="text" placeholder="Sara"
+              class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-4"/>
+            <label data-i18n="settings.bot.style" class="block text-sm font-medium text-gray-700 mb-2">Estilo de personalidad</label>
+            <div class="grid grid-cols-1 gap-2 mb-3" id="presetGrid"></div>
+            <div id="customPersonalityWrap" class="hidden">
+              <label data-i18n="settings.bot.customLabel" class="block text-sm font-medium text-gray-700 mb-1">Descripción personalizada</label>
+              <textarea id="sPersonalityCustom" rows="3"
+                placeholder="Ej: Sos Luna, una chica apasionada por las flores que habla de forma poética..."
+                class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm resize-none"
+                oninput="onCustomPersonalityInput()"></textarea>
+              <p data-i18n="settings.bot.customHint" class="text-xs text-gray-400 mt-1">Describí la personalidad en detalle — cuanto más específico, mejor.</p>
+            </div>
+            <button onclick="saveSettings()" data-i18n="settings.bot.save"
+              class="btn-green w-full py-2 rounded-lg text-sm font-semibold mt-4">Guardar personalidad</button>
+          </div>
+
+          <div class="bg-white rounded-xl shadow-sm p-6">
+            <h3 class="font-medium text-gray-800 mb-1">👤 Perfil de WhatsApp del bot</h3>
+            <p class="text-xs text-gray-400 mb-4">Foto de perfil y descripción que ven tus clientes al chatear. Se actualiza directamente en WhatsApp.</p>
+            <div id="wpProfileMsg" class="hidden rounded-lg px-4 py-2 text-sm mb-4"></div>
+            <div class="flex items-center gap-4 mb-4">
+              <div class="relative w-20 h-20 flex-shrink-0">
+                <div id="wpAvatarPreview"
+                  class="w-20 h-20 rounded-full bg-gray-100 border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden cursor-pointer hover:border-purple-400 transition"
+                  onclick="document.getElementById('wpPhotoInput').click()">
+                  <span id="wpAvatarIcon" class="text-3xl text-gray-300">📷</span>
+                  <img id="wpAvatarImg" class="hidden w-full h-full object-cover" src=""/>
+                </div>
+                <button id="wpRemoveBtn" onclick="removeWpPhoto()" class="hidden absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center shadow">×</button>
+              </div>
+              <div class="flex-1">
+                <p class="text-sm font-medium text-gray-700 mb-1">Foto de perfil</p>
+                <p class="text-xs text-gray-400 mb-2">JPG o PNG, mínimo 192×192 px. Recomendado: cuadrada.</p>
+                <button onclick="document.getElementById('wpPhotoInput').click()" class="text-xs text-purple-600 hover:underline font-medium">Elegir foto</button>
+                <input type="file" id="wpPhotoInput" accept="image/jpeg,image/png" class="hidden" onchange="previewWpPhoto(this)"/>
+              </div>
+            </div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Descripción (About)</label>
+            <textarea id="sWpAbout" rows="2" maxlength="139"
+              placeholder="Ej: 🍕 Pizzería Don Carlos | Pedidos por WhatsApp 🕐 12:00–23:00"
+              class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm resize-none mb-1"
+              oninput="document.getElementById('wpAboutCount').textContent=this.value.length"></textarea>
+            <p class="text-xs text-gray-400 text-right mb-4"><span id="wpAboutCount">0</span>/139</p>
+            <button onclick="saveWpProfile()" class="btn-green w-full py-2 rounded-lg text-sm font-semibold">
+              Actualizar perfil en WhatsApp
+            </button>
+          </div>
+
+          <div class="bg-white rounded-xl shadow-sm p-6">
+            <h3 data-i18n="settings.payment.title" class="font-medium text-gray-800 mb-1">💳 Instrucciones de pago</h3>
+            <p data-i18n="settings.payment.desc" class="text-xs text-gray-400 mb-3">Sara las envía automáticamente después de cada pedido confirmado.</p>
+            <div id="paymentMsg" class="hidden rounded-lg px-4 py-2 text-sm mb-3"></div>
+            <textarea id="sPayment" rows="4" data-i18n-ph="settings.payment.placeholder"
+              placeholder="Ej: Pagá por Billetera Personal al 0981-000-001 o transferencia BNF 000-123456. Envianos el comprobante 🧾"
+              class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm resize-none mb-3"></textarea>
+            <button onclick="savePayment()" data-i18n="settings.payment.save"
+              class="btn-green w-full py-2 rounded-lg text-sm font-semibold">Guardar instrucciones de pago</button>
+          </div>
+
+          <div class="bg-white rounded-xl shadow-sm p-6">
+            <h3 data-i18n="settings.rules.title" class="font-medium text-gray-800 mb-1">📋 Reglas del negocio</h3>
+            <p class="text-xs text-gray-400 mb-3">
+              <span data-i18n="settings.rules.desc">Escribí en lenguaje natural cualquier regla, restricción o información especial de tu negocio. Sara las seguirá siempre.</span><br>
+              <span data-i18n="settings.rules.example" class="italic">Ej: "Las tortas personalizadas requieren 3 días de anticipación."</span>
+            </p>
+            <div id="customInstrMsg" class="hidden rounded-lg px-4 py-2 text-sm mb-3"></div>
+            <textarea id="sCustomInstructions" rows="6" data-i18n-ph="settings.rules.placeholder"
+              placeholder="- Las composiciones personalizadas requieren 48 hs de anticipación."
+              class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm resize-none mb-3"></textarea>
+            <button onclick="saveCustomInstructions()" data-i18n="settings.rules.save"
+              class="btn-green w-full py-2 rounded-lg text-sm font-semibold">Guardar reglas</button>
+          </div>
+
+        </div><!-- /RIGHT -->
+
+      </div><!-- /two-col -->
+
+      <!-- Business hours + closures — full width -->
+      <div class="bg-white rounded-xl shadow-sm p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <h3 class="font-medium text-gray-800 mb-1">🕐 Horarios del local</h3>
           <p class="text-xs text-gray-400 mb-4">Definí los días y horarios de atención. Los turnos solo se pueden reservar en estos horarios.</p>
-          <div id="businessHoursForm" class="space-y-2">
-            <!-- rendered by JS -->
-          </div>
+          <div id="businessHoursForm" class="space-y-2"></div>
           <div id="bhMsg" class="hidden rounded-lg px-4 py-2 text-sm mt-3"></div>
           <button onclick="saveBusinessHours()" class="btn-green w-full py-2 rounded-lg text-sm font-semibold mt-4">Guardar horarios</button>
         </div>
@@ -1088,8 +1235,8 @@
         </div>
       </div>
 
-      <!-- Offers -->
-      <div class="bg-white rounded-xl shadow-sm p-6 md:col-span-2">
+      <!-- Offers — full width -->
+      <div class="bg-white rounded-xl shadow-sm p-6">
         <h3 data-i18n="settings.offers.title" class="font-medium text-gray-800 mb-1">🏷️ Ofertas y Descuentos</h3>
         <p data-i18n="settings.offers.desc" class="text-xs text-gray-400 mb-4">Sara menciona los precios con descuento automáticamente en la conversación.</p>
         <div id="offersList" class="space-y-2 mb-4"></div>
@@ -1122,153 +1269,33 @@
         <div id="offerMsg" class="hidden rounded-lg px-4 py-2 text-sm mt-3"></div>
       </div>
 
-      <!-- Bot personality -->
-      <div class="bg-white rounded-xl shadow-sm p-6 md:col-span-2">
-        <h3 data-i18n="settings.bot.title" class="font-medium text-gray-800 mb-1">🤖 Personalidad de tu asistente</h3>
-        <p data-i18n="settings.bot.desc" class="text-xs text-gray-400 mb-4">Esto define cómo habla Sara con tus clientes.</p>
-        <div id="settingsMsg" class="hidden rounded-lg px-4 py-2 text-sm mb-4"></div>
-
-        <label data-i18n="settings.bot.name" class="block text-sm font-medium text-gray-700 mb-1">Nombre del bot</label>
-        <input id="sBotName" type="text" placeholder="Sara"
-          class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-4"/>
-
-        <label data-i18n="settings.bot.style" class="block text-sm font-medium text-gray-700 mb-2">Estilo de personalidad</label>
-        <div class="grid grid-cols-1 gap-2 mb-3" id="presetGrid"></div>
-
-        <div id="customPersonalityWrap" class="hidden">
-          <label data-i18n="settings.bot.customLabel" class="block text-sm font-medium text-gray-700 mb-1">Descripción personalizada</label>
-          <textarea id="sPersonalityCustom" rows="3"
-            placeholder="Ej: Sos Luna, una chica apasionada por las flores que habla de forma poética..."
-            class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm resize-none"
-            oninput="onCustomPersonalityInput()"></textarea>
-          <p data-i18n="settings.bot.customHint" class="text-xs text-gray-400 mt-1">Describí la personalidad en detalle — cuanto más específico, mejor.</p>
-        </div>
-
-        <button onclick="saveSettings()" data-i18n="settings.bot.save"
-          class="btn-green w-full py-2 rounded-lg text-sm font-semibold mt-4">
-          Guardar personalidad
-        </button>
-      </div>
-
-      <!-- WhatsApp Profile -->
-      <div class="bg-white rounded-xl shadow-sm p-6 md:col-span-2">
-        <h3 class="font-medium text-gray-800 mb-1">👤 Perfil de WhatsApp del bot</h3>
-        <p class="text-xs text-gray-400 mb-4">Foto de perfil y descripción que ven tus clientes al chatear. Se actualiza directamente en WhatsApp.</p>
-        <div id="wpProfileMsg" class="hidden rounded-lg px-4 py-2 text-sm mb-4"></div>
-
-        <!-- Photo upload -->
-        <div class="flex items-center gap-4 mb-4">
-          <div class="relative w-20 h-20 flex-shrink-0">
-            <div id="wpAvatarPreview"
-              class="w-20 h-20 rounded-full bg-gray-100 border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden cursor-pointer hover:border-purple-400 transition"
-              onclick="document.getElementById('wpPhotoInput').click()">
-              <span id="wpAvatarIcon" class="text-3xl text-gray-300">📷</span>
-              <img id="wpAvatarImg" class="hidden w-full h-full object-cover" src=""/>
-            </div>
-            <button id="wpRemoveBtn" onclick="removeWpPhoto()" class="hidden absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center shadow">×</button>
-          </div>
-          <div class="flex-1">
-            <p class="text-sm font-medium text-gray-700 mb-1">Foto de perfil</p>
-            <p class="text-xs text-gray-400 mb-2">JPG o PNG, mínimo 192×192 px. Recomendado: cuadrada.</p>
-            <button onclick="document.getElementById('wpPhotoInput').click()" class="text-xs text-purple-600 hover:underline font-medium">Elegir foto</button>
-            <input type="file" id="wpPhotoInput" accept="image/jpeg,image/png" class="hidden" onchange="previewWpPhoto(this)"/>
-          </div>
-        </div>
-
-        <!-- About text -->
-        <label class="block text-sm font-medium text-gray-700 mb-1">Descripción (About)</label>
-        <textarea id="sWpAbout" rows="2" maxlength="139"
-          placeholder="Ej: 🍕 Pizzería Don Carlos | Pedidos por WhatsApp 🕐 12:00–23:00"
-          class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm resize-none mb-1"
-          oninput="document.getElementById('wpAboutCount').textContent=this.value.length"></textarea>
-        <p class="text-xs text-gray-400 text-right mb-4"><span id="wpAboutCount">0</span>/139</p>
-
-        <button onclick="saveWpProfile()" class="btn-green w-full py-2 rounded-lg text-sm font-semibold">
-          Actualizar perfil en WhatsApp
-        </button>
-      </div>
-
-      <!-- Merchant phone -->
-      <div class="bg-white rounded-xl shadow-sm p-6">
-        <h3 data-i18n="settings.phone.title" class="font-medium text-gray-800 mb-1">📲 Tu número de WhatsApp</h3>
-        <p data-i18n="settings.phone.desc" class="text-xs text-gray-400 mb-3">Sara te avisa aquí cuando llega un pedido nuevo. Formato internacional sin + ni espacios (ej: 595981123456).</p>
-        <div id="merchantPhoneMsg" class="hidden rounded-lg px-4 py-2 text-sm mb-3"></div>
-        <input id="sMerchantPhone" type="tel" placeholder="595981123456"
-          class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-3"/>
-        <button onclick="saveMerchantPhone()" data-i18n="settings.phone.save"
-          class="btn-green w-full py-2 rounded-lg text-sm font-semibold">
-          Guardar número
-        </button>
-      </div>
-
-      <!-- Payment instructions -->
-      <div class="bg-white rounded-xl shadow-sm p-6">
-        <h3 data-i18n="settings.payment.title" class="font-medium text-gray-800 mb-1">💳 Instrucciones de pago</h3>
-        <p data-i18n="settings.payment.desc" class="text-xs text-gray-400 mb-3">Sara las envía automáticamente después de cada pedido confirmado.</p>
-        <div id="paymentMsg" class="hidden rounded-lg px-4 py-2 text-sm mb-3"></div>
-        <textarea id="sPayment" rows="3" data-i18n-ph="settings.payment.placeholder"
-          placeholder="Ej: Pagá por Billetera Personal al 0981-000-001 o transferencia BNF 000-123456. Envianos el comprobante 🧾"
-          class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm resize-none mb-3"></textarea>
-        <button onclick="savePayment()" data-i18n="settings.payment.save"
-          class="btn-green w-full py-2 rounded-lg text-sm font-semibold">
-          Guardar instrucciones de pago
-        </button>
-      </div>
-
-      <!-- Custom instructions -->
-      <div class="bg-white rounded-xl shadow-sm p-6 md:col-span-2">
-        <h3 data-i18n="settings.rules.title" class="font-medium text-gray-800 mb-1">📋 Reglas del negocio</h3>
-        <p class="text-xs text-gray-400 mb-3">
-          <span data-i18n="settings.rules.desc">Escribí en lenguaje natural cualquier regla, restricción o información especial de tu negocio. Sara las seguirá siempre.</span><br>
-          <span data-i18n="settings.rules.example" class="italic">Ej: "Las tortas personalizadas requieren 3 días de anticipación."</span>
-        </p>
-        <div id="customInstrMsg" class="hidden rounded-lg px-4 py-2 text-sm mb-3"></div>
-        <textarea id="sCustomInstructions" rows="6" data-i18n-ph="settings.rules.placeholder"
-          placeholder="- Las composiciones personalizadas requieren 48 hs de anticipación."
-          class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm resize-none mb-3"></textarea>
-        <button onclick="saveCustomInstructions()" data-i18n="settings.rules.save"
-          class="btn-green w-full py-2 rounded-lg text-sm font-semibold">
-          Guardar reglas
-        </button>
-      </div>
-
-      <!-- Business info -->
-      <div class="bg-white rounded-xl shadow-sm p-6">
-        <h3 data-i18n="settings.bizinfo.title" class="font-medium text-gray-800 mb-1">📍 Información del negocio</h3>
-        <p data-i18n="settings.bizinfo.desc" class="text-xs text-gray-400 mb-3">Sara usa estos datos para responder preguntas sobre dónde encontrarte y pedir reseñas.</p>
-        <div id="businessInfoMsg" class="hidden rounded-lg px-4 py-2 text-sm mb-3"></div>
-        <label class="block text-xs font-medium text-gray-600 mb-1" data-i18n="settings.bizinfo.address">Dirección del local</label>
-        <input id="sAddress" type="text" data-i18n-ph="settings.bizinfo.address_ph"
-          placeholder="Av. España 1234, Asunción"
-          class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-3"/>
-        <label class="block text-xs font-medium text-gray-600 mb-1" data-i18n="settings.bizinfo.review_url">Link Google Reviews</label>
-        <input id="sGoogleReviewUrl" type="url" data-i18n-ph="settings.bizinfo.review_url_ph"
-          placeholder="https://g.page/r/..."
-          class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-3"/>
-        <p class="text-xs text-gray-400 mb-3" data-i18n="settings.bizinfo.review_hint">Sara pide una reseña automáticamente después de cada entrega.</p>
-        <button onclick="saveBusinessInfo()" data-i18n="settings.bizinfo.save"
-          class="btn-green w-full py-2 rounded-lg text-sm font-semibold">
-          Guardar info
-        </button>
-      </div>
-
-      <!-- Delivery settings — only for plans with products (Shop/Restaurant/Pro) -->
-      <div id="deliverySection" class="md:col-span-2 hidden">
+      <!-- Delivery — full width, conditional -->
+      <div id="deliverySection" class="hidden">
       <div class="bg-white rounded-xl shadow-sm p-6">
         <h3 data-i18n="settings.delivery.title" class="font-medium text-gray-800 mb-1">🚚 Envíos a domicilio</h3>
         <p data-i18n="settings.delivery.desc" class="text-xs text-gray-400 mb-4">Configurá si ofrecés entregas, la dirección de tu local y el costo.</p>
         <div id="deliveryMsg" class="hidden rounded-lg px-4 py-2 text-sm mb-4"></div>
-
         <div class="flex items-center gap-3 mb-4">
           <input id="sDeliveryEnabled" type="checkbox" class="w-4 h-4 accent-green-600"/>
           <label for="sDeliveryEnabled" data-i18n="settings.delivery.enable" class="text-sm font-medium text-gray-700">Activar envíos</label>
         </div>
-
         <div id="deliveryFields">
-          <label data-i18n="settings.delivery.address" class="block text-sm font-medium text-gray-700 mb-1">Dirección del local</label>
-          <input id="sLocationAddress" type="text" placeholder="Ej: Av. Mariscal López 1234, Asunción"
-            class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-3"/>
-
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+            <div>
+              <label data-i18n="settings.delivery.address" class="block text-sm font-medium text-gray-700 mb-1">Dirección del local</label>
+              <input id="sLocationAddress" type="text" placeholder="Ej: Av. Mariscal López 1234, Asunción"
+                class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
+            </div>
+            <div>
+              <label data-i18n="settings.delivery.type" class="block text-sm font-medium text-gray-700 mb-1">Tipo de tarifa</label>
+              <select id="sDeliveryType" onchange="updateDeliveryFields()"
+                class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                <option value="fixed" data-i18n="settings.delivery.fixed">Tarifa fija</option>
+                <option value="zone" data-i18n="settings.delivery.zone">Por zona (km)</option>
+                <option value="per_km" data-i18n="settings.delivery.perkm">Por kilómetro</option>
+              </select>
+            </div>
+          </div>
           <div class="grid grid-cols-2 gap-3 mb-3">
             <div>
               <label data-i18n="settings.delivery.lat" class="block text-sm font-medium text-gray-700 mb-1">Latitud</label>
@@ -1282,22 +1309,19 @@
             </div>
           </div>
           <p data-i18n="settings.delivery.mapsHint" class="text-xs text-gray-400 mb-4">Abrí Google Maps, buscá tu local, clic derecho → "¿Qué hay aquí?" y copiá las coordenadas.</p>
-
-          <label data-i18n="settings.delivery.type" class="block text-sm font-medium text-gray-700 mb-1">Tipo de tarifa</label>
-          <select id="sDeliveryType" onchange="updateDeliveryFields()"
-            class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-4">
-            <option value="fixed" data-i18n="settings.delivery.fixed">Tarifa fija</option>
-            <option value="zone" data-i18n="settings.delivery.zone">Por zona (km)</option>
-            <option value="per_km" data-i18n="settings.delivery.perkm">Por kilómetro</option>
-          </select>
-
-          <div>
-            <label data-i18n="settings.delivery.baseFee" class="block text-sm font-medium text-gray-700 mb-1" id="baseFeeLabel">Costo de envío (Gs)</label>
-            <input id="sDeliveryBaseFee" type="number" min="0" placeholder="15000"
-              class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-3"/>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+            <div>
+              <label data-i18n="settings.delivery.baseFee" class="block text-sm font-medium text-gray-700 mb-1" id="baseFeeLabel">Costo de envío (Gs)</label>
+              <input id="sDeliveryBaseFee" type="number" min="0" placeholder="15000"
+                class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
+            </div>
+            <div>
+              <label data-i18n="settings.delivery.minOrder" class="block text-sm font-medium text-gray-700 mb-1">Monto mínimo para envío (Gs)</label>
+              <input id="sDeliveryMinOrder" type="number" min="0" placeholder="0"
+                class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
+            </div>
           </div>
-
-          <div id="zoneFields" class="hidden space-y-3 mb-3">
+          <div id="zoneFields" class="hidden grid grid-cols-2 gap-3 mb-3">
             <div>
               <label data-i18n="settings.delivery.zoneRadius" class="block text-sm font-medium text-gray-700 mb-1">Radio zona interior (km)</label>
               <input id="sDeliveryZoneKm" type="number" min="0" placeholder="5"
@@ -1309,71 +1333,21 @@
                 class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
             </div>
           </div>
-
           <div id="perKmField" class="hidden mb-3">
             <label data-i18n="settings.delivery.perKm" class="block text-sm font-medium text-gray-700 mb-1">Costo adicional por km (Gs)</label>
             <input id="sDeliveryPerKm" type="number" min="0" placeholder="2000"
               class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
           </div>
-
-          <label data-i18n="settings.delivery.minOrder" class="block text-sm font-medium text-gray-700 mb-1">Monto mínimo para envío (Gs)</label>
-          <input id="sDeliveryMinOrder" type="number" min="0" placeholder="0"
-            class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-3"/>
-          <p data-i18n="settings.delivery.minHint" class="text-xs text-gray-400 mb-4">Dejá en 0 para no tener mínimo.</p>
-
           <label data-i18n="settings.delivery.disabled" class="block text-sm font-medium text-gray-700 mb-1">Días/fechas sin envío</label>
           <input id="sDeliveryDisabledDates" type="text"
             placeholder="domingo, 2026-12-25, 2026-01-01"
             class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-1"/>
           <p data-i18n="settings.delivery.disabledHint" class="text-xs text-gray-400 mb-4">Separados por coma. Podés poner nombres de días (domingo, sabado) o fechas exactas (AAAA-MM-DD).</p>
         </div>
-
         <button onclick="saveDelivery()" data-i18n="settings.delivery.save"
-          class="btn-green w-full py-2 rounded-lg text-sm font-semibold">
-          Guardar configuración de envíos
-        </button>
+          class="btn-green w-full py-2 rounded-lg text-sm font-semibold">Guardar configuración de envíos</button>
       </div>
       </div><!-- /deliverySection -->
-
-      <!-- Change password -->
-      <div class="bg-white rounded-xl shadow-sm p-6">
-        <h3 data-i18n="settings.password.title" class="font-medium text-gray-800 mb-3">🔒 Cambiar contraseña</h3>
-        <div id="pwdMsg" class="hidden rounded-lg px-4 py-2 text-sm mb-3"></div>
-        <input id="newPwd" type="password" data-i18n-ph="settings.password.placeholder" placeholder="Nueva contraseña (mín. 6 caracteres)"
-          class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-3"/>
-        <button onclick="changePassword()" data-i18n="settings.password.save"
-          class="btn-green w-full py-2 rounded-lg text-sm font-semibold">
-          Guardar contraseña
-        </button>
-      </div>
-
-      <!-- ── Legal ── -->
-      <div class="bg-white rounded-xl shadow-sm p-6">
-        <h3 data-i18n="settings.legal.title" class="font-medium text-gray-800 mb-3">📄 Legal</h3>
-        <div class="space-y-2">
-          <a href="/legal/terms" target="_blank"
-            class="flex items-center justify-between px-4 py-3 rounded-lg border border-gray-100 hover:bg-gray-50 transition">
-            <span class="text-sm text-gray-700" data-i18n="settings.legal.terms">📋 Términos de Servicio</span>
-            <span class="text-gray-400 text-xs">↗</span>
-          </a>
-          <a href="/legal/privacy" target="_blank"
-            class="flex items-center justify-between px-4 py-3 rounded-lg border border-gray-100 hover:bg-gray-50 transition">
-            <span class="text-sm text-gray-700" data-i18n="settings.legal.privacy">🔒 Política de Privacidad</span>
-            <span class="text-gray-400 text-xs">↗</span>
-          </a>
-          <a href="/legal/disclaimer" target="_blank"
-            class="flex items-center justify-between px-4 py-3 rounded-lg border border-gray-100 hover:bg-gray-50 transition">
-            <span class="text-sm text-gray-700" data-i18n="settings.legal.disclaimer">⚠️ Disclaimer</span>
-            <span class="text-gray-400 text-xs">↗</span>
-          </a>
-          <a href="/legal/dpa" target="_blank"
-            class="flex items-center justify-between px-4 py-3 rounded-lg border border-gray-100 hover:bg-gray-50 transition">
-            <span class="text-sm text-gray-700" data-i18n="settings.legal.dpa">📝 Acuerdo de Tratamiento de Datos (DPA)</span>
-            <span class="text-gray-400 text-xs">↗</span>
-          </a>
-        </div>
-        <p class="text-xs text-gray-400 mt-3" data-i18n="settings.legal.note">Al usar este servicio aceptás los términos y condiciones.</p>
-      </div>
 
     </div>
 
