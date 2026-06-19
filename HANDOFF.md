@@ -411,6 +411,15 @@ CREATE TABLE IF NOT EXISTS offers (
 );
 ```
 
+## COSA È STATO FATTO (sessione 2026-06-19 — Sara UX completamento)
+
+### Sara bot — completamento 4 feature extra (commit bb75190)
+- **Cross-sell rule 13**: `buildStaticSystemPrompt` → regola 13 aggiunta: suggerisce 1 prodotto complementare al momento della conferma ordine, mai forzato, mai al primo messaggio
+- **Business hours in dynamic prompt**: `buildDynamicSystemPrompt` accetta `businessHours[]` + `isFirstMessage` — `hoursBlock` dice a Sara se è aperto o chiuso ora (con orario riapertura) e di accettare ordini ma avvisare "verranno confermati in orario lavorativo" se chiuso; `firstMsgBlock` abilita saluto personalizzato al primo messaggio
+- **`getBusinessHours`** in `services/stock.js`: cache 45s, già presente — ora esportato e usato anche in webhook
+- **Webhook `handleCustomerMessage`**: `getBusinessHours` aggiunto al `Promise.all` parallelo; `isFirstMessage = history.length === 0` calcolato prima di chiamare `chat()`; entrambi passati a `chat()`
+- **Push notifiche cliente per cambio stato ordine**: `notifyCustomerOrderStatus()` helper — manda messaggio automatico al cliente (non al merchant) quando stato ordine cambia a `preparing`/`delivering`/`delivered`; stringhe multilingua aggiunte in MT (`cust_status_preparing/delivering/delivered` in ES/EN/IT/DE/FR/PT); chiamato in entrambi i path (single-match + pending-candidate)
+
 ## PROSSIME PRIORITÀ (sessione successiva)
 1. **Stripe** — configurare env vars reali su Render + testare flow completo con account business
 2. **Costi/margini** — calcolo reale token AI + infra + limiti piano + definire piani starter/pro
