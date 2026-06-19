@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { createClient } = require('@supabase/supabase-js');
-const { getTenantConfig, getStock, decrementStock, getServices, getOffers, getBusinessClosures, getBusinessHours, invalidateStock, invalidateServices, invalidateClosures, invalidateOffers, invalidateBusinessHours } = require('../services/stock');
+const { getTenantConfig, getStock, decrementStock, getServices, getOffers, getBusinessClosures, getBusinessHours, getRestaurantZones, getRestaurantTables, getUpcomingReservations, invalidateStock, invalidateServices, invalidateClosures, invalidateOffers, invalidateBusinessHours } = require('../services/stock');
 const { sendMessage, sendImage, notifyMerchant } = require('../services/whatsapp');
 const { chat } = require('../services/claude');
 const { downloadAndStore, uploadImageBuffer } = require('../services/storage');
@@ -1399,11 +1399,28 @@ async function handleCustomerMessage(tenant, customerPhone, messageText, locatio
     return;
   }
 
+  // ── Load restaurant data (if enabled and message might be about reservation) ─
+  let restaurantZones = null, restaurantTables = null, upcomingReservations = null;
+  const RESERVATION_KEYWORDS = /reserv|tavolo|table|mesa|posto|book|prenotaz|prenot|coperti|posto|seat/i;
+  const mightBeAboutReservation = tenant.restaurant_enabled && (
+    RESERVATION_KEYWORDS.test(messageText || '') ||
+    history.slice(-4).some(m => RESERVATION_KEYWORDS.test(m.content))
+  );
+  if (tenant.restaurant_enabled) {
+    [restaurantZones, restaurantTables] = await Promise.all([
+      getRestaurantZones(tenant.id),
+      getRestaurantTables(tenant.id),
+    ]);
+    if (mightBeAboutReservation) {
+      upcomingReservations = await getUpcomingReservations(tenant.id, 7);
+    }
+  }
+
   // ── Normal text message → Claude ───────────────────────────────────────────
   const isFirstMessage = history.length === 0;
   const { reply, order, imageProductName, customerName,
           deliveryChoice, deliveryAddress, offTopic, updatedHistory,
-          appointmentRequest, waitlistProduct } = await chat({
+          appointmentRequest, waitlistProduct, reservationRequest } = await chat({
     tenant, stock, services, history,
     userMessage: messageText,
     convState,
@@ -1415,6 +1432,9 @@ async function handleCustomerMessage(tenant, customerPhone, messageText, locatio
     businessHours,
     isFirstMessage,
     customerNotes: convRow?.customer_notes || null,
+    restaurantZones,
+    restaurantTables,
+    upcomingReservations,
   });
 
   if (offTopic) {
@@ -1576,6 +1596,69 @@ async function handleCustomerMessage(tenant, customerPhone, messageText, locatio
       product_name: waitlistProduct,
       created_at: new Date().toISOString(),
     }, { onConflict: 'tenant_id,customer_phone,product_name' });
+  }
+
+  // ── Handle restaurant reservation ──────────────────────────────────────────
+  if (reservationRequest && tenant.restaurant_enabled) {
+    try {
+      const { customer_name, party_size, date, time, zone_preference, notes, status: reqStatus } = reservationRequest;
+      const reservedAt = new Date(`${date}T${time || '20:00'}:00`).toISOString();
+      const isPending = reqStatus === 'pending_merchant';
+
+      // Auto-assign smallest available table (skip if pending_merchant)
+      let tableId = null, zoneId = null;
+      if (!isPending && restaurantTables?.length) {
+        // Find tables big enough for the party, sorted by capacity ascending
+        const candidates = (restaurantTables || [])
+          .filter(t => t.capacity >= party_size)
+          .sort((a, b) => a.capacity - b.capacity);
+
+        for (const t of candidates) {
+          // Check if table is free at this time (no overlap in existing reservations)
+          const dur = tenant.restaurant_slot_duration || 90;
+          const reqStart = new Date(reservedAt).getTime();
+          const reqEnd   = reqStart + dur * 60000;
+          const conflict = (upcomingReservations || []).some(r => {
+            if (r.table_id !== t.id) return false;
+            if (['cancelled','done','no_show'].includes(r.status)) return false;
+            const rStart = new Date(r.reserved_at).getTime();
+            const rEnd   = rStart + (r.duration_min || dur) * 60000;
+            return reqStart < rEnd && reqEnd > rStart;
+          });
+          if (!conflict) { tableId = t.id; zoneId = t.zone_id; break; }
+        }
+      }
+
+      // Match zone_preference to zone_id if not assigned via table
+      if (!zoneId && zone_preference && restaurantZones?.length) {
+        const z = restaurantZones.find(z => z.name.toLowerCase().includes(zone_preference.toLowerCase()));
+        if (z) zoneId = z.id;
+      }
+
+      const finalStatus = isPending ? 'pending_merchant' : 'confirmed';
+      await supabase.from('reservations').insert({
+        tenant_id: tenant.id,
+        table_id: tableId || null,
+        zone_id: zoneId || null,
+        customer_name: customer_name || convRow?.customer_name || customerPhone,
+        customer_phone: customerPhone,
+        party_size: party_size || 2,
+        reserved_at: reservedAt,
+        duration_min: tenant.restaurant_slot_duration || 90,
+        status: finalStatus,
+        notes: notes || null,
+      });
+
+      // Notify merchant for pending_merchant reservations
+      if (isPending && tenant.merchant_phone) {
+        const dt = new Date(reservedAt).toLocaleString('es', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+        await sendMessage(tenant.merchant_phone,
+          `⚠️ *Reserva grupo grande — requiere tu atención*\n👤 ${customer_name || customerPhone} (+${customerPhone})\n👥 ${party_size} personas\n📅 ${dt}\n\nContactá al cliente para coordinar los lugares.`,
+          phoneNumberId, token);
+      }
+    } catch (e) {
+      console.error('[reservation] error:', e.message);
+    }
   }
 
   // ── Send product image ──────────────────────────────────────────────────────

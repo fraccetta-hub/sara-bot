@@ -335,6 +335,7 @@
       <button class="py-2 px-1 sm:px-0 whitespace-nowrap flex-shrink-0" id="tabOrders" onclick="switchTab('orders')">🛒 Pedidos</button>
       <button class="py-2 px-1 sm:px-0 whitespace-nowrap flex-shrink-0" id="tabCustomers" data-i18n="tab.customers" onclick="switchTab('customers')">👥 Clientes</button>
       <button class="py-2 px-1 sm:px-0 whitespace-nowrap flex-shrink-0" id="tabAppointments" onclick="switchTab('appointments')">📅 Turnos</button>
+      <button class="py-2 px-1 sm:px-0 whitespace-nowrap flex-shrink-0 hidden" id="tabRestaurant" onclick="switchTab('restaurant')">🍽️ <span data-i18n="tab.restaurant">Restaurante</span></button>
       <button class="py-2 px-1 sm:px-0 whitespace-nowrap flex-shrink-0" id="tabSettings" onclick="switchTab('settings')">⚙️ Ajustes</button>
       <button class="py-2 px-1 sm:px-0 whitespace-nowrap flex-shrink-0" id="tabAnalytics" data-i18n="tab.analytics" onclick="switchTab('analytics')">📊 Analytics</button>
       <button class="py-2 px-1 sm:px-0 whitespace-nowrap flex-shrink-0" id="tabPlan" onclick="switchTab('plan')">💳 Plan</button>
@@ -643,6 +644,165 @@
             <span data-i18n="broadcast.btn">📢 Enviar</span>
           </button>
           <span id="broadcastStatus" class="text-sm text-gray-500"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── RESTAURANT TAB ── -->
+    <div id="sectionRestaurant" class="hidden space-y-6">
+
+      <!-- Enable toggle + slot duration -->
+      <div class="bg-white rounded-xl shadow-sm p-5">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h2 data-i18n="restaurant.title" class="text-lg font-semibold text-gray-800">🍽️ Restaurante</h2>
+            <p data-i18n="restaurant.desc" class="text-sm text-gray-500 mt-0.5">Activa la gestión de reservas de mesa con Sara.</p>
+          </div>
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" id="restaurantEnabled" class="sr-only peer" onchange="saveRestaurantSettings()">
+            <div class="w-11 h-6 bg-gray-200 peer-focus:ring-2 peer-focus:ring-green-300 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
+          </label>
+        </div>
+        <div class="flex items-center gap-3">
+          <label data-i18n="restaurant.slotDuration" class="text-sm text-gray-600 whitespace-nowrap">Duración de mesa (min):</label>
+          <input type="number" id="restaurantSlotDuration" value="90" min="30" max="300" step="15"
+            class="w-24 border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-300"
+            onchange="saveRestaurantSettings()">
+        </div>
+      </div>
+
+      <!-- Zones -->
+      <div class="bg-white rounded-xl shadow-sm p-5">
+        <div class="flex items-center justify-between mb-3">
+          <h3 data-i18n="restaurant.zones" class="font-semibold text-gray-800">Zonas / Salas</h3>
+          <button onclick="openZoneModal(null)" class="btn-green px-3 py-1.5 rounded-lg text-sm font-semibold">+ <span data-i18n="restaurant.addZone">Agregar zona</span></button>
+        </div>
+        <div id="zonesList" class="space-y-2 text-sm text-gray-600">
+          <p class="text-gray-400 py-4 text-center" data-i18n="restaurant.noZones">Sin zonas configuradas.</p>
+        </div>
+      </div>
+
+      <!-- Tables -->
+      <div class="bg-white rounded-xl shadow-sm p-5">
+        <div class="flex items-center justify-between mb-3">
+          <h3 data-i18n="restaurant.tables" class="font-semibold text-gray-800">Mesas</h3>
+          <button onclick="openTableModal(null)" class="btn-green px-3 py-1.5 rounded-lg text-sm font-semibold">+ <span data-i18n="restaurant.addTable">Agregar mesa</span></button>
+        </div>
+        <div id="tablesList" class="space-y-2 text-sm text-gray-600">
+          <p class="text-gray-400 py-4 text-center" data-i18n="restaurant.noTables">Sin mesas configuradas.</p>
+        </div>
+      </div>
+
+      <!-- Reservations -->
+      <div class="bg-white rounded-xl shadow-sm p-5">
+        <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center gap-3">
+            <h3 data-i18n="restaurant.reservations" class="font-semibold text-gray-800">Reservas</h3>
+            <input type="date" id="resvDate" onchange="loadReservations()"
+              class="border border-gray-200 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-green-300">
+          </div>
+          <button onclick="openResvModal(null)" class="btn-green px-3 py-1.5 rounded-lg text-sm font-semibold">+ <span data-i18n="restaurant.addResv">Nueva reserva</span></button>
+        </div>
+        <div id="resvList" class="space-y-2 text-sm"></div>
+      </div>
+    </div>
+
+    <!-- Zone modal -->
+    <div id="zoneModal" class="fixed inset-0 bg-black/40 z-50 hidden flex items-center justify-center p-4">
+      <div class="bg-white rounded-xl shadow-xl w-full max-w-sm p-6">
+        <h3 id="zoneModalTitle" data-i18n="restaurant.zoneModal" class="font-semibold text-gray-800 mb-4">Zona</h3>
+        <input type="hidden" id="zoneModalId">
+        <div class="space-y-3">
+          <div>
+            <label data-i18n="restaurant.zoneName" class="block text-xs text-gray-500 mb-1">Nombre</label>
+            <input id="zoneModalName" type="text" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-300">
+          </div>
+          <div>
+            <label data-i18n="restaurant.zoneNotes" class="block text-xs text-gray-500 mb-1">Notas (opcional)</label>
+            <input id="zoneModalNotes" type="text" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-300">
+          </div>
+        </div>
+        <div class="flex justify-end gap-2 mt-5">
+          <button onclick="closeZoneModal()" data-i18n="cancel" class="px-4 py-2 rounded-lg text-gray-600 border border-gray-200 text-sm">Cancelar</button>
+          <button onclick="saveZone()" data-i18n="save" class="btn-green px-4 py-2 rounded-lg text-sm font-semibold">Guardar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Table modal -->
+    <div id="tableModal" class="fixed inset-0 bg-black/40 z-50 hidden flex items-center justify-center p-4">
+      <div class="bg-white rounded-xl shadow-xl w-full max-w-sm p-6">
+        <h3 id="tableModalTitle" data-i18n="restaurant.tableModal" class="font-semibold text-gray-800 mb-4">Mesa</h3>
+        <input type="hidden" id="tableModalId">
+        <div class="space-y-3">
+          <div>
+            <label data-i18n="restaurant.tableLabel" class="block text-xs text-gray-500 mb-1">Etiqueta (ej: T1, Mesa Ventana)</label>
+            <input id="tableModalLabel" type="text" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-300">
+          </div>
+          <div>
+            <label data-i18n="restaurant.tableCapacity" class="block text-xs text-gray-500 mb-1">Capacidad (personas)</label>
+            <input id="tableModalCapacity" type="number" min="1" max="50" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-300">
+          </div>
+          <div>
+            <label data-i18n="restaurant.tableZone" class="block text-xs text-gray-500 mb-1">Zona</label>
+            <select id="tableModalZone" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-300">
+              <option value="" data-i18n="restaurant.noZone">Sin zona</option>
+            </select>
+          </div>
+        </div>
+        <div class="flex justify-end gap-2 mt-5">
+          <button onclick="closeTableModal()" data-i18n="cancel" class="px-4 py-2 rounded-lg text-gray-600 border border-gray-200 text-sm">Cancelar</button>
+          <button onclick="saveTable()" data-i18n="save" class="btn-green px-4 py-2 rounded-lg text-sm font-semibold">Guardar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reservation modal -->
+    <div id="resvModal" class="fixed inset-0 bg-black/40 z-50 hidden flex items-center justify-center p-4">
+      <div class="bg-white rounded-xl shadow-xl w-full max-w-sm p-6">
+        <h3 id="resvModalTitle" data-i18n="restaurant.resvModal" class="font-semibold text-gray-800 mb-4">Reserva</h3>
+        <input type="hidden" id="resvModalId">
+        <div class="space-y-3">
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label data-i18n="restaurant.resvName" class="block text-xs text-gray-500 mb-1">Nombre</label>
+              <input id="resvModalName" type="text" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-300">
+            </div>
+            <div>
+              <label data-i18n="restaurant.resvPhone" class="block text-xs text-gray-500 mb-1">Teléfono</label>
+              <input id="resvModalPhone" type="text" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-300">
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label data-i18n="restaurant.resvDate" class="block text-xs text-gray-500 mb-1">Fecha</label>
+              <input id="resvModalDate" type="date" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-300">
+            </div>
+            <div>
+              <label data-i18n="restaurant.resvTime" class="block text-xs text-gray-500 mb-1">Hora</label>
+              <input id="resvModalTime" type="time" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-300">
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label data-i18n="restaurant.resvParty" class="block text-xs text-gray-500 mb-1">Personas</label>
+              <input id="resvModalParty" type="number" min="1" max="100" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-300">
+            </div>
+            <div>
+              <label data-i18n="restaurant.resvTable" class="block text-xs text-gray-500 mb-1">Mesa</label>
+              <select id="resvModalTable" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-300">
+                <option value="" data-i18n="restaurant.autoAssign">Auto</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label data-i18n="restaurant.resvNotes" class="block text-xs text-gray-500 mb-1">Notas</label>
+            <input id="resvModalNotes" type="text" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-300">
+          </div>
+        </div>
+        <div class="flex justify-end gap-2 mt-5">
+          <button onclick="closeResvModal()" data-i18n="cancel" class="px-4 py-2 rounded-lg text-gray-600 border border-gray-200 text-sm">Cancelar</button>
+          <button onclick="saveResv()" data-i18n="save" class="btn-green px-4 py-2 rounded-lg text-sm font-semibold">Guardar</button>
         </div>
       </div>
     </div>
@@ -2338,7 +2498,7 @@ async function showDashboard() {
     document.getElementById('statPending').textContent  = stats.pendingOrders;
     document.getElementById('statRevenue').textContent  = formatGs(stats.todayRevenue);
     document.getElementById('statProducts').textContent = stats.activeProducts + '/' + stats.totalProducts;
-    applyTabVisibility(settings.products_enabled !== false, !!settings.services_enabled, !!settings.appointments_enabled);
+    applyTabVisibility(settings.products_enabled !== false, !!settings.services_enabled, !!settings.appointments_enabled, !!settings.restaurant_enabled);
     if (settings.products_enabled !== false) loadProducts();
     if (settings.whatsapp_token_refresh_error) showTokenErrorBanner();
   } catch (e) {
@@ -2362,13 +2522,15 @@ function showTokenErrorBanner() {
 }
 
 // ── Tab visibility (based on enabled sections) ─────────────────────────────────
-function applyTabVisibility(productsEnabled, servicesEnabled, appointmentsEnabled) {
+function applyTabVisibility(productsEnabled, servicesEnabled, appointmentsEnabled, restaurantEnabled) {
   const tabP = document.getElementById('tabProducts');
   const tabS = document.getElementById('tabServices');
   const tabA = document.getElementById('tabAppointments');
+  const tabR = document.getElementById('tabRestaurant');
   if (tabP) tabP.style.display = productsEnabled     ? '' : 'none';
   if (tabS) tabS.style.display = servicesEnabled     ? '' : 'none';
   if (tabA) tabA.style.display = appointmentsEnabled ? '' : 'none';
+  if (tabR) tabR.classList.toggle('hidden', !restaurantEnabled);
 
   // If current active tab is now hidden, redirect to chats
   const activeEl = document.querySelector('.tab-active');
@@ -2376,7 +2538,8 @@ function applyTabVisibility(productsEnabled, servicesEnabled, appointmentsEnable
     const id = activeEl.id;
     if ((id === 'tabProducts'     && !productsEnabled)     ||
         (id === 'tabServices'     && !servicesEnabled)     ||
-        (id === 'tabAppointments' && !appointmentsEnabled)) {
+        (id === 'tabAppointments' && !appointmentsEnabled) ||
+        (id === 'tabRestaurant'   && !restaurantEnabled)) {
       switchTab('chats');
     }
   }
@@ -2414,9 +2577,11 @@ function switchTab(tab) {
     setTimeout(() => { banner.style.opacity = '1'; }, 150);
     return;
   }
-  ['chats','products','services','orders','customers','appointments','settings','analytics','plan','help','support'].forEach(t => {
-    document.getElementById('section' + cap(t)).classList.toggle('hidden', t !== tab);
-    document.getElementById('tab'     + cap(t)).classList.toggle('tab-active', t === tab);
+  ['chats','products','services','orders','customers','restaurant','appointments','settings','analytics','plan','help','support'].forEach(t => {
+    const sec = document.getElementById('section' + cap(t));
+    const btn = document.getElementById('tab'     + cap(t));
+    if (sec) sec.classList.toggle('hidden', t !== tab);
+    if (btn) btn.classList.toggle('tab-active', t === tab);
   });
   // Hide stats bar and remove padding on chats tab (chat needs full remaining height)
   const statsBar = document.getElementById('statsBar');
@@ -2437,6 +2602,7 @@ function switchTab(tab) {
   if (tab === 'analytics')    loadAnalytics();
   if (tab === 'plan')         loadPlan();
   if (tab === 'services')     loadServices();
+  if (tab === 'restaurant')   loadRestaurant();
   if (tab === 'appointments') initCalendar();
   if (tab === 'support')      { loadSupportMessages(); startSupportPoll(); }
   else                        stopSupportPoll();
@@ -2891,6 +3057,237 @@ async function exportCustomers() {
     a.download = `clientes_${new Date().toISOString().slice(0,10)}.csv`;
     a.click(); URL.revokeObjectURL(url);
   } catch (e) { alert('Error al exportar clientes: ' + e.message); }
+}
+
+// ── Restaurant ────────────────────────────────────────────────────────────────
+let _rZones = [], _rTables = [];
+
+async function loadRestaurant() {
+  const [settings, zones, tables] = await Promise.all([
+    api('/admin/settings'),
+    api('/admin/restaurant/zones'),
+    api('/admin/restaurant/tables'),
+  ]);
+  _rZones  = zones  || [];
+  _rTables = tables || [];
+  document.getElementById('restaurantEnabled').checked = !!settings.restaurant_enabled;
+  document.getElementById('restaurantSlotDuration').value = settings.restaurant_slot_duration || 90;
+  renderZones();
+  renderTables();
+  const today = new Date().toISOString().slice(0,10);
+  document.getElementById('resvDate').value = today;
+  await loadReservations();
+}
+
+async function saveRestaurantSettings() {
+  const enabled  = document.getElementById('restaurantEnabled').checked;
+  const duration = parseInt(document.getElementById('restaurantSlotDuration').value) || 90;
+  await api('/admin/restaurant/settings', 'PUT', { restaurant_enabled: enabled, restaurant_slot_duration: duration });
+  applyTabVisibility(
+    document.getElementById('tabProducts')?.style.display !== 'none',
+    document.getElementById('tabServices')?.style.display !== 'none',
+    document.getElementById('tabAppointments')?.style.display !== 'none',
+    enabled
+  );
+}
+
+function renderZones() {
+  const el = document.getElementById('zonesList');
+  if (!_rZones.length) {
+    el.innerHTML = `<p class="text-gray-400 py-4 text-center" data-i18n="restaurant.noZones">${t('restaurant.noZones')}</p>`;
+    return;
+  }
+  el.innerHTML = _rZones.map(z => `
+    <div class="flex items-center justify-between bg-gray-50 rounded-lg px-4 py-2">
+      <div>
+        <span class="font-medium text-gray-800">${z.name}</span>
+        ${z.notes ? `<span class="text-gray-400 text-xs ml-2">${z.notes}</span>` : ''}
+      </div>
+      <div class="flex gap-2">
+        <button onclick="openZoneModal(${z.id})" class="text-blue-500 hover:text-blue-700 text-sm">✏️</button>
+        <button onclick="deleteZone(${z.id})" class="text-red-400 hover:text-red-600 text-sm">🗑️</button>
+      </div>
+    </div>`).join('');
+}
+
+function renderTables() {
+  const el = document.getElementById('tablesList');
+  if (!_rTables.length) {
+    el.innerHTML = `<p class="text-gray-400 py-4 text-center">${t('restaurant.noTables')}</p>`;
+    return;
+  }
+  const grouped = {};
+  for (const t_ of _rTables) {
+    const zName = t_.restaurant_zones?.name || t('restaurant.noZone');
+    (grouped[zName] = grouped[zName] || []).push(t_);
+  }
+  el.innerHTML = Object.entries(grouped).map(([zone, tables]) => `
+    <div class="mb-3">
+      <div class="text-xs font-semibold text-gray-400 uppercase mb-1 px-1">${zone}</div>
+      <div class="space-y-1">
+        ${tables.map(tbl => `
+          <div class="flex items-center justify-between bg-gray-50 rounded-lg px-4 py-2">
+            <div class="flex items-center gap-3">
+              <span class="font-mono font-semibold text-gray-800">${tbl.label}</span>
+              <span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">${tbl.capacity}p</span>
+              ${!tbl.is_active ? '<span class="text-xs bg-gray-200 text-gray-500 px-2 py-0.5 rounded-full">inactiva</span>' : ''}
+            </div>
+            <div class="flex gap-2">
+              <button onclick="openTableModal(${tbl.id})" class="text-blue-500 hover:text-blue-700 text-sm">✏️</button>
+              <button onclick="deleteTable(${tbl.id})" class="text-red-400 hover:text-red-600 text-sm">🗑️</button>
+            </div>
+          </div>`).join('')}
+      </div>
+    </div>`).join('');
+}
+
+async function loadReservations() {
+  const date = document.getElementById('resvDate').value;
+  const data = await api(`/admin/restaurant/reservations?from=${date}&days=1`);
+  const el = document.getElementById('resvList');
+  const STATUS_COLOR = { confirmed:'bg-blue-100 text-blue-700', seated:'bg-green-100 text-green-700', done:'bg-gray-100 text-gray-500', cancelled:'bg-red-100 text-red-500', no_show:'bg-orange-100 text-orange-600', pending_merchant:'bg-yellow-100 text-yellow-700' };
+  if (!data?.length) {
+    el.innerHTML = `<p class="text-gray-400 text-center py-6">${t('restaurant.noResvDay')}</p>`;
+    return;
+  }
+  el.innerHTML = data.map(r => {
+    const time = new Date(r.reserved_at).toLocaleTimeString('es', { hour:'2-digit', minute:'2-digit' });
+    const zone  = r.restaurant_zones?.name || '';
+    const table = r.restaurant_tables?.label || '';
+    const where = [table, zone].filter(Boolean).join(' / ');
+    const sc = STATUS_COLOR[r.status] || 'bg-gray-100 text-gray-600';
+    return `<div class="flex items-center justify-between bg-gray-50 rounded-lg px-4 py-2 gap-3">
+      <div class="flex items-center gap-3 min-w-0">
+        <span class="font-mono font-semibold text-gray-800 whitespace-nowrap">${time}</span>
+        <div class="min-w-0">
+          <p class="font-medium text-gray-800 truncate">${r.customer_name}</p>
+          <p class="text-xs text-gray-400">${r.party_size}p${where ? ' · ' + where : ''}${r.notes ? ' · ' + r.notes : ''}</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 flex-shrink-0">
+        <select onchange="updateResvStatus(${r.id}, this.value)" class="text-xs border border-gray-200 rounded-lg px-2 py-1 focus:outline-none ${sc}">
+          ${['confirmed','seated','done','cancelled','no_show','pending_merchant'].map(s =>
+            `<option value="${s}" ${r.status===s?'selected':''}>${s}</option>`).join('')}
+        </select>
+        <button onclick="openResvModal(${r.id})" class="text-blue-500 hover:text-blue-700 text-sm">✏️</button>
+        <button onclick="deleteResv(${r.id})" class="text-red-400 hover:text-red-600 text-sm">🗑️</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// Zone modal
+function openZoneModal(id) {
+  const z = id ? _rZones.find(x => x.id === id) : null;
+  document.getElementById('zoneModalId').value    = id || '';
+  document.getElementById('zoneModalName').value  = z?.name  || '';
+  document.getElementById('zoneModalNotes').value = z?.notes || '';
+  document.getElementById('zoneModal').classList.remove('hidden');
+}
+function closeZoneModal() { document.getElementById('zoneModal').classList.add('hidden'); }
+async function saveZone() {
+  const id    = document.getElementById('zoneModalId').value;
+  const name  = document.getElementById('zoneModalName').value.trim();
+  const notes = document.getElementById('zoneModalNotes').value.trim();
+  if (!name) return;
+  if (id) await api(`/admin/restaurant/zones/${id}`, 'PUT', { name, notes });
+  else    await api('/admin/restaurant/zones', 'POST', { name, notes });
+  closeZoneModal();
+  _rZones  = await api('/admin/restaurant/zones');
+  _rTables = await api('/admin/restaurant/tables');
+  renderZones(); renderTables();
+  // Refresh zone dropdowns
+  populateZoneDropdowns();
+}
+async function deleteZone(id) {
+  if (!confirm(t('restaurant.confirmDeleteZone'))) return;
+  await api(`/admin/restaurant/zones/${id}`, 'DELETE');
+  _rZones  = await api('/admin/restaurant/zones');
+  _rTables = await api('/admin/restaurant/tables');
+  renderZones(); renderTables();
+}
+
+// Table modal
+function populateZoneDropdowns() {
+  ['tableModalZone','resvModalTable'].forEach(selId => {
+    const sel = document.getElementById(selId);
+    if (!sel) return;
+    if (selId === 'tableModalZone') {
+      sel.innerHTML = `<option value="">${t('restaurant.noZone')}</option>` +
+        _rZones.map(z => `<option value="${z.id}">${z.name}</option>`).join('');
+    } else {
+      sel.innerHTML = `<option value="">${t('restaurant.autoAssign')}</option>` +
+        _rTables.map(tbl => `<option value="${tbl.id}">${tbl.label} (${tbl.capacity}p)${tbl.restaurant_zones?.name ? ' — ' + tbl.restaurant_zones.name : ''}</option>`).join('');
+    }
+  });
+}
+function openTableModal(id) {
+  const tbl = id ? _rTables.find(x => x.id === id) : null;
+  populateZoneDropdowns();
+  document.getElementById('tableModalId').value       = id || '';
+  document.getElementById('tableModalLabel').value    = tbl?.label    || '';
+  document.getElementById('tableModalCapacity').value = tbl?.capacity || '';
+  document.getElementById('tableModalZone').value     = tbl?.zone_id  || '';
+  document.getElementById('tableModal').classList.remove('hidden');
+}
+function closeTableModal() { document.getElementById('tableModal').classList.add('hidden'); }
+async function saveTable() {
+  const id       = document.getElementById('tableModalId').value;
+  const label    = document.getElementById('tableModalLabel').value.trim();
+  const capacity = document.getElementById('tableModalCapacity').value;
+  const zone_id  = document.getElementById('tableModalZone').value || null;
+  if (!label || !capacity) return;
+  if (id) await api(`/admin/restaurant/tables/${id}`, 'PUT', { label, capacity, zone_id });
+  else    await api('/admin/restaurant/tables', 'POST', { label, capacity, zone_id });
+  closeTableModal();
+  _rTables = await api('/admin/restaurant/tables');
+  renderTables();
+}
+async function deleteTable(id) {
+  if (!confirm(t('restaurant.confirmDeleteTable'))) return;
+  await api(`/admin/restaurant/tables/${id}`, 'DELETE');
+  _rTables = await api('/admin/restaurant/tables');
+  renderTables();
+}
+
+// Reservation modal
+function openResvModal(id) {
+  const r = id ? null : null; // existing reservations not cached — just clear for new
+  populateZoneDropdowns();
+  document.getElementById('resvModalId').value    = id || '';
+  document.getElementById('resvModalName').value  = '';
+  document.getElementById('resvModalPhone').value = '';
+  document.getElementById('resvModalDate').value  = document.getElementById('resvDate').value;
+  document.getElementById('resvModalTime').value  = '';
+  document.getElementById('resvModalParty').value = '';
+  document.getElementById('resvModalNotes').value = '';
+  document.getElementById('resvModal').classList.remove('hidden');
+}
+function closeResvModal() { document.getElementById('resvModal').classList.add('hidden'); }
+async function saveResv() {
+  const name       = document.getElementById('resvModalName').value.trim();
+  const phone      = document.getElementById('resvModalPhone').value.trim();
+  const date       = document.getElementById('resvModalDate').value;
+  const time       = document.getElementById('resvModalTime').value;
+  const party      = document.getElementById('resvModalParty').value;
+  const table_id   = document.getElementById('resvModalTable').value || null;
+  const notes      = document.getElementById('resvModalNotes').value.trim();
+  if (!name || !date || !time || !party) return;
+  const reserved_at = new Date(`${date}T${time}:00`).toISOString();
+  const id = document.getElementById('resvModalId').value;
+  if (id) await api(`/admin/restaurant/reservations/${id}`, 'PUT', { customer_name: name, customer_phone: phone || null, party_size: parseInt(party), reserved_at, table_id, notes: notes || null });
+  else    await api('/admin/restaurant/reservations', 'POST', { customer_name: name, customer_phone: phone || null, party_size: parseInt(party), reserved_at, table_id, notes: notes || null });
+  closeResvModal();
+  await loadReservations();
+}
+async function updateResvStatus(id, status) {
+  await api(`/admin/restaurant/reservations/${id}`, 'PUT', { status });
+  await loadReservations();
+}
+async function deleteResv(id) {
+  if (!confirm(t('restaurant.confirmDeleteResv'))) return;
+  await api(`/admin/restaurant/reservations/${id}`, 'DELETE');
+  await loadReservations();
 }
 
 async function sendBroadcast() {

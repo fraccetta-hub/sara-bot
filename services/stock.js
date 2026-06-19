@@ -146,11 +146,51 @@ async function getBusinessClosures(tenantId) {
   return result;
 }
 
+async function getRestaurantZones(tenantId) {
+  const key = `rzones:${tenantId}`;
+  const hit = cacheGet(key);
+  if (hit) return hit;
+  const { data, error } = await supabase
+    .from('restaurant_zones').select('*').eq('tenant_id', tenantId).order('sort_order').order('id');
+  if (error) { console.error('getRestaurantZones error:', error.message); return []; }
+  const result = data || [];
+  cacheSet(key, result);
+  return result;
+}
+
+async function getRestaurantTables(tenantId) {
+  const key = `rtables:${tenantId}`;
+  const hit = cacheGet(key);
+  if (hit) return hit;
+  const { data, error } = await supabase
+    .from('restaurant_tables').select('*, restaurant_zones(name)').eq('tenant_id', tenantId).eq('is_active', true).order('zone_id').order('capacity');
+  if (error) { console.error('getRestaurantTables error:', error.message); return []; }
+  const result = data || [];
+  cacheSet(key, result);
+  return result;
+}
+
+async function getUpcomingReservations(tenantId, days = 7) {
+  const from = new Date().toISOString();
+  const to   = new Date(Date.now() + days * 24 * 3600 * 1000).toISOString();
+  const { data, error } = await supabase
+    .from('reservations')
+    .select('id, customer_name, customer_phone, party_size, reserved_at, duration_min, status, notes, zone_id, table_id, restaurant_zones(name), restaurant_tables(label, capacity)')
+    .eq('tenant_id', tenantId)
+    .not('status', 'in', '("cancelled","done","no_show")')
+    .gte('reserved_at', from)
+    .lte('reserved_at', to)
+    .order('reserved_at');
+  if (error) { console.error('getUpcomingReservations error:', error.message); return []; }
+  return data || [];
+}
+
 function invalidateBusinessHours(tenantId) { cache.delete(`bh:${tenantId}`); }
 function invalidateStock(tenantId) { cache.delete(`stock:${tenantId}`); }
 function invalidateServices(tenantId) { cache.delete(`services:${tenantId}`); }
 function invalidateTenant(phoneNumberId) { cache.delete(`tenant:${phoneNumberId}`); }
 function invalidateClosures(tenantId) { cache.delete(`closures:${tenantId}`); }
 function invalidateOffers(tenantId) { cache.delete(`offers:${tenantId}`); }
+function invalidateRestaurant(tenantId) { cache.delete(`rzones:${tenantId}`); cache.delete(`rtables:${tenantId}`); }
 
-module.exports = { getTenantConfig, getStock, decrementStock, getServices, getOffers, getBusinessClosures, getBusinessHours, invalidateStock, invalidateServices, invalidateTenant, invalidateClosures, invalidateOffers, invalidateBusinessHours };
+module.exports = { getTenantConfig, getStock, decrementStock, getServices, getOffers, getBusinessClosures, getBusinessHours, getRestaurantZones, getRestaurantTables, getUpcomingReservations, invalidateStock, invalidateServices, invalidateTenant, invalidateClosures, invalidateOffers, invalidateBusinessHours, invalidateRestaurant };

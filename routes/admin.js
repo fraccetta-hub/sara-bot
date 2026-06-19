@@ -11,7 +11,7 @@ const { sendMessage, sendImage } = require('../services/whatsapp');
 const crypto = require('crypto');
 const AdmZip = require('adm-zip');
 const { sendPasswordReset } = require('../services/mailer');
-const { invalidateClosures, invalidateOffers } = require('../services/stock');
+const { invalidateClosures, invalidateOffers, invalidateRestaurant } = require('../services/stock');
 const { rateLimit } = require('express-rate-limit');
 
 const forgotPasswordLimiter = rateLimit({
@@ -279,6 +279,7 @@ router.get('/settings', requireAuth, async (req, res) => {
              delivery_zone_outer_fee, delivery_per_km,
              delivery_min_order, delivery_disabled_dates,
              address, google_review_url,
+             restaurant_enabled, restaurant_slot_duration,
              active, plan_expires, plan_currency, phone_number_id, whatsapp_token_refresh_error`)
     .eq('id', req.tenant.tenantId)
     .single();
@@ -2142,6 +2143,157 @@ router.post('/redeem-promo', requireAuth, async (req, res) => {
     newPlanPrice:   updates.plan_price   ?? null,
     newPlanExpires: updates.plan_expires ?? null,
   });
+});
+
+// ─── Restaurant: zones ────────────────────────────────────────────────────────
+
+router.get('/restaurant/zones', requireAuth, async (req, res) => {
+  const { data, error } = await supabase.from('restaurant_zones')
+    .select('*').eq('tenant_id', req.tenant.tenantId).order('sort_order').order('id');
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data || []);
+});
+
+router.post('/restaurant/zones', requireAuth, async (req, res) => {
+  const { name, notes } = req.body;
+  if (!name?.trim()) return res.status(400).json({ error: 'Nombre requerido' });
+  const { data, error } = await supabase.from('restaurant_zones')
+    .insert({ tenant_id: req.tenant.tenantId, name: name.trim(), notes: notes?.trim() || null })
+    .select().single();
+  if (error) return res.status(500).json({ error: error.message });
+  invalidateRestaurant(req.tenant.tenantId);
+  res.json(data);
+});
+
+router.put('/restaurant/zones/:id', requireAuth, async (req, res) => {
+  const { name, notes, sort_order } = req.body;
+  const updates = {};
+  if (name?.trim()) updates.name = name.trim();
+  if (notes !== undefined) updates.notes = notes?.trim() || null;
+  if (sort_order !== undefined) updates.sort_order = Number(sort_order) || 0;
+  const { error } = await supabase.from('restaurant_zones')
+    .update(updates).eq('id', req.params.id).eq('tenant_id', req.tenant.tenantId);
+  if (error) return res.status(500).json({ error: error.message });
+  invalidateRestaurant(req.tenant.tenantId);
+  res.json({ ok: true });
+});
+
+router.delete('/restaurant/zones/:id', requireAuth, async (req, res) => {
+  const { error } = await supabase.from('restaurant_zones')
+    .delete().eq('id', req.params.id).eq('tenant_id', req.tenant.tenantId);
+  if (error) return res.status(500).json({ error: error.message });
+  invalidateRestaurant(req.tenant.tenantId);
+  res.json({ ok: true });
+});
+
+// ─── Restaurant: tables ───────────────────────────────────────────────────────
+
+router.get('/restaurant/tables', requireAuth, async (req, res) => {
+  const { data, error } = await supabase.from('restaurant_tables')
+    .select('*, restaurant_zones(name)').eq('tenant_id', req.tenant.tenantId)
+    .order('zone_id').order('capacity');
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data || []);
+});
+
+router.post('/restaurant/tables', requireAuth, async (req, res) => {
+  const { label, capacity, zone_id } = req.body;
+  if (!label?.trim() || !capacity) return res.status(400).json({ error: 'Etiqueta y capacidad requeridas' });
+  const { data, error } = await supabase.from('restaurant_tables')
+    .insert({ tenant_id: req.tenant.tenantId, label: label.trim(), capacity: parseInt(capacity), zone_id: zone_id || null })
+    .select().single();
+  if (error) return res.status(500).json({ error: error.message });
+  invalidateRestaurant(req.tenant.tenantId);
+  res.json(data);
+});
+
+router.put('/restaurant/tables/:id', requireAuth, async (req, res) => {
+  const { label, capacity, zone_id, is_active } = req.body;
+  const updates = {};
+  if (label?.trim()) updates.label = label.trim();
+  if (capacity) updates.capacity = parseInt(capacity);
+  if (zone_id !== undefined) updates.zone_id = zone_id || null;
+  if (is_active !== undefined) updates.is_active = Boolean(is_active);
+  const { error } = await supabase.from('restaurant_tables')
+    .update(updates).eq('id', req.params.id).eq('tenant_id', req.tenant.tenantId);
+  if (error) return res.status(500).json({ error: error.message });
+  invalidateRestaurant(req.tenant.tenantId);
+  res.json({ ok: true });
+});
+
+router.delete('/restaurant/tables/:id', requireAuth, async (req, res) => {
+  const { error } = await supabase.from('restaurant_tables')
+    .delete().eq('id', req.params.id).eq('tenant_id', req.tenant.tenantId);
+  if (error) return res.status(500).json({ error: error.message });
+  invalidateRestaurant(req.tenant.tenantId);
+  res.json({ ok: true });
+});
+
+// ─── Restaurant: reservations ─────────────────────────────────────────────────
+
+router.get('/restaurant/reservations', requireAuth, async (req, res) => {
+  const days = parseInt(req.query.days || '7');
+  const from = req.query.from || new Date().toISOString().slice(0, 10);
+  const to   = new Date(new Date(from).getTime() + days * 24 * 3600 * 1000).toISOString().slice(0, 10);
+  const { data, error } = await supabase.from('reservations')
+    .select('*, restaurant_zones(name), restaurant_tables(label, capacity)')
+    .eq('tenant_id', req.tenant.tenantId)
+    .gte('reserved_at', from)
+    .lte('reserved_at', to + 'T23:59:59')
+    .order('reserved_at');
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data || []);
+});
+
+router.post('/restaurant/reservations', requireAuth, async (req, res) => {
+  const { customer_name, customer_phone, party_size, reserved_at, duration_min, zone_id, table_id, notes } = req.body;
+  if (!customer_name?.trim() || !party_size || !reserved_at)
+    return res.status(400).json({ error: 'Nombre, personas y fecha requeridos' });
+  const { data, error } = await supabase.from('reservations')
+    .insert({
+      tenant_id: req.tenant.tenantId,
+      customer_name: customer_name.trim(),
+      customer_phone: customer_phone?.trim() || null,
+      party_size: parseInt(party_size),
+      reserved_at,
+      duration_min: parseInt(duration_min || 90),
+      zone_id: zone_id || null,
+      table_id: table_id || null,
+      notes: notes?.trim() || null,
+      status: 'confirmed',
+    }).select().single();
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
+router.put('/restaurant/reservations/:id', requireAuth, async (req, res) => {
+  const allowed = ['status', 'table_id', 'zone_id', 'notes', 'customer_name', 'customer_phone', 'party_size', 'reserved_at', 'duration_min'];
+  const updates = {};
+  for (const k of allowed) if (req.body[k] !== undefined) updates[k] = req.body[k];
+  if (!Object.keys(updates).length) return res.status(400).json({ error: 'Nada para actualizar' });
+  const { error } = await supabase.from('reservations')
+    .update(updates).eq('id', req.params.id).eq('tenant_id', req.tenant.tenantId);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ ok: true });
+});
+
+router.delete('/restaurant/reservations/:id', requireAuth, async (req, res) => {
+  const { error } = await supabase.from('reservations')
+    .update({ status: 'cancelled' }).eq('id', req.params.id).eq('tenant_id', req.tenant.tenantId);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ ok: true });
+});
+
+// ─── Restaurant: settings (enable/disable + slot duration) ───────────────────
+
+router.put('/restaurant/settings', requireAuth, async (req, res) => {
+  const { restaurant_enabled, restaurant_slot_duration } = req.body;
+  const updates = {};
+  if (restaurant_enabled !== undefined) updates.restaurant_enabled = Boolean(restaurant_enabled);
+  if (restaurant_slot_duration) updates.restaurant_slot_duration = parseInt(restaurant_slot_duration);
+  const { error } = await supabase.from('tenants').update(updates).eq('id', req.tenant.tenantId);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ ok: true });
 });
 
 module.exports = router;

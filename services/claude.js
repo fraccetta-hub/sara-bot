@@ -130,7 +130,30 @@ function matchOffer(offers, name, category, scopeProduct, scopeCategory, scopeAl
   ) || null;
 }
 
-function buildStaticSystemPrompt(tenant, stock, services = [], offers = []) {
+function buildRestaurantStaticBlock(zones, tables) {
+  if (!zones.length && !tables.length) return '';
+  const byZone = {};
+  for (const t of tables) {
+    const zName = t.restaurant_zones?.name || 'Sin zona';
+    (byZone[zName] = byZone[zName] || []).push(`${t.label} (${t.capacity}p)`);
+  }
+  const zonesStr = Object.entries(byZone)
+    .map(([z, ts]) => `• ${z}: ${ts.join(', ')}`)
+    .join('\n');
+  const maxSingle = tables.reduce((m, t) => Math.max(m, t.capacity), 0);
+  return `\nRESERVAS DE MESA — CAPACIDAD DEL LOCAL:
+${zonesStr}
+Mesa más grande: ${maxSingle} personas. Grupos de más de ${maxSingle} personas → no confirmés directamente, usá <RESERVATION:{"status":"pending_merchant",...}> y decile al cliente que el titular lo contactará para coordinar.
+
+CÓMO GESTIONAR RESERVAS:
+R1. Preguntá primero cuántas personas, luego fecha y hora, luego si prefiere alguna zona (si hay más de una).
+R2. Verificá disponibilidad en el bloque de reservas del contexto dinámico. Si hay mesa disponible → confirmá.
+R3. Si hay disponibilidad: respondé afirmativamente y emitís <RESERVATION:{"customer_name":"NOMBRE","party_size":N,"date":"YYYY-MM-DD","time":"HH:MM","zone_preference":"zona o null","notes":""}> al final de tu mensaje.
+R4. Si no hay mesa: proponé horarios alternativos del mismo día o el día siguiente.
+R5. Nunca digas en qué mesa específica está — eso lo gestiona el local.`;
+}
+
+function buildStaticSystemPrompt(tenant, stock, services = [], offers = [], restaurantZones = [], restaurantTables = []) {
   const botName = tenant.bot_name || 'Sara';
   const personality = tenant.bot_personality || 'cálida, profesional y entusiasta';
 
@@ -170,6 +193,10 @@ function buildStaticSystemPrompt(tenant, stock, services = [], offers = []) {
       }).join('\n')
     : null;
 
+  const restaurantBlock = tenant.restaurant_enabled
+    ? buildRestaurantStaticBlock(restaurantZones, restaurantTables)
+    : '';
+
   const addressBlock = tenant.address
     ? `\nDIRECCIÓN DEL LOCAL: ${tenant.address}`
     : '';
@@ -185,7 +212,7 @@ function buildStaticSystemPrompt(tenant, stock, services = [], offers = []) {
   const catalogBlock = [
     catalog        ? `PRODUCTOS:\n${catalog}`   : null,
     servicesCatalog ? `SERVICIOS:\n${servicesCatalog}` : null,
-  ].filter(Boolean).join('\n\n') || '(Sin catálogo disponible — consultá con el local)';
+  ].filter(Boolean).join('\n\n') || (tenant.restaurant_enabled ? '(Local de restauración — sin catálogo de productos)' : '(Sin catálogo disponible — consultá con el local)');
 
   return `Sos ${botName}, la asistente de ${tenant.name}.
 
@@ -207,6 +234,7 @@ ESTILO WHATSAPP — REGLAS DE ORO:
 • Emojis: 0 o 1 por mensaje, solo donde los usaría una persona real. Nunca al inicio de respuesta.
 
 ${catalogBlock}
+${restaurantBlock}
 ${addressBlock}
 ${paymentBlock}
 ${customBlock}
@@ -237,7 +265,23 @@ REGLAS OPERATIVAS:
 
 // Per-conversation dynamic content — varies message to message (delivery state,
 // appointment slot availability, customer context). Kept out of the cached block on purpose.
-function buildDynamicSystemPrompt(tenant, convState = {}, appointmentSlots = null, customerContext = null, closures = [], businessHours = [], isFirstMessage = false, customerNotes = null) {
+function buildReservationsBlock(reservations, slotDuration) {
+  if (!reservations.length) return '\nRESERVAS PRÓXIMOS 7 DÍAS: ninguna todavía.';
+  const lines = reservations.map(r => {
+    const dt = new Date(r.reserved_at);
+    const dateStr = dt.toLocaleDateString('es', { weekday: 'short', day: 'numeric', month: 'short' });
+    const timeStr = dt.toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' });
+    const endDt = new Date(dt.getTime() + (r.duration_min || slotDuration) * 60000);
+    const endStr = endDt.toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' });
+    const zone = r.restaurant_zones?.name || '';
+    const table = r.restaurant_tables?.label || '';
+    const where = [table, zone].filter(Boolean).join(' / ');
+    return `• ${dateStr} ${timeStr}–${endStr} | ${r.customer_name} | ${r.party_size}p${where ? ` | ${where}` : ''}${r.status === 'pending_merchant' ? ' ⏳ pendiente titular' : ''}`;
+  });
+  return `\nRESERVAS PRÓXIMOS 7 DÍAS:\n${lines.join('\n')}\n(Duración estándar: ${slotDuration} min. Verificá solapamiento antes de confirmar una reserva nueva.)`;
+}
+
+function buildDynamicSystemPrompt(tenant, convState = {}, appointmentSlots = null, customerContext = null, closures = [], businessHours = [], isFirstMessage = false, customerNotes = null, upcomingReservations = null) {
   // ── Delivery block ──────────────────────────────────────────────────────────
   let deliveryBlock = '';
   if (tenant.delivery_enabled) {
@@ -380,12 +424,16 @@ A8. Después de emitir la reserva, informá al cliente que el local confirmará 
     ? `\nPRIMER MENSAJE DEL CLIENTE: es la primera vez que escribe. Presentate brevemente (tu nombre y el nombre del local) y preguntá en qué podés ayudar. Sé cálida pero muy concisa — máximo 2 líneas.`
     : '';
 
-  return `${deliveryBlock}\n${appointmentsBlock}\n${closuresBlock}\n${hoursBlock}\n${firstMsgBlock}\n${customerBlock}\n${dateBlock}`.trim();
+  const reservationsBlock = (tenant.restaurant_enabled && upcomingReservations !== null)
+    ? buildReservationsBlock(upcomingReservations, tenant.restaurant_slot_duration || 90)
+    : '';
+
+  return `${deliveryBlock}\n${appointmentsBlock}\n${reservationsBlock}\n${closuresBlock}\n${hoursBlock}\n${firstMsgBlock}\n${customerBlock}\n${dateBlock}`.trim();
 }
 
-async function chat({ tenant, stock, services, history, userMessage, convState, imageData, appointmentSlots, customerContext, closures, offers, businessHours, isFirstMessage, customerNotes }) {
-  const staticPrompt  = buildStaticSystemPrompt(tenant, stock, services || [], offers || []);
-  const dynamicPrompt = buildDynamicSystemPrompt(tenant, convState || {}, appointmentSlots || null, customerContext || null, closures || [], businessHours || [], isFirstMessage || false, customerNotes || null);
+async function chat({ tenant, stock, services, history, userMessage, convState, imageData, appointmentSlots, customerContext, closures, offers, businessHours, isFirstMessage, customerNotes, restaurantZones, restaurantTables, upcomingReservations }) {
+  const staticPrompt  = buildStaticSystemPrompt(tenant, stock, services || [], offers || [], restaurantZones || [], restaurantTables || []);
+  const dynamicPrompt = buildDynamicSystemPrompt(tenant, convState || {}, appointmentSlots || null, customerContext || null, closures || [], businessHours || [], isFirstMessage || false, customerNotes || null, upcomingReservations || null);
 
   // Static catalog/rules block is cached (only changes when the merchant edits
   // products/config) — avoids re-billing it at full price on every message.
@@ -498,6 +546,18 @@ async function chat({ tenant, stock, services, history, userMessage, convState, 
     cleanReply = cleanReply.replace(/<APPOINTMENT:\{[\s\S]*?\}>/, '').trim();
   }
 
+  // Extract RESERVATION tag
+  let reservationRequest = null;
+  const resvMatch = cleanReply.match(/<RESERVATION:(\{[\s\S]*?\})>/);
+  if (resvMatch) {
+    try {
+      reservationRequest = JSON.parse(resvMatch[1]);
+    } catch(e) {
+      console.error('Failed to parse RESERVATION JSON:', e.message);
+    }
+    cleanReply = cleanReply.replace(/<RESERVATION:\{[\s\S]*?\}>/, '').trim();
+  }
+
   // Store a text-only representation in history (avoids saving large base64 in Supabase)
   const historyEntry = imageData
     ? `[foto enviada por el cliente] ${userMessage || ''}`.trim()
@@ -509,7 +569,7 @@ async function chat({ tenant, stock, services, history, userMessage, convState, 
     { role: 'assistant', content: rawReply }
   ].slice(-MAX_HISTORY);
 
-  return { reply: cleanReply, order, imageProductName, customerName, deliveryChoice, deliveryAddress, offTopic, updatedHistory, appointmentRequest, waitlistProduct };
+  return { reply: cleanReply, order, imageProductName, customerName, deliveryChoice, deliveryAddress, offTopic, updatedHistory, appointmentRequest, waitlistProduct, reservationRequest };
 }
 
 module.exports = { chat };
