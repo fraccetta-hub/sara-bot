@@ -864,7 +864,11 @@ async function loadPromos() {
   try {
     const list = await api('/superadmin/promo-codes');
     renderPromos(list);
-  } catch(e) { console.error('[promos]', e.message); }
+  } catch(e) {
+    console.error('[promos]', e.message);
+    const tbody = document.getElementById('promosTable');
+    if (tbody) tbody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-red-400 text-xs">⚠️ ${escHtml(e.message || 'Error')}${e.status ? ' ('+e.status+')' : ''}</td></tr>`;
+  }
 }
 
 function renderPromos(list) {

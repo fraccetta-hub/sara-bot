@@ -805,6 +805,14 @@ ALTER TABLE tenants
   ADD COLUMN IF NOT EXISTS subscription_cancel_at_period_end BOOLEAN DEFAULT false;
 ```
 
+## COSA È STATO FATTO (sessione 2026-06-20 — fix promo codes superadmin)
+
+### Bug: codici sconto superadmin non funzionavano
+- `GET /superadmin/promo-codes` usava embed `select('*, promo_redemptions(tenant_id)')` → richiede FK `promo_redemptions.promo_code_id → promo_codes`, assente se la tabella è stata creata a mano → 500 → `loadPromos()` ingoiava l'errore → tabella bloccata su "Cargando" (stesso pattern di support)
+- Il render (`renderPromos`) non usa nemmeno i dati di `promo_redemptions` → embed inutile
+- Fix: `routes/superadmin.js` GET promo-codes → `.select('*')` (rimosso embed); `loadPromos` ora mostra l'errore reale nell'UI invece di "Cargando" muto
+- NB: lo stesso fix escHtml (commit 56e8bc5) era prerequisito — `renderPromos` usa `escHtml`, prima lanciava ReferenceError
+
 ## COSA È STATO FATTO (sessione 2026-06-20 — fix superadmin support chat "cargando")
 
 ### ✅ CAUSA REALE (commit 56e8bc5): `escHtml` non definito in superadmin/index.html — RISOLTO E CONFERMATO FUNZIONANTE

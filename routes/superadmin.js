@@ -534,9 +534,12 @@ router.post('/support/:tenantId', requireSuper, async (req, res) => {
 // ─── GET /superadmin/promo-codes ─────────────────────────────────────────────
 
 router.get('/promo-codes', requireSuper, async (req, res) => {
+  // No embed: promo_redemptions(tenant_id) needs a declared FK that may be
+  // absent in prod (manual table) → would 500. The UI uses uses_count, not the
+  // redemption rows, so the embed is unnecessary.
   const { data, error } = await supabase
     .from('promo_codes')
-    .select('*, promo_redemptions(tenant_id)')
+    .select('*')
     .order('created_at', { ascending: false });
   if (error) return res.status(500).json({ error: error.message });
   res.json(data || []);
