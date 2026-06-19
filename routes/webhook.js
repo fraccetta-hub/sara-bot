@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { createClient } = require('@supabase/supabase-js');
-const { getTenantConfig, getStock, decrementStock, getServices, getBusinessClosures, invalidateStock, invalidateServices, invalidateClosures } = require('../services/stock');
+const { getTenantConfig, getStock, decrementStock, getServices, getOffers, getBusinessClosures, invalidateStock, invalidateServices, invalidateClosures, invalidateOffers } = require('../services/stock');
 const { sendMessage, sendImage, notifyMerchant } = require('../services/whatsapp');
 const { chat } = require('../services/claude');
 const { downloadAndStore, uploadImageBuffer } = require('../services/storage');
@@ -246,6 +246,10 @@ const MT = {
   closure_added:    { es:(s,e,l)=>`🏖️ Cierre registrado${l}:\n📅 ${s} → ${e}`, it:(s,e,l)=>`🏖️ Chiusura registrata${l}:\n📅 ${s} → ${e}`, en:(s,e,l)=>`🏖️ Closure saved${l}:\n📅 ${s} → ${e}`, fr:(s,e,l)=>`🏖️ Fermeture enregistrée${l}:\n📅 ${s} → ${e}`, de:(s,e,l)=>`🏖️ Schließung gespeichert${l}:\n📅 ${s} → ${e}`, pt:(s,e,l)=>`🏖️ Encerramento registrado${l}:\n📅 ${s} → ${e}` },
   closure_removed:  { es:(l)=>`✅ Cierre eliminado: ${l}`, it:(l)=>`✅ Chiusura eliminata: ${l}`, en:(l)=>`✅ Closure removed: ${l}`, fr:(l)=>`✅ Fermeture supprimée: ${l}`, de:(l)=>`✅ Schließung entfernt: ${l}`, pt:(l)=>`✅ Encerramento removido: ${l}` },
   closure_not_found:{ es:()=>`⚠️ No encontré ese cierre.`, it:()=>`⚠️ Chiusura non trovata.`, en:()=>`⚠️ Closure not found.`, fr:()=>`⚠️ Fermeture introuvable.`, de:()=>`⚠️ Schließung nicht gefunden.`, pt:()=>`⚠️ Encerramento não encontrado.` },
+  offer_missing:    { es:()=>`Necesito: nombre de la oferta, tipo de descuento (% o monto fijo), valor y alcance (todos los productos, categoría, producto específico...).`, it:()=>`Ho bisogno di: nome offerta, tipo sconto (% o fisso), valore e ambito (tutti i prodotti, categoria, prodotto specifico...).`, en:()=>`I need: offer name, discount type (% or fixed), value, and scope (all products, category, specific product...).`, fr:()=>`J'ai besoin du nom, type de remise (% ou fixe), valeur et portée (tous les produits, catégorie, produit...).`, de:()=>`Ich brauche: Name, Rabatttyp (% oder fest), Wert und Bereich (alle Produkte, Kategorie, Produkt...).`, pt:()=>`Preciso de: nome da oferta, tipo de desconto (% ou fixo), valor e âmbito (todos os produtos, categoria, produto...).` },
+  offer_added:      { es:(l,d,s,dt)=>`🏷️ Oferta creada: *${l}* — ${d} de descuento${s}${dt}`, it:(l,d,s,dt)=>`🏷️ Offerta creata: *${l}* — ${d} di sconto${s}${dt}`, en:(l,d,s,dt)=>`🏷️ Offer created: *${l}* — ${d} off${s}${dt}`, fr:(l,d,s,dt)=>`🏷️ Offre créée: *${l}* — ${d} de remise${s}${dt}`, de:(l,d,s,dt)=>`🏷️ Angebot erstellt: *${l}* — ${d} Rabatt${s}${dt}`, pt:(l,d,s,dt)=>`🏷️ Oferta criada: *${l}* — ${d} de desconto${s}${dt}` },
+  offer_removed:    { es:(l)=>`✅ Oferta "${l}" eliminada.`, it:(l)=>`✅ Offerta "${l}" eliminata.`, en:(l)=>`✅ Offer "${l}" removed.`, fr:(l)=>`✅ Offre "${l}" supprimée.`, de:(l)=>`✅ Angebot "${l}" entfernt.`, pt:(l)=>`✅ Oferta "${l}" removida.` },
+  offer_not_found:  { es:()=>`⚠️ No encontré esa oferta.`, it:()=>`⚠️ Offerta non trovata.`, en:()=>`⚠️ Offer not found.`, fr:()=>`⚠️ Offre introuvable.`, de:()=>`⚠️ Angebot nicht gefunden.`, pt:()=>`⚠️ Oferta não encontrada.` },
   svc_list_header:  { es:(n)=>`💼 *${n} servicios:*`, it:(n)=>`💼 *${n} servizi:*`, en:(n)=>`💼 *${n} services:*`, fr:(n)=>`💼 *${n} services:*`, de:(n)=>`💼 *${n} Dienstleistungen:*`, pt:(n)=>`💼 *${n} serviços:*` },
   svc_none:         { es:()=>`💼 No tenés servicios cargados.`, it:()=>`💼 Nessun servizio configurato.`, en:()=>`💼 No services configured.`, fr:()=>`💼 Aucun service configuré.`, de:()=>`💼 Keine Dienstleistungen konfiguriert.`, pt:()=>`💼 Nenhum serviço configurado.` },
   svc_added:        { es:n=>`✅ Servicio *${n}* agregado.`, it:n=>`✅ Servizio *${n}* aggiunto.`, en:n=>`✅ Service *${n}* added.`, fr:n=>`✅ Service *${n}* ajouté.`, de:n=>`✅ Dienstleistung *${n}* hinzugefügt.`, pt:n=>`✅ Serviço *${n}* adicionado.` },
@@ -295,6 +299,7 @@ get_orders, confirm_order, cancel_order, update_order_status, chat_takeover, nam
 get_appointments, add_appointment, cancel_appointment, reschedule_appointment,
 block_time, unblock_time,
 create_closure, delete_closure,
+create_offer, delete_offer,
 get_services, update_service, add_service,
 unknown.
 
@@ -317,6 +322,8 @@ block_time: {"start_at":"ISO","end_at":"ISO","reason":null}
 unblock_time: {"start_at":"ISO or null","reason_query":null}
 create_closure: {"start_date":"YYYY-MM-DD","end_date":"YYYY-MM-DD","label":"..."} — multi-day business closure (ferie, vacanze, festività). Use when merchant says "siamo chiusi dal X al Y", "ferie agosto", "vacaciones semana santa"
 delete_closure: {"label_query":"...","start_date":"YYYY-MM-DD or null"} — remove a business closure by label or date
+create_offer: {"label":"...","discount_type":"percent|fixed","discount_value":N,"scope":"all_products|category|product|all_services|service_category|service","scope_target":"category or product name or null","valid_from":"YYYY-MM-DD or null","valid_to":"YYYY-MM-DD or null"} — discount offer. Use when merchant says "20% su tutte le rose", "sconto 5000 Gs su massaggi", "offerta weekend su tutte le torte"
+delete_offer: {"label_query":"..."} — remove an offer by label
 update_service: {"updates":{"price_guarani":null,"duration_min":null,"is_available":null,"name":null,"category":null,"description":null}}
 add_service: {"name":"...","category":null,"price":0,"duration_min":null,"price_type":"fixed"}
 
@@ -890,6 +897,39 @@ async function handleMerchantMessage(tenant, messageText, phoneNumberId, token) 
     return;
   }
 
+  if (intent.action === 'create_offer') {
+    const { label, discount_type, discount_value, scope, scope_target, valid_from, valid_to } = intent.params || {};
+    if (!label || !discount_type || discount_value == null || !scope) {
+      await sendMessage(tenant.merchant_phone, mt(lang, 'offer_missing'), phoneNumberId, token);
+      return;
+    }
+    await supabase.from('offers').insert({
+      tenant_id: tenant.id, label, discount_type,
+      discount_value: parseFloat(discount_value),
+      scope, scope_target: scope_target || null,
+      valid_from: valid_from || null, valid_to: valid_to || null,
+      is_active: true,
+    });
+    invalidateOffers(tenant.id);
+    const scopeStr = scope_target ? ` (${scope_target})` : '';
+    const discStr = discount_type === 'percent' ? `${discount_value}%` : `${discount_value}`;
+    const dateStr = valid_to ? ` → hasta ${valid_to}` : '';
+    await sendMessage(tenant.merchant_phone, mt(lang, 'offer_added', label, discStr, scopeStr, dateStr), phoneNumberId, token);
+    return;
+  }
+
+  if (intent.action === 'delete_offer') {
+    const { label_query } = intent.params || {};
+    let q = supabase.from('offers').select('id,label').eq('tenant_id', tenant.id);
+    if (label_query) q = q.ilike('label', `%${label_query}%`);
+    const { data: found } = await q.limit(1);
+    if (!found?.length) { await sendMessage(tenant.merchant_phone, mt(lang, 'offer_not_found'), phoneNumberId, token); return; }
+    await supabase.from('offers').delete().eq('id', found[0].id);
+    invalidateOffers(tenant.id);
+    await sendMessage(tenant.merchant_phone, mt(lang, 'offer_removed', found[0].label), phoneNumberId, token);
+    return;
+  }
+
   // ── Services ──────────────────────────────────────────────────────────────
   if (intent.action === 'get_services') {
     if (!allServices.length) { await sendMessage(tenant.merchant_phone, mt(lang, 'svc_none'), phoneNumberId, token); return; }
@@ -1208,10 +1248,11 @@ async function handleCustomerMessage(tenant, customerPhone, messageText, locatio
       return { role: msg.role, content: typeof content === 'string' ? content : String(content) };
     });
   // ── Customer context: active order + past orders ────────────────────────────
-  const [stock, services, closures, activeOrderRes, pastOrdersRes] = await Promise.all([
+  const [stock, services, closures, offers, activeOrderRes, pastOrdersRes] = await Promise.all([
     getStock(tenant.id),
     getServices(tenant.id),
     getBusinessClosures(tenant.id),
+    getOffers(tenant.id),
     supabase.from('orders')
       .select('id,status,items_json,total_guarani,created_at')
       .eq('tenant_id', tenant.id)
@@ -1350,6 +1391,7 @@ async function handleCustomerMessage(tenant, customerPhone, messageText, locatio
     appointmentSlots,
     customerContext,
     closures,
+    offers,
   });
 
   if (offTopic) {

@@ -92,29 +92,56 @@ function getNearbyOccasion(country) {
 // Static per-tenant content — identical across consecutive messages in the same
 // conversation (only changes when the merchant edits catalog/config). Cached via
 // Anthropic prompt caching so it isn't re-billed at full price on every message.
-function buildStaticSystemPrompt(tenant, stock, services = []) {
+function applyOffer(price, offer) {
+  if (offer.discount_type === 'percent') return Math.round(price * (1 - offer.discount_value / 100));
+  return Math.max(0, price - offer.discount_value);
+}
+
+function matchOffer(offers, name, category, scopeProduct, scopeCategory, scopeAll) {
+  return offers.find(o =>
+    o.scope === scopeAll ||
+    (o.scope === scopeCategory && o.scope_target?.toLowerCase() === (category || '').toLowerCase()) ||
+    (o.scope === scopeProduct  && o.scope_target?.toLowerCase() === (name || '').toLowerCase())
+  ) || null;
+}
+
+function buildStaticSystemPrompt(tenant, stock, services = [], offers = []) {
   const botName = tenant.bot_name || 'Sara';
   const personality = tenant.bot_personality || 'cálida, profesional y entusiasta';
 
   const currency = tenant.plan_currency || 'PYG';
+  const today = new Date().toISOString().slice(0, 10);
+  const activeOffers = offers.filter(o =>
+    (!o.valid_from || o.valid_from <= today) && (!o.valid_to || o.valid_to >= today)
+  );
+
   const catalog = (tenant.products_enabled !== false && stock.length)
-    ? stock.map(p =>
-        `• ${p.name}${p.sku ? ` [SKU:${p.sku}]` : ''} [${p.category}] — ${formatPrice(p.price_guarani, currency)}` +
-        (p.stock_qty === null ? '' : p.stock_qty > 0 ? ` (${p.stock_qty} disponibles)` : ' (AGOTADO)') +
-        (p.description ? ` — ${p.description}` : '') +
-        (p.image_url ? ' [tiene foto]' : '')
-      ).join('\n')
+    ? stock.map(p => {
+        const offer = matchOffer(activeOffers, p.name, p.category, 'product', 'category', 'all_products');
+        const price = offer ? applyOffer(p.price_guarani, currency === 'PYG' ? p.price_guarani : p.price_guarani) : p.price_guarani;
+        const priceStr = formatPrice(offer ? applyOffer(p.price_guarani, offer) : p.price_guarani, currency);
+        const offerNote = offer ? ` 🏷️ ${offer.label} (precio original: ${formatPrice(p.price_guarani, currency)})` : '';
+        return `• ${p.name}${p.sku ? ` [SKU:${p.sku}]` : ''} [${p.category}] — ${priceStr}` +
+          (p.stock_qty === null ? '' : p.stock_qty > 0 ? ` (${p.stock_qty} disponibles)` : ' (AGOTADO)') +
+          (p.description ? ` — ${p.description}` : '') +
+          (p.image_url ? ' [tiene foto]' : '') +
+          offerNote;
+      }).join('\n')
     : null;
 
   const servicesCatalog = (tenant.services_enabled && services.length)
     ? services.map(s => {
+        const offer = matchOffer(activeOffers, s.name, s.category, 'service', 'service_category', 'all_services');
+        const basePrice = offer ? applyOffer(s.price_guarani, offer) : s.price_guarani;
         const price = s.price_type === 'hourly'
-          ? `${formatPrice(s.price_guarani, currency)}/hora`
-          : formatPrice(s.price_guarani, currency);
+          ? `${formatPrice(basePrice, currency)}/hora`
+          : formatPrice(basePrice, currency);
+        const offerNote = offer ? ` 🏷️ ${offer.label} (precio original: ${formatPrice(s.price_guarani, currency)})` : '';
         const dur = s.duration_min ? ` (${s.duration_min} min)` : '';
         return `• ${s.name} [${s.category || 'Servicio'}] — ${price}${dur}` +
           (s.description ? ` — ${s.description}` : '') +
-          (s.image_url ? ' [tiene foto]' : '');
+          (s.image_url ? ' [tiene foto]' : '') +
+          offerNote;
       }).join('\n')
     : null;
 
@@ -308,8 +335,8 @@ A8. Después de emitir la reserva, informá al cliente que el local confirmará 
   return `${deliveryBlock}\n${appointmentsBlock}\n${closuresBlock}\n${customerBlock}\n${dateBlock}`.trim();
 }
 
-async function chat({ tenant, stock, services, history, userMessage, convState, imageData, appointmentSlots, customerContext, closures }) {
-  const staticPrompt  = buildStaticSystemPrompt(tenant, stock, services || []);
+async function chat({ tenant, stock, services, history, userMessage, convState, imageData, appointmentSlots, customerContext, closures, offers }) {
+  const staticPrompt  = buildStaticSystemPrompt(tenant, stock, services || [], offers || []);
   const dynamicPrompt = buildDynamicSystemPrompt(tenant, convState || {}, appointmentSlots || null, customerContext || null, closures || []);
 
   // Static catalog/rules block is cached (only changes when the merchant edits

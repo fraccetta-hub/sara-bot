@@ -93,6 +93,26 @@ async function getServices(tenantId) {
   return result;
 }
 
+async function getOffers(tenantId) {
+  const key = `offers:${tenantId}`;
+  const hit = cacheGet(key);
+  if (hit) return hit;
+
+  const today = new Date().toISOString().slice(0, 10);
+  const { data, error } = await supabase
+    .from('offers')
+    .select('*')
+    .eq('tenant_id', tenantId)
+    .eq('is_active', true)
+    .or(`valid_to.is.null,valid_to.gte.${today}`)
+    .order('created_at');
+
+  if (error) { console.error('getOffers error:', error.message); return []; }
+  const result = data || [];
+  cacheSet(key, result);
+  return result;
+}
+
 async function getBusinessClosures(tenantId) {
   const key = `closures:${tenantId}`;
   const hit = cacheGet(key);
@@ -116,5 +136,6 @@ function invalidateStock(tenantId) { cache.delete(`stock:${tenantId}`); }
 function invalidateServices(tenantId) { cache.delete(`services:${tenantId}`); }
 function invalidateTenant(phoneNumberId) { cache.delete(`tenant:${phoneNumberId}`); }
 function invalidateClosures(tenantId) { cache.delete(`closures:${tenantId}`); }
+function invalidateOffers(tenantId) { cache.delete(`offers:${tenantId}`); }
 
-module.exports = { getTenantConfig, getStock, decrementStock, getServices, getBusinessClosures, invalidateStock, invalidateServices, invalidateTenant, invalidateClosures };
+module.exports = { getTenantConfig, getStock, decrementStock, getServices, getOffers, getBusinessClosures, invalidateStock, invalidateServices, invalidateTenant, invalidateClosures, invalidateOffers };

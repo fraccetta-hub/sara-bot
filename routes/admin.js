@@ -11,7 +11,7 @@ const { sendMessage, sendImage } = require('../services/whatsapp');
 const crypto = require('crypto');
 const AdmZip = require('adm-zip');
 const { sendPasswordReset } = require('../services/mailer');
-const { invalidateClosures } = require('../services/stock');
+const { invalidateClosures, invalidateOffers } = require('../services/stock');
 const { rateLimit } = require('express-rate-limit');
 
 const forgotPasswordLimiter = rateLimit({
@@ -1193,6 +1193,42 @@ router.put('/business-hours', requireAuth, async (req, res) => {
   const { error } = await supabase.from('business_hours')
     .upsert(rows, { onConflict: 'tenant_id,day_of_week' });
   if (error) return res.status(500).json({ error: error.message });
+  res.json({ ok: true });
+});
+
+// ─── GET /admin/offers ────────────────────────────────────────────────────────
+router.get('/offers', requireAuth, async (req, res) => {
+  const { data, error } = await supabase.from('offers').select('*')
+    .eq('tenant_id', req.tenant.tenantId).order('created_at');
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
+router.post('/offers', requireAuth, async (req, res) => {
+  const { label, discount_type, discount_value, scope, scope_target, valid_from, valid_to } = req.body;
+  if (!label || !discount_type || discount_value == null || !scope)
+    return res.status(400).json({ error: 'label, discount_type, discount_value, scope required' });
+  if (!['percent','fixed'].includes(discount_type))
+    return res.status(400).json({ error: 'discount_type must be percent or fixed' });
+  if (!['all_products','category','product','all_services','service_category','service'].includes(scope))
+    return res.status(400).json({ error: 'invalid scope' });
+  const { data, error } = await supabase.from('offers').insert({
+    tenant_id: req.tenant.tenantId, label, discount_type,
+    discount_value: parseFloat(discount_value),
+    scope, scope_target: scope_target || null,
+    valid_from: valid_from || null, valid_to: valid_to || null,
+    is_active: true,
+  }).select().single();
+  if (error) return res.status(500).json({ error: error.message });
+  invalidateOffers(req.tenant.tenantId);
+  res.json(data);
+});
+
+router.delete('/offers/:id', requireAuth, async (req, res) => {
+  const { error } = await supabase.from('offers').delete()
+    .eq('id', req.params.id).eq('tenant_id', req.tenant.tenantId);
+  if (error) return res.status(500).json({ error: error.message });
+  invalidateOffers(req.tenant.tenantId);
   res.json({ ok: true });
 });
 

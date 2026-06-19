@@ -888,6 +888,40 @@
         <button onclick="saveBusinessHours()" class="btn-green w-full py-2 rounded-lg text-sm font-semibold mt-4">Guardar horarios</button>
       </div>
 
+      <!-- Offers -->
+      <div class="bg-white rounded-xl shadow-sm p-6">
+        <h3 data-i18n="settings.offers.title" class="font-medium text-gray-800 mb-1">🏷️ Ofertas y Descuentos</h3>
+        <p data-i18n="settings.offers.desc" class="text-xs text-gray-400 mb-4">Sara menciona los precios con descuento automáticamente en la conversación.</p>
+        <div id="offersList" class="space-y-2 mb-4"></div>
+        <div class="grid grid-cols-1 gap-2">
+          <input id="offerLabel" type="text" data-i18n-placeholder="settings.offers.label_ph" placeholder="Nombre de la oferta" class="border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
+          <div class="flex gap-2">
+            <select id="offerType" class="border border-gray-200 rounded-lg px-3 py-2 text-sm">
+              <option value="percent" data-i18n="settings.offers.percent">% descuento</option>
+              <option value="fixed" data-i18n="settings.offers.fixed">Monto fijo</option>
+            </select>
+            <input id="offerValue" type="number" min="0" placeholder="20" class="border border-gray-200 rounded-lg px-3 py-2 text-sm w-24"/>
+          </div>
+          <div class="flex gap-2">
+            <select id="offerScope" onchange="updateOfferScopeTarget()" class="border border-gray-200 rounded-lg px-3 py-2 text-sm flex-1">
+              <option value="all_products" data-i18n="settings.offers.scope_all_p">Todos los productos</option>
+              <option value="category" data-i18n="settings.offers.scope_cat">Categoría de producto</option>
+              <option value="product" data-i18n="settings.offers.scope_prod">Producto específico</option>
+              <option value="all_services" data-i18n="settings.offers.scope_all_s">Todos los servicios</option>
+              <option value="service_category" data-i18n="settings.offers.scope_scat">Categoría de servicio</option>
+              <option value="service" data-i18n="settings.offers.scope_svc">Servicio específico</option>
+            </select>
+            <input id="offerTarget" type="text" placeholder="Nombre…" class="border border-gray-200 rounded-lg px-3 py-2 text-sm flex-1 hidden"/>
+          </div>
+          <div class="flex gap-2">
+            <input id="offerFrom" type="date" class="border border-gray-200 rounded-lg px-3 py-2 text-sm flex-1"/>
+            <input id="offerTo" type="date" class="border border-gray-200 rounded-lg px-3 py-2 text-sm flex-1"/>
+          </div>
+          <button onclick="addOffer()" class="btn-green py-2 rounded-lg text-sm font-semibold" data-i18n="settings.offers.add">Agregar oferta</button>
+        </div>
+        <div id="offerMsg" class="hidden rounded-lg px-4 py-2 text-sm mt-3"></div>
+      </div>
+
       <!-- Business closures -->
       <div class="bg-white rounded-xl shadow-sm p-6">
         <h3 data-i18n="settings.closures.title" class="font-medium text-gray-800 mb-1">🏖️ Cierres y Vacaciones</h3>
@@ -3268,7 +3302,8 @@ async function loadSettings() {
     const bh = await api('/admin/business-hours').catch(() => []);
     renderBusinessHoursForm(bh);
 
-    // Load closures
+    // Load offers and closures
+    loadOffers();
     loadClosures();
   } catch (e) { /* ignore */ }
 }
@@ -4713,6 +4748,60 @@ function renderBusinessHoursForm(data) {
 function toggleBhDay(i) {
   const closed = document.getElementById(`bhClosed_${i}`).checked;
   document.getElementById(`bhTimes_${i}`).classList.toggle('hidden', closed);
+}
+
+function updateOfferScopeTarget() {
+  const scope = document.getElementById('offerScope').value;
+  const needsTarget = ['category','product','service_category','service'].includes(scope);
+  document.getElementById('offerTarget').classList.toggle('hidden', !needsTarget);
+}
+
+async function loadOffers() {
+  const list = document.getElementById('offersList');
+  if (!list) return;
+  try {
+    const data = await api('/admin/offers');
+    if (!data.length) { list.innerHTML = `<p class="text-xs text-gray-400">${t('settings.offers.none')}</p>`; return; }
+    list.innerHTML = data.map(o => {
+      const disc = o.discount_type === 'percent' ? `${o.discount_value}%` : o.discount_value;
+      const scope = o.scope_target ? ` — ${o.scope_target}` : '';
+      const dates = (o.valid_from || o.valid_to) ? ` <span class="text-gray-400 text-xs">${o.valid_from || ''}→${o.valid_to || ''}</span>` : '';
+      return `<div class="flex items-center justify-between gap-2 bg-amber-50 rounded-lg px-3 py-2 text-sm">
+        <span>🏷️ <b>${o.label}</b> <span class="text-amber-700">${disc} off</span>${scope}${dates}</span>
+        <button onclick="deleteOffer(${o.id})" class="text-red-400 hover:text-red-600 text-xs font-medium">✕</button>
+      </div>`;
+    }).join('');
+  } catch(e) { list.innerHTML = ''; }
+}
+
+async function addOffer() {
+  const label = document.getElementById('offerLabel').value.trim();
+  const discount_type = document.getElementById('offerType').value;
+  const discount_value = parseFloat(document.getElementById('offerValue').value);
+  const scope = document.getElementById('offerScope').value;
+  const scope_target = document.getElementById('offerTarget').value.trim() || null;
+  const valid_from = document.getElementById('offerFrom').value || null;
+  const valid_to   = document.getElementById('offerTo').value   || null;
+  const msg = document.getElementById('offerMsg');
+  if (!label || isNaN(discount_value)) {
+    msg.textContent = t('settings.offers.err_fields');
+    msg.className = 'rounded-lg px-4 py-2 text-sm mt-3 bg-red-50 text-red-700';
+    msg.classList.remove('hidden'); return;
+  }
+  try {
+    await api('/admin/offers', 'POST', { label, discount_type, discount_value, scope, scope_target, valid_from, valid_to });
+    ['offerLabel','offerValue','offerTarget','offerFrom','offerTo'].forEach(id => document.getElementById(id).value = '');
+    msg.textContent = t('settings.offers.saved');
+    msg.className = 'rounded-lg px-4 py-2 text-sm mt-3 bg-green-50 text-green-700';
+    msg.classList.remove('hidden');
+    setTimeout(() => msg.classList.add('hidden'), 3000);
+    loadOffers();
+  } catch(e) { msg.textContent = errMsg(e); msg.className = 'rounded-lg px-4 py-2 text-sm mt-3 bg-red-50 text-red-700'; msg.classList.remove('hidden'); }
+}
+
+async function deleteOffer(id) {
+  try { await api(`/admin/offers/${id}`, 'DELETE'); loadOffers(); }
+  catch(e) { console.error('deleteOffer', e); }
 }
 
 async function loadClosures() {
