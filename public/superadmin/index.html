@@ -302,8 +302,8 @@
         <p id="eInfoPhone" class="text-gray-400 font-mono text-xs mt-1 break-all"></p>
       </div>
       <div class="border-t border-gray-100 pt-3">
-        <p class="text-xs text-gray-400 mb-1.5">Secciones activas</p>
-        <div id="eInfoSections" class="flex gap-2 flex-wrap"></div>
+        <p class="text-xs text-gray-400 mb-1.5">Suscripción</p>
+        <div id="eInfoSections"></div>
       </div>
       <div class="border-t border-gray-100 pt-3 grid grid-cols-2 gap-3">
         <div>
@@ -641,15 +641,13 @@ async function openEditModal(id) {
     metaEl.innerHTML = '<span class="text-blue-500">🔵 Usa token global</span>';
   }
 
-  const sections = [
-    { key: 'products_enabled',     label: '📦 Productos' },
-    { key: 'services_enabled',     label: '🛠 Servicios' },
-    { key: 'appointments_enabled', label: '📅 Turnos' },
-    { key: 'restaurant_enabled',   label: '🍽️ Restaurante' },
-  ];
-  document.getElementById('eInfoSections').innerHTML = sections.map(s =>
-    `<span class="px-2 py-1 rounded-full text-xs font-medium ${t[s.key] ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-400'}">${s.label}</span>`
-  ).join('');
+  let planName = '—';
+  if (t.restaurant_enabled)                                                        planName = '🍽️ Restaurant';
+  else if (t.products_enabled && t.services_enabled && t.appointments_enabled)    planName = '⭐ Pro';
+  else if (t.services_enabled && t.appointments_enabled)                           planName = '📅 Bookings';
+  else if (t.products_enabled)                                                     planName = '📦 Shop';
+  document.getElementById('eInfoSections').innerHTML =
+    `<span class="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700">${planName}</span>`;
 
   document.getElementById('eInfoCurrency').textContent = t.plan_currency || '—';
   document.getElementById('eInfoPrice').textContent    = t.plan_price ? `${t.plan_price} ${t.plan_currency || ''}` : '—';

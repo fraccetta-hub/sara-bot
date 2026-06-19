@@ -1932,6 +1932,7 @@
 <script>
 
 let currentLang = localStorage.getItem('sara_lang') || 'es';
+let isRestaurantPlan = false;
 
 function t(key) {
   return (TR[currentLang] && TR[currentLang][key] !== undefined)
@@ -1978,6 +1979,23 @@ function applyTranslations() {
   });
   // Re-render Help section
   renderHelp();
+  applyMenuLabels();
+}
+
+function applyMenuLabels() {
+  const SWAPS = [
+    ['stat.products',         'stat.menu'],
+    ['products.title',        'menu.title'],
+    ['products.new',          'menu.new'],
+    ['products.col.product',  'menu.col.item'],
+    ['import.title',          'menu.import.title'],
+    ['import.photos.hint',    'menu.import.photos.hint'],
+    ['import.preview.found',  'menu.import.preview.found'],
+  ];
+  SWAPS.forEach(([normal, menu]) => {
+    const key = isRestaurantPlan ? menu : normal;
+    document.querySelectorAll(`[data-i18n="${normal}"]`).forEach(el => { el.innerHTML = t(key); });
+  });
 }
 
 function renderHelp() {
@@ -2530,11 +2548,14 @@ function showTokenErrorBanner() {
 
 // ── Tab visibility (based on enabled sections) ─────────────────────────────────
 function applyTabVisibility(productsEnabled, servicesEnabled, appointmentsEnabled, restaurantEnabled) {
+  isRestaurantPlan = !!restaurantEnabled;
   const tabP = document.getElementById('tabProducts');
   const tabS = document.getElementById('tabServices');
   const tabA = document.getElementById('tabAppointments');
   const tabR = document.getElementById('tabRestaurant');
   if (tabP) tabP.style.display = productsEnabled     ? '' : 'none';
+  if (tabP) tabP.textContent  = t(restaurantEnabled ? 'tab.menu' : 'tab.products');
+  applyMenuLabels();
   if (tabS) tabS.style.display = servicesEnabled     ? '' : 'none';
   if (tabA) tabA.style.display = appointmentsEnabled ? '' : 'none';
   if (tabR) tabR.classList.toggle('hidden', !restaurantEnabled);
