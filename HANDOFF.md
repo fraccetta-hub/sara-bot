@@ -5,6 +5,21 @@
 - Fase attuale: email transazionali operative (Brevo HTTP API). Prossimo: Stripe env vars + META_CONFIG_ID.
 - Ultimo commit stabile: `3c91d96` — "security: rate limit forgot-password (5/h per IP), fix multer+nodemailer vulns"
 
+## COSA È STATO FATTO (sessione 2026-06-20 — menu ristorante)
+
+### Menu ristorante — vista dedicata + invio menu da Sara
+- **Data model**: riusata tabella `products` (no tabella nuova). Aggiunta UNA colonna `allergens TEXT`. Stock irrilevante per ristorante → nascosto in UI, item sempre disponibile (`stock_qty = null`).
+- **Migration richiesta**: `ALTER TABLE products ADD COLUMN IF NOT EXISTS allergens TEXT;` (Migration 10 in `db/migrations.sql`)
+- **Vista Menu** (`public/admin/index.html`): quando `isRestaurantPlan`, il tab Productos/Menu rende `renderMenu()` invece della tabella prodotti. Piatti raggruppati per categoria, colonne `Piatto | Descrizione | Allergeni | Prezzo | Stato | Azioni` — niente stock/SKU. `#menuView` nuovo container, `#productsTableWrap` nascosto in modalità ristorante.
+- **Modal piatto**: campo allergeni (`#pAllergens`) visibile solo ristorante; `#stockRow` + `#skuField` nascosti in ristorante. `saveProduct`/`openProductModal` gestiscono `allergens`; stock forzato a `null` per ristorante.
+- **Backend** (`routes/admin.js`): POST/PUT `/products` accettano `allergens`. `import-confirm` bulk insert passa `allergens`.
+- **Import foto menu-aware** (`routes/admin.js` `import-from-images`): prompt vision branchato su `tenant.restaurant_enabled` — estrae `category` (= sezione menu: Entradas/Primeros/Postres...), `description`, `allergens` per ogni piatto. Riusa stessa pipeline Haiku.
+- **Invio menu da Sara** (decisione chiave: menu sempre generato dal DB, MAI foto cartacea caricata — evita staleness, zero storage, zero token AI):
+  - `services/claude.js`: regola 15 (solo `restaurant_enabled`) → cliente chiede menu/carta → Sara emette `<SEND_MENU>` e NON scrive i piatti. Catalogo nel prompt mostra anche allergeni (`⚠️`). Tag `<SEND_MENU>` parsato → ritorna `sendMenu`. `formatPrice` ora esportato.
+  - `routes/webhook.js`: destruttura `sendMenu`; `buildMenuText(stock, tenant)` costruisce menu testo formattato (raggruppato per categoria, prezzo via `formatPrice`, descrizione, allergeni) e lo manda dopo la reply. Zero token AI (costruito nel backend).
+- **i18n**: chiavi `menu.col.dish/desc/allergens/price/status/actions`, `menu.active/inactive`, `menu.noCategory`, `menu.allergens/allergensPh` in ES/EN/IT/DE/FR/PT (`public/admin/i18n.js`).
+- **Foto singolo piatto**: meccanismo esistente `<SHOW_IMAGE>` + `products.image_url` invariato.
+
 ## COSA È STATO FATTO (sessioni precedenti + 2026-06-17)
 - **#3** — `routes/admin.js` + `routes/superadmin.js`: Opus → `claude-haiku-4-5-20251001` per import catalogo da foto
 - **#4** — `routes/webhook.js` `handleMerchantMessage`: query `conversations` spostata dentro i branch CHAT/CONFIRMAR/CANCELAR — FIN/BOT e free-text non la eseguono più
@@ -686,6 +701,16 @@ ALTER TABLE conversations ADD COLUMN IF NOT EXISTS last_nudge_at TIMESTAMPTZ;
 - Fix precedente (nasconderla in window.onload prima del fetch) non bastava perché window.onload si attiva dopo il render
 - Fix definitivo: `hidden` aggiunto direttamente al div `loginPage` nell'HTML → mai visibile al browser prima di JS
 - Mostrata esplicitamente solo nei rami `else` / `catch` di window.onload se non autenticato
+
+## COSA È STATO FATTO (sessione 2026-06-20 — fix support bot muto)
+
+### Support bot (tab Support admin) non rispondeva — FIX (`routes/admin.js` POST `/admin/support`)
+- Sintomo: merchant scriveva nella chat supporto, nessuna risposta del bot
+- Bug 1: history `limit(20)` con `order ascending` → dopo 20 msg prendeva i 20 PIÙ VECCHI, bot rispondeva a contesto antico ignorando la domanda nuova
+- Bug 2: Anthropic richiede ruoli `user/assistant` strettamente alternati a partire da `user`. Una singola risposta AI fallita (o 2 msg merchant di fila, o 2 risposte superadmin `support` consecutive) lasciava ruoli consecutivi → ogni chiamata successiva errore 400 → bot muto in modo permanente su quella chat
+- Fix: fetch ultimi 20 (`descending` + `reverse`); collasso ruoli consecutivi (concatena content); drop `assistant` iniziali; fallback al msg corrente se array vuoto
+- Resto invariato e funzionante: escalation `[ESCALATE]` → `notifySuperadmin` Telegram (rispondi col reply Telegram → arriva al merchant via role `support`); chat visibile in superadmin panel (`GET /superadmin/support`)
+- Telegram escalation confermato funzionante (env già settati e testati)
 
 ## PROSSIME PRIORITÀ (sessione successiva)
 1. **Fatturazione** — capire come mandare fatture ai merchant
