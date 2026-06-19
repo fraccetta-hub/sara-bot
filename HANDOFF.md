@@ -467,10 +467,67 @@ ALTER TABLE tenants ADD COLUMN IF NOT EXISTS google_review_url TEXT;
 ALTER TABLE conversations ADD COLUMN IF NOT EXISTS customer_notes TEXT;
 ```
 
+## COSA È STATO FATTO (sessione 2026-06-19 — cron features + broadcast)
+
+### Reminder appuntamenti 24h — COMPLETATO (commit 9d4cedf)
+- `services/cron.js`: `runAppointmentReminders()` — ogni ora, finestra 23-25h, guard `reminder_sent_at IS NULL`, `status != cancelled`, `customer_phone NOT NULL`
+- Manda messaggio al cliente via WhatsApp, poi segna `reminder_sent_at = NOW()`
+- Raggruppa per tenant_id per minimizzare le query tenant
+
+### Nudge carrello abbandonato — COMPLETATO (commit 9d4cedf)
+- `services/cron.js`: `runAbandonedCartNudge()` — ogni ora, conversazioni aggiornate 2-24h fa, cooldown 7gg (`last_nudge_at`)
+- Esclude clienti che hanno già ordinato nelle ultime 24h (cross-check tabella `orders`)
+- Solo tenant con `products_enabled = true`
+- 500ms delay tra messaggi per evitare rate limit Meta
+
+### Broadcast marketing — COMPLETATO (commit 9d4cedf)
+- `POST /admin/broadcast`: filtra clienti per `days_active` (default 30gg), invia a tutti a ~1 msg/s (fire-and-forget post-response)
+- Validazione: messaggio non vuoto, max 1000 caratteri
+- UI in tab Clientes: select periodo + textarea + pulsante viola + feedback count
+- i18n `broadcast.*` + `err.missing_message/message_too_long` in ES/EN/IT/DE/FR/PT
+
+### Migration SQL — DA ESEGUIRE in Supabase
+```sql
+ALTER TABLE appointments ADD COLUMN IF NOT EXISTS reminder_sent_at TIMESTAMPTZ;
+ALTER TABLE conversations ADD COLUMN IF NOT EXISTS last_nudge_at TIMESTAMPTZ;
+```
+
+## ANALISI COSTI AI (calcolo parziale, sessione 2026-06-19)
+
+### Modelli in uso
+- Chat cliente (`handleCustomerMessage`): `claude-haiku-4-5-20251001`, max_tokens 1024 — `services/claude.js:420-421`
+- Import foto: `claude-haiku-4-5-20251001`, max_tokens 2048 — `routes/admin.js:1033-1034`
+- Support bot: `claude-haiku-4-5-20251001`, max_tokens 512 — `routes/admin.js:1683-1684`
+- MAX_HISTORY = 20 msg — `services/claude.js:26`
+
+### Prezzi Haiku 4.5
+- Input: $1.00/MTok | Cache write: $1.25/MTok | Cache read: $0.10/MTok | Output: $5.00/MTok
+
+### Costo per messaggio (chat cliente, stima con caching)
+- Input: ~200 token uncached + ~1.800 token cached (static prompt)
+- Output: ~300 token
+- Formula: (200×$0.000001) + (1800×$0.0000001) + (300×$0.000005) ≈ **$0.000380/msg**
+
+### Stima per tenant/mese
+| Scenario | Msg/mese | Costo AI |
+|----------|----------|----------|
+| Basso (33 msg/gg) | 1.000 | ~$0.38 |
+| Medio (50 msg/gg) | 1.500 | ~$0.57 |
+| Alto (100 msg/gg) | 3.000 | ~$1.14 |
+| Molto alto (200 msg/gg) | 6.000 | ~$2.28 |
+
+**Cache miss rate 30% → moltiplica ×1.3 → ancora < $3/tenant/mese anche per uso molto alto.**
+
+### Mancano (da completare con i dati dell'utente)
+- Costo Render/mese
+- Costo Supabase/mese (free o Pro $25)
+- Costo Brevo/mese
+- Stima messaggi medi/tenant per definire limiti piano
+
 ## PROSSIME PRIORITÀ (sessione successiva)
-1. **Stripe** — configurare env vars reali su Render + testare flow completo con account business
-2. **Sara cron features** — reminder appuntamento 24h prima (node-cron), nudge carrello abbandonato (conversations senza ORDER nelle ultime 2h), broadcast marketing da admin panel
-3. **Costi/margini** — calcolo reale token AI + infra + limiti piano + definire piani starter/pro
+1. **Migration Supabase** — eseguire le 2 migration pendenti (reminder_sent_at, last_nudge_at)
+2. **Stripe** — configurare env vars reali su Render + testare flow completo con account business
+3. **Costi/margini** — completare con costi infra (Render + Supabase + Brevo) → definire prezzi piani Stripe
 4. **Fatturazione** — capire come mandare fatture ai merchant
 5. **GDPR compliance** — audit cosa manca (DPA, retention policy, right-to-erasure flow)
 6. **Go-to-market** — pubblicità, test, vendita
