@@ -1894,7 +1894,8 @@ router.post('/broadcast', requireAuth, async (req, res) => {
     .eq('id', req.tenant.tenantId)
     .single();
 
-  if (!tenant?.whatsapp_token || !tenant?.phone_number_id)
+  const broadcastToken = tenant?.whatsapp_token || process.env.WHATSAPP_TOKEN;
+  if (!broadcastToken || !tenant?.phone_number_id)
     return res.status(400).json({ ok: false, errorCode: 'not_connected' });
 
   const since = new Date(Date.now() - days_active * 24 * 60 * 60 * 1000).toISOString();
@@ -1913,7 +1914,7 @@ router.post('/broadcast', requireAuth, async (req, res) => {
   const { sendMessage } = require('../services/whatsapp');
   const text = message.trim();
   for (const phone of phones) {
-    await sendMessage(phone, text, tenant.phone_number_id, tenant.whatsapp_token).catch(() => {});
+    await sendMessage(phone, text, tenant.phone_number_id, broadcastToken).catch(() => {});
     await new Promise(r => setTimeout(r, 1100));
   }
 });
