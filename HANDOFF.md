@@ -812,6 +812,18 @@ ALTER TABLE tenants
   ADD COLUMN IF NOT EXISTS subscription_cancel_at_period_end BOOLEAN DEFAULT false;
 ```
 
+## COSA È STATO FATTO (sessione 2026-06-20 — promo codes applicati su Stripe)
+
+### Riscatto promo ora applica un Coupon Stripe reale (`routes/admin.js POST /redeem-promo`)
+- Prima: il riscatto mutava solo `tenants.plan_price`/`plan_expires` nel DB → cosmetico. Stripe addebitava il prezzo pieno (price_id fisso) e il webhook `subscription.updated` sovrascriveva `plan_expires`. Sconti/mesi gratis senza effetto reale.
+- Ora: al riscatto si crea un Coupon Stripe e si applica alla subscription (`stripe.subscriptions.update(sub, { coupon })`):
+  - **sconto % / fisso** → coupon `duration: 'once'` → applicato al PROSSIMO addebito (decisione utente: -X% una volta). Fisso usa `amount_off` in centesimi + `plan_currency`.
+  - **mesi gratis** → coupon `percent_off:100, duration:'repeating', duration_in_months:N` → N mesi saltati, poi riprende.
+- Niente più mutazioni DB di `plan_price`/`plan_expires` (Stripe fonte di verità; webhook sincronizza). Si registrano solo `promo_redemptions` + `uses_count`.
+- Serve subscription attiva: `!stripe_subscription_id` → errore `no_subscription`. Errore Stripe → 502 `stripe_failed`, redemption NON registrata (riprovabile).
+- Frontend `redeemPromo`: messaggio aggiornato ("en tu próximo cobro", "N mes gratis"). Campi `newPlanPrice/newPlanExpires` rimossi dalla response.
+- Coupon creato al volo al riscatto (uno per riscatto); creazione codice in superadmin resta solo-DB.
+
 ## COSA È STATO FATTO (sessione 2026-06-20 — fix promo codes superadmin)
 
 ### Bug: codici sconto superadmin non funzionavano

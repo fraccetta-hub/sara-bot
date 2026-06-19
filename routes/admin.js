@@ -2199,7 +2199,7 @@ router.post('/redeem-promo', requireAuth, async (req, res) => {
 
   const { data: tenant } = await supabase
     .from('tenants')
-    .select('id, plan_price, plan_currency, plan_expires')
+    .select('id, plan_price, plan_currency, stripe_subscription_id')
     .eq('id', req.tenant.tenantId)
     .single();
 
@@ -2214,31 +2214,39 @@ router.post('/redeem-promo', requireAuth, async (req, res) => {
     .single();
   if (existing) return res.status(400).json({ error: 'Ya usaste este código', errorCode: 'code_already_used' });
 
-  const updates = {};
+  if (!tenant.stripe_subscription_id)
+    return res.status(400).json({ error: 'Necesitás una suscripción activa para usar un código.', errorCode: 'no_subscription' });
+
+  // Build the Stripe coupon. Discounts apply once (next invoice); free months
+  // are a 100%-off coupon repeating for N months. Stripe billing is the source
+  // of truth — we don't mutate plan_price/plan_expires here (the webhook syncs).
+  let couponParams = null;
   let discountApplied = 0;
   let monthsAdded = 0;
 
-  if (promo.discount_value > 0) {
-    const currentPrice = parseFloat(tenant.plan_price) || 0;
-    if (promo.discount_type === 'percent') {
-      discountApplied = parseFloat((currentPrice * promo.discount_value / 100).toFixed(2));
-    } else {
-      discountApplied = Math.min(currentPrice, parseFloat(promo.discount_value));
-    }
-    updates.plan_price = Math.max(0, parseFloat((currentPrice - discountApplied).toFixed(2)));
-  }
-
   if (promo.months_free > 0) {
-    const base = tenant.plan_expires && new Date(tenant.plan_expires) > new Date()
-      ? new Date(tenant.plan_expires)
-      : new Date();
-    base.setMonth(base.getMonth() + promo.months_free);
-    updates.plan_expires = base.toISOString();
+    couponParams = { percent_off: 100, duration: 'repeating', duration_in_months: promo.months_free, name: `Promo ${promo.code}` };
     monthsAdded = promo.months_free;
+  } else if (promo.discount_value > 0) {
+    if (promo.discount_type === 'percent') {
+      couponParams = { percent_off: Math.min(100, promo.discount_value), duration: 'once', name: `Promo ${promo.code}` };
+      discountApplied = parseFloat(((parseFloat(tenant.plan_price) || 0) * promo.discount_value / 100).toFixed(2));
+    } else {
+      couponParams = { amount_off: Math.round(promo.discount_value * 100), currency: (tenant.plan_currency || 'usd').toLowerCase(), duration: 'once', name: `Promo ${promo.code}` };
+      discountApplied = Math.min(parseFloat(tenant.plan_price) || 0, parseFloat(promo.discount_value));
+    }
+  } else {
+    return res.status(400).json({ error: 'El código no aplica ningún beneficio', errorCode: 'code_no_benefit' });
   }
 
-  if (Object.keys(updates).length) {
-    await supabase.from('tenants').update(updates).eq('id', tenant.id);
+  try {
+    const Stripe = require('stripe');
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+    const coupon = await stripe.coupons.create(couponParams);
+    await stripe.subscriptions.update(tenant.stripe_subscription_id, { coupon: coupon.id });
+  } catch (e) {
+    console.error('[redeem-promo] stripe:', e.message);
+    return res.status(502).json({ error: 'No se pudo aplicar el descuento en el cobro. Intentá de nuevo.', errorCode: 'stripe_failed' });
   }
 
   await Promise.all([
@@ -2256,8 +2264,6 @@ router.post('/redeem-promo', requireAuth, async (req, res) => {
     description: promo.description,
     discountApplied,
     monthsAdded,
-    newPlanPrice:   updates.plan_price   ?? null,
-    newPlanExpires: updates.plan_expires ?? null,
   });
 });
 

@@ -3938,8 +3938,8 @@ async function redeemPromo() {
   try {
     const d = await api('/admin/redeem-promo', 'POST', { code });
     const parts = [];
-    if (d.discountApplied > 0) parts.push(`-${d.discountApplied} en tu precio mensual`);
-    if (d.monthsAdded  > 0)   parts.push(`+${d.monthsAdded} mes${d.monthsAdded>1?'es':''} al plan`);
+    if (d.discountApplied > 0) parts.push(`-${d.discountApplied} en tu próximo cobro`);
+    if (d.monthsAdded  > 0)   parts.push(`${d.monthsAdded} mes${d.monthsAdded>1?'es':''} gratis`);
     okEl.textContent = `✅ Código aplicado! ${d.description ? d.description + '. ' : ''}${parts.join(' · ')}`;
     okEl.classList.remove('hidden');
     input.value = '';
