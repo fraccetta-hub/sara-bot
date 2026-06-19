@@ -1880,6 +1880,43 @@ router.get('/customers/export', requireAuth, async (req, res) => {
   res.send('﻿' + csv);
 });
 
+// ─── POST /admin/broadcast — send message to all recent customers ─────────────
+
+router.post('/broadcast', requireAuth, async (req, res) => {
+  const { message, days_active = 30 } = req.body;
+  if (!message?.trim()) return res.status(400).json({ ok: false, errorCode: 'missing_message' });
+  if (message.trim().length > 1000) return res.status(400).json({ ok: false, errorCode: 'message_too_long' });
+
+  const { data: tenant } = await supabase
+    .from('tenants')
+    .select('whatsapp_token, phone_number_id')
+    .eq('id', req.tenant.tenantId)
+    .single();
+
+  if (!tenant?.whatsapp_token || !tenant?.phone_number_id)
+    return res.status(400).json({ ok: false, errorCode: 'not_connected' });
+
+  const since = new Date(Date.now() - days_active * 24 * 60 * 60 * 1000).toISOString();
+  const { data: convs, error } = await supabase
+    .from('conversations')
+    .select('customer_phone')
+    .eq('tenant_id', req.tenant.tenantId)
+    .gte('updated_at', since);
+
+  if (error) return res.status(500).json({ ok: false, error: error.message });
+
+  const phones = [...new Set((convs || []).map(c => c.customer_phone))];
+  res.json({ ok: true, count: phones.length });
+
+  // Fire-and-forget: send at ~1 msg/s to avoid Meta rate limits
+  const { sendMessage } = require('../services/whatsapp');
+  const text = message.trim();
+  for (const phone of phones) {
+    await sendMessage(phone, text, tenant.phone_number_id, tenant.whatsapp_token).catch(() => {});
+    await new Promise(r => setTimeout(r, 1100));
+  }
+});
+
 // ─── GET /admin/analytics — weekly/monthly stats ──────────────────────────────
 router.get('/analytics', requireAuth, async (req, res) => {
   const period = req.query.period === 'month' ? 30 : 7;

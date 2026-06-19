@@ -617,6 +617,34 @@
           </tbody>
         </table>
       </div>
+
+      <!-- Broadcast -->
+      <div class="mt-6 bg-white rounded-xl shadow-sm p-5 border border-purple-100">
+        <h3 data-i18n="broadcast.title" class="font-semibold text-gray-800 mb-1">📢 Mensaje masivo</h3>
+        <p data-i18n="broadcast.desc" class="text-sm text-gray-500 mb-4">Envía un mensaje a todos tus clientes activos.</p>
+        <div class="flex flex-col sm:flex-row gap-3 mb-3">
+          <div class="flex-1">
+            <label data-i18n="broadcast.daysLabel" class="block text-xs text-gray-500 mb-1">Clientes activos en los últimos</label>
+            <select id="broadcastDays" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300">
+              <option value="7" data-i18n="broadcast.days7">7 días</option>
+              <option value="30" selected data-i18n="broadcast.days30">30 días</option>
+              <option value="90" data-i18n="broadcast.days90">90 días</option>
+              <option value="365" data-i18n="broadcast.daysAll">Todo el historial</option>
+            </select>
+          </div>
+        </div>
+        <textarea id="broadcastMsg" rows="3"
+          data-i18n-ph="broadcast.placeholder"
+          placeholder="Escribe tu mensaje aquí..."
+          class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300 resize-none mb-3"></textarea>
+        <div class="flex items-center gap-3">
+          <button onclick="sendBroadcast()"
+            class="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold transition">
+            <span data-i18n="broadcast.btn">📢 Enviar</span>
+          </button>
+          <span id="broadcastStatus" class="text-sm text-gray-500"></span>
+        </div>
+      </div>
     </div>
 
     <!-- ── APPOINTMENTS TAB ── -->
@@ -2863,6 +2891,22 @@ async function exportCustomers() {
     a.download = `clientes_${new Date().toISOString().slice(0,10)}.csv`;
     a.click(); URL.revokeObjectURL(url);
   } catch (e) { alert('Error al exportar clientes: ' + e.message); }
+}
+
+async function sendBroadcast() {
+  const msg  = document.getElementById('broadcastMsg').value.trim();
+  const days = parseInt(document.getElementById('broadcastDays').value, 10);
+  const statusEl = document.getElementById('broadcastStatus');
+  if (!msg) { statusEl.textContent = t('broadcast.emptyMsg'); return; }
+  statusEl.textContent = t('broadcast.sending');
+  try {
+    const data = await api('/admin/broadcast', 'POST', { message: msg, days_active: days });
+    if (!data.ok) { statusEl.textContent = errMsg(data); return; }
+    statusEl.textContent = t('broadcast.sent').replace('{n}', data.count);
+    document.getElementById('broadcastMsg').value = '';
+  } catch (e) {
+    statusEl.textContent = errMsg(e);
+  }
 }
 
 // ── Analytics ─────────────────────────────────────────────────────────────────

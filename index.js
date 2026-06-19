@@ -27,6 +27,7 @@ const { router: telegramRouter, notifyTokenError } = require('./routes/telegram'
 const paymentsRouter  = require('./routes/payments');
 const registerRouter  = require('./routes/register');
 const billingRouter   = require('./routes/billing');
+const { setupCronJobs } = require('./services/cron');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -169,5 +170,8 @@ app.listen(PORT, () => {
   setTimeout(renewTokens, 15000);
   setInterval(renewTokens, 24 * 60 * 60 * 1000);
 })();
+
+// ─── Cron: appointment reminders + abandoned cart nudge ──────────────────────
+setupCronJobs();
 
 module.exports = app;
