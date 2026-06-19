@@ -137,6 +137,7 @@ Tenant con `appointments_enabled = true` hanno gestione turni:
 - `appointment_blocks` — blocchi orario (chiusure/ferie)
 - `appointments` — prenotazioni confermate
 - Sara calcola slot liberi 14 giorni in avanti e propone al cliente
+- **Capacità parallela** (`tenants.appointment_capacity`, default 1): quanti appuntamenti simultanei nella stessa fascia. 1 = dentista/sala singola; N = studio con N risorse. Uno slot è "pieno" solo quando le sovrapposizioni raggiungono la capacità. `appointment_blocks` bloccano sempre. Configurabile in admin → tab appuntamenti → Horarios.
 
 ---
 

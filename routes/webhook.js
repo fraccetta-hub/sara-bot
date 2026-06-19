@@ -374,16 +374,17 @@ function featureGate(tenant, action, lang) {
 }
 
 // Slot availability check — returns { available: true } or { available: false, reason, detail }
-async function checkSlotAvailability(tenantId, startAt, endAt) {
+async function checkSlotAvailability(tenantId, startAt, endAt, capacity = 1) {
   const d = new Date(startAt);
   const dayOfWeek = d.getUTCDay();
   const startHHMM = d.toISOString().slice(11, 16);
   const endHHMM   = new Date(endAt).toISOString().slice(11, 16);
+  const cap = Math.max(1, capacity || 1);
 
   const [bhRes, blocksRes, apptsRes] = await Promise.all([
     supabase.from('business_hours').select('open_time,close_time,is_closed').eq('tenant_id', tenantId).eq('day_of_week', dayOfWeek).maybeSingle(),
     supabase.from('appointment_blocks').select('start_at,end_at,reason').eq('tenant_id', tenantId).lt('start_at', endAt).gt('end_at', startAt).limit(1),
-    supabase.from('appointments').select('customer_name,customer_phone,start_at,end_at,service_id').eq('tenant_id', tenantId).neq('status', 'cancelled').lt('start_at', endAt).gt('end_at', startAt).limit(1),
+    supabase.from('appointments').select('customer_name,customer_phone,start_at,end_at,service_id').eq('tenant_id', tenantId).neq('status', 'cancelled').lt('start_at', endAt).gt('end_at', startAt),
   ]);
 
   const bh = bhRes.data;
@@ -392,7 +393,8 @@ async function checkSlotAvailability(tenantId, startAt, endAt) {
     return { available: false, reason: 'outside_hours', open: bh.open_time, close: bh.close_time };
   if (blocksRes.data?.length)
     return { available: false, reason: 'blocked', block: blocksRes.data[0] };
-  if (apptsRes.data?.length)
+  // Slot is full only when overlapping appointments reach the tenant's parallel capacity
+  if ((apptsRes.data?.length || 0) >= cap)
     return { available: false, reason: 'booked', appt: apptsRes.data[0] };
   return { available: true };
 }
@@ -853,7 +855,7 @@ async function handleMerchantMessage(tenant, messageText, phoneNumberId, token) 
     const appt = appts[0];
     const durationMs = new Date(appt.end_at) - new Date(appt.start_at);
     const new_end = new Date(new Date(new_start).getTime() + durationMs).toISOString();
-    const slotCheck = await checkSlotAvailability(tenant.id, new_start, new_end);
+    const slotCheck = await checkSlotAvailability(tenant.id, new_start, new_end, tenant.appointment_capacity);
     if (!slotCheck.available) { await sendMessage(tenant.merchant_phone, slotConflictMessage(slotCheck, lang), phoneNumberId, token); return; }
     await supabase.from('appointments').update({ start_at: new_start, end_at: new_end }).eq('id', appt.id);
     const dt = new Date(new_start).toLocaleString('es-PY', { weekday:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
@@ -1195,7 +1197,7 @@ async function completeAddAppointment(tenant, params, services, lang, phoneNumbe
   const duration_min = duration_override || service?.duration_min || 60;
   const end_at = new Date(new Date(start_at).getTime() + duration_min * 60000).toISOString();
 
-  const check = await checkSlotAvailability(tenant.id, start_at, end_at);
+  const check = await checkSlotAvailability(tenant.id, start_at, end_at, tenant.appointment_capacity);
   if (!check.available) {
     await sendMessage(tenant.merchant_phone, slotConflictMessage(check, lang), phoneNumberId, token);
     return;
@@ -1325,7 +1327,9 @@ async function handleCustomerMessage(tenant, customerPhone, messageText, locatio
 
       const bhMap = {};
       for (const bh of bhRes.data || []) bhMap[bh.day_of_week] = bh;
-      const busy = [...(existingRes.data || []), ...(blocksRes.data || [])];
+      const appts  = existingRes.data || [];          // count vs capacity
+      const blocks = blocksRes.data || [];            // always block
+      const cap    = Math.max(1, tenant.appointment_capacity || 1);
       const slotDur = apptServices[0]?.duration_min || 30;
 
       const byDate = {};
@@ -1347,7 +1351,9 @@ async function handleCustomerMessage(tenant, customerPhone, messageText, locatio
         }
         byDate[dateStr] = allSlots.filter(slotStart => {
           const sS = new Date(slotStart).getTime(), sE = sS + slotDur * 60000;
-          return !busy.some(b => new Date(b.start_at).getTime() < sE && new Date(b.end_at).getTime() > sS);
+          const overlaps = b => new Date(b.start_at).getTime() < sE && new Date(b.end_at).getTime() > sS;
+          if (blocks.some(overlaps)) return false;                 // manual block closes the slot
+          return appts.filter(overlaps).length < cap;              // free while under parallel capacity
         });
       }
       appointmentSlots = { byDate, servicesList: apptServices };

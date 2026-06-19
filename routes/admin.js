@@ -279,7 +279,7 @@ router.get('/settings', requireAuth, async (req, res) => {
              delivery_zone_outer_fee, delivery_per_km,
              delivery_min_order, delivery_disabled_dates,
              address, google_review_url,
-             restaurant_enabled, restaurant_slot_duration,
+             restaurant_enabled, restaurant_slot_duration, appointment_capacity,
              active, plan_expires, plan_currency, phone_number_id, whatsapp_token_refresh_error`)
     .eq('id', req.tenant.tenantId)
     .single();
@@ -297,12 +297,14 @@ router.put('/settings', requireAuth, async (req, res) => {
     'delivery_type','delivery_base_fee','delivery_zone_km',
     'delivery_zone_outer_fee','delivery_per_km',
     'delivery_min_order','delivery_disabled_dates',
-    'address','google_review_url'
+    'address','google_review_url','appointment_capacity'
   ];
   const updates = {};
   for (const key of allowed) {
     if (req.body[key] !== undefined) updates[key] = req.body[key];
   }
+  if (updates.appointment_capacity !== undefined)
+    updates.appointment_capacity = Math.max(1, parseInt(updates.appointment_capacity) || 1);
 
   const { error } = await supabase
     .from('tenants').update(updates).eq('id', req.tenant.tenantId);
@@ -1420,9 +1422,13 @@ router.get('/available-slots', requireAuth, async (req, res) => {
 
   const dayOfWeek = new Date(date + 'T12:00:00Z').getUTCDay(); // 0=dom..6=sab
 
-  // Orari del locale quel giorno
-  const { data: bh } = await supabase.from('business_hours').select('*')
-    .eq('tenant_id', req.tenant.tenantId).eq('day_of_week', dayOfWeek).single();
+  // Orari del locale quel giorno + capacità parallela del tenant
+  const [{ data: bh }, { data: tCfg }] = await Promise.all([
+    supabase.from('business_hours').select('*')
+      .eq('tenant_id', req.tenant.tenantId).eq('day_of_week', dayOfWeek).single(),
+    supabase.from('tenants').select('appointment_capacity').eq('id', req.tenant.tenantId).single(),
+  ]);
+  const cap = Math.max(1, tCfg?.appointment_capacity || 1);
 
   if (!bh || bh.is_closed) return res.json({ slots: [], closed: true });
 
@@ -1460,17 +1466,17 @@ router.get('/available-slots', requireAuth, async (req, res) => {
     .eq('tenant_id', req.tenant.tenantId)
     .gte('start_at', dayStart).lte('start_at', dayEnd);
 
-  const busy = [...(existing || []), ...(blocks || [])];
-
-  // Filtra slot occupati
+  // Blocks always close the slot; appointments only fill it once they reach capacity
+  const overlaps = (b, sStart, sEnd) => {
+    const bStart = new Date(b.start_at).getTime();
+    const bEnd   = new Date(b.end_at).getTime();
+    return sStart < bEnd && sEnd > bStart;
+  };
   const freeSlots = allSlots.filter(slotStart => {
     const sStart = new Date(slotStart).getTime();
     const sEnd   = sStart + slotDuration * 60000;
-    return !busy.some(b => {
-      const bStart = new Date(b.start_at).getTime();
-      const bEnd   = new Date(b.end_at).getTime();
-      return sStart < bEnd && sEnd > bStart;
-    });
+    if ((blocks || []).some(b => overlaps(b, sStart, sEnd))) return false;
+    return (existing || []).filter(b => overlaps(b, sStart, sEnd)).length < cap;
   });
 
   res.json({ slots: freeSlots, duration_min: slotDuration });

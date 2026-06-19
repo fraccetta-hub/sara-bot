@@ -26,6 +26,19 @@
 - `public/admin/index.html`: modal tavolo — campo `#tableModalQuantity` + hint (`#tableQtyRow`), visibile solo in creazione (nascosto in edit). Label ora opzionale. `saveTable` invia `quantity` in POST.
 - i18n: `restaurant.tableQuantity` + `restaurant.tableQuantityHint` in 6 lingue; `restaurant.tableLabel` → "(opcional)".
 
+### Capacità parallela appuntamenti (Fase 1 epic prenotazioni)
+- Problema: modello appuntamenti assumeva 1 prenotazione per slot. Dentista=1 ok, ma studio con N poltrone / ristorante devono accettare più prenotazioni nella stessa fascia. Decisione: capacità **per-tenant** (numero unico), non per-servizio.
+- **Migration ✅ ESEGUITA (2026-06-20)**: `ALTER TABLE tenants ADD COLUMN IF NOT EXISTS appointment_capacity INTEGER NOT NULL DEFAULT 1;` (Migration 11)
+- `routes/webhook.js`: `checkSlotAvailability(tenantId, start, end, capacity)` — slot pieno solo quando appuntamenti sovrapposti ≥ capacità (era: qualsiasi sovrapposizione). I `appointment_blocks` bloccano sempre. Slot-gen 14gg idem (blocchi sempre, appts contati vs cap). Entrambi i caller passano `tenant.appointment_capacity` (getTenantConfig usa `select('*')`).
+- `routes/admin.js`: `/settings` GET espone `appointment_capacity`, PUT lo accetta (clamp ≥1). `/available-slots` (usato dal modal calendario manuale) capacity-aware: blocchi sempre, appts contati vs cap.
+- `public/admin/index.html`: campo "Citas en paralelo por horario" (`#apptCapacity`) nella sezione 🕐 Horarios (tab appuntamenti), load in `initCalendar`, save via `saveApptCapacity` → `/admin/settings`.
+- i18n: `appt.capacity` + `appt.capacityHint` in 6 lingue.
+- **Restaurant resta table-based** (parallelismo = tavoli liberi) — non usa appointment_capacity.
+
+### Epic prenotazioni — FASI PENDENTI (non ancora fatte)
+- **Fase 2**: merge vista — per tenant ristorante, tab Turnos → "Prenotazioni", calendario mostra `reservations`; rimuovere lista prenotazioni dal tab Ristorante.
+- **Fase 3**: tab Ristorante diventa config — fasce orarie pranzo/cena + durata per prenotazione; eliminare duplicazione Turnos/Restaurante.
+
 ## COSA È STATO FATTO (sessioni precedenti + 2026-06-17)
 - **#3** — `routes/admin.js` + `routes/superadmin.js`: Opus → `claude-haiku-4-5-20251001` per import catalogo da foto
 - **#4** — `routes/webhook.js` `handleMerchantMessage`: query `conversations` spostata dentro i branch CHAT/CONFIRMAR/CANCELAR — FIN/BOT e free-text non la eseguono più

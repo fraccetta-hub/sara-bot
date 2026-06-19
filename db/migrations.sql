@@ -43,6 +43,10 @@ CREATE TABLE IF NOT EXISTS promo_redemptions (
 ALTER TABLE products
   ADD COLUMN IF NOT EXISTS allergens TEXT;   -- free text, e.g. "gluten, lácteos, frutos secos"
 
+-- Migration 11: Parallel appointment capacity per slot (dentist=1, clinic with N chairs=N)
+ALTER TABLE tenants
+  ADD COLUMN IF NOT EXISTS appointment_capacity INTEGER NOT NULL DEFAULT 1;
+
 -- ============================================================
 -- PRIMA DI TUTTO: crea il bucket per le foto su Supabase Storage
 -- Supabase Dashboard → Storage → New bucket
