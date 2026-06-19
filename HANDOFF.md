@@ -807,7 +807,13 @@ ALTER TABLE tenants
 
 ## COSA È STATO FATTO (sessione 2026-06-20 — fix superadmin support chat "cargando")
 
-### Bug: chat support superadmin bloccata su "Cargando..."
+### ✅ CAUSA REALE (commit 56e8bc5): `escHtml` non definito in superadmin/index.html
+- `loadSupportList` / `renderSupportMessages` chiamano `escHtml()` ma la funzione NON era mai definita in `public/superadmin/index.html` → ogni render lanciava ReferenceError → catch silenzioso → lista bloccata su "Cargando" da sempre.
+- Indizio diagnostico: il badge unread mostrava "5" mentre la lista era vuota → il poll del badge non usa `escHtml` (funzionava); solo la lista falliva.
+- Fix: definita `escHtml` in superadmin (identica all'admin), function declaration hoisted.
+- NB: l'embed `tenants(name)` rimosso prima NON era la causa (badge=5 provava che l'endpoint tornava dati). Modifiche tenute comunque (più robuste): no-embed + error surfacing UI.
+
+### Bug (ipotesi iniziale errata): chat support superadmin "Cargando..."
 - Causa: `GET /superadmin/support` usava embed PostgREST `select('... tenants(name)')` che richiede una FK dichiarata `support_messages.tenant_id → tenants`. In prod la tabella è stata creata a mano, probabilmente senza FK → PostgREST 500 → `loadSupportList()` ingoia l'errore in console → lista resta "Cargando..."
 - Fix (`routes/superadmin.js`): rimosso l'embed. Ora fetch `support_messages` semplice + query separata `tenants.select('id,name').in('id', ids)` per i nomi. Mai più 500 sulla relazione. Aggiunto anche `last_message` nella risposta (il frontend lo usava ma il backend non lo popolava).
 - `db/migrations.sql`: documentata la tabella `support_messages` (CREATE IF NOT EXISTS) con FK a tenants + CHECK `role IN ('merchant','assistant','support')` + indice — così nuovi ambienti hanno la relazione corretta per gli embed.
