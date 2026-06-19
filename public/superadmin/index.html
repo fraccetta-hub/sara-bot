@@ -1049,6 +1049,11 @@ setInterval(() => {
 }, 60000);
 
 // ── API helper ─────────────────────────────────────────────────────────────────
+function escHtml(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
 async function api(path, method = 'GET', body = null) {
   const opts = { method, credentials: 'same-origin', headers: { 'Content-Type': 'application/json' } };
   if (body) opts.body = JSON.stringify(body);
