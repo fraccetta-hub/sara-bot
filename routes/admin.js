@@ -280,7 +280,8 @@ router.get('/settings', requireAuth, async (req, res) => {
              delivery_min_order, delivery_disabled_dates,
              address, google_review_url,
              restaurant_enabled, restaurant_slot_duration, appointment_capacity,
-             active, plan_expires, plan_currency, phone_number_id, whatsapp_token_refresh_error`)
+             active, plan_expires, plan_currency, plan_price, phone_number_id, whatsapp_token_refresh_error,
+             stripe_subscription_status, subscription_cancel_at_period_end`)
     .eq('id', req.tenant.tenantId)
     .single();
   if (error) return res.status(500).json({ error: error.message });

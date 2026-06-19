@@ -85,6 +85,7 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
           stripe_subscription_id:     obj.id,
           stripe_subscription_status: obj.status,
           plan_status:                isLive ? 'active' : 'suspended',
+          subscription_cancel_at_period_end: !!obj.cancel_at_period_end,
           plan_expires: obj.current_period_end
             ? new Date(obj.current_period_end * 1000).toISOString()
             : null,
@@ -291,6 +292,8 @@ router.post('/cancel', async (req, res) => {
     await stripe.subscriptions.update(tenant.stripe_subscription_id, {
       cancel_at_period_end: true,
     });
+    await supabase.from('tenants')
+      .update({ subscription_cancel_at_period_end: true }).eq('id', tenantId);
 
     res.json({ ok: true, message: 'Suscripción cancelada. Mantenés acceso hasta el fin del período actual.' });
   } catch (err) {
@@ -319,6 +322,8 @@ router.post('/reactivate', async (req, res) => {
     await stripe.subscriptions.update(tenant.stripe_subscription_id, {
       cancel_at_period_end: false,
     });
+    await supabase.from('tenants')
+      .update({ subscription_cancel_at_period_end: false }).eq('id', tenantId);
 
     res.json({ ok: true, message: 'Suscripción reactivada.' });
   } catch (err) {

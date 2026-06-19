@@ -12,6 +12,10 @@ ALTER TABLE tenants
   ADD COLUMN IF NOT EXISTS account_deletion_token   TEXT,
   ADD COLUMN IF NOT EXISTS account_deletion_expires TIMESTAMPTZ;
 
+-- Migration: track Stripe cancel-at-period-end so the Plan tab shows Cancel vs Reactivate
+ALTER TABLE tenants
+  ADD COLUMN IF NOT EXISTS subscription_cancel_at_period_end BOOLEAN DEFAULT false;
+
 -- Migration 9: Promo codes
 CREATE TABLE IF NOT EXISTS promo_codes (
   id                   UUID          PRIMARY KEY DEFAULT gen_random_uuid(),

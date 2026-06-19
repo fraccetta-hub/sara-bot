@@ -1396,6 +1396,13 @@
       <!-- Estado actual -->
       <div class="bg-white rounded-xl shadow-sm p-6">
         <h3 data-i18n="plan.status.title" class="font-medium text-gray-800 mb-4">📋 Estado de tu suscripción</h3>
+        <div class="flex items-center justify-between pb-4 mb-4 border-b border-gray-100">
+          <span class="text-sm text-gray-500" data-i18n="plan.your_plan">Tu plan actual</span>
+          <div class="text-right">
+            <span id="planNameBadge" class="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700">—</span>
+            <div id="planPriceText" class="text-xs text-gray-400 mt-1"></div>
+          </div>
+        </div>
         <div id="planStatusBox" class="rounded-xl px-5 py-4 flex items-center gap-4">
           <div id="planStatusIcon" class="text-3xl"></div>
           <div>
@@ -1410,6 +1417,23 @@
             ¿Querés cambiar de plan? Contactá soporte
           </button>
         </div>
+      </div>
+
+      <!-- Gestión de suscripción -->
+      <div id="planBillingCard" class="hidden bg-white rounded-xl shadow-sm p-6">
+        <h3 class="font-medium text-gray-800 mb-3" data-i18n="plan.manage.title">⚙️ Gestionar suscripción</h3>
+        <div id="planBillingMsg" class="hidden rounded-lg px-4 py-2 text-sm mb-3"></div>
+        <div id="planCancelScheduled" class="hidden bg-amber-50 border border-amber-200 text-amber-700 text-sm rounded-lg px-4 py-3 mb-3"></div>
+        <button id="planCancelBtn" onclick="cancelSubscription()"
+          class="w-full py-2 rounded-lg text-sm font-semibold bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 transition"
+          data-i18n="plan.cancel.btn">
+          Cancelar suscripción
+        </button>
+        <button id="planReactivateBtn" onclick="reactivateSubscription()"
+          class="hidden w-full py-2 rounded-lg text-sm font-semibold bg-green-50 text-green-700 border border-green-200 hover:bg-green-100 transition"
+          data-i18n="plan.reactivate.btn">
+          Reactivar suscripción
+        </button>
       </div>
 
       <!-- Código promocional -->
@@ -3878,8 +3902,41 @@ async function loadPlan() {
     const title = document.getElementById('planStatusTitle');
     const sub   = document.getElementById('planStatusSub');
 
+    const planName = s.restaurant_enabled ? '🍽️ Restaurant'
+      : (s.products_enabled && s.services_enabled && s.appointments_enabled) ? '⭐ Pro'
+      : (s.services_enabled && s.appointments_enabled) ? '📅 Bookings'
+      : s.products_enabled ? '📦 Shop' : '—';
+    document.getElementById('planNameBadge').textContent = planName;
+    const priceEl = document.getElementById('planPriceText');
+    priceEl.textContent = s.plan_price
+      ? `${s.plan_price} ${s.plan_currency || ''}/${t('plan.per_month')}`.trim()
+      : '';
+
     const active  = s.active !== false;
     const expires = s.plan_expires ? new Date(s.plan_expires) : null;
+
+    // Billing actions — only for tenants with a live Stripe subscription
+    const billingCard   = document.getElementById('planBillingCard');
+    const cancelBtn     = document.getElementById('planCancelBtn');
+    const reactivateBtn = document.getElementById('planReactivateBtn');
+    const scheduledBox  = document.getElementById('planCancelScheduled');
+    const hasSub = ['active', 'trialing', 'past_due'].includes(s.stripe_subscription_status);
+    billingCard.classList.toggle('hidden', !hasSub);
+    if (hasSub) {
+      const fmt = d => d.toLocaleDateString(undefined, { day:'2-digit', month:'long', year:'numeric' });
+      if (s.subscription_cancel_at_period_end) {
+        cancelBtn.classList.add('hidden');
+        reactivateBtn.classList.remove('hidden');
+        scheduledBox.classList.remove('hidden');
+        scheduledBox.textContent = expires
+          ? t('plan.cancel.scheduled').replace('{date}', fmt(expires))
+          : t('plan.cancel.scheduled_nodate');
+      } else {
+        cancelBtn.classList.remove('hidden');
+        reactivateBtn.classList.add('hidden');
+        scheduledBox.classList.add('hidden');
+      }
+    }
     const now     = new Date();
     const diffDays = expires ? Math.ceil((expires - now) / 86400000) : null;
 
@@ -3917,6 +3974,41 @@ async function loadPlan() {
       sub.className     = 'text-sm mt-0.5 text-red-500';
     }
   } catch(e) { /* ignore */ }
+}
+
+async function cancelSubscription() {
+  if (!confirm(t('plan.cancel.confirm'))) return;
+  const msg = document.getElementById('planBillingMsg');
+  try {
+    const res = await fetch('/billing/cancel', { method: 'POST', credentials: 'same-origin' });
+    const d = await res.json();
+    if (!res.ok) throw new Error(d.error);
+    msg.textContent = t('plan.cancel.done');
+    msg.className = 'rounded-lg px-4 py-2 text-sm mb-3 bg-amber-50 text-amber-700';
+    msg.classList.remove('hidden');
+    loadPlan();
+  } catch(e) {
+    msg.textContent = 'Error: ' + e.message;
+    msg.className = 'rounded-lg px-4 py-2 text-sm mb-3 bg-red-50 text-red-700';
+    msg.classList.remove('hidden');
+  }
+}
+
+async function reactivateSubscription() {
+  const msg = document.getElementById('planBillingMsg');
+  try {
+    const res = await fetch('/billing/reactivate', { method: 'POST', credentials: 'same-origin' });
+    const d = await res.json();
+    if (!res.ok) throw new Error(d.error);
+    msg.textContent = t('plan.reactivate.done');
+    msg.className = 'rounded-lg px-4 py-2 text-sm mb-3 bg-green-50 text-green-700';
+    msg.classList.remove('hidden');
+    loadPlan();
+  } catch(e) {
+    msg.textContent = 'Error: ' + e.message;
+    msg.className = 'rounded-lg px-4 py-2 text-sm mb-3 bg-red-50 text-red-700';
+    msg.classList.remove('hidden');
+  }
 }
 
 async function loadSettings() {

@@ -771,9 +771,33 @@ ALTER TABLE tenants
 - Sezioni esistenti (catalogo, foto, ordini, takeover, chat panel) invariate
 - Migration `account_deletion_*` già eseguita su Supabase ✅
 
+## COSA È STATO FATTO (sessione 2026-06-20 — tab Plan: nome piano + disdetta self-service)
+
+### Tab Plan — nome piano attivo + gestione abbonamento (disdici/riattiva)
+- **Nome piano** mostrato nella card stato: badge derivato dai flag (📦 Shop / 📅 Bookings / 🍽️ Restaurant / ⭐ Pro) + prezzo/mese — stessa logica del badge superadmin
+- **Card "Gestisci abbonamento"**: bottone **Disdici** (rosso); dopo disdetta → bottone **Riattiva** + avviso giallo "accesso fino al {data}"
+- Backend billing già esisteva (`POST /billing/cancel` = `cancel_at_period_end:true`, `POST /billing/reactivate`); ora cablato nell'UI
+- **Persistenza flag**: nuovo `subscription_cancel_at_period_end` (DB) settato in cancel/reactivate + webhook `subscription.updated` (`obj.cancel_at_period_end`) → l'UI sceglie Disdici vs Riattiva anche dopo reload
+- `/admin/settings` espone ora `plan_price`, `stripe_subscription_status`, `subscription_cancel_at_period_end`
+- Card billing visibile solo se `stripe_subscription_status ∈ {active, trialing, past_due}` (tenant manuali/legacy senza Stripe non vedono il bottone)
+- i18n: 11 chiavi `plan.*` (your_plan, per_month, manage.title, cancel.btn/confirm/done/scheduled/scheduled_nodate, reactivate.btn/done) in ES/EN/IT/DE/FR/PT
+- File: `public/admin/index.html` (`loadPlan` + `cancelSubscription`/`reactivateSubscription`), `public/admin/i18n.js`, `routes/admin.js`, `routes/billing.js`, `db/migrations.sql`
+
+### DECISIONE: comportamento a disdetta/scadenza (NON riaprire — è lo standard SaaS)
+- Disdetta **non immediata**: accesso fino a fine periodo pagato; riattivabile prima
+- A fine periodo → Stripe `subscription.deleted` → `active:false`, `plan_status:suspended`
+- Poi: **Sara OFF** per i clienti (kill switch `webhook.js`) + **pannello limitato** a support/settings/plan (`ALWAYS_ALLOWED` in `admin.js`) — NON lockout totale: il merchant resta dentro per ripagare/contattare supporto/esportare/eliminare dati
+
+**Migration richiesta su Supabase (NON ancora eseguita):**
+```sql
+ALTER TABLE tenants
+  ADD COLUMN IF NOT EXISTS subscription_cancel_at_period_end BOOLEAN DEFAULT false;
+```
+
 ## PROSSIME PRIORITÀ (sessione successiva)
-1. **Fatturazione** — capire come mandare fatture ai merchant
-2. **Go-to-market** — pubblicità, test, vendita
+1. **Eseguire migration** `subscription_cancel_at_period_end` su Supabase
+2. **Fatturazione** — capire come mandare fatture ai merchant
+3. **Go-to-market** — pubblicità, test, vendita
 
 ## IDEE FUTURE (non ancora pianificate)
 
