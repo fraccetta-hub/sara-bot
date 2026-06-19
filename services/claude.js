@@ -170,6 +170,10 @@ function buildStaticSystemPrompt(tenant, stock, services = [], offers = []) {
       }).join('\n')
     : null;
 
+  const addressBlock = tenant.address
+    ? `\nDIRECCIÓN DEL LOCAL: ${tenant.address}`
+    : '';
+
   const paymentBlock = tenant.payment_instructions
     ? `\nINFORMACIÓN DE PAGO:\n${tenant.payment_instructions}`
     : '';
@@ -203,6 +207,7 @@ ESTILO WHATSAPP — REGLAS DE ORO:
 • Emojis: 0 o 1 por mensaje, solo donde los usaría una persona real. Nunca al inicio de respuesta.
 
 ${catalogBlock}
+${addressBlock}
 ${paymentBlock}
 ${customBlock}
 
@@ -232,7 +237,7 @@ REGLAS OPERATIVAS:
 
 // Per-conversation dynamic content — varies message to message (delivery state,
 // appointment slot availability, customer context). Kept out of the cached block on purpose.
-function buildDynamicSystemPrompt(tenant, convState = {}, appointmentSlots = null, customerContext = null, closures = [], businessHours = [], isFirstMessage = false) {
+function buildDynamicSystemPrompt(tenant, convState = {}, appointmentSlots = null, customerContext = null, closures = [], businessHours = [], isFirstMessage = false, customerNotes = null) {
   // ── Delivery block ──────────────────────────────────────────────────────────
   let deliveryBlock = '';
   if (tenant.delivery_enabled) {
@@ -340,7 +345,10 @@ A8. Después de emitir la reserva, informá al cliente que el local confirmará 
         .join(' | ');
       parts.push(`HISTORIAL DE COMPRAS DEL CLIENTE: ${summaries} — podés usar esto para sugerir "¿lo mismo de siempre?" si es relevante.`);
     }
+    if (customerNotes) parts.push(`NOTAS PRIVADAS DEL NEGOCIO SOBRE ESTE CLIENTE (úsalas para personalizar, no las menciones explícitamente): ${customerNotes}`);
     if (parts.length) customerBlock = `\nCONTEXTO DEL CLIENTE:\n${parts.join('\n')}`;
+  } else if (customerNotes) {
+    customerBlock = `\nCONTEXTO DEL CLIENTE:\nNOTAS PRIVADAS DEL NEGOCIO SOBRE ESTE CLIENTE (úsalas para personalizar, no las menciones explícitamente): ${customerNotes}`;
   }
 
   // ── Business closures ───────────────────────────────────────────────────────
@@ -375,9 +383,9 @@ A8. Después de emitir la reserva, informá al cliente que el local confirmará 
   return `${deliveryBlock}\n${appointmentsBlock}\n${closuresBlock}\n${hoursBlock}\n${firstMsgBlock}\n${customerBlock}\n${dateBlock}`.trim();
 }
 
-async function chat({ tenant, stock, services, history, userMessage, convState, imageData, appointmentSlots, customerContext, closures, offers }) {
+async function chat({ tenant, stock, services, history, userMessage, convState, imageData, appointmentSlots, customerContext, closures, offers, businessHours, isFirstMessage, customerNotes }) {
   const staticPrompt  = buildStaticSystemPrompt(tenant, stock, services || [], offers || []);
-  const dynamicPrompt = buildDynamicSystemPrompt(tenant, convState || {}, appointmentSlots || null, customerContext || null, closures || []);
+  const dynamicPrompt = buildDynamicSystemPrompt(tenant, convState || {}, appointmentSlots || null, customerContext || null, closures || [], businessHours || [], isFirstMessage || false, customerNotes || null);
 
   // Static catalog/rules block is cached (only changes when the merchant edits
   // products/config) — avoids re-billing it at full price on every message.

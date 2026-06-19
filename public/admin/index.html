@@ -442,6 +442,14 @@
             </div>
             <!-- Messages -->
             <div id="chatMessages" class="flex-1 overflow-y-auto px-3 py-3 space-y-1.5" style="background:#f0f2f0"></div>
+            <!-- Customer notes -->
+            <div class="bg-yellow-50 border-t border-yellow-200 px-3 py-2 flex items-center gap-2 flex-shrink-0">
+              <span class="text-xs text-yellow-700 flex-shrink-0" data-i18n="chat.notes.label">📝 Notas:</span>
+              <input id="customerNotesInput" type="text" data-i18n-ph="chat.notes.placeholder"
+                placeholder="vegano, alérgico a nueces... (solo lo ves vos)"
+                onchange="saveCustomerNotes(currentChatPhone)"
+                class="flex-1 bg-white border border-yellow-200 rounded-full px-3 py-1 text-xs focus:outline-none focus:border-yellow-400 min-w-0"/>
+            </div>
             <!-- Input bar -->
             <div class="bg-gray-100 border-t border-gray-200 px-3 py-2 flex items-center gap-2 flex-shrink-0">
               <button onclick="openImgPicker()" title="Enviar imagen"
@@ -1043,6 +1051,26 @@
         <button onclick="saveCustomInstructions()" data-i18n="settings.rules.save"
           class="btn-green w-full py-2 rounded-lg text-sm font-semibold">
           Guardar reglas
+        </button>
+      </div>
+
+      <!-- Business info -->
+      <div class="bg-white rounded-xl shadow-sm p-6">
+        <h3 data-i18n="settings.bizinfo.title" class="font-medium text-gray-800 mb-1">📍 Información del negocio</h3>
+        <p data-i18n="settings.bizinfo.desc" class="text-xs text-gray-400 mb-3">Sara usa estos datos para responder preguntas sobre dónde encontrarte y pedir reseñas.</p>
+        <div id="businessInfoMsg" class="hidden rounded-lg px-4 py-2 text-sm mb-3"></div>
+        <label class="block text-xs font-medium text-gray-600 mb-1" data-i18n="settings.bizinfo.address">Dirección del local</label>
+        <input id="sAddress" type="text" data-i18n-ph="settings.bizinfo.address_ph"
+          placeholder="Av. España 1234, Asunción"
+          class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-3"/>
+        <label class="block text-xs font-medium text-gray-600 mb-1" data-i18n="settings.bizinfo.review_url">Link Google Reviews</label>
+        <input id="sGoogleReviewUrl" type="url" data-i18n-ph="settings.bizinfo.review_url_ph"
+          placeholder="https://g.page/r/..."
+          class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-3"/>
+        <p class="text-xs text-gray-400 mb-3" data-i18n="settings.bizinfo.review_hint">Sara pide una reseña automáticamente después de cada entrega.</p>
+        <button onclick="saveBusinessInfo()" data-i18n="settings.bizinfo.save"
+          class="btn-green w-full py-2 rounded-lg text-sm font-semibold">
+          Guardar info
         </button>
       </div>
 
@@ -3298,6 +3326,10 @@ async function loadSettings() {
     updateDeliveryFields();
     applyTabVisibility(s.products_enabled !== false, !!s.services_enabled, !!s.appointments_enabled);
 
+    // Business info fields
+    document.getElementById('sAddress').value         = s.address || '';
+    document.getElementById('sGoogleReviewUrl').value = s.google_review_url || '';
+
     // Account fields
     document.getElementById('aEmail').value    = s.email    || s.login_slug || '';
     document.getElementById('aUsername').value = s.login_slug || '';
@@ -3483,6 +3515,29 @@ async function savePayment() {
     msgEl.textContent = errMsg(e);
     msgEl.classList.remove('hidden');
   }
+}
+
+async function saveBusinessInfo() {
+  const msgEl = document.getElementById('businessInfoMsg');
+  msgEl.classList.add('hidden');
+  try {
+    await api('/admin/settings', 'PUT', {
+      address:           document.getElementById('sAddress').value.trim() || null,
+      google_review_url: document.getElementById('sGoogleReviewUrl').value.trim() || null,
+    });
+    msgEl.className   = 'rounded-lg px-4 py-2 text-sm mb-3 bg-green-50 text-green-700';
+    msgEl.textContent = t('settings.bizinfo.saved');
+    msgEl.classList.remove('hidden');
+  } catch (e) {
+    msgEl.className   = 'rounded-lg px-4 py-2 text-sm mb-3 bg-red-50 text-red-700';
+    msgEl.textContent = errMsg(e);
+    msgEl.classList.remove('hidden');
+  }
+}
+
+async function saveCustomerNotes(phone) {
+  const notes = document.getElementById('customerNotesInput').value;
+  await api(`/admin/chats/${encodeURIComponent(phone)}/notes`, 'PATCH', { notes }).catch(() => {});
 }
 
 async function changePassword() {
@@ -3885,6 +3940,12 @@ async function refreshChat() {
     }
 
     renderMessages(conv.messages_json || []);
+
+    // Customer notes
+    const notesInput = document.getElementById('customerNotesInput');
+    if (notesInput && conv.customer_notes !== undefined) {
+      notesInput.value = conv.customer_notes || '';
+    }
   } catch(e) { /* silent */ }
 }
 

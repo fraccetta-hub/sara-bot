@@ -283,12 +283,16 @@ function mt(lang, key, ...args) {
   return MT[key][l](...args);
 }
 
-async function notifyCustomerOrderStatus(order, status, phoneNumberId, token) {
+async function notifyCustomerOrderStatus(order, status, phoneNumberId, token, tenant = null) {
   const custNotifyKey = `cust_status_${status}`;
   if (!MT[custNotifyKey] || !order.customer_phone) return;
   const shortId = order.id.substring(0, 8).toUpperCase();
   const msg = MT[custNotifyKey].es(shortId);
   await sendMessage(order.customer_phone, msg, phoneNumberId, token).catch(() => {});
+  if (status === 'delivered' && tenant?.google_review_url) {
+    const reviewMsg = `¿Cómo fue tu experiencia? Si te gustó, nos ayudás mucho con una reseña 🙏\n${tenant.google_review_url}`;
+    await sendMessage(order.customer_phone, reviewMsg, phoneNumberId, token).catch(() => {});
+  }
 }
 
 async function parseMerchantIntent(messageText, products, services) {
@@ -568,7 +572,7 @@ async function handleMerchantMessage(tenant, messageText, phoneNumberId, token) 
           } else if (pending.action === 'update_order_status') {
             await supabase.from('orders').update({ status: pending.params.status }).eq('id', chosen.id);
             await sendMessage(tenant.merchant_phone, mt(pending.lang, 'order_status_upd', chosen.id.substring(0,8).toUpperCase(), pending.params.status), phoneNumberId, token);
-            await notifyCustomerOrderStatus(chosen, pending.params.status, phoneNumberId, token);
+            await notifyCustomerOrderStatus(chosen, pending.params.status, phoneNumberId, token, tenant);
           } else if (pending.action === 'confirm_order') {
             await confirmOrder(tenant, chosen, phoneNumberId, token);
           } else if (pending.action === 'cancel_order') {
@@ -736,7 +740,7 @@ async function handleMerchantMessage(tenant, messageText, phoneNumberId, token) 
     if (orders.length === 1) {
       await supabase.from('orders').update({ status }).eq('id', orders[0].id);
       await sendMessage(tenant.merchant_phone, mt(lang, 'order_status_upd', orders[0].id.substring(0,8).toUpperCase(), status), phoneNumberId, token);
-      await notifyCustomerOrderStatus(orders[0], status, phoneNumberId, token);
+      await notifyCustomerOrderStatus(orders[0], status, phoneNumberId, token, tenant);
       return;
     }
     const list = orders.map((o,i) => `${i+1}. *#${o.id.substring(0,8).toUpperCase()}* +${o.customer_phone} (${o.status})`).join('\n');
@@ -1410,6 +1414,7 @@ async function handleCustomerMessage(tenant, customerPhone, messageText, locatio
     offers,
     businessHours,
     isFirstMessage,
+    customerNotes: convRow?.customer_notes || null,
   });
 
   if (offTopic) {

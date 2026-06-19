@@ -278,6 +278,7 @@ router.get('/settings', requireAuth, async (req, res) => {
              delivery_type, delivery_base_fee, delivery_zone_km,
              delivery_zone_outer_fee, delivery_per_km,
              delivery_min_order, delivery_disabled_dates,
+             address, google_review_url,
              active, plan_expires, plan_currency, phone_number_id, whatsapp_token_refresh_error`)
     .eq('id', req.tenant.tenantId)
     .single();
@@ -294,7 +295,8 @@ router.put('/settings', requireAuth, async (req, res) => {
     'delivery_enabled','location_address','location_lat','location_lng',
     'delivery_type','delivery_base_fee','delivery_zone_km',
     'delivery_zone_outer_fee','delivery_per_km',
-    'delivery_min_order','delivery_disabled_dates'
+    'delivery_min_order','delivery_disabled_dates',
+    'address','google_review_url'
   ];
   const updates = {};
   for (const key of allowed) {
@@ -707,6 +709,18 @@ router.post('/chats/:phone/send', requireAuth, async (req, res) => {
     })
     .eq('tenant_id', req.tenant.tenantId).eq('customer_phone', req.params.phone);
 
+  res.json({ ok: true });
+});
+
+// ─── PATCH /admin/chats/:phone/notes — save customer notes ───────────────────
+
+router.patch('/chats/:phone/notes', requireAuth, async (req, res) => {
+  const { notes } = req.body;
+  if (notes === undefined) return res.status(400).json({ error: 'notes required' });
+  await supabase.from('conversations')
+    .update({ customer_notes: notes })
+    .eq('tenant_id', req.tenant.tenantId)
+    .eq('customer_phone', req.params.phone);
   res.json({ ok: true });
 });
 
