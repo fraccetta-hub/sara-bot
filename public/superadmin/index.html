@@ -1033,6 +1033,13 @@ setInterval(async () => {
   }
 }, 30000);
 
+// Tenant list refresh — picks up cancellations, new signups, plan changes
+setInterval(() => {
+  if (!document.getElementById('sectionClients').classList.contains('hidden')) {
+    loadTenants().catch(() => {});
+  }
+}, 60000);
+
 // ── API helper ─────────────────────────────────────────────────────────────────
 async function api(path, method = 'GET', body = null) {
   const opts = { method, credentials: 'same-origin', headers: { 'Content-Type': 'application/json' } };
