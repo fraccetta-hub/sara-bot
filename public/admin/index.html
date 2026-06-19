@@ -888,6 +888,20 @@
         <button onclick="saveBusinessHours()" class="btn-green w-full py-2 rounded-lg text-sm font-semibold mt-4">Guardar horarios</button>
       </div>
 
+      <!-- Business closures -->
+      <div class="bg-white rounded-xl shadow-sm p-6">
+        <h3 data-i18n="settings.closures.title" class="font-medium text-gray-800 mb-1">🏖️ Cierres y Vacaciones</h3>
+        <p data-i18n="settings.closures.desc" class="text-xs text-gray-400 mb-4">Fechas en las que el local estará cerrado. Sara lo informará a los clientes y no se tomarán turnos ni delivery en ese período.</p>
+        <div id="closuresList" class="space-y-2 mb-4"></div>
+        <div class="flex gap-2 flex-wrap">
+          <input id="closureStart" type="date" class="border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
+          <input id="closureEnd" type="date" class="border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
+          <input id="closureLabel" type="text" data-i18n-placeholder="settings.closures.label_ph" placeholder="Ej: Vacaciones" class="border border-gray-200 rounded-lg px-3 py-2 text-sm flex-1 min-w-32"/>
+          <button onclick="addClosure()" class="btn-green px-4 py-2 rounded-lg text-sm font-semibold" data-i18n="settings.closures.add">Agregar</button>
+        </div>
+        <div id="closureMsg" class="hidden rounded-lg px-4 py-2 text-sm mt-3"></div>
+      </div>
+
       <!-- Bot personality -->
       <div class="bg-white rounded-xl shadow-sm p-6">
         <h3 data-i18n="settings.bot.title" class="font-medium text-gray-800 mb-1">🤖 Personalidad de tu asistente</h3>
@@ -2013,6 +2027,7 @@ window.onload = async () => {
   applyTranslations();
 
   // Check if already authenticated via cookie
+  document.getElementById('loginPage').classList.add('hidden');
   try {
     const me = await fetch('/admin/me', { credentials: 'same-origin' });
     if (me.ok) {
@@ -2036,8 +2051,12 @@ window.onload = async () => {
           }, 800);
         }
       }
+    } else {
+      document.getElementById('loginPage').classList.remove('hidden');
     }
-  } catch (_) {}
+  } catch (_) {
+    document.getElementById('loginPage').classList.remove('hidden');
+  }
 };
 
 // ── Auth ───────────────────────────────────────────────────────────────────────
@@ -3248,6 +3267,9 @@ async function loadSettings() {
     // Load business hours
     const bh = await api('/admin/business-hours').catch(() => []);
     renderBusinessHoursForm(bh);
+
+    // Load closures
+    loadClosures();
   } catch (e) { /* ignore */ }
 }
 
@@ -4691,6 +4713,46 @@ function renderBusinessHoursForm(data) {
 function toggleBhDay(i) {
   const closed = document.getElementById(`bhClosed_${i}`).checked;
   document.getElementById(`bhTimes_${i}`).classList.toggle('hidden', closed);
+}
+
+async function loadClosures() {
+  const list = document.getElementById('closuresList');
+  if (!list) return;
+  try {
+    const data = await api('/admin/business-closures');
+    if (!data.length) { list.innerHTML = `<p class="text-xs text-gray-400" data-i18n="settings.closures.none">${t('settings.closures.none')}</p>`; return; }
+    list.innerHTML = data.map(c => `
+      <div class="flex items-center justify-between gap-2 bg-gray-50 rounded-lg px-3 py-2 text-sm">
+        <span class="text-gray-700">🏖️ <b>${c.label || '—'}</b> <span class="text-gray-400">${c.start_date} → ${c.end_date}</span></span>
+        <button onclick="deleteClosure(${c.id})" class="text-red-400 hover:text-red-600 text-xs font-medium">✕</button>
+      </div>`).join('');
+  } catch(e) { list.innerHTML = ''; }
+}
+
+async function addClosure() {
+  const start = document.getElementById('closureStart').value;
+  const end   = document.getElementById('closureEnd').value;
+  const label = document.getElementById('closureLabel').value.trim();
+  const msg   = document.getElementById('closureMsg');
+  if (!start || !end) { msg.textContent = t('settings.closures.err_dates'); msg.className = 'rounded-lg px-4 py-2 text-sm mt-3 bg-red-50 text-red-700'; msg.classList.remove('hidden'); return; }
+  try {
+    await api('/admin/business-closures', 'POST', { start_date: start, end_date: end, label });
+    document.getElementById('closureStart').value = '';
+    document.getElementById('closureEnd').value = '';
+    document.getElementById('closureLabel').value = '';
+    msg.textContent = t('settings.closures.saved');
+    msg.className = 'rounded-lg px-4 py-2 text-sm mt-3 bg-green-50 text-green-700';
+    msg.classList.remove('hidden');
+    setTimeout(() => msg.classList.add('hidden'), 3000);
+    loadClosures();
+  } catch(e) { msg.textContent = errMsg(e); msg.className = 'rounded-lg px-4 py-2 text-sm mt-3 bg-red-50 text-red-700'; msg.classList.remove('hidden'); }
+}
+
+async function deleteClosure(id) {
+  try {
+    await api(`/admin/business-closures/${id}`, 'DELETE');
+    loadClosures();
+  } catch(e) { console.error('deleteClosure', e); }
 }
 
 async function saveBusinessHours() {

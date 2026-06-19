@@ -111,6 +111,12 @@
 - Fix: `if (!settings) return` aggiunto subito dopo `await api('/admin/settings')`
 - File: `public/admin/index.html` — funzione `showDashboard()`
 
+### Bug fix loginPage flash al boot / impersonazione (fix definitivo, sessione 2026-06-19)
+- Root cause: `loginPage` visibile per default in HTML; `window.onload` nascondeva solo dentro `showDashboard()` dopo `await fetch('/admin/me')` → flash durante il round-trip
+- Fix: `loginPage.classList.add('hidden')` spostato PRIMA del `fetch('/admin/me')` in `window.onload`
+- Se `me` non ok o fetch fallisce → `loginPage` rimostrata nel ramo `else` + `catch`
+- File: `public/admin/index.html` — `window.onload`
+
 ## COSA È STATO FATTO (sessione 2026-06-18 — fix wizard + validazione credenziali manuali)
 
 ### Bug fix wizard Embedded Signup
