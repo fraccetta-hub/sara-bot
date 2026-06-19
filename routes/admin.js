@@ -500,6 +500,27 @@ router.get('/customers', requireAuth, async (req, res) => {
   res.json(data);
 });
 
+// ─── POST /admin/customers — add customer manually ───────────────────────────
+
+router.post('/customers', requireAuth, async (req, res) => {
+  let { phone, name } = req.body;
+  if (!phone) return res.status(400).json({ error: 'phone required', errorCode: 'missing_phone' });
+  phone = String(phone).replace(/\D/g, '');
+  if (!phone) return res.status(400).json({ error: 'invalid phone', errorCode: 'invalid_phone' });
+
+  const { error } = await supabase
+    .from('conversations')
+    .upsert({
+      tenant_id:     req.tenant.tenantId,
+      customer_phone: phone,
+      customer_name: name?.trim() || null,
+      messages_json: [],
+      updated_at:    new Date().toISOString(),
+    }, { onConflict: 'tenant_id,customer_phone', ignoreDuplicates: false });
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ ok: true });
+});
+
 // ─── PUT /admin/customers/:phone/name ────────────────────────────────────────
 
 router.put('/customers/:phone/name', requireAuth, async (req, res) => {
