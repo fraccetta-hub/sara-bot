@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Data Processing Agreement — Sara Bot</title>
+  <link rel="icon" type="image/webp" href="/images/favicon.webp"/>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f9f9f9;color:#1a1a1a;line-height:1.7}
+    .topbar{background:#fff;border-bottom:1px solid #e5e5e5;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;position:sticky;top:0;z-index:10}
+    .topbar a{font-weight:700;font-size:16px;color:#1a1a1a;text-decoration:none}
+    .lang-picker{position:relative}
+    .lang-picker-btn{border:1px solid #e5e7eb;border-radius:8px;padding:5px 10px;font-size:13px;font-weight:600;cursor:pointer;background:#fff;color:#374151;white-space:nowrap}
+    .lang-picker-btn:hover{background:#f9fafb}
+    .lang-picker-menu{display:none;position:absolute;right:0;top:calc(100% + 4px);background:#fff;border:1px solid #e5e7eb;border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.1);z-index:1000;min-width:0;overflow:hidden}
+    .lang-picker-menu.open{display:block}
+    .lang-picker-menu button{display:block;width:100%;text-align:left;padding:8px 14px;border:none;background:none;cursor:pointer;font-size:13px;color:#374151}
+    .lang-picker-menu button:hover{background:#f0fdf4;color:#16a34a}
+    .content{max-width:800px;margin:0 auto;padding:40px 24px 80px;background:#fff;min-height:100vh}
+    h1{font-size:26px;font-weight:700;margin-bottom:6px}
+    h2{font-size:17px;font-weight:600;margin-top:32px;margin-bottom:8px}
+    p,li{font-size:14px;color:#333}
+    ul{padding-left:20px;margin:6px 0}
+    .meta{font-size:12px;color:#999;margin-bottom:32px}
+    a{color:#25D366}
+    hr{border:none;border-top:1px solid #eee;margin:36px 0}
+    table{width:100%;border-collapse:collapse;margin:12px 0;font-size:13px}
+    th,td{text-align:left;padding:8px 10px;border:1px solid #e5e5e5}
+    th{background:#f5f5f5;font-weight:600}
+    [data-lang]{display:none}
+    [data-lang].visible{display:block}
+  </style>
+</head>
+<body>
+<div class="topbar">
+  <a href="/"><img src="/images/logosarabot.webp" alt="Sara Bot" style="height:32px;"></a>
+  <div class="lang-picker" id="langPicker">
+    <button class="lang-picker-btn" id="langPickerBtn" onclick="toggleLangPicker(event)">ES ▾</button>
+    <div class="lang-picker-menu" id="langPickerMenu">
+      <button onclick="setLang('es')">ES</button>
+      <button onclick="setLang('en')">EN</button>
+      <button onclick="setLang('it')">IT</button>
+      <button onclick="setLang('de')">DE</button>
+      <button onclick="setLang('fr')">FR</button>
+    </div>
+  </div>
+</div>
+<div class="content">
+
+<!-- ═══ ES ═══ -->
+<div data-lang="es">
+<h1>Acuerdo de Tratamiento de Datos (DPA)</h1>
+<p class="meta">Versión: Junio 2026 · Sara Bot</p>
+<p>Este Acuerdo de Tratamiento de Datos (<strong>"DPA"</strong>) es parte integrante de los Términos de Servicio entre el Merchant (en adelante <strong>"Responsable"</strong>) y el operador de Sara Bot (en adelante <strong>"Encargado"</strong>), y rige el tratamiento de datos personales de los clientes finales del Merchant.</p>
+<h2>1. Objeto y naturaleza del tratamiento</h2>
+<p>El Encargado tratará datos personales de los clientes finales del Responsable con la única finalidad de prestar el servicio de asistente virtual por WhatsApp descrito en los Términos de Servicio.</p>
+<h2>2. Categorías de datos y sujetos</h2>
+<table>
+<tr><th>Dato</th><th>Finalidad</th></tr>
+<tr><td>Número de teléfono</td><td>Identificación de la conversación</td></tr>
+<tr><td>Nombre de perfil WhatsApp</td><td>Personalización de respuestas</td></tr>
+<tr><td>Contenido de mensajes de texto</td><td>Contexto para la IA generativa</td></tr>
+<tr><td>Pedidos y datos de entrega</td><td>Gestión comercial del Responsable</td></tr>
+<tr><td>Citas y reservas</td><td>Agenda del Responsable</td></tr>
+</table>
+<h2>3. Duración</h2>
+<p>El tratamiento dura mientras el Responsable mantenga una suscripción activa en Sara Bot. Al cancelar la cuenta, todos los datos se eliminan de forma irreversible en un plazo máximo de 30 días.</p>
+<h2>4. Obligaciones del Encargado</h2>
+<ul>
+<li>Tratar los datos únicamente según las instrucciones documentadas del Responsable.</li>
+<li>Garantizar la confidencialidad del personal con acceso a los datos.</li>
+<li>Implementar medidas de seguridad técnicas y organizativas apropiadas (HTTPS/TLS, hash bcrypt, cookies HttpOnly, acceso restringido).</li>
+<li>Notificar al Responsable cualquier violación de seguridad en un plazo máximo de 72 horas tras su detección.</li>
+<li>Asistir al Responsable en el cumplimiento de solicitudes de derechos de los interesados (acceso, rectificación, supresión, portabilidad).</li>
+<li>Eliminar o devolver todos los datos al término del contrato, a elección del Responsable.</li>
+<li>Poner a disposición toda la información necesaria para demostrar el cumplimiento del presente DPA.</li>
+</ul>
+<h2>5. Subencargados autorizados</h2>
+<table>
+<tr><th>Proveedor</th><th>Rol</th><th>Ubicación</th></tr>
+<tr><td>Meta Platforms Inc.</td><td>Entrega de mensajes WhatsApp</td><td>EE.UU. (cláusulas contractuales tipo)</td></tr>
+<tr><td>Anthropic PBC</td><td>IA generativa (procesamiento de mensajes)</td><td>EE.UU. (cláusulas contractuales tipo)</td></tr>
+<tr><td>Supabase Inc.</td><td>Almacenamiento de base de datos</td><td>EE.UU. (cláusulas contractuales tipo)</td></tr>
+<tr><td>Render Inc.</td><td>Infraestructura de servidor</td><td>EE.UU. (cláusulas contractuales tipo)</td></tr>
+</table>
+<p>El Encargado notificará al Responsable cualquier cambio en la lista de subencargados con al menos 15 días de anticipación.</p>
+<h2>6. Transferencias internacionales</h2>
+<p>Los datos pueden transferirse a países fuera del EEE. Todas las transferencias se realizan bajo cláusulas contractuales tipo (CCT) aprobadas por la Comisión Europea o mecanismos equivalentes.</p>
+<h2>7. Derechos del interesado — herramienta de supresión</h2>
+<p>El Responsable puede eliminar todos los datos de un cliente final desde el panel de administración: <strong>pestaña Chats → seleccioná el contacto → botón "🗑️ Borrar datos del contacto"</strong>. La eliminación incluye conversaciones, pedidos, citas, reservas y lista de espera.</p>
+<h2>8. Aceptación</h2>
+<p>Al marcar la casilla "Acepto el Acuerdo de Tratamiento de Datos" durante el registro, el Responsable acepta los términos del presente DPA en nombre de su organización.</p>
+<hr><p style="font-size:12px;color:#999">Contacto DPO: <a href="mailto:support@sarabot.pro">support@sarabot.pro</a></p>
+</div>
+
+<!-- ═══ EN ═══ -->
+<div data-lang="en">
+<h1>Data Processing Agreement (DPA)</h1>
+<p class="meta">Version: June 2026 · Sara Bot</p>
+<p>This Data Processing Agreement (<strong>"DPA"</strong>) forms part of the Terms of Service between the Merchant (hereinafter <strong>"Controller"</strong>) and the operator of Sara Bot (hereinafter <strong>"Processor"</strong>), and governs the processing of personal data of the Merchant's end customers.</p>
+<h2>1. Subject matter and nature of processing</h2>
+<p>The Processor will process personal data of the Controller's end customers solely for the purpose of providing the WhatsApp virtual assistant service described in the Terms of Service.</p>
+<h2>2. Categories of data and data subjects</h2>
+<table>
+<tr><th>Data</th><th>Purpose</th></tr>
+<tr><td>Phone number</td><td>Conversation identification</td></tr>
+<tr><td>WhatsApp profile name</td><td>Response personalisation</td></tr>
+<tr><td>Text message content</td><td>Context for generative AI</td></tr>
+<tr><td>Orders and delivery data</td><td>Controller's commerce management</td></tr>
+<tr><td>Appointments and reservations</td><td>Controller's scheduling</td></tr>
+</table>
+<h2>3. Duration</h2>
+<p>Processing lasts for as long as the Controller maintains an active subscription with Sara Bot. Upon account deletion, all data is irreversibly erased within a maximum of 30 days.</p>
+<h2>4. Processor obligations</h2>
+<ul>
+<li>Process data only on documented instructions from the Controller.</li>
+<li>Ensure confidentiality of personnel with access to data.</li>
+<li>Implement appropriate technical and organisational security measures (HTTPS/TLS, bcrypt hashing, HttpOnly cookies, restricted access).</li>
+<li>Notify the Controller of any security breach within 72 hours of detection.</li>
+<li>Assist the Controller in responding to data subject rights requests (access, rectification, erasure, portability).</li>
+<li>Delete or return all data at the end of the contract, at the Controller's choice.</li>
+<li>Make all information necessary to demonstrate compliance with this DPA available.</li>
+</ul>
+<h2>5. Authorised sub-processors</h2>
+<table>
+<tr><th>Provider</th><th>Role</th><th>Location</th></tr>
+<tr><td>Meta Platforms Inc.</td><td>WhatsApp message delivery</td><td>USA (standard contractual clauses)</td></tr>
+<tr><td>Anthropic PBC</td><td>Generative AI (message processing)</td><td>USA (standard contractual clauses)</td></tr>
+<tr><td>Supabase Inc.</td><td>Database storage</td><td>USA (standard contractual clauses)</td></tr>
+<tr><td>Render Inc.</td><td>Server infrastructure</td><td>USA (standard contractual clauses)</td></tr>
+</table>
+<p>The Processor will notify the Controller of any changes to the sub-processor list at least 15 days in advance.</p>
+<h2>6. International transfers</h2>
+<p>Data may be transferred to countries outside the EEA. All transfers are carried out under Standard Contractual Clauses (SCCs) approved by the European Commission or equivalent mechanisms.</p>
+<h2>7. Data subject rights — erasure tool</h2>
+<p>The Controller can delete all data for a specific end customer from the admin panel: <strong>Chats tab → select the contact → "🗑️ Delete contact data" button</strong>. Deletion covers conversations, orders, appointments, reservations and waitlist entries.</p>
+<h2>8. Acceptance</h2>
+<p>By checking the "I accept the Data Processing Agreement" box during registration, the Controller accepts the terms of this DPA on behalf of their organisation.</p>
+<hr><p style="font-size:12px;color:#999">DPO contact: <a href="mailto:support@sarabot.pro">support@sarabot.pro</a></p>
+</div>
+
+<!-- ═══ IT ═══ -->
+<div data-lang="it">
+<h1>Accordo sul Trattamento dei Dati (DPA)</h1>
+<p class="meta">Versione: Giugno 2026 · Sara Bot</p>
+<p>Il presente Accordo sul Trattamento dei Dati (<strong>"DPA"</strong>) è parte integrante dei Termini di Servizio tra il Merchant (di seguito <strong>"Titolare"</strong>) e l'operatore di Sara Bot (di seguito <strong>"Responsabile"</strong>), e disciplina il trattamento dei dati personali dei clienti finali del Titolare.</p>
+<h2>1. Oggetto e natura del trattamento</h2>
+<p>Il Responsabile tratterà i dati personali dei clienti finali del Titolare con l'unico scopo di erogare il servizio di assistente virtuale via WhatsApp descritto nei Termini di Servizio.</p>
+<h2>2. Categorie di dati e interessati</h2>
+<table>
+<tr><th>Dato</th><th>Finalità</th></tr>
+<tr><td>Numero di telefono</td><td>Identificazione della conversazione</td></tr>
+<tr><td>Nome profilo WhatsApp</td><td>Personalizzazione delle risposte</td></tr>
+<tr><td>Contenuto dei messaggi di testo</td><td>Contesto per l'IA generativa</td></tr>
+<tr><td>Ordini e dati di consegna</td><td>Gestione commerciale del Titolare</td></tr>
+<tr><td>Appuntamenti e prenotazioni</td><td>Agenda del Titolare</td></tr>
+</table>
+<h2>3. Durata</h2>
+<p>Il trattamento dura finché il Titolare mantiene un abbonamento attivo su Sara Bot. Alla cancellazione dell'account, tutti i dati vengono eliminati in modo irreversibile entro un massimo di 30 giorni.</p>
+<h2>4. Obblighi del Responsabile</h2>
+<ul>
+<li>Trattare i dati esclusivamente su istruzioni documentate del Titolare.</li>
+<li>Garantire la riservatezza del personale con accesso ai dati.</li>
+<li>Implementare misure di sicurezza tecniche e organizzative adeguate (HTTPS/TLS, hash bcrypt, cookie HttpOnly, accesso limitato).</li>
+<li>Notificare al Titolare qualsiasi violazione della sicurezza entro 72 ore dalla sua rilevazione.</li>
+<li>Assistere il Titolare nel rispondere alle richieste di esercizio dei diritti degli interessati (accesso, rettifica, cancellazione, portabilità).</li>
+<li>Eliminare o restituire tutti i dati al termine del contratto, a scelta del Titolare.</li>
+<li>Mettere a disposizione tutte le informazioni necessarie per dimostrare il rispetto del presente DPA.</li>
+</ul>
+<h2>5. Sub-responsabili autorizzati</h2>
+<table>
+<tr><th>Fornitore</th><th>Ruolo</th><th>Sede</th></tr>
+<tr><td>Meta Platforms Inc.</td><td>Consegna messaggi WhatsApp</td><td>USA (clausole contrattuali standard)</td></tr>
+<tr><td>Anthropic PBC</td><td>IA generativa (elaborazione messaggi)</td><td>USA (clausole contrattuali standard)</td></tr>
+<tr><td>Supabase Inc.</td><td>Database cloud</td><td>USA (clausole contrattuali standard)</td></tr>
+<tr><td>Render Inc.</td><td>Infrastruttura server</td><td>USA (clausole contrattuali standard)</td></tr>
+</table>
+<p>Il Responsabile notificherà al Titolare qualsiasi modifica all'elenco dei sub-responsabili con almeno 15 giorni di anticipo.</p>
+<h2>6. Trasferimenti internazionali</h2>
+<p>I dati possono essere trasferiti in paesi al di fuori del SEE. Tutti i trasferimenti avvengono mediante clausole contrattuali standard (SCC) approvate dalla Commissione Europea o meccanismi equivalenti.</p>
+<h2>7. Diritti degli interessati — strumento di cancellazione</h2>
+<p>Il Titolare può eliminare tutti i dati di un cliente finale dal pannello di amministrazione: <strong>tab Chat → seleziona il contatto → pulsante "🗑️ Elimina dati del contatto"</strong>. La cancellazione include conversazioni, ordini, appuntamenti, prenotazioni e lista d'attesa.</p>
+<h2>8. Accettazione</h2>
+<p>Spuntando la casella "Accetto l'Accordo sul Trattamento dei Dati" durante la registrazione, il Titolare accetta i termini del presente DPA per conto della propria organizzazione.</p>
+<hr><p style="font-size:12px;color:#999">Contatto DPO: <a href="mailto:support@sarabot.pro">support@sarabot.pro</a></p>
+</div>
+
+<!-- ═══ DE ═══ -->
+<div data-lang="de">
+<h1>Auftragsverarbeitungsvertrag (AVV / DPA)</h1>
+<p class="meta">Version: Juni 2026 · Sara Bot</p>
+<p>Dieser Auftragsverarbeitungsvertrag (<strong>"AVV"</strong>) ist Bestandteil der Nutzungsbedingungen zwischen dem Händler (nachfolgend <strong>"Verantwortlicher"</strong>) und dem Betreiber von Sara Bot (nachfolgend <strong>"Auftragsverarbeiter"</strong>) und regelt die Verarbeitung personenbezogener Daten der Endkunden des Verantwortlichen.</p>
+<h2>1. Gegenstand und Art der Verarbeitung</h2>
+<p>Der Auftragsverarbeiter verarbeitet personenbezogene Daten der Endkunden des Verantwortlichen ausschließlich zum Zweck der Erbringung des in den Nutzungsbedingungen beschriebenen WhatsApp-Assistenten-Dienstes.</p>
+<h2>2. Datenkategorien und betroffene Personen</h2>
+<table>
+<tr><th>Datum</th><th>Zweck</th></tr>
+<tr><td>Telefonnummer</td><td>Gesprächsidentifikation</td></tr>
+<tr><td>WhatsApp-Profilname</td><td>Antwort-Personalisierung</td></tr>
+<tr><td>Textnachrichteninhalt</td><td>Kontext für generative KI</td></tr>
+<tr><td>Bestellungen und Lieferdaten</td><td>Handelsverwaltung des Verantwortlichen</td></tr>
+<tr><td>Termine und Reservierungen</td><td>Terminplanung des Verantwortlichen</td></tr>
+</table>
+<h2>3. Laufzeit</h2>
+<p>Die Verarbeitung dauert so lange an, wie der Verantwortliche ein aktives Abonnement bei Sara Bot unterhält. Bei Kontoschließung werden alle Daten innerhalb von maximal 30 Tagen unwiderruflich gelöscht.</p>
+<h2>4. Pflichten des Auftragsverarbeiters</h2>
+<ul>
+<li>Daten nur auf dokumentierte Weisung des Verantwortlichen verarbeiten.</li>
+<li>Vertraulichkeit des zugangsberechtigten Personals gewährleisten.</li>
+<li>Geeignete technische und organisatorische Sicherheitsmaßnahmen implementieren (HTTPS/TLS, bcrypt-Hashing, HttpOnly-Cookies, eingeschränkter Zugang).</li>
+<li>Den Verantwortlichen innerhalb von 72 Stunden nach Entdeckung über Sicherheitsverletzungen informieren.</li>
+<li>Den Verantwortlichen bei der Beantwortung von Anfragen betroffener Personen (Auskunft, Berichtigung, Löschung, Portabilität) unterstützen.</li>
+<li>Alle Daten nach Vertragsende löschen oder zurückgeben, nach Wahl des Verantwortlichen.</li>
+<li>Alle zur Nachweisführung der Einhaltung dieses AVV erforderlichen Informationen bereitstellen.</li>
+</ul>
+<h2>5. Autorisierte Unterauftragsverarbeiter</h2>
+<table>
+<tr><th>Anbieter</th><th>Rolle</th><th>Standort</th></tr>
+<tr><td>Meta Platforms Inc.</td><td>WhatsApp-Nachrichtenzustellung</td><td>USA (Standardvertragsklauseln)</td></tr>
+<tr><td>Anthropic PBC</td><td>Generative KI (Nachrichtenverarbeitung)</td><td>USA (Standardvertragsklauseln)</td></tr>
+<tr><td>Supabase Inc.</td><td>Datenbankspeicherung</td><td>USA (Standardvertragsklauseln)</td></tr>
+<tr><td>Render Inc.</td><td>Serverinfrastruktur</td><td>USA (Standardvertragsklauseln)</td></tr>
+</table>
+<p>Der Auftragsverarbeiter informiert den Verantwortlichen über Änderungen der Unterauftragsverarbeiterliste mindestens 15 Tage im Voraus.</p>
+<h2>6. Internationale Datenübermittlungen</h2>
+<p>Daten können in Länder außerhalb des EWR übermittelt werden. Alle Übermittlungen erfolgen unter von der Europäischen Kommission genehmigten Standardvertragsklauseln (SCC) oder gleichwertigen Mechanismen.</p>
+<h2>7. Rechte der Betroffenen — Lösch-Tool</h2>
+<p>Der Verantwortliche kann alle Daten eines bestimmten Endkunden über das Admin-Panel löschen: <strong>Reiter Chats → Kontakt auswählen → Schaltfläche "🗑️ Kontaktdaten löschen"</strong>. Die Löschung umfasst Gespräche, Bestellungen, Termine, Reservierungen und Warteliste.</p>
+<h2>8. Annahme</h2>
+<p>Durch Ankreuzen der Checkbox „Ich akzeptiere den Auftragsverarbeitungsvertrag" bei der Registrierung akzeptiert der Verantwortliche die Bedingungen dieses AVV im Namen seiner Organisation.</p>
+<hr><p style="font-size:12px;color:#999">DSB-Kontakt: <a href="mailto:support@sarabot.pro">support@sarabot.pro</a></p>
+</div>
+
+<!-- ═══ FR ═══ -->
+<div data-lang="fr">
+<h1>Accord de Traitement des Données (ATD / DPA)</h1>
+<p class="meta">Version : Juin 2026 · Sara Bot</p>
+<p>Le présent Accord de Traitement des Données (<strong>"ATD"</strong>) fait partie intégrante des Conditions d'utilisation entre le Marchand (ci-après <strong>"Responsable du traitement"</strong>) et l'opérateur de Sara Bot (ci-après <strong>"Sous-traitant"</strong>), et régit le traitement des données personnelles des clients finaux du Marchand.</p>
+<h2>1. Objet et nature du traitement</h2>
+<p>Le Sous-traitant traitera les données personnelles des clients finaux du Responsable uniquement aux fins de fournir le service d'assistant virtuel WhatsApp décrit dans les Conditions d'utilisation.</p>
+<h2>2. Catégories de données et personnes concernées</h2>
+<table>
+<tr><th>Donnée</th><th>Finalité</th></tr>
+<tr><td>Numéro de téléphone</td><td>Identification de la conversation</td></tr>
+<tr><td>Nom de profil WhatsApp</td><td>Personnalisation des réponses</td></tr>
+<tr><td>Contenu des messages texte</td><td>Contexte pour l'IA générative</td></tr>
+<tr><td>Commandes et données de livraison</td><td>Gestion commerciale du Responsable</td></tr>
+<tr><td>Rendez-vous et réservations</td><td>Agenda du Responsable</td></tr>
+</table>
+<h2>3. Durée</h2>
+<p>Le traitement dure aussi longtemps que le Responsable maintient un abonnement actif chez Sara Bot. Lors de la suppression du compte, toutes les données sont effacées de manière irréversible dans un délai maximum de 30 jours.</p>
+<h2>4. Obligations du Sous-traitant</h2>
+<ul>
+<li>Traiter les données uniquement sur instructions documentées du Responsable.</li>
+<li>Garantir la confidentialité du personnel ayant accès aux données.</li>
+<li>Mettre en œuvre des mesures de sécurité techniques et organisationnelles appropriées (HTTPS/TLS, hachage bcrypt, cookies HttpOnly, accès restreint).</li>
+<li>Notifier le Responsable de toute violation de sécurité dans un délai maximum de 72 heures après sa détection.</li>
+<li>Assister le Responsable dans la gestion des demandes d'exercice des droits des personnes concernées (accès, rectification, effacement, portabilité).</li>
+<li>Supprimer ou restituer toutes les données à la fin du contrat, au choix du Responsable.</li>
+<li>Mettre à disposition toutes les informations nécessaires pour démontrer le respect du présent ATD.</li>
+</ul>
+<h2>5. Sous-traitants ultérieurs autorisés</h2>
+<table>
+<tr><th>Fournisseur</th><th>Rôle</th><th>Localisation</th></tr>
+<tr><td>Meta Platforms Inc.</td><td>Distribution des messages WhatsApp</td><td>USA (clauses contractuelles types)</td></tr>
+<tr><td>Anthropic PBC</td><td>IA générative (traitement des messages)</td><td>USA (clauses contractuelles types)</td></tr>
+<tr><td>Supabase Inc.</td><td>Stockage de base de données</td><td>USA (clauses contractuelles types)</td></tr>
+<tr><td>Render Inc.</td><td>Infrastructure serveur</td><td>USA (clauses contractuelles types)</td></tr>
+</table>
+<p>Le Sous-traitant informera le Responsable de tout changement dans la liste des sous-traitants ultérieurs au moins 15 jours à l'avance.</p>
+<h2>6. Transferts internationaux</h2>
+<p>Les données peuvent être transférées vers des pays hors EEE. Tous les transferts sont effectués sous des clauses contractuelles types (CCT) approuvées par la Commission européenne ou des mécanismes équivalents.</p>
+<h2>7. Droits des personnes concernées — outil de suppression</h2>
+<p>Le Responsable peut supprimer toutes les données d'un client final depuis le panneau d'administration : <strong>onglet Chats → sélectionner le contact → bouton "🗑️ Supprimer les données du contact"</strong>. La suppression inclut les conversations, commandes, rendez-vous, réservations et liste d'attente.</p>
+<h2>8. Acceptation</h2>
+<p>En cochant la case « J'accepte l'Accord de Traitement des Données » lors de l'inscription, le Responsable accepte les termes du présent ATD au nom de son organisation.</p>
+<hr><p style="font-size:12px;color:#999">Contact DPO : <a href="mailto:support@sarabot.pro">support@sarabot.pro</a></p>
+</div>
+
+</div>
+<script>
+function toggleLangPicker(e){e.stopPropagation();document.getElementById('langPickerMenu').classList.toggle('open');}
+document.addEventListener('click',()=>document.getElementById('langPickerMenu').classList.remove('open'));
+function setLang(l){
+  document.querySelectorAll('[data-lang]').forEach(el=>el.classList.remove('visible'));
+  const el=document.querySelector(`[data-lang="${l}"]`);
+  if(el)el.classList.add('visible');
+  document.getElementById('langPickerBtn').textContent=l.toUpperCase()+' ▾';
+  try{localStorage.setItem('sara_lang',l);}catch(e){}
+}
+(function(){
+  const saved=localStorage.getItem('sara_lang')||localStorage.getItem('legal_lang')||'es';
+  setLang(saved);
+})();
+</script>
+</body>
+</html>

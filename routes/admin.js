@@ -2284,6 +2284,23 @@ router.delete('/restaurant/reservations/:id', requireAuth, async (req, res) => {
   res.json({ ok: true });
 });
 
+// ─── GDPR: erase all personal data for a specific end customer ───────────────
+router.delete('/customers/:phone', requireAuth, async (req, res) => {
+  const tenantId = req.tenant.tenantId;
+  const phone = req.params.phone.replace(/\D/g, '');
+  if (!phone) return res.status(400).json({ error: 'invalid phone', errorCode: 'invalid_phone' });
+
+  await Promise.all([
+    supabase.from('conversations').delete().eq('tenant_id', tenantId).eq('customer_phone', phone),
+    supabase.from('orders').delete().eq('tenant_id', tenantId).eq('customer_phone', phone),
+    supabase.from('waitlist').delete().eq('tenant_id', tenantId).eq('customer_phone', phone),
+    supabase.from('appointments').delete().eq('tenant_id', tenantId).eq('customer_phone', phone),
+    supabase.from('reservations').delete().eq('tenant_id', tenantId).eq('customer_phone', phone),
+  ]);
+
+  res.json({ ok: true });
+});
+
 // ─── Restaurant: settings (enable/disable + slot duration) ───────────────────
 
 router.put('/restaurant/settings', requireAuth, async (req, res) => {

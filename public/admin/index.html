@@ -428,6 +428,7 @@
                 <button onclick="cancelEditName()" class="text-green-300 hover:text-white text-xs flex-shrink-0">✕</button>
               </div>
               <button id="resumeBtn" onclick="resumeBot()" data-i18n="chat.resume" class="hidden flex-shrink-0 bg-white text-green-700 text-xs font-semibold px-3 py-1.5 rounded-full hover:bg-green-50 transition">🤖 Reactivar Sara</button>
+              <button onclick="eraseCustomerData()" data-i18n="chat.erase" title="GDPR erase" class="flex-shrink-0 text-red-300 hover:text-white text-xs px-2 py-1.5 rounded-full transition opacity-60 hover:opacity-100">🗑️</button>
             </div>
             <!-- Takeover banner -->
             <div id="takeoverBanner" class="hidden bg-blue-50 border-b border-blue-200 px-4 py-2 flex items-center gap-2 flex-shrink-0">
@@ -4557,6 +4558,20 @@ async function resumeBot() {
   try {
     await api(`/admin/chats/${currentChatPhone}/resume`, 'POST');
     await refreshChat();
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+async function eraseCustomerData() {
+  if (!currentChatPhone) return;
+  if (!confirm(t('chat.erase.confirm'))) return;
+  try {
+    await api(`/admin/customers/${currentChatPhone}`, 'DELETE');
+    alert(t('chat.erase.ok'));
+    clearInterval(chatMsgPoll);
+    currentChatPhone = null;
+    document.getElementById('chatActive').classList.add('hidden');
+    document.getElementById('chatEmpty').classList.remove('hidden');
+    await loadChatList();
   } catch(e) { alert('Error: ' + e.message); }
 }
 
