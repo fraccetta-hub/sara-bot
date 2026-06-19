@@ -729,9 +729,27 @@ ALTER TABLE conversations ADD COLUMN IF NOT EXISTS last_nudge_at TIMESTAMPTZ;
 - Aggiunta chiave `plan.change.plan` in ES/EN/IT/DE/FR/PT
 - Rimane: status abbonamento (`planStatusBox`) + codice promozionale
 
+## COSA È STATO FATTO (sessione 2026-06-20 — eliminazione account a conferma email)
+
+### Anti-malicious-employee: delete account ora richiede conferma via email
+- Motivo: prima `DELETE /admin/account` cancellava subito → un dipendente col pannello poteva eliminare l'account del titolare. Ora solo chi controlla l'email registrata (il titolare) può completare.
+- Flusso: Settings → "Elimina account" → doppia conferma pannello → `POST /admin/account/request-deletion` (genera token 32B, scadenza 1h, manda mail) → mostra "controlla la mail" → titolare apre link `?delete=<token>` → pagina `#deletePage` → `POST /admin/account/confirm-deletion` (token-gated, NO requireAuth, come reset-password) → cancel Stripe + wipe dati + logout + redirect
+- `routes/admin.js`: rimosso `DELETE /account`; aggiunto helper `performAccountDeletion(tenantId)` + route request/confirm; KB support bot aggiornata
+- `services/mailer.js`: `sendAccountDeletion()` + traduzioni `TD` ×6 lingue (template rosso)
+- `public/admin/index.html`: `#deletePage` (dopo `#resetPage`), detection `?delete=` in `window.onload`, `deleteAccount()` riscritta (chiama request-deletion + msg `email_sent`), `showDeletePage()` + `confirmDeletion()`
+- `public/admin/i18n.js`: `delete.title/hint/btn/cancel/error` + `settings.danger.email_sent` + reword `settings.danger.confirm1` in tutte e 6 le lingue (ES/EN/IT/DE/FR/PT)
+
+**Migration Supabase richiesta (NON ancora eseguita):**
+```sql
+ALTER TABLE tenants
+  ADD COLUMN IF NOT EXISTS account_deletion_token   TEXT,
+  ADD COLUMN IF NOT EXISTS account_deletion_expires TIMESTAMPTZ;
+```
+
 ## PROSSIME PRIORITÀ (sessione successiva)
-1. **Fatturazione** — capire come mandare fatture ai merchant
-2. **Go-to-market** — pubblicità, test, vendita
+1. **Eseguire migration** `account_deletion_token` / `account_deletion_expires` su Supabase
+2. **Fatturazione** — capire come mandare fatture ai merchant
+3. **Go-to-market** — pubblicità, test, vendita
 
 ## IDEE FUTURE (non ancora pianificate)
 

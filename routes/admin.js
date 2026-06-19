@@ -10,7 +10,7 @@ const { sendMessage, sendImage } = require('../services/whatsapp');
 
 const crypto = require('crypto');
 const AdmZip = require('adm-zip');
-const { sendPasswordReset } = require('../services/mailer');
+const { sendPasswordReset, sendAccountDeletion } = require('../services/mailer');
 const { invalidateClosures, invalidateOffers, invalidateRestaurant } = require('../services/stock');
 const { rateLimit } = require('express-rate-limit');
 
@@ -1661,7 +1661,7 @@ Sara Bot is a SaaS platform that gives businesses an AI chatbot (named Sara) on 
 - 7-day free trial included on signup
 - To cancel: go to Plan tab → Cancel subscription
 - After cancellation the account stays active until the end of the paid period
-- To delete the account permanently: Support tab → Delete account button (this cancels Stripe and erases all data)
+- To delete the account permanently: Support tab → Delete account button → a confirmation link is sent to the registered email → opening it confirms and cancels Stripe and erases all data. This email step protects against an employee deleting the owner's account.
 - Promo codes can be redeemed in the Plan tab for discounts or free months
 
 ## Password and account
@@ -2091,34 +2091,80 @@ router.post('/plan/checkout', requireAuth, async (req, res) => {
   }
 });
 
-// ─── DELETE /admin/account — cancel Stripe subscription + delete all tenant data
-router.delete('/account', requireAuth, async (req, res) => {
-  const tenantId = req.tenant.tenantId;
-  try {
-    const { data: tenantData } = await supabase
-      .from('tenants').select('stripe_subscription_id').eq('id', tenantId).single();
-    if (tenantData?.stripe_subscription_id) {
-      const Stripe = require('stripe');
-      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-      try {
-        await stripe.subscriptions.cancel(tenantData.stripe_subscription_id);
-      } catch (stripeErr) {
-        console.warn('[delete-account] stripe cancel failed:', stripeErr.message);
-      }
+// Account deletion is a two-step, email-confirmed flow so that an employee with
+// panel access cannot wipe the owner's account: only whoever controls the
+// registered email (the owner) can complete it via the link.
+async function performAccountDeletion(tenantId) {
+  const { data: tenantData } = await supabase
+    .from('tenants').select('stripe_subscription_id').eq('id', tenantId).single();
+  if (tenantData?.stripe_subscription_id) {
+    const Stripe = require('stripe');
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+    try {
+      await stripe.subscriptions.cancel(tenantData.stripe_subscription_id);
+    } catch (stripeErr) {
+      console.warn('[delete-account] stripe cancel failed:', stripeErr.message);
     }
-    // Delete in order to respect FK constraints
-    await supabase.from('appointment_blocks').delete().eq('tenant_id', tenantId);
-    await supabase.from('appointments').delete().eq('tenant_id', tenantId);
-    await supabase.from('orders').delete().eq('tenant_id', tenantId);
-    await supabase.from('conversations').delete().eq('tenant_id', tenantId);
-    await supabase.from('products').delete().eq('tenant_id', tenantId);
-    await supabase.from('services').delete().eq('tenant_id', tenantId);
-    await supabase.from('business_hours').delete().eq('tenant_id', tenantId);
-    const { error } = await supabase.from('tenants').delete().eq('id', tenantId);
-    if (error) throw error;
+  }
+  // Delete in order to respect FK constraints
+  await supabase.from('appointment_blocks').delete().eq('tenant_id', tenantId);
+  await supabase.from('appointments').delete().eq('tenant_id', tenantId);
+  await supabase.from('orders').delete().eq('tenant_id', tenantId);
+  await supabase.from('conversations').delete().eq('tenant_id', tenantId);
+  await supabase.from('products').delete().eq('tenant_id', tenantId);
+  await supabase.from('services').delete().eq('tenant_id', tenantId);
+  await supabase.from('business_hours').delete().eq('tenant_id', tenantId);
+  const { error } = await supabase.from('tenants').delete().eq('id', tenantId);
+  if (error) throw error;
+}
+
+// ─── POST /admin/account/request-deletion — email a confirmation link ─────────
+router.post('/account/request-deletion', requireAuth, async (req, res) => {
+  const tenantId = req.tenant.tenantId;
+  const { lang = 'es' } = req.body;
+  try {
+    const { data: tenant } = await supabase
+      .from('tenants').select('name, email, login_slug').eq('id', tenantId).single();
+
+    const token   = crypto.randomBytes(32).toString('hex');
+    const expires = new Date(Date.now() + 60 * 60 * 1000).toISOString(); // 1 hour
+
+    await supabase.from('tenants').update({
+      account_deletion_token: token,
+      account_deletion_expires: expires,
+    }).eq('id', tenantId);
+
+    const confirmUrl = `${process.env.APP_URL}/admin/index.html?delete=${token}`;
+    const sendTo = tenant.email || tenant.login_slug;
+    await sendAccountDeletion({ email: sendTo, businessName: tenant.name, confirmUrl, lang });
+
+    res.json({ ok: true, email: sendTo });
+  } catch (e) {
+    console.error('[request-deletion]', e);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ─── POST /admin/account/confirm-deletion — token-authenticated final delete ──
+router.post('/account/confirm-deletion', async (req, res) => {
+  const { token } = req.body;
+  if (!token) return res.status(400).json({ error: 'Token requerido', errorCode: 'invalid_token' });
+
+  const { data: tenant } = await supabase
+    .from('tenants')
+    .select('id, account_deletion_token, account_deletion_expires')
+    .eq('account_deletion_token', token)
+    .maybeSingle();
+
+  if (!tenant) return res.status(400).json({ error: 'Token inválido o expirado', errorCode: 'invalid_token' });
+  if (new Date(tenant.account_deletion_expires) < new Date())
+    return res.status(400).json({ error: 'Token expirado. Solicitá la eliminación de nuevo.', errorCode: 'token_expired' });
+
+  try {
+    await performAccountDeletion(tenant.id);
     res.json({ ok: true });
   } catch (e) {
-    console.error('[delete-account]', e);
+    console.error('[confirm-deletion]', e);
     res.status(500).json({ error: e.message });
   }
 });

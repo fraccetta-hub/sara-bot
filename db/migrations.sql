@@ -7,6 +7,11 @@ ALTER TABLE tenants
   ADD COLUMN IF NOT EXISTS plan_price      NUMERIC(10,2) DEFAULT 0,   -- monthly subscription fee in plan_currency
   ADD COLUMN IF NOT EXISTS deactivated_at  TIMESTAMPTZ;               -- set when active goes false, cleared on reactivation
 
+-- Migration: email-confirmed account deletion (anti-malicious-employee)
+ALTER TABLE tenants
+  ADD COLUMN IF NOT EXISTS account_deletion_token   TEXT,
+  ADD COLUMN IF NOT EXISTS account_deletion_expires TIMESTAMPTZ;
+
 -- Migration 9: Promo codes
 CREATE TABLE IF NOT EXISTS promo_codes (
   id                   UUID          PRIMARY KEY DEFAULT gen_random_uuid(),

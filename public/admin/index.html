@@ -162,6 +162,31 @@
   </div>
 </div>
 
+<!-- ════ ACCOUNT DELETION CONFIRMATION (from email link ?delete=<token>) ════ -->
+<div id="deletePage" class="hidden min-h-screen flex flex-col" style="background:linear-gradient(135deg,#fef2f2 0%,#fff1f2 60%,#fafafa 100%);">
+  <header style="padding:12px 16px;border-bottom:1px solid #e5e7eb;background:rgba(255,255,255,.96);">
+    <img src="/images/logosarabot.webp" alt="Sara Bot" style="height:32px;">
+  </header>
+  <div class="flex-1 flex items-center justify-center px-4 py-10">
+    <div class="bg-white rounded-2xl w-full max-w-sm p-8" style="box-shadow:0 4px 24px rgba(0,0,0,.07);border:1px solid #fecaca;">
+      <h1 class="text-xl font-bold text-red-700 mb-1" data-i18n="delete.title">Eliminar cuenta</h1>
+      <p class="text-sm text-gray-500 mb-6" data-i18n="delete.hint">Esta acción cancela tu suscripción y borra TODOS tus datos de forma permanente e irreversible.</p>
+      <div id="deletePageError" class="hidden bg-red-50 text-red-700 text-sm rounded-xl px-4 py-3 mb-4"></div>
+      <div id="deletePageSuccess" class="hidden bg-green-50 text-green-700 text-sm rounded-xl px-4 py-3 mb-4"></div>
+      <div class="space-y-3">
+        <button onclick="confirmDeletion()" id="deletePageBtn" data-i18n="delete.btn"
+          class="w-full py-2.5 rounded-xl text-sm font-bold text-white" style="background:#ef4444;">
+          Sí, eliminar mi cuenta permanentemente
+        </button>
+        <a href="/admin/index.html" data-i18n="delete.cancel"
+          class="block text-center w-full py-2.5 rounded-xl text-sm font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200">
+          Cancelar
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ════ ONBOARDING WIZARD ════ -->
 <div id="onboardingPage" class="hidden min-h-screen flex items-center justify-center px-4 bg-gray-50">
   <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg p-8 relative">
@@ -2267,6 +2292,14 @@ window.onload = async () => {
     return;
   }
 
+  // Account deletion confirmation link: ?delete=<token>
+  const deleteToken = params.get('delete');
+  if (deleteToken) {
+    applyTranslations();
+    showDeletePage(deleteToken);
+    return;
+  }
+
   // Support impersonation: superadmin passes ?name=yyy (token now set via cookie server-side)
   const urlName = params.get('name');
 
@@ -3534,15 +3567,51 @@ async function deleteAccount() {
     return;
   }
   try {
-    const res = await fetch('/admin/account', { method: 'DELETE', credentials: 'same-origin' });
+    const res = await fetch('/admin/account/request-deletion', {
+      method: 'POST', credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ lang: currentLang }),
+    });
     if (!res.ok) { const d = await res.json(); throw new Error(d.error); }
-    alert(t('settings.danger.deleted'));
-    await fetch('/admin/logout', { method: 'POST', credentials: 'same-origin' }).catch(() => {});
-    window.location.href = '/admin';
+    const d = await res.json();
+    msg.innerHTML = t('settings.danger.email_sent').replace('{email}', escHtml(d.email || ''));
+    msg.className = 'rounded-lg px-4 py-2 text-sm mb-4 bg-blue-50 text-blue-700';
+    msg.classList.remove('hidden');
   } catch (e) {
     msg.textContent = 'Error: ' + e.message;
     msg.className = 'rounded-lg px-4 py-2 text-sm mb-4 bg-red-50 text-red-700';
     msg.classList.remove('hidden');
+  }
+}
+
+// ── Account deletion confirmation page (opened from email link) ────────────────
+function showDeletePage(token) {
+  document.getElementById('deletePage').classList.remove('hidden');
+  document.getElementById('deletePage').dataset.token = token;
+}
+
+async function confirmDeletion() {
+  const token = document.getElementById('deletePage').dataset.token;
+  const errEl = document.getElementById('deletePageError');
+  const okEl  = document.getElementById('deletePageSuccess');
+  const btn   = document.getElementById('deletePageBtn');
+  errEl.classList.add('hidden');
+  btn.disabled = true;
+  try {
+    const res = await fetch('/admin/account/confirm-deletion', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token }),
+    });
+    if (!res.ok) { const d = await res.json(); throw new Error(d.error); }
+    okEl.textContent = t('settings.danger.deleted');
+    okEl.classList.remove('hidden');
+    await fetch('/admin/logout', { method: 'POST', credentials: 'same-origin' }).catch(() => {});
+    setTimeout(() => { window.location.href = '/admin/index.html'; }, 2500);
+  } catch (e) {
+    errEl.textContent = t('delete.error');
+    errEl.classList.remove('hidden');
+    btn.disabled = false;
   }
 }
 

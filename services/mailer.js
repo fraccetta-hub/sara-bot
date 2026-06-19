@@ -236,4 +236,107 @@ async function sendPasswordReset({ email, businessName, resetUrl, lang = 'es' })
   }
 }
 
-module.exports = { sendWelcome, sendPasswordReset };
+// ── Account deletion confirmation email translations ───────────────────────────
+const TD = {
+  es: {
+    subject: 'Confirmá la eliminación de tu cuenta — Sara Bot',
+    greeting: name => `Hola, ${name}`,
+    body: 'Recibimos una solicitud para eliminar permanentemente tu cuenta de Sara Bot. Si fuiste vos, hacé clic en el botón para confirmar. Se cancelará tu suscripción y se borrarán TODOS tus datos de forma irreversible.',
+    btn: 'Confirmar eliminación de cuenta',
+    expiry: 'El enlace expira en 1 hora.',
+    ignore: 'Si no solicitaste esto, ignorá este correo. Tu cuenta NO se eliminará.',
+    noreply: 'Este mensaje es automático. Por favor, no respondas a este correo.',
+  },
+  en: {
+    subject: 'Confirm your account deletion — Sara Bot',
+    greeting: name => `Hi, ${name}`,
+    body: 'We received a request to permanently delete your Sara Bot account. If this was you, click the button to confirm. Your subscription will be cancelled and ALL your data will be erased irreversibly.',
+    btn: 'Confirm account deletion',
+    expiry: 'The link expires in 1 hour.',
+    ignore: "If you didn't request this, ignore this email. Your account will NOT be deleted.",
+    noreply: 'This is an automated message. Please do not reply to this email.',
+  },
+  it: {
+    subject: "Conferma l'eliminazione del tuo account — Sara Bot",
+    greeting: name => `Ciao, ${name}`,
+    body: 'Abbiamo ricevuto una richiesta di eliminazione permanente del tuo account Sara Bot. Se sei stato tu, clicca il pulsante per confermare. Il tuo abbonamento sarà annullato e TUTTI i tuoi dati saranno cancellati in modo irreversibile.',
+    btn: 'Conferma eliminazione account',
+    expiry: 'Il link scade tra 1 ora.',
+    ignore: 'Se non hai richiesto questo, ignora questa email. Il tuo account NON sarà eliminato.',
+    noreply: 'Questo messaggio è generato automaticamente. Non rispondere a questa email.',
+  },
+  de: {
+    subject: 'Bestätige die Löschung deines Kontos — Sara Bot',
+    greeting: name => `Hallo, ${name}`,
+    body: 'Wir haben eine Anfrage zur dauerhaften Löschung deines Sara Bot-Kontos erhalten. Wenn du das warst, klicke auf den Button zur Bestätigung. Dein Abonnement wird gekündigt und ALLE deine Daten werden unwiderruflich gelöscht.',
+    btn: 'Kontolöschung bestätigen',
+    expiry: 'Der Link läuft in 1 Stunde ab.',
+    ignore: 'Wenn du das nicht angefordert hast, ignoriere diese E-Mail. Dein Konto wird NICHT gelöscht.',
+    noreply: 'Diese Nachricht wurde automatisch generiert. Bitte antworte nicht auf diese E-Mail.',
+  },
+  fr: {
+    subject: 'Confirmez la suppression de votre compte — Sara Bot',
+    greeting: name => `Bonjour, ${name}`,
+    body: 'Nous avons reçu une demande de suppression définitive de votre compte Sara Bot. Si c\'était vous, cliquez sur le bouton pour confirmer. Votre abonnement sera annulé et TOUTES vos données seront effacées de manière irréversible.',
+    btn: 'Confirmer la suppression du compte',
+    expiry: 'Le lien expire dans 1 heure.',
+    ignore: "Si vous n'avez pas fait cette demande, ignorez cet e-mail. Votre compte ne sera PAS supprimé.",
+    noreply: "Ce message est généré automatiquement. Merci de ne pas répondre à cet e-mail.",
+  },
+  pt: {
+    subject: 'Confirme a exclusão da sua conta — Sara Bot',
+    greeting: name => `Olá, ${name}`,
+    body: 'Recebemos uma solicitação para excluir permanentemente sua conta Sara Bot. Se foi você, clique no botão para confirmar. Sua assinatura será cancelada e TODOS os seus dados serão apagados de forma irreversível.',
+    btn: 'Confirmar exclusão da conta',
+    expiry: 'O link expira em 1 hora.',
+    ignore: 'Se você não solicitou isso, ignore este e-mail. Sua conta NÃO será excluída.',
+    noreply: 'Esta mensagem é gerada automaticamente. Por favor, não responda a este e-mail.',
+  },
+};
+
+function buildDeleteHtml(td, businessName, confirmUrl) {
+  return `<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/></head>
+<body style="margin:0;padding:0;background:#fef2f2;font-family:sans-serif;">
+<div style="max-width:520px;margin:32px auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.06);">
+  <div style="background:#fff;padding:28px 32px;text-align:center;border-bottom:3px solid #ef4444;">
+    <img src="https://sarabot.pro/images/logosarabot.webp" alt="Sara Bot" style="height:44px;">
+  </div>
+  <div style="padding:32px;">
+    <p style="font-size:18px;font-weight:700;color:#111;margin:0 0 16px;">${td.greeting(businessName)}</p>
+    <p style="color:#444;line-height:1.6;margin:0 0 24px;">${td.body}</p>
+    <div style="text-align:center;margin-bottom:24px;">
+      <a href="${confirmUrl}" style="display:inline-block;background:#ef4444;color:#fff;font-weight:700;font-size:15px;padding:14px 32px;border-radius:12px;text-decoration:none;">${td.btn}</a>
+    </div>
+    <p style="color:#9ca3af;font-size:13px;margin:0 0 8px;">⏱ ${td.expiry}</p>
+  </div>
+  <div style="padding:16px 32px;border-top:1px solid #f0f0f0;text-align:center;">
+    <p style="color:#9ca3af;font-size:11px;margin:0 0 4px;">${td.ignore}</p>
+    <p style="color:#d1d5db;font-size:10px;margin:0 0 8px;">${td.noreply}</p>
+    <p style="color:#d1d5db;font-size:10px;margin:0;">
+      <a href="https://sarabot.pro/legal/terms" style="color:#d1d5db;">Terms</a> ·
+      <a href="https://sarabot.pro/legal/privacy" style="color:#d1d5db;">Privacy</a> ·
+      © 2026 Sara Bot
+    </p>
+  </div>
+</div>
+</body>
+</html>`;
+}
+
+async function sendAccountDeletion({ email, businessName, confirmUrl, lang = 'es' }) {
+  if (!process.env.BREVO_API_KEY) {
+    console.warn('[mailer] BREVO_API_KEY not configured — skipping account deletion email');
+    return;
+  }
+  const td = TD[lang] || TD.es;
+  try {
+    await sendMail({ to: email, subject: td.subject, html: buildDeleteHtml(td, businessName, confirmUrl) });
+    console.log(`[mailer] Account deletion email sent to ${email}`);
+  } catch (err) {
+    console.error('[mailer] Failed to send account deletion email:', err.response?.data || err.message);
+  }
+}
+
+module.exports = { sendWelcome, sendPasswordReset, sendAccountDeletion };
