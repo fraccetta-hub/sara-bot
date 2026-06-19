@@ -541,6 +541,14 @@ ALTER TABLE conversations ADD COLUMN IF NOT EXISTS last_nudge_at TIMESTAMPTZ;
 3. Gruppo ≤ tavolo singolo → conferma + tag `<RESERVATION:JSON>` → backend assegna tavolo libero più piccolo
 4. Gruppo > tavolo singolo max → `status: pending_merchant` → notifica WhatsApp merchant
 
+## COSA È STATO FATTO (sessione 2026-06-19 — superadmin restaurant badge)
+
+### Superadmin — restaurant_enabled visibile (commit ddd9dd9)
+- `routes/superadmin.js` GET `/tenants/:id`: aggiunto `restaurant_enabled` al select
+- `routes/superadmin.js` PUT `/tenants/:id`: aggiunto `restaurant_enabled` ai campi aggiornabili
+- `public/superadmin/index.html`: badge `🍽️ Restaurante` aggiunto in "Secciones activas" del modal tenant
+- Pushato su Render (origin/main — 6 commit totali)
+
 ## PROSSIME PRIORITÀ (sessione successiva)
 1. **Stripe** — configurare env vars reali su Render + testare flow completo con account business
 3. **Costi/margini** — completare con costi infra (Render + Supabase + Brevo) → definire prezzi piani Stripe
