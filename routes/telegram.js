@@ -112,11 +112,4 @@ router.post('/', async (req, res) => {
   console.log(`[telegram] Support reply sent to tenant ${tenantId}: "${replyContent}"`);
 });
 
-// ── Notify superadmin of a token renewal failure ──────────────────────────────
-async function notifyTokenError(tenantName, tenantId, errorMsg) {
-  if (!BOT_TOKEN || !SUPERADMIN_CHAT) return;
-  const text = `🔴 <b>Token WhatsApp expirado</b>\n\nEl token de <b>${tenantName}</b> no se pudo renovar automáticamente.\n\nError: <code>${errorMsg}</code>\n\nEl merchant debe reconectar su cuenta desde el panel.\n[TID:${tenantId}]`;
-  await tgSend(SUPERADMIN_CHAT, text);
-}
-
-module.exports = { router, notifySuperadmin, notifyTokenError };
+module.exports = { router, notifySuperadmin };

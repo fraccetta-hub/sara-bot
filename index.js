@@ -23,7 +23,7 @@ const { createClient } = require('@supabase/supabase-js');
 const webhookRoutes      = require('./routes/webhook');
 const adminRoutes        = require('./routes/admin');
 const superadminRoutes   = require('./routes/superadmin');
-const { router: telegramRouter, notifyTokenError } = require('./routes/telegram');
+const { router: telegramRouter } = require('./routes/telegram');
 const paymentsRouter  = require('./routes/payments');
 const registerRouter  = require('./routes/register');
 const billingRouter   = require('./routes/billing');
@@ -160,7 +160,6 @@ app.listen(PORT, () => {
             .update({ whatsapp_token_refresh_error: errMsg })
             .eq('id', tenant.id);
           console.error(`[token-renewal] Failed for ${tenant.name}: ${errMsg}`);
-          await notifyTokenError(tenant.name, tenant.id, errMsg);
         }
       } catch (e) {
         console.error(`[token-renewal] Error for ${tenant.name}: ${e.message}`);

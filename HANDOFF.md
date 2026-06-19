@@ -633,6 +633,26 @@ ALTER TABLE conversations ADD COLUMN IF NOT EXISTS last_nudge_at TIMESTAMPTZ;
 - Loop in `try/finally` → Set svuotato anche su crash
 - Fix token: `broadcastToken = tenant.whatsapp_token || process.env.WHATSAPP_TOKEN` (commit d241b41) — "Sin Meta" tenant usano token globale come il webhook
 
+## COSA È STATO FATTO (sessione 2026-06-19 — WhatsApp reconnect banner fix)
+
+### Banner "connessione WhatsApp ha un problema" — FIX (commit 56c408f + b6e0957)
+- Il banner (`showTokenErrorBanner()`) appare quando `whatsapp_token_refresh_error` è settato (dal cron `index.js` che tenta refresh token Meta)
+- Il bottone chiamava `switchTab('settings')` → portava in Settings che non ha campo per token → sembrava non fare nulla
+- Fix: bottone ora chiama `reconnectWhatsApp()` — nuova funzione che apre wizard direttamente allo **step 2** (connessione WhatsApp)
+- Step 2 wizard offre sia Embedded Signup (Facebook/Meta) che inserimento manuale (Phone ID + token)
+- Il banner si rimuove automaticamente all'apertura wizard
+- **Card persistente in tab Support** (`tokenErrorCard`): visibile finché `token_refresh_error` è settato — non scompare se tenant chiude il banner. Tenant trova sempre il bottone in Support tab.
+- i18n: `wiz.token_error_title` + `wiz.token_error_desc` aggiunte in ES/EN/IT/DE/FR/PT
+- Cosa deve fare il tenant: clicca "Ricollegare WhatsApp" (banner o card Support) → si apre wizard → usa Embedded Signup o inserisce manualmente le credenziali Meta aggiornate
+
+## COSA È STATO FATTO (sessione 2026-06-19 — rimossa notifica Telegram token scaduto)
+
+### Telegram token-error alert — RIMOSSO
+- Eliminata `notifyTokenError()` da `routes/telegram.js` (funzione + export)
+- Rimosso import + chiamata in `index.js` (cron `scheduleTokenRenewal`)
+- Il cron continua a loggare il fallimento e a settare `whatsapp_token_refresh_error` in DB → banner/card "Ricollegare WhatsApp" nel pannello admin invariati
+- `notifySuperadmin` (alert chat supporto) non toccato
+
 ## PROSSIME PRIORITÀ (sessione successiva)
 1. **Stripe test** — testare flow completo iscrizione end-to-end (scegli piano → Stripe checkout → webhook → tenant attivo)
 2. **Fatturazione** — capire come mandare fatture ai merchant
