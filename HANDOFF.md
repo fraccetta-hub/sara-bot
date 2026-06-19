@@ -318,6 +318,24 @@ ALTER TABLE tenants ADD COLUMN IF NOT EXISTS bot_phone_number TEXT;
 UPDATE tenants SET email = login_slug WHERE email IS NULL;
 ```
 
+## COSA È STATO FATTO (sessione 2026-06-19 — fix UX + template catalogo Excel)
+
+### Fix flash loginPage al boot / impersonazione (commit 2619e00)
+- Root cause: `loginPage` visibile di default in HTML; `window.onload` la nascondeva solo dentro `showDashboard()` dopo `await fetch('/admin/me')` → flash durante il round-trip
+- Fix: `loginPage.classList.add('hidden')` spostato PRIMA del fetch in `window.onload`; rimostrata nel ramo `else` + `catch` se non autenticato
+- File: `public/admin/index.html` — `window.onload`
+
+### Superadmin modal cleanup finale (commit 080f713)
+- Bottone "Reset contraseña" rimosso dal modal — l'utente resetta autonomamente via email
+- "Vence" (scadenza piano) rimosso — Stripe è ricorrente, non ha scadenza fissa
+- Phone Number ID accorpato sotto riga Conexión Meta (testo grigio mono, non riga separata)
+
+### Template Excel catalogo prodotti (commit eb4061a)
+- `public/catalog_template.xlsx`: foglio **Catalogo** (7 colonne: nome*, categoria, descrizione, prezzo*, stock, disponibile, SKU) + 3 righe esempio + dropdown SI/NO + freeze pane + foglio **Instrucciones**
+- `GET /admin/catalog-template`: route autenticata che fa `res.download()` del file
+- Pannello admin → Importa → CSV: banner viola con link "📥 Plantilla Excel →" → scarica template
+- i18n `import.csv.templateHint` + `import.csv.templateBtn` in ES/EN/IT/DE/FR/PT
+
 ## COSA È STATO FATTO (sessione 2026-06-19 — import/export audit + ZIP bulk images)
 
 ### Import/export — audit e fix (commit 9dea353)
