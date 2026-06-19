@@ -618,6 +618,13 @@ ALTER TABLE conversations ADD COLUMN IF NOT EXISTS last_nudge_at TIMESTAMPTZ;
 - Superadmin modal: "Secciones activas" (4 badge moduli) → "Suscripción" con badge unico nome piano (Shop/Bookings/Restaurant/Pro derivato da flags)
 - Superadmin lista tenant: badge piano inline sotto nome (es. `Sara · desde 01/01/2026 · 🍽️ Restaurant`)
 
+## COSA È STATO FATTO (sessione 2026-06-19 — superadmin tenant list polling)
+
+### Superadmin lista tenant — auto-refresh (commit 1cacfac)
+- `setInterval(loadTenants, 60000)` aggiunto in `public/superadmin/index.html`
+- Gira solo quando tab Clientes è visibile (check `sectionClients.classList`)
+- Rileva in automatico: cancellazioni account, nuove iscrizioni, cambio piano
+
 ## PROSSIME PRIORITÀ (sessione successiva)
 1. **Stripe test** — testare flow completo iscrizione end-to-end (scegli piano → Stripe checkout → webhook → tenant attivo)
 2. **Fatturazione** — capire come mandare fatture ai merchant
