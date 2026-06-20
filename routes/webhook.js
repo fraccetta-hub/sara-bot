@@ -1654,23 +1654,32 @@ async function handleCustomerMessage(tenant, customerPhone, messageText, locatio
         const dur      = tenant.restaurant_slot_duration || 90;
         const reqStart = new Date(reservedAt).getTime();
         const reqEnd   = reqStart + dur * 60000;
+        const maxCap   = restaurantTables.reduce((m, t) => Math.max(m, t.capacity || 0), 0) || 1;
         const existingRes = await getUpcomingReservations(tenant.id, 90);
+        const overlaps = r => {
+          const rStart = new Date(r.reserved_at).getTime();
+          const rEnd   = rStart + (r.duration_min || dur) * 60000;
+          return reqStart < rEnd && reqEnd > rStart;
+        };
 
-        const candidates = restaurantTables
+        // Tables physically free in this slot (no assigned reservation overlaps).
+        const freeTables = restaurantTables.filter(t => !existingRes.some(r => r.table_id === t.id && overlaps(r)));
+        // Unassigned groups (pending_merchant) reserve the tables they'll need.
+        const pendingNeed = existingRes
+          .filter(r => !r.table_id && overlaps(r))
+          .reduce((s, r) => s + Math.max(1, Math.ceil((r.party_size || 1) / maxCap)), 0);
+
+        const fitting = freeTables
           .filter(t => t.capacity >= party_size)
           .sort((a, b) => a.capacity - b.capacity);
 
-        for (const t of candidates) {
-          const conflict = existingRes.some(r => {
-            if (r.table_id !== t.id) return false;
-            const rStart = new Date(r.reserved_at).getTime();
-            const rEnd   = rStart + (r.duration_min || dur) * 60000;
-            return reqStart < rEnd && reqEnd > rStart;
-          });
-          if (!conflict) { tableId = t.id; zoneId = t.zone_id; break; }
+        // Assign only if a fitting table is free AND the slot still has capacity
+        // once pending large groups are accounted for; otherwise it's full.
+        if (fitting.length && (freeTables.length - pendingNeed) >= 1) {
+          tableId = fitting[0].id; zoneId = fitting[0].zone_id;
+        } else {
+          full = true;
         }
-        // Tables fit the party but all are busy → fully booked, do NOT save.
-        if (!tableId) full = true;
       }
 
       if (full) {

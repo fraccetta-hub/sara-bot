@@ -302,16 +302,24 @@ function _genSlots(start, end, dur) {
   return out;
 }
 
-// Free tables at a given date+time: tables with no overlapping active reservation.
-function _freeTablesAt(tables, reservations, ymd, hhmm, dur) {
+// Free tables at a given date+time. A reservation with an assigned table blocks
+// that table; a still-unassigned group (pending_merchant, e.g. a large party the
+// merchant will seat by joining tables) reserves the number of tables it will
+// need — ceil(party / largest table) — so the grid never oversells a slot the
+// merchant is still coordinating.
+function _freeTablesAt(tables, reservations, ymd, hhmm, dur, maxCap) {
   const reqStart = new Date(`${ymd}T${hhmm}:00`).getTime();
   const reqEnd   = reqStart + dur * 60000;
-  return tables.filter(t => !reservations.some(r => {
-    if (r.table_id !== t.id) return false;
+  const overlaps = r => {
     const rStart = new Date(r.reserved_at).getTime();
     const rEnd   = rStart + (r.duration_min || dur) * 60000;
     return reqStart < rEnd && reqEnd > rStart;
-  })).length;
+  };
+  const directlyFree = tables.filter(t => !reservations.some(r => r.table_id === t.id && overlaps(r))).length;
+  const pendingNeed  = reservations
+    .filter(r => !r.table_id && overlaps(r))
+    .reduce((sum, r) => sum + Math.max(1, Math.ceil((r.party_size || 1) / (maxCap || 1))), 0);
+  return Math.max(0, directlyFree - pendingNeed);
 }
 
 // Real table availability grid for the next `days` open days so Sara only ever
@@ -319,6 +327,7 @@ function _freeTablesAt(tables, reservations, ymd, hhmm, dur) {
 function buildAvailabilityBlock(tenant, tables, reservations, mealBands, businessHours, closures, days = 7) {
   if (!tables.length) return buildReservationsBlock(reservations, tenant.restaurant_slot_duration || 90);
   const dur   = tenant.restaurant_slot_duration || 90;
+  const maxCap = tables.reduce((m, t) => Math.max(m, t.capacity || 0), 0) || 1;
   const bands  = (mealBands || []).filter(b => b.start && b.end);
   const closes = (closures || []).filter(c => c.start_date && c.end_date);
   const today  = new Date();
@@ -339,7 +348,7 @@ function buildAvailabilityBlock(tenant, tables, reservations, mealBands, busines
     const parts = [];
     for (const w of windows) {
       const slotStrs = _genSlots(w.start, w.end, dur).map(s => {
-        const free = _freeTablesAt(tables, reservations, ymd, s, dur);
+        const free = _freeTablesAt(tables, reservations, ymd, s, dur, maxCap);
         return free > 0 ? `${s}(${free})` : `${s}✗`;
       });
       if (slotStrs.length) parts.push(`${w.label ? w.label + ' ' : ''}${slotStrs.join(' ')}`);

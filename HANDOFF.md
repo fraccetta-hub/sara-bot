@@ -1,5 +1,12 @@
 # PROJECT HANDOFF — Sara Bot (whatsapp-bot) — 2026-06-18
 
+## ✅ FATTO (sessione 2026-06-20 — disponibilità conservativa per gruppi pending)
+
+Buco: prenotazioni `pending_merchant` (table_id null, es. gruppo grande in attesa di unione tavoli) NON bloccavano alcun tavolo → griglia/assegnazione sovrastimavano la disponibilità.
+- `_freeTablesAt` (`services/claude.js`) + loop assegnazione (`routes/webhook.js`): i gruppi non assegnati che si sovrappongono allo slot ora consumano `ceil(party_size / maxCap)` tavoli (`maxCap` = tavolo più grande). `free = tavoliLiberiDiretti − pendingNeed`.
+- Test: 4 tavoli da 4; gruppo 7p pending alle 20:00 → liberi=2 (4−ceil(7/4)); fuori sovrapposizione=4. Scenario "4 prenotazioni da 2p" → 1 tavolo libero (1 tavolo per party, corretto, niente posti condivisi).
+- **Limite residuo**: il modello ha UN solo `table_id` per prenotazione. L'unione fisica di 2 tavoli per un gruppo grande è contabilizzata (pendingNeed) finché lo stato è `pending_merchant`, ma quando il merchant conferma assegnando un singolo `table_id` il 2° tavolo unito torna "libero" → serve supporto multi-tavolo (array `table_ids` + UI multi-select) per bloccarli entrambi con precisione. DA DECIDERE con l'utente.
+
 ## ✅ FATTO (sessione 2026-06-20 — gruppi grandi → merchant + disponibilità reale a Sara)
 
 ### 1. Gruppo troppo grande → escala al merchant (`routes/webhook.js`)
