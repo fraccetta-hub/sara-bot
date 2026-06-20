@@ -1,4 +1,14 @@
-# PROJECT HANDOFF — Sara Bot (whatsapp-bot) — 2026-06-18
+# PROJECT HANDOFF — Sara Bot (whatsapp-bot) — 2026-06-20
+
+## ✅ FATTO (sessione 2026-06-20 — griglia disponibilità + walk-in quick block)
+
+Griglia disponibilità multi-giorno nel pannello prenotazioni + modal walk-in per occupare mesas senza inserire una prenotazione completa.
+- `GET /restaurant/availability`: endpoint server che restituisce slot liberi per 1/3/7/14 giorni; replica la logica `_freeTablesAt` (rispetta `table_ids`, ignora cancelled/done/no_show/pending senza tavolo).
+- `POST /restaurant/reservations`: ora accetta `status=seated` per inserimento walk-in diretto.
+- Frontend: card "griglia disponibilità" (`#availGrid`) con `<select id="availDays">` 1/3/7/14; `loadAvailGrid()` fetcha + renderizza. Modal `#blockModal` ("Ocupar mesas sin reserva"): `openBlockModal()` / `refreshBlockTables()` (mostra solo tavoli liberi all'ora scelta) / `saveBlock()` inserisce `status=seated`, `customer_name=Walk-in`.
+- i18n: `avail1/3/7/14`, `availLegend`, `availClosed`, `blockBtn/Title/Desc/Tables/TablesHint/NoFree/Save`, `walkin` in 6 lingue.
+
+**White page investigazione chiusa**: causa era apostrofo non escapato `un'email` in i18n.js IT (commit 7281fba). Già fixato da f38cb44. Nessuna azione richiesta.
 
 ## ✅ FATTO (sessione 2026-06-20 — pannello "Mesas libres" per il merchant)
 
