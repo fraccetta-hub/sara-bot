@@ -211,3 +211,9 @@ SELECT id,
     'https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=600'
   ])
 FROM tenants WHERE name = 'Pastelería Dulce Sueño';
+
+-- Migration 14: Email-confirmed phone change + username change columns (if not already present)
+ALTER TABLE tenants
+  ADD COLUMN IF NOT EXISTS pending_merchant_phone TEXT,
+  ADD COLUMN IF NOT EXISTS phone_change_token     TEXT,
+  ADD COLUMN IF NOT EXISTS phone_change_expires   TIMESTAMPTZ;

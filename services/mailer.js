@@ -384,4 +384,46 @@ async function sendUsernameChange({ email, businessName, confirmUrl, newUsername
   }
 }
 
-module.exports = { sendWelcome, sendPasswordReset, sendAccountDeletion, sendUsernameChange };
+// ── Phone change confirmation email ───────────────────────────────────────────
+const TP = {
+  es: { subject: 'Confirmá el cambio de número WhatsApp — Sara Bot', greeting: n => `Hola, ${n}`, body: p => `Recibimos una solicitud para cambiar tu número de WhatsApp de notificaciones a <strong>${p}</strong>. Hacé clic para confirmar.`, btn: 'Confirmar cambio de número', expiry: 'El enlace expira en 1 hora.', ignore: 'Si no solicitaste esto, ignorá este correo. Tu número no cambiará.', noreply: 'Este mensaje es automático. Por favor, no respondas.' },
+  en: { subject: 'Confirm your WhatsApp number change — Sara Bot', greeting: n => `Hi, ${n}`, body: p => `We received a request to change your notification WhatsApp number to <strong>${p}</strong>. Click to confirm.`, btn: 'Confirm number change', expiry: 'The link expires in 1 hour.', ignore: "If you didn't request this, ignore this email.", noreply: 'This is an automated message. Please do not reply.' },
+  it: { subject: 'Conferma il cambio di numero WhatsApp — Sara Bot', greeting: n => `Ciao, ${n}`, body: p => `Abbiamo ricevuto una richiesta di cambio numero WhatsApp notifiche in <strong>${p}</strong>. Clicca per confermare.`, btn: 'Conferma cambio numero', expiry: 'Il link scade tra 1 ora.', ignore: 'Se non hai richiesto questo, ignora questa email.', noreply: 'Questo messaggio è automatico. Non rispondere.' },
+  de: { subject: 'Bestätige deine WhatsApp-Nummer-Änderung — Sara Bot', greeting: n => `Hallo, ${n}`, body: p => `Wir haben eine Anfrage erhalten, deine WhatsApp-Benachrichtigungsnummer in <strong>${p}</strong> zu ändern. Klicke zum Bestätigen.`, btn: 'Nummer-Änderung bestätigen', expiry: 'Der Link läuft in 1 Stunde ab.', ignore: 'Wenn du das nicht angefordert hast, ignoriere diese E-Mail.', noreply: 'Diese Nachricht wurde automatisch generiert.' },
+  fr: { subject: 'Confirmez le changement de numéro WhatsApp — Sara Bot', greeting: n => `Bonjour, ${n}`, body: p => `Nous avons reçu une demande de modification de votre numéro WhatsApp de notification en <strong>${p}</strong>. Cliquez pour confirmer.`, btn: 'Confirmer le changement de numéro', expiry: 'Le lien expire dans 1 heure.', ignore: "Si vous n'avez pas fait cette demande, ignorez cet e-mail.", noreply: "Ce message est automatique. Merci de ne pas répondre." },
+  pt: { subject: 'Confirme a mudança de número WhatsApp — Sara Bot', greeting: n => `Olá, ${n}`, body: p => `Recebemos uma solicitação para alterar seu número de WhatsApp de notificações para <strong>${p}</strong>. Clique para confirmar.`, btn: 'Confirmar mudança de número', expiry: 'O link expira em 1 hora.', ignore: 'Se não foi você, ignore este e-mail.', noreply: 'Esta mensagem é automática. Não responda.' },
+};
+
+async function sendPhoneChange({ email, businessName, confirmUrl, newPhone, lang = 'es' }) {
+  if (!process.env.BREVO_API_KEY) {
+    console.warn('[mailer] BREVO_API_KEY not configured — skipping phone change email');
+    return;
+  }
+  const tr = TP[lang] || TP.es;
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"/></head>
+<body style="margin:0;padding:0;background:#f0fdf4;font-family:sans-serif;">
+<div style="max-width:520px;margin:32px auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.06);">
+  <div style="background:#fff;padding:28px 32px;text-align:center;border-bottom:3px solid #22c55e;">
+    <img src="https://sarabot.pro/images/logosarabot.webp" alt="Sara Bot" style="height:44px;">
+  </div>
+  <div style="padding:28px 32px;">
+    <p style="font-size:16px;color:#111;">${tr.greeting(businessName)},</p>
+    <p style="font-size:15px;color:#444;line-height:1.6;">${tr.body(newPhone)}</p>
+    <div style="text-align:center;margin:28px 0;">
+      <a href="${confirmUrl}" style="background:#22c55e;color:#fff;text-decoration:none;padding:14px 32px;border-radius:10px;font-weight:600;font-size:15px;display:inline-block;">${tr.btn}</a>
+    </div>
+    <p style="font-size:13px;color:#888;">${tr.expiry}</p>
+    <p style="font-size:13px;color:#888;">${tr.ignore}</p>
+  </div>
+  <div style="background:#f9fafb;padding:16px 32px;text-align:center;font-size:12px;color:#aaa;">${tr.noreply}</div>
+</div>
+</body></html>`;
+  try {
+    await sendMail({ to: email, subject: tr.subject, html });
+    console.log(`[mailer] Phone change email sent to ${email}`);
+  } catch (err) {
+    console.error('[mailer] Failed to send phone change email:', err.response?.data || err.message);
+  }
+}
+
+module.exports = { sendWelcome, sendPasswordReset, sendAccountDeletion, sendUsernameChange, sendPhoneChange };
