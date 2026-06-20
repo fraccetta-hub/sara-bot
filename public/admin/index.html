@@ -1504,6 +1504,38 @@
             </div>
           </div>
 
+          <!-- Cambiar de plan -->
+          <div id="planChangeCard" class="hidden border-t border-gray-100 pt-4">
+            <h3 class="font-medium text-gray-700 mb-3 text-sm" data-i18n="plan.change.title">Cambiar de plan</h3>
+            <div id="planChangeMsg" class="hidden rounded-lg px-4 py-2 text-sm mb-3"></div>
+            <div class="grid grid-cols-2 gap-2">
+              <button onclick="changePlan('shop')" id="planBtn-shop"
+                class="plan-btn text-left p-3 rounded-xl border-2 border-gray-100 hover:border-purple-300 transition">
+                <div class="text-base mb-0.5">📦</div>
+                <div class="font-semibold text-gray-800 text-xs">Shop</div>
+                <div class="text-xs text-gray-400 mt-0.5" data-i18n="plan.feat.shop">Catálogo de productos y pedidos</div>
+              </button>
+              <button onclick="changePlan('bookings')" id="planBtn-bookings"
+                class="plan-btn text-left p-3 rounded-xl border-2 border-gray-100 hover:border-purple-300 transition">
+                <div class="text-base mb-0.5">📅</div>
+                <div class="font-semibold text-gray-800 text-xs">Bookings</div>
+                <div class="text-xs text-gray-400 mt-0.5" data-i18n="plan.feat.bookings">Servicios y reserva de citas</div>
+              </button>
+              <button onclick="changePlan('restaurant')" id="planBtn-restaurant"
+                class="plan-btn text-left p-3 rounded-xl border-2 border-gray-100 hover:border-purple-300 transition">
+                <div class="text-base mb-0.5">🍽️</div>
+                <div class="font-semibold text-gray-800 text-xs">Restaurant</div>
+                <div class="text-xs text-gray-400 mt-0.5" data-i18n="plan.feat.restaurant">Menú + reservas de mesa</div>
+              </button>
+              <button onclick="changePlan('pro')" id="planBtn-pro"
+                class="plan-btn text-left p-3 rounded-xl border-2 border-gray-100 hover:border-purple-300 transition">
+                <div class="text-base mb-0.5">⭐</div>
+                <div class="font-semibold text-gray-800 text-xs">Pro</div>
+                <div class="text-xs text-gray-400 mt-0.5" data-i18n="plan.feat.pro">Todo: productos, servicios y citas</div>
+              </button>
+            </div>
+          </div>
+
           <!-- Gestión suscripción -->
           <div id="planBillingCard" class="hidden border-t border-gray-100 pt-4">
             <h3 class="font-medium text-gray-700 mb-3 text-sm" data-i18n="plan.manage.title">Gestionar suscripción</h3>
@@ -4311,6 +4343,26 @@ async function loadPlan() {
     const scheduledBox  = document.getElementById('planCancelScheduled');
     const hasSub = ['active', 'trialing', 'past_due'].includes(s.stripe_subscription_status);
     billingCard.classList.toggle('hidden', !hasSub);
+    document.getElementById('planChangeCard').classList.toggle('hidden', !hasSub);
+
+    // Highlight current plan button
+    const currentPlan = s.restaurant_enabled ? 'restaurant'
+      : (s.products_enabled && s.services_enabled && s.appointments_enabled) ? 'pro'
+      : (s.services_enabled && s.appointments_enabled) ? 'bookings'
+      : 'shop';
+    ['shop','bookings','restaurant','pro'].forEach(p => {
+      const btn = document.getElementById(`planBtn-${p}`);
+      if (!btn) return;
+      if (p === currentPlan) {
+        btn.classList.add('border-purple-500','bg-purple-50');
+        btn.classList.remove('border-gray-100');
+        btn.disabled = true;
+      } else {
+        btn.classList.remove('border-purple-500','bg-purple-50');
+        btn.classList.add('border-gray-100');
+        btn.disabled = false;
+      }
+    });
     if (hasSub) {
       const fmt = d => d.toLocaleDateString(undefined, { day:'2-digit', month:'long', year:'numeric' });
       if (s.subscription_cancel_at_period_end) {
@@ -4385,6 +4437,29 @@ async function loadPlan() {
       promoBox.classList.add('hidden');
     }
   } catch(e) { /* ignore */ }
+}
+
+async function changePlan(plan) {
+  const msgEl = document.getElementById('planChangeMsg');
+  const planNames = { shop:'📦 Shop', bookings:'📅 Bookings', restaurant:'🍽️ Restaurant', pro:'⭐ Pro' };
+  if (!confirm(t('plan.change.confirm').replace('{plan}', planNames[plan] || plan))) return;
+
+  document.querySelectorAll('.plan-btn').forEach(b => { b.disabled = true; });
+  msgEl.className = 'rounded-lg px-4 py-2 text-sm mb-3 bg-gray-50 text-gray-500';
+  msgEl.textContent = t('plan.change.switching');
+  msgEl.classList.remove('hidden');
+
+  try {
+    await api('/billing/change-plan', 'POST', { plan });
+    msgEl.className = 'rounded-lg px-4 py-2 text-sm mb-3 bg-green-50 text-green-700';
+    msgEl.textContent = t('plan.change.done').replace('{plan}', planNames[plan] || plan);
+    await loadPlan();
+  } catch (e) {
+    msgEl.className = 'rounded-lg px-4 py-2 text-sm mb-3 bg-red-50 text-red-700';
+    msgEl.textContent = errMsg(e);
+  } finally {
+    document.querySelectorAll('.plan-btn').forEach(b => { b.disabled = false; });
+  }
 }
 
 async function cancelSubscription() {

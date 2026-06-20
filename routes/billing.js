@@ -16,6 +16,13 @@ const PRICE_IDS = {
   pro:        process.env.STRIPE_PRICE_PRO,
 };
 
+const PLAN_FLAGS = {
+  shop:       { products_enabled: true,  services_enabled: false, appointments_enabled: false, restaurant_enabled: false },
+  bookings:   { products_enabled: false, services_enabled: true,  appointments_enabled: true,  restaurant_enabled: false },
+  restaurant: { products_enabled: true,  services_enabled: false, appointments_enabled: true,  restaurant_enabled: true  },
+  pro:        { products_enabled: true,  services_enabled: true,  appointments_enabled: true,  restaurant_enabled: false },
+};
+
 // ── POST /billing/create-checkout ─────────────────────────────────────────────
 // Body: { tenantId, plan, email }
 // Returns: { url } — Stripe Checkout URL to redirect the user to
@@ -80,6 +87,7 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
         if (!tenantId) break;
 
         const isLive = ['active', 'trialing'].includes(obj.status);
+        const planName = obj.metadata?.plan;
         await supabase.from('tenants').update({
           stripe_customer_id:         obj.customer,
           stripe_subscription_id:     obj.id,
@@ -89,6 +97,7 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
           plan_expires: obj.current_period_end
             ? new Date(obj.current_period_end * 1000).toISOString()
             : null,
+          ...(planName && PLAN_FLAGS[planName] ? PLAN_FLAGS[planName] : {}),
         }).eq('id', tenantId);
 
         // Send welcome email only on first activation (trialing)
@@ -340,6 +349,46 @@ router.post('/reactivate', async (req, res) => {
     res.json({ ok: true, message: 'Suscripción reactivada.' });
   } catch (err) {
     console.error('[billing] reactivate:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── POST /billing/change-plan ─────────────────────────────────────────────────
+// Merchant upgrades or downgrades their plan. Updates Stripe subscription price
+// and immediately updates module flags in DB without waiting for webhook.
+router.post('/change-plan', async (req, res) => {
+  const token = req.cookies?.sara_token;
+  if (!token) return res.status(401).json({ error: 'No autorizado.' });
+
+  try {
+    const decoded  = jwt.verify(token, JWT_SECRET);
+    const tenantId = decoded.tenantId;
+    const { plan } = req.body;
+
+    const priceId = PRICE_IDS[plan];
+    if (!priceId) return res.status(400).json({ error: 'Plan inválido.' });
+
+    const { data: tenant } = await supabase
+      .from('tenants').select('stripe_subscription_id').eq('id', tenantId).single();
+
+    if (!tenant?.stripe_subscription_id)
+      return res.status(400).json({ error: 'No hay suscripción activa con Stripe.' });
+
+    const sub    = await stripe.subscriptions.retrieve(tenant.stripe_subscription_id);
+    const itemId = sub.items.data[0]?.id;
+    if (!itemId) return res.status(500).json({ error: 'No se pudo leer la suscripción.' });
+
+    await stripe.subscriptions.update(tenant.stripe_subscription_id, {
+      items: [{ id: itemId, price: priceId }],
+      proration_behavior: 'always_invoice',
+      metadata: { tenantId, plan },
+    });
+
+    await supabase.from('tenants').update(PLAN_FLAGS[plan]).eq('id', tenantId);
+
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[billing] change-plan:', err.message);
     res.status(500).json({ error: err.message });
   }
 });

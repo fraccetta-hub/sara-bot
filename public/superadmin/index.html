@@ -573,12 +573,7 @@ function filterTenants(q) {
   renderTenants(filtered);
 }
 
-const PLAN_MODULES = {
-  shop:       { products_enabled: true,  services_enabled: false, appointments_enabled: false, restaurant_enabled: false },
-  bookings:   { products_enabled: false, services_enabled: true,  appointments_enabled: true,  restaurant_enabled: false },
-  restaurant: { products_enabled: true,  services_enabled: false, appointments_enabled: true,  restaurant_enabled: true  },
-  pro:        { products_enabled: true,  services_enabled: true,  appointments_enabled: true,  restaurant_enabled: false },
-};
+const PLAN_LABELS = { shop:'📦 Shop', bookings:'📅 Bookings', restaurant:'🍽️ Restaurant', pro:'⭐ Pro' };
 
 function tenantPlan(t) {
   if (t.restaurant_enabled)                                                                    return 'restaurant';
@@ -635,13 +630,7 @@ function renderTenants(list) {
         </button>
       </td>
       <td class="px-4 py-3 text-right space-y-1.5">
-        <select onchange="changePlan('${t.id}', this.value)"
-          class="w-full border border-gray-200 rounded-lg px-2 py-1 text-xs text-gray-700 bg-white">
-          <option value="shop"       ${currentPlan==='shop'       ?'selected':''}>📦 Shop</option>
-          <option value="bookings"   ${currentPlan==='bookings'   ?'selected':''}>📅 Bookings</option>
-          <option value="restaurant" ${currentPlan==='restaurant' ?'selected':''}>🍽️ Restaurant</option>
-          <option value="pro"        ${currentPlan==='pro'        ?'selected':''}>⭐ Pro</option>
-        </select>
+        <div class="text-xs font-semibold text-gray-500 mb-1">${PLAN_LABELS[currentPlan] || '—'}</div>
         <div class="flex gap-1">
           <button onclick="toggleTenant('${t.id}')"
             class="flex-1 py-1 rounded text-xs font-semibold ${t.active ? 'bg-red-50 text-red-600 hover:bg-red-100' : 'bg-green-50 text-green-600 hover:bg-green-100'} transition">
@@ -655,11 +644,6 @@ function renderTenants(list) {
       </td>
     </tr>`;
   }).join('');
-}
-
-async function changePlan(id, plan) {
-  await api(`/superadmin/tenants/${id}`, 'PUT', PLAN_MODULES[plan]);
-  await loadTenants();
 }
 
 async function impersonateById(id) {
