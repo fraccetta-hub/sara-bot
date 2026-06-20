@@ -3561,6 +3561,7 @@ async function loadReservations() {
         </div>
       </div>
       <div class="flex items-center gap-2 flex-shrink-0">
+        ${r.status === 'seated' ? `<button onclick="updateResvStatus(${r.id},'done')" class="bg-green-500 hover:bg-green-600 text-white text-xs font-semibold px-2 py-1 rounded-lg whitespace-nowrap">✓ Libera</button>` : ''}
         <select onchange="updateResvStatus(${r.id}, this.value)" class="text-xs border border-gray-200 rounded-lg px-2 py-1 focus:outline-none ${sc}">
           ${['confirmed','seated','done','cancelled','no_show','pending_merchant'].map(s =>
             `<option value="${s}" ${r.status===s?'selected':''}>${s}</option>`).join('')}
