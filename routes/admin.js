@@ -935,13 +935,15 @@ router.post('/import-preview', requireAuth, async (req, res) => {
       csv = await response.text();
     }
 
-    // Parse CSV — strip BOM, honor a leading "sep=;" Excel directive, and
-    // auto-detect ";" vs "," delimiter (our exports use ";", Google Sheets ",").
+    // Parse CSV — strip BOM, honor a leading "sep=;" Excel directive, skip
+    // "# ..." metadata lines, and auto-detect ";" vs "," delimiter (our exports
+    // use ";", Google Sheets ",").
     const lines = csv.replace(/^﻿/, '').split('\n').map(l => l.trim()).filter(Boolean);
     let delim = ',';
     const sepMatch = lines[0]?.match(/^sep=(.)$/i);
     if (sepMatch) { delim = sepMatch[1]; lines.shift(); }
-    else if ((lines[0]?.split(';').length || 0) > (lines[0]?.split(',').length || 0)) delim = ';';
+    while (lines.length && lines[0].startsWith('#')) lines.shift(); // drop metadata lines
+    if (!sepMatch && (lines[0]?.split(';').length || 0) > (lines[0]?.split(',').length || 0)) delim = ';';
     if (lines.length < 2) return res.status(400).json({ error: 'El Sheet está vacío o tiene solo encabezados' });
 
     // Normalize header names
@@ -1842,16 +1844,19 @@ router.get('/orders/new', requireAuth, async (req, res) => {
   res.json({ orders });
 });
 
-// Builds an Excel-friendly CSV: ";" delimiter + a "sep=;" directive so Excel
-// (incl. ES/IT locales whose list separator is ";") splits into proper columns.
+// Builds an Excel-friendly CSV: BOM + a "sep=;" directive (so Excel — incl.
+// ES/IT locales whose list separator is ";" — splits into proper columns) and a
+// "# sarabot.pro" metadata line. Both leading lines are skipped on re-import.
 function toCsv(headers, rows) {
   const escape = v => {
     if (v == null) return '';
     const s = String(v);
     return /[;"\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
   };
+  const date = new Date().toISOString().slice(0, 10);
+  const meta = `# SaraBot — sarabot.pro — exported ${date}`;
   const body = [headers, ...rows].map(r => r.map(escape).join(';')).join('\r\n');
-  return '﻿' + 'sep=;\r\n' + body;
+  return '﻿' + 'sep=;\r\n' + meta + '\r\n' + body;
 }
 
 // ─── GET /admin/products/export — CSV export of the catalog/menu ─────────────

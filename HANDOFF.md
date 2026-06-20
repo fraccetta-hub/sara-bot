@@ -1,5 +1,13 @@
 # PROJECT HANDOFF — Sara Bot (whatsapp-bot) — 2026-06-18
 
+## ✅ FATTO (sessione 2026-06-20 — branding sarabot.pro su tutti i download)
+
+Regola: **form vuoti** (template xlsx) = con istruzioni; **form con dati** (export) = solo dati, CSV reimportabile. Tutti i file esportati portano il riferimento a sarabot.pro nei metadati.
+- **Template** (`scripts/gen-templates.js`): aggiunta `brand(wb,title)` → metadati workbook `creator=SaraBot`, `company=sarabot.pro`, `subject/keywords=sarabot.pro`, `description=https://sarabot.pro`. Fogli istruzioni EN ("Instructions") + ES ("Instrucciones") **mantenuti**. Rigenerati i 2 xlsx.
+- **Export CSV** (`toCsv` in `routes/admin.js`): ora antepone una riga metadati `# SaraBot — sarabot.pro — exported <data>` dopo `sep=;`. Solo dati, niente istruzioni. Vale per products/menu, services, orders, customers.
+- **Import** reso robusto: salta `sep=;` + qualunque riga `#...` (metadata) prima di trovare l'header; delimiter auto-detect dopo lo skip. **Round-trip testato**: export (con `;`, `#` meta, campi virgolettati contenenti `;`/`,`) → reimport ricostruisce i dati correttamente.
+- `exceljs` resta devDependency (serve solo al generatore template; export sono CSV, runtime non lo importa).
+
 ## ✅ FATTO (sessione 2026-06-20 — template import/export separati + CSV a colonne)
 
 ### Due template separati (catalogo vs menu)
