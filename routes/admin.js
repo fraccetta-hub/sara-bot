@@ -279,7 +279,7 @@ router.get('/settings', requireAuth, async (req, res) => {
              delivery_zone_outer_fee, delivery_per_km,
              delivery_min_order, delivery_disabled_dates,
              address, google_review_url,
-             restaurant_enabled, restaurant_slot_duration, appointment_capacity,
+             restaurant_enabled, restaurant_slot_duration, restaurant_slot_duration_2, appointment_capacity,
              sector, active, plan_expires, plan_currency, plan_price, phone_number_id, whatsapp_token_refresh_error,
              stripe_subscription_status, subscription_cancel_at_period_end,
              pending_login_slug`)
@@ -2546,7 +2546,7 @@ router.get('/restaurant/availability', requireAuth, async (req, res) => {
   const toTs = new Date(base.getTime() + days * 86400000).toISOString();
 
   const [tRes, tablesRes, hoursRes, closuresRes, resvRes] = await Promise.all([
-    supabase.from('tenants').select('restaurant_slot_duration').eq('id', tenantId).single(),
+    supabase.from('tenants').select('restaurant_slot_duration, restaurant_slot_duration_2').eq('id', tenantId).single(),
     supabase.from('restaurant_tables').select('id, label, capacity, is_active').eq('tenant_id', tenantId),
     supabase.from('business_hours').select('day_of_week, is_closed, open_time, close_time').eq('tenant_id', tenantId),
     supabase.from('business_closures').select('start_date, end_date').eq('tenant_id', tenantId),
@@ -2555,7 +2555,8 @@ router.get('/restaurant/availability', requireAuth, async (req, res) => {
       .gte('reserved_at', fromTs).lte('reserved_at', toTs),
   ]);
 
-  const dur    = tRes.data?.restaurant_slot_duration || 90;
+  const dur1   = tRes.data?.restaurant_slot_duration  || 90;
+  const dur2   = tRes.data?.restaurant_slot_duration_2 || dur1;
   const tables = (tablesRes.data || []).filter(t => t.is_active !== false);
   const hours  = hoursRes.data || [];
   const closes = closuresRes.data || [];
@@ -2564,12 +2565,12 @@ router.get('/restaurant/availability', requireAuth, async (req, res) => {
   const occ = r => (Array.isArray(r.table_ids) && r.table_ids.length) ? r.table_ids : (r.table_id ? [r.table_id] : []);
   const toMin = s => { const [h, m] = String(s).slice(0, 5).split(':').map(Number); return h * 60 + (m || 0); };
   const toHHMM = m => `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
-  const freeAt = (ymd, hhmm) => {
-    const rs = new Date(`${ymd}T${hhmm}:00`).getTime(), re = rs + dur * 60000;
+  const CLEAN_MS = 10 * 60000;
+  const freeAt = (ymd, hhmm, slotDur) => {
+    const rs = new Date(`${ymd}T${hhmm}:00`).getTime(), re = rs + slotDur * 60000;
     return tables.filter(t => !resv.some(r => {
       if (!occ(r).includes(t.id)) return false;
-      const a = new Date(r.reserved_at).getTime(), b = a + (r.duration_min || dur) * 60000;
-      const CLEAN_MS = 10 * 60000; // <=10min overlap (start or end) is acceptable
+      const a = new Date(r.reserved_at).getTime(), b = a + (r.duration_min || slotDur) * 60000;
       return Math.min(re, b) - Math.max(rs, a) > CLEAN_MS;
     }));
   };
@@ -2582,23 +2583,23 @@ router.get('/restaurant/availability', requireAuth, async (req, res) => {
     const closed = closes.some(c => ymd >= c.start_date && ymd <= c.end_date) || (bh && bh.is_closed);
     const windows = closed || !bh ? []
       : [
-          { label: '', start: String(bh.open_time).slice(0, 5), end: String(bh.close_time).slice(0, 5) },
+          { start: String(bh.open_time).slice(0, 5), end: String(bh.close_time).slice(0, 5), dur: dur1 },
           ...(bh.open_time_2 && bh.close_time_2
-            ? [{ label: '', start: String(bh.open_time_2).slice(0, 5), end: String(bh.close_time_2).slice(0, 5) }]
+            ? [{ start: String(bh.open_time_2).slice(0, 5), end: String(bh.close_time_2).slice(0, 5), dur: dur2 }]
             : []),
         ];
     const bandsOut = windows.map(w => {
       const slots = [];
-      for (let m = toMin(w.start); m < toMin(w.end); m += dur) {
+      for (let m = toMin(w.start); m < toMin(w.end); m += w.dur) {
         const hhmm = toHHMM(m);
-        const ft = freeAt(ymd, hhmm);
+        const ft = freeAt(ymd, hhmm, w.dur);
         slots.push({ time: hhmm, free: ft.length, tables: ft.map(t => ({ id: t.id, label: t.label, capacity: t.capacity })) });
       }
-      return { label: w.label, slots };
+      return { slots, slot_duration: w.dur };
     });
     out.push({ date: ymd, dow: day.getDay(), closed: !!closed, bands: bandsOut });
   }
-  res.json({ total_tables: tables.length, slot_duration: dur, days: out });
+  res.json({ total_tables: tables.length, slot_duration: dur1, slot_duration_2: dur2, days: out });
 });
 
 router.put('/restaurant/reservations/:id', requireAuth, async (req, res) => {
@@ -2645,10 +2646,11 @@ router.delete('/customers/:phone', requireAuth, async (req, res) => {
 // ─── Restaurant: settings (enable/disable + slot duration) ───────────────────
 
 router.put('/restaurant/settings', requireAuth, async (req, res) => {
-  const { restaurant_enabled, restaurant_slot_duration } = req.body;
+  const { restaurant_enabled, restaurant_slot_duration, restaurant_slot_duration_2 } = req.body;
   const updates = {};
   if (restaurant_enabled !== undefined) updates.restaurant_enabled = Boolean(restaurant_enabled);
   if (restaurant_slot_duration) updates.restaurant_slot_duration = parseInt(restaurant_slot_duration);
+  updates.restaurant_slot_duration_2 = restaurant_slot_duration_2 ? parseInt(restaurant_slot_duration_2) : null;
   const { error } = await supabase.from('tenants').update(updates).eq('id', req.tenant.tenantId);
   if (error) return res.status(500).json({ error: error.message });
   res.json({ ok: true });
