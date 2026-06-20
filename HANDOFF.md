@@ -5,6 +5,13 @@
 - Fase attuale: email transazionali operative (Brevo HTTP API). Prossimo: Stripe env vars + META_CONFIG_ID.
 - Ultimo commit stabile: `3c91d96` — "security: rate limit forgot-password (5/h per IP), fix multer+nodemailer vulns"
 
+## COSA È STATO FATTO (sessione 2026-06-20 — i18n hardcoded in Ajustes)
+
+### Stringhe hardcoded in Settings → tradotte
+- `public/admin/index.html`: card "👤 Perfil de WhatsApp del bot" (titolo, desc, "Foto de perfil", hint, "Elegir foto", "Descripción (About)", placeholder, "Actualizar perfil en WhatsApp") e blocco "🕐 Horarios del local" (titolo, desc, "Guardar horarios") erano hardcoded → aggiunti `data-i18n`/`data-i18n-ph`.
+- **Bug attributo**: `closureLabel` e `offerLabel` usavano `data-i18n-placeholder` (attributo inesistente — applyTranslations cerca `data-i18n-ph`) → placeholder mai tradotti. Corretto in `data-i18n-ph` (le chiavi `settings.closures.label_ph`/`settings.offers.label_ph` esistevano già).
+- `public/admin/i18n.js`: nuove chiavi `settings.wp.*` (8) + `settings.hours.*` (3) in ES/EN/IT/DE/FR/PT. Verificato in preview (switch IT → tutto tradotto).
+
 ## COSA È STATO FATTO (sessione 2026-06-20 — riscrittura prompt support bot)
 
 ### Support bot merchant — knowledge base aggiornata e precisa
