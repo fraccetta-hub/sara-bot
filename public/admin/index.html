@@ -898,14 +898,51 @@
           <div id="resvList" class="space-y-2 text-sm"></div>
         </div>
 
-        <!-- Free-tables availability at a given time -->
+        <!-- Free-tables availability grid (this day + next days) -->
         <div class="bg-white rounded-xl shadow-sm p-5 mt-4">
           <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
             <h3 data-i18n="restaurant.availTitle" class="font-semibold text-gray-800">Mesas libres</h3>
-            <input type="time" id="resvAvailTime" onchange="renderAvailability()"
-              class="border border-gray-200 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-green-300">
+            <div class="flex items-center gap-2">
+              <select id="availDays" onchange="loadAvailGrid()" class="border border-gray-200 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-green-300">
+                <option value="1" data-i18n="restaurant.avail1">Hoy</option>
+                <option value="3" data-i18n="restaurant.avail3">3 días</option>
+                <option value="7" selected data-i18n="restaurant.avail7">7 días</option>
+                <option value="14" data-i18n="restaurant.avail14">14 días</option>
+              </select>
+              <button onclick="openWalkinModal()" class="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-lg text-sm font-semibold whitespace-nowrap">🍽️ <span data-i18n="restaurant.blockBtn">Ocupar mesa</span></button>
+            </div>
           </div>
-          <div id="resvAvail" class="text-sm"></div>
+          <p class="text-xs text-gray-400 mb-3" data-i18n="restaurant.availLegend">El número = mesas libres a esa hora. Tocá un horario para ocupar mesas sin reserva.</p>
+          <div id="availGrid" class="text-sm"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick block / walk-in modal -->
+    <div id="blockModal" class="fixed inset-0 bg-black/40 z-50 hidden flex items-center justify-center p-4">
+      <div class="bg-white rounded-xl shadow-xl w-full max-w-sm p-6">
+        <h3 data-i18n="restaurant.blockTitle" class="font-semibold text-gray-800 mb-1">Ocupar mesas (sin reserva)</h3>
+        <p data-i18n="restaurant.blockDesc" class="text-xs text-gray-400 mb-4">Bloqueá mesas para un walk-in en esta franja, sin cargar una reserva completa.</p>
+        <div class="space-y-3">
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label data-i18n="restaurant.resvDate" class="block text-xs text-gray-500 mb-1">Fecha</label>
+              <input id="blockDate" type="date" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-300">
+            </div>
+            <div>
+              <label data-i18n="restaurant.resvTime" class="block text-xs text-gray-500 mb-1">Hora</label>
+              <input id="blockTime" type="time" onchange="refreshBlockTables()" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-300">
+            </div>
+          </div>
+          <div>
+            <label data-i18n="restaurant.blockTables" class="block text-xs text-gray-500 mb-1">Mesas a ocupar</label>
+            <select id="blockTablesSel" multiple size="5" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-300"></select>
+            <p data-i18n="restaurant.blockTablesHint" class="text-[11px] text-gray-400 mt-1">Solo se muestran las mesas libres en ese horario. Elegí varias con Ctrl/Cmd.</p>
+          </div>
+        </div>
+        <div class="flex justify-end gap-2 mt-5">
+          <button onclick="closeBlockModal()" data-i18n="cancel" class="px-4 py-2 rounded-lg text-gray-600 border border-gray-200 text-sm">Cancelar</button>
+          <button onclick="saveBlock()" data-i18n="restaurant.blockSave" class="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg text-sm font-semibold">Ocupar</button>
         </div>
       </div>
     </div>
@@ -3452,7 +3489,7 @@ async function loadReservations() {
   const date = document.getElementById('resvDate').value;
   const data = await api(`/admin/restaurant/reservations?from=${date}&days=1`);
   _rReservations = data || [];
-  renderAvailability();
+  loadAvailGrid();
   const el = document.getElementById('resvList');
   const STATUS_COLOR = { confirmed:'bg-blue-100 text-blue-700', seated:'bg-green-100 text-green-700', done:'bg-gray-100 text-gray-500', cancelled:'bg-red-100 text-red-500', no_show:'bg-orange-100 text-orange-600', pending_merchant:'bg-yellow-100 text-yellow-700' };
   if (!data?.length) {
@@ -3472,7 +3509,7 @@ async function loadReservations() {
       <div class="flex items-center gap-3 min-w-0">
         <span class="font-mono font-semibold text-gray-800 whitespace-nowrap">${time}</span>
         <div class="min-w-0">
-          <p class="font-medium text-gray-800 truncate">${r.customer_name}</p>
+          <p class="font-medium text-gray-800 truncate">${r.customer_name === 'walk-in' ? '🚶 ' + t('restaurant.walkin') : r.customer_name}</p>
           <p class="text-xs text-gray-400">${r.party_size}p${where ? ' · ' + where : ''}${r.notes ? ' · ' + r.notes : ''}</p>
         </div>
       </div>
@@ -3488,39 +3525,80 @@ async function loadReservations() {
   }).join('');
 }
 
-// Free tables at the time picked in the reservations view. Cancelled/no-show/done
-// don't count; a table is busy if a reservation occupying it covers that instant.
-function renderAvailability() {
-  const el = document.getElementById('resvAvail');
+// Availability grid (this day + next days). Computed server-side so it mirrors
+// exactly the free-table grid Sara uses. Cached for the walk-in block modal.
+let _availData = null;
+async function loadAvailGrid() {
+  const el = document.getElementById('availGrid');
   if (!el) return;
   const date = document.getElementById('resvDate').value;
-  const time = document.getElementById('resvAvailTime').value;
-  if (!date || !time) { el.innerHTML = `<p class="text-gray-400">${t('restaurant.availHint')}</p>`; return; }
-  const T = new Date(`${date}T${time}:00`).getTime();
-  const active = r => !['cancelled', 'no_show', 'done'].includes(r.status);
-  const occ = r => (Array.isArray(r.table_ids) && r.table_ids.length) ? r.table_ids : (r.table_id ? [r.table_id] : []);
-  const busy = new Set();
-  (_rReservations || []).filter(active).forEach(r => {
-    const s = new Date(r.reserved_at).getTime();
-    const e = s + (r.duration_min || 90) * 60000;
-    if (T >= s && T < e) occ(r).forEach(id => busy.add(id));
+  const days = document.getElementById('availDays').value || '7';
+  _availData = await api(`/admin/restaurant/availability?date=${date}&days=${days}`).catch(() => null);
+  if (!_availData) { el.innerHTML = `<p class="text-gray-400">${t('restaurant.availHint')}</p>`; return; }
+  renderAvailGrid();
+}
+function renderAvailGrid() {
+  const el = document.getElementById('availGrid');
+  if (!el || !_availData) return;
+  const WD = ['dom','lun','mar','mié','jue','vie','sáb'];
+  const cell = (s, date) => {
+    const tone = s.free === 0 ? 'bg-red-50 text-red-400'
+      : s.free <= 1 ? 'bg-amber-50 text-amber-700'
+      : 'bg-green-50 text-green-700';
+    const click = s.free > 0 ? `onclick="openBlockModal('${date}','${s.time}')" ` : '';
+    const cur = s.free > 0 ? 'cursor-pointer hover:ring-1 hover:ring-green-300' : 'opacity-70';
+    return `<span ${click}class="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium ${tone} ${cur}"><span class="font-mono">${s.time}</span><b>${s.free}</b></span>`;
+  };
+  let html = '';
+  for (const d of _availData.days) {
+    const dt = new Date(d.date + 'T00:00:00');
+    const label = `${WD[d.dow]} ${dt.getDate()}/${dt.getMonth() + 1}`;
+    if (d.closed) { html += `<div class="mb-2"><span class="font-semibold text-gray-700">${label}</span> <span class="text-xs text-gray-400">— ${t('restaurant.availClosed')}</span></div>`; continue; }
+    html += `<div class="mb-3"><div class="font-semibold text-gray-700 mb-1">${label}</div>`;
+    for (const b of d.bands) {
+      const slots = b.slots.map(s => cell(s, d.date)).join(' ');
+      html += `<div class="flex flex-wrap items-center gap-1.5 mb-1">${b.label ? `<span class="text-xs text-gray-400 w-16 shrink-0">${b.label}</span>` : ''}<div class="flex flex-wrap gap-1.5">${slots || `<span class="text-xs text-gray-300">—</span>`}</div></div>`;
+    }
+    html += `</div>`;
+  }
+  el.innerHTML = html || `<p class="text-gray-400">${t('restaurant.availClosed')}</p>`;
+}
+
+// Walk-in / quick block modal
+function openBlockModal(date, time) {
+  document.getElementById('blockDate').value = date || document.getElementById('resvDate').value;
+  if (time) document.getElementById('blockTime').value = time;
+  else if (!document.getElementById('blockTime').value) {
+    const now = new Date(); document.getElementById('blockTime').value = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  }
+  refreshBlockTables();
+  document.getElementById('blockModal').classList.remove('hidden');
+}
+function closeBlockModal() { document.getElementById('blockModal').classList.add('hidden'); }
+// Show only tables free at the chosen date+time (from the cached grid; falls back to all).
+function refreshBlockTables() {
+  const sel = document.getElementById('blockTablesSel');
+  const date = document.getElementById('blockDate').value;
+  const time = document.getElementById('blockTime').value;
+  let freeTables = _rTables;
+  const day = _availData?.days.find(d => d.date === date);
+  const slot = day?.bands.flatMap(b => b.slots).find(s => s.time === time);
+  if (slot) freeTables = slot.tables;
+  sel.innerHTML = freeTables.map(tbl => `<option value="${tbl.id}">${tbl.label} (${tbl.capacity}p)</option>`).join('')
+    || `<option disabled>${t('restaurant.blockNoFree')}</option>`;
+}
+async function saveBlock() {
+  const date = document.getElementById('blockDate').value;
+  const time = document.getElementById('blockTime').value;
+  const table_ids = Array.from(document.getElementById('blockTablesSel').selectedOptions).map(o => o.value).filter(Boolean);
+  if (!date || !time || !table_ids.length) return;
+  const seats = _rTables.filter(t => table_ids.includes(t.id)).reduce((s, t) => s + (t.capacity || 0), 0);
+  const reserved_at = new Date(`${date}T${time}:00`).toISOString();
+  await api('/admin/restaurant/reservations', 'POST', {
+    customer_name: 'walk-in', party_size: seats || 1, reserved_at, table_ids, status: 'seated',
   });
-  const freeTables = _rTables.filter(t => !busy.has(t.id));
-  const occTables  = _rTables.filter(t => busy.has(t.id));
-  const byCap = {};
-  freeTables.forEach(t => { byCap[t.capacity] = (byCap[t.capacity] || 0) + 1; });
-  const capStr = Object.keys(byCap).sort((a, b) => a - b).map(c => `${byCap[c]}×${c}p`).join(' · ');
-  const seats = freeTables.reduce((s, t) => s + (t.capacity || 0), 0);
-  el.innerHTML = `
-    <div class="flex items-baseline gap-2 mb-2">
-      <span class="text-2xl font-bold text-green-600">${freeTables.length}</span>
-      <span class="text-gray-500">${t('restaurant.availFree')} · ${seats} ${t('restaurant.availSeats')}</span>
-    </div>
-    ${capStr ? `<p class="text-sm text-gray-600 mb-2">${capStr}</p>` : ''}
-    <div class="flex flex-wrap gap-1.5">
-      ${freeTables.map(t => `<span class="px-2 py-0.5 rounded-full bg-green-50 text-green-700 text-xs">${t.label} (${t.capacity}p)</span>`).join('')}
-      ${occTables.map(t => `<span class="px-2 py-0.5 rounded-full bg-red-50 text-red-400 text-xs line-through">${t.label} (${t.capacity}p)</span>`).join('')}
-    </div>`;
+  closeBlockModal();
+  await loadReservations();
 }
 
 // Zone modal

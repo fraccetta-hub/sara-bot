@@ -2522,10 +2522,72 @@ router.post('/restaurant/reservations', requireAuth, async (req, res) => {
       table_id,
       table_ids,
       notes: notes?.trim() || null,
-      status: 'confirmed',
+      status: req.body.status === 'seated' ? 'seated' : 'confirmed',
     }).select().single();
   if (error) return res.status(500).json({ error: error.message });
   res.json(data);
+});
+
+// Availability grid: free tables per slot for the next `days` open days. Mirrors
+// the grid Sara sees, so the merchant can check any day/time and block walk-ins.
+router.get('/restaurant/availability', requireAuth, async (req, res) => {
+  const tenantId = req.tenant.tenantId;
+  const days = Math.min(Math.max(parseInt(req.query.days || '7'), 1), 14);
+  const fromDate = req.query.date || new Date().toISOString().slice(0, 10);
+  const base = new Date(fromDate + 'T00:00:00');
+  const fromTs = base.toISOString();
+  const toTs = new Date(base.getTime() + days * 86400000).toISOString();
+
+  const [tRes, tablesRes, hoursRes, closuresRes, resvRes] = await Promise.all([
+    supabase.from('tenants').select('restaurant_slot_duration, restaurant_meal_bands').eq('id', tenantId).single(),
+    supabase.from('restaurant_tables').select('id, label, capacity, is_active').eq('tenant_id', tenantId),
+    supabase.from('business_hours').select('day_of_week, is_closed, open_time, close_time').eq('tenant_id', tenantId),
+    supabase.from('business_closures').select('start_date, end_date').eq('tenant_id', tenantId),
+    supabase.from('reservations').select('reserved_at, duration_min, status, table_id, table_ids')
+      .eq('tenant_id', tenantId).not('status', 'in', '("cancelled","no_show","done")')
+      .gte('reserved_at', fromTs).lte('reserved_at', toTs),
+  ]);
+
+  const dur   = tRes.data?.restaurant_slot_duration || 90;
+  const bands  = (tRes.data?.restaurant_meal_bands || []).filter(b => b.start && b.end);
+  const tables = (tablesRes.data || []).filter(t => t.is_active !== false);
+  const hours  = hoursRes.data || [];
+  const closes = closuresRes.data || [];
+  const resv   = resvRes.data || [];
+
+  const occ = r => (Array.isArray(r.table_ids) && r.table_ids.length) ? r.table_ids : (r.table_id ? [r.table_id] : []);
+  const toMin = s => { const [h, m] = String(s).slice(0, 5).split(':').map(Number); return h * 60 + (m || 0); };
+  const toHHMM = m => `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
+  const freeAt = (ymd, hhmm) => {
+    const rs = new Date(`${ymd}T${hhmm}:00`).getTime(), re = rs + dur * 60000;
+    return tables.filter(t => !resv.some(r => {
+      if (!occ(r).includes(t.id)) return false;
+      const a = new Date(r.reserved_at).getTime(), b = a + (r.duration_min || dur) * 60000;
+      return rs < b && re > a;
+    }));
+  };
+
+  const out = [];
+  for (let d = 0; d < days; d++) {
+    const day = new Date(base.getFullYear(), base.getMonth(), base.getDate() + d);
+    const ymd = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;
+    const bh = hours.find(h => h.day_of_week === day.getDay());
+    const closed = closes.some(c => ymd >= c.start_date && ymd <= c.end_date) || (bh && bh.is_closed);
+    const windows = closed ? []
+      : (bands.length ? bands.map(b => ({ label: b.label || '', start: b.start, end: b.end }))
+        : (bh ? [{ label: '', start: String(bh.open_time).slice(0, 5), end: String(bh.close_time).slice(0, 5) }] : []));
+    const bandsOut = windows.map(w => {
+      const slots = [];
+      for (let m = toMin(w.start); m < toMin(w.end); m += dur) {
+        const hhmm = toHHMM(m);
+        const ft = freeAt(ymd, hhmm);
+        slots.push({ time: hhmm, free: ft.length, tables: ft.map(t => ({ id: t.id, label: t.label, capacity: t.capacity })) });
+      }
+      return { label: w.label, slots };
+    });
+    out.push({ date: ymd, dow: day.getDay(), closed: !!closed, bands: bandsOut });
+  }
+  res.json({ total_tables: tables.length, slot_duration: dur, days: out });
 });
 
 router.put('/restaurant/reservations/:id', requireAuth, async (req, res) => {
