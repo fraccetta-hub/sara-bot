@@ -897,6 +897,16 @@
           </div>
           <div id="resvList" class="space-y-2 text-sm"></div>
         </div>
+
+        <!-- Free-tables availability at a given time -->
+        <div class="bg-white rounded-xl shadow-sm p-5 mt-4">
+          <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
+            <h3 data-i18n="restaurant.availTitle" class="font-semibold text-gray-800">Mesas libres</h3>
+            <input type="time" id="resvAvailTime" onchange="renderAvailability()"
+              class="border border-gray-200 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-green-300">
+          </div>
+          <div id="resvAvail" class="text-sm"></div>
+        </div>
       </div>
     </div>
 
@@ -3442,6 +3452,7 @@ async function loadReservations() {
   const date = document.getElementById('resvDate').value;
   const data = await api(`/admin/restaurant/reservations?from=${date}&days=1`);
   _rReservations = data || [];
+  renderAvailability();
   const el = document.getElementById('resvList');
   const STATUS_COLOR = { confirmed:'bg-blue-100 text-blue-700', seated:'bg-green-100 text-green-700', done:'bg-gray-100 text-gray-500', cancelled:'bg-red-100 text-red-500', no_show:'bg-orange-100 text-orange-600', pending_merchant:'bg-yellow-100 text-yellow-700' };
   if (!data?.length) {
@@ -3475,6 +3486,41 @@ async function loadReservations() {
       </div>
     </div>`;
   }).join('');
+}
+
+// Free tables at the time picked in the reservations view. Cancelled/no-show/done
+// don't count; a table is busy if a reservation occupying it covers that instant.
+function renderAvailability() {
+  const el = document.getElementById('resvAvail');
+  if (!el) return;
+  const date = document.getElementById('resvDate').value;
+  const time = document.getElementById('resvAvailTime').value;
+  if (!date || !time) { el.innerHTML = `<p class="text-gray-400">${t('restaurant.availHint')}</p>`; return; }
+  const T = new Date(`${date}T${time}:00`).getTime();
+  const active = r => !['cancelled', 'no_show', 'done'].includes(r.status);
+  const occ = r => (Array.isArray(r.table_ids) && r.table_ids.length) ? r.table_ids : (r.table_id ? [r.table_id] : []);
+  const busy = new Set();
+  (_rReservations || []).filter(active).forEach(r => {
+    const s = new Date(r.reserved_at).getTime();
+    const e = s + (r.duration_min || 90) * 60000;
+    if (T >= s && T < e) occ(r).forEach(id => busy.add(id));
+  });
+  const freeTables = _rTables.filter(t => !busy.has(t.id));
+  const occTables  = _rTables.filter(t => busy.has(t.id));
+  const byCap = {};
+  freeTables.forEach(t => { byCap[t.capacity] = (byCap[t.capacity] || 0) + 1; });
+  const capStr = Object.keys(byCap).sort((a, b) => a - b).map(c => `${byCap[c]}×${c}p`).join(' · ');
+  const seats = freeTables.reduce((s, t) => s + (t.capacity || 0), 0);
+  el.innerHTML = `
+    <div class="flex items-baseline gap-2 mb-2">
+      <span class="text-2xl font-bold text-green-600">${freeTables.length}</span>
+      <span class="text-gray-500">${t('restaurant.availFree')} · ${seats} ${t('restaurant.availSeats')}</span>
+    </div>
+    ${capStr ? `<p class="text-sm text-gray-600 mb-2">${capStr}</p>` : ''}
+    <div class="flex flex-wrap gap-1.5">
+      ${freeTables.map(t => `<span class="px-2 py-0.5 rounded-full bg-green-50 text-green-700 text-xs">${t.label} (${t.capacity}p)</span>`).join('')}
+      ${occTables.map(t => `<span class="px-2 py-0.5 rounded-full bg-red-50 text-red-400 text-xs line-through">${t.label} (${t.capacity}p)</span>`).join('')}
+    </div>`;
 }
 
 // Zone modal

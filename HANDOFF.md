@@ -1,5 +1,13 @@
 # PROJECT HANDOFF — Sara Bot (whatsapp-bot) — 2026-06-18
 
+## ✅ FATTO (sessione 2026-06-20 — pannello "Mesas libres" per il merchant)
+
+Il merchant ora vede quanti tavoli (e di che capienza) sono liberi a una certa ora.
+- `public/admin/index.html`: nuova card nella vista Prenotazioni (`reservationsView`) con `<input type="time" id="resvAvailTime">` + `#resvAvail`. `renderAvailability()` calcola lato client da `_rTables` (capienze) e `_rReservations` (cache giornaliera): un tavolo è occupato se una prenotazione attiva che lo include (`table_ids`/`table_id`) copre l'istante scelto. Cancelled/no_show/done e i **pending (senza tavolo) non contano**.
+- Output: numero tavoli liberi + coperti totali + breakdown per capienza (`2×4p · 1×6p`) + chip verdi (liberi) / rossi barrati (occupati). Si aggiorna a ogni `loadReservations()` e al cambio ora.
+- i18n: `restaurant.availTitle/availHint/availFree/availSeats` in 6 lingue.
+- Test: A(single)+B,C(multi) occupate alle 20:30, pending 8p ignorato → libero solo M4(6p).
+
 ## ✅ FATTO (sessione 2026-06-20 — multi-tavolo + pending NON blocca)
 
 ⚠️ **MIGRATION 13 DA ESEGUIRE su Supabase** (`db/migrations.sql`):
