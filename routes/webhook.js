@@ -1299,7 +1299,8 @@ async function handleCustomerMessage(tenant, customerPhone, messageText, locatio
   // Skip the 3 extra queries + large prompt block when the conversation has no
   // sign of being about booking — avoids wasting AI tokens on unrelated chats.
   const APPOINTMENT_KEYWORDS = /reserv|agend|turno|turnos|cita|citas|disponibil|horari|appointment|booking|schedule|atendimento|prenota|appuntamento|hora libre|hora disponible/i;
-  const mightBeAboutAppointments = tenant.appointments_enabled && (
+  // Restaurants use the reservation system (not appointments) even if appointments_enabled=true
+  const mightBeAboutAppointments = tenant.appointments_enabled && !tenant.restaurant_enabled && (
     APPOINTMENT_KEYWORDS.test(messageText || '') ||
     history.slice(-4).some(m => APPOINTMENT_KEYWORDS.test(m.content))
   );

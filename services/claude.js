@@ -204,6 +204,46 @@ function buildStaticSystemPrompt(tenant, stock, services = [], offers = [], rest
     ? buildRestaurantStaticBlock(restaurantZones, restaurantTables, tenant.restaurant_meal_bands || [])
     : '';
 
+  // Business-type awareness: explicit list of what this bot can/cannot do so Sara
+  // never offers table reservations to a spa customer or appointments to a diner.
+  const hasProducts     = tenant.products_enabled !== false;
+  const hasServices     = !!tenant.services_enabled;
+  const hasAppointments = !!tenant.appointments_enabled && !tenant.restaurant_enabled;
+  const hasRestaurant   = !!tenant.restaurant_enabled;
+  const hasDelivery     = !!tenant.delivery_enabled;
+
+  const bizType = hasRestaurant
+    ? 'Restaurante / bar / local de comidas'
+    : hasAppointments && hasServices && hasProducts
+      ? 'Comercio con catálogo, servicios y citas'
+      : hasAppointments && hasServices
+        ? 'Centro de servicios con citas (peluquería, estética, salud, etc.)'
+        : hasAppointments
+          ? 'Negocio de reservas y citas'
+          : 'Tienda / comercio con catálogo de productos';
+
+  const canDo = [
+    hasRestaurant   && '• Reservar mesa (tag <RESERVATION>)',
+    hasAppointments && '• Reservar turno/cita para servicios (tag <APPOINTMENT>)',
+    hasProducts     && !hasRestaurant && '• Recibir pedidos de productos (tag <ORDER>)',
+    hasDelivery     && '• Gestionar envíos a domicilio',
+  ].filter(Boolean).join('\n');
+
+  const cannotDo = [
+    !hasRestaurant   && '• NO podés reservar mesas ni turnos para cenar — este negocio no tiene servicio de restaurante',
+    !hasAppointments && '• NO podés agendar citas o turnos de servicios personales — este negocio no gestiona citas',
+    !hasProducts && !hasRestaurant && '• NO vendés productos físicos',
+    !hasDelivery     && '• NO hacés envíos a domicilio',
+  ].filter(Boolean).join('\n');
+
+  const bizTypeBlock = `
+TIPO DE NEGOCIO: ${bizType}
+LO QUE PODÉS HACER:
+${canDo || '• Responder consultas generales'}
+LO QUE NO PODÉS OFRECER (aunque el cliente lo pida):
+${cannotDo || '• (sin restricciones adicionales)'}
+Si el cliente pide algo que no está en la lista de lo que podés hacer, explicale amablemente que ese servicio no está disponible en este local y redirigilo a lo que sí ofrecés.`;
+
   const menuRule = tenant.restaurant_enabled
     ? `\n15. MENÚ: si el cliente pide ver el menú, la carta o "qué platos tienen" en general, NO lo escribas vos. Acompañá con una frase corta (ej: "Te paso nuestra carta 👇") y agregá al final <SEND_MENU>. El menú se arma y se envía automáticamente desde el catálogo actualizado. Solo describí o mostrá foto de un plato puntual cuando el cliente pregunte por ese plato específico.`
     : '';
@@ -230,6 +270,7 @@ function buildStaticSystemPrompt(tenant, stock, services = [], offers = [], rest
 IDENTIDAD Y CARÁCTER:
 ${personality || 'Sos cálida, cercana y empática. Hablás como si conocieras al cliente de hace tiempo, con un tono amigable y personal.'}
 Esta es tu personalidad real. Mantenerla en cada mensaje es lo más importante — no la pierdas por seguir reglas operativas.
+${bizTypeBlock}
 
 IDIOMA:
 Siempre respondés en el MISMO IDIOMA que usa el cliente. Español, inglés, portugués, italiano, francés, alemán — lo que escriba el cliente. Si escribe en jopará (mezcla guaraní-español), usás las mismas palabras guaraní que usó mezcladas con español. Nunca cambias de idioma por iniciativa propia. Nunca decís que sos un bot o una IA.
