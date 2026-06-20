@@ -159,10 +159,20 @@ UX redesign 10-punti completato e verificato in preview (static server `public/`
 - **Fix 1 — tenant esistenti**: module toggles nella riga espandibile permettono di correggere i flag senza SQL.
 - **Fix 2 — nuovi tenant**: form "Registrar nuevo cliente" ora ha `<select id="nPlan">` (Shop / Bookings / Restaurant / Pro). `createTenant()` mappa il piano ai flag corretti e li manda nel POST. `routes/superadmin.js` `POST /tenants` ora accetta e persiste `products_enabled/services_enabled/appointments_enabled/restaurant_enabled` + `plan_currency/plan_expires/plan_price`.
 
+## ✅ FATTO (sessione 2026-06-20 — piano via Stripe + superadmin read-only)
+
+### Piano = tab visibili = comportamento bot (commit ed1dd3d)
+- **Concetto "moduli" eliminato** — esistono solo 4 piani (Shop/Bookings/Restaurant/Pro) che determinano i flag booleani nel DB, che a loro volta determinano le tab visibili al merchant e il comportamento di Sara.
+- `PLAN_FLAGS` in `routes/billing.js` — mappa piano → flag DB, condivisa tra webhook e change-plan route.
+- **`POST /billing/change-plan`** — merchant può fare upgrade/downgrade. Chiama Stripe (`subscriptions.update` con nuovo `price`, `proration_behavior: 'always_invoice'`, metadata `plan`), aggiorna immediatamente i flag nel DB senza attendere il webhook.
+- **Webhook `customer.subscription.updated`** — ora legge `metadata.plan` e aggiorna i flag se presente. Copre anche rinnovi/cambi Stripe-side.
+- **Admin panel "💳 Plan y facturación"** — nuova sezione "Cambiar de plan" con 4 card (Shop/Bookings/Restaurant/Pro). Piano attuale evidenziato e disabilitato. Visibile solo con Stripe sub attiva. i18n 6 lingue.
+- **Superadmin** — dropdown piano rimosso dalle righe. Il piano è read-only (badge testo). Il superadmin non gestisce più il piano; lo fa il merchant via Stripe. Le righe mostrano: nome+info+metaStatus | ordini | stato (toggle) | piano badge + Desact. + Impersonar.
+
 ## STATO CORRENTE
 - Obiettivo generale: SaaS multi-tenant WhatsApp Business (Node/Express + Supabase + Anthropic Claude). Bot AI risponde a clienti, gestisce catalogo, delivery, turni/appuntamenti, ordini.
-- Fase attuale: superadmin UX completa. Prossimo: Stripe env vars + invoicing merchant.
-- Ultimo commit stabile: `46449f1` — "feat(superadmin): inline expandable tenant rows + plan module flags"
+- Fase attuale: flusso piano completo (iscrizione → cambio → cancellazione via Stripe). Prossimo: Stripe env vars live su Render, invoicing merchant.
+- Ultimo commit stabile: `ed1dd3d` — "feat(billing): merchant plan change + superadmin read-only plan badge"
 
 ## COSA È STATO FATTO (sessione 2026-06-20 — i18n hardcoded in Ajustes)
 
