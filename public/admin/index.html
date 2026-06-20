@@ -2436,26 +2436,22 @@ function finishOnboarding() {
 }
 
 // ── Tab gating — locked when WhatsApp not connected ───────────────────────────
-const LOCKED_TABS = ['chats','products','services','orders','customers','appointments','analytics','settings'];
-const FREE_TABS   = ['support'];
+const LOCKED_TABS = ['chats'];
 
 function applyTabGating() {
-  LOCKED_TABS.forEach(tab => {
-    const btn = document.getElementById('tab' + cap(tab));
-    if (!btn) return;
+  const chatBtn = document.getElementById('tabChats');
+  if (chatBtn) {
     if (!waConnected) {
-      btn.classList.add('opacity-40');
-      btn.title = '⚠️ Conectá WhatsApp Business para usar esta sección';
+      chatBtn.classList.add('opacity-40');
+      chatBtn.title = '⚠️ Conectá WhatsApp Business para usar esta sección';
     } else {
-      btn.classList.remove('opacity-40');
-      btn.title = '';
+      chatBtn.classList.remove('opacity-40');
+      chatBtn.title = '';
     }
-  });
+  }
   // Show/hide resume wizard banner in support tab
   const banner = document.getElementById('wizResumeBanner');
   if (banner) banner.classList.toggle('hidden', waConnected);
-  // If currently on a locked tab and WA not connected, redirect to support
-  if (!waConnected) switchTab('support');
 }
 
 // ── State ──────────────────────────────────────────────────────────────────────
@@ -2772,8 +2768,7 @@ function applyTabVisibility(productsEnabled, servicesEnabled, appointmentsEnable
 
 // ── Tab switching ──────────────────────────────────────────────────────────────
 function switchTab(tab) {
-  if (!waConnected && LOCKED_TABS.includes(tab)) {
-    // Flash the banner to draw attention
+  if (!waConnected && tab === 'chats') {
     const banner = document.getElementById('waBanner');
     banner.classList.remove('hidden');
     banner.style.transition = 'opacity .15s';
