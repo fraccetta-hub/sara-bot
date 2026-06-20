@@ -2453,9 +2453,27 @@ router.put('/restaurant/settings', requireAuth, async (req, res) => {
   if (restaurant_enabled !== undefined) updates.restaurant_enabled = Boolean(restaurant_enabled);
   if (restaurant_slot_duration) updates.restaurant_slot_duration = parseInt(restaurant_slot_duration);
   if (Array.isArray(restaurant_meal_bands)) {
-    updates.restaurant_meal_bands = restaurant_meal_bands
+    const bands = restaurant_meal_bands
       .filter(b => b && b.start && b.end)
       .map(b => ({ label: String(b.label || '').slice(0, 40), start: b.start, end: b.end }));
+
+    // Each band must start before it ends and fit inside the opening hours of
+    // every open day (so reservations within a band are always within hours).
+    for (const b of bands) {
+      if (b.start.slice(0,5) >= b.end.slice(0,5))
+        return res.status(400).json({ error: `La franja "${b.label || ''}" tiene una hora de inicio posterior a la de fin.`, errorCode: 'band_invalid_range' });
+    }
+    const { data: bhRows } = await supabase
+      .from('business_hours').select('day_of_week, open_time, close_time, is_closed')
+      .eq('tenant_id', req.tenant.tenantId);
+    const openDays = (bhRows || []).filter(h => !h.is_closed && h.open_time && h.close_time);
+    for (const b of bands) {
+      for (const d of openDays) {
+        if (b.start.slice(0,5) < String(d.open_time).slice(0,5) || b.end.slice(0,5) > String(d.close_time).slice(0,5))
+          return res.status(400).json({ error: `La franja "${b.label || ''}" (${b.start}–${b.end}) está fuera del horario de apertura (${String(d.open_time).slice(0,5)}–${String(d.close_time).slice(0,5)}).`, errorCode: 'band_outside_hours' });
+      }
+    }
+    updates.restaurant_meal_bands = bands;
   }
   const { error } = await supabase.from('tenants').update(updates).eq('id', req.tenant.tenantId);
   if (error) return res.status(500).json({ error: error.message });

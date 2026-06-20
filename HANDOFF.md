@@ -863,6 +863,15 @@ ALTER TABLE support_messages DROP CONSTRAINT IF EXISTS support_messages_role_che
 ALTER TABLE support_messages ADD  CONSTRAINT support_messages_role_check CHECK (role IN ('merchant','assistant','support'));
 ```
 
+## COSA È STATO FATTO (sessione 2026-06-20 — enforcement orari prenotazioni/appuntamenti)
+
+### Appuntamenti e reservation ora rispettano orari/fasce lato server
+- **Appuntamento cliente** (`webhook.js` blocco `appointmentRequest`): prima inseriva SENZA validazione → un cliente poteva prenotare fuori orario. Ora chiama `checkSlotAvailability` (già usata dal lato merchant): se non valido (giorno chiuso / fuori orario / bloccato / slot pieno) → NON salva, NON notifica, inietta `[SISTEMA]` note → Sara corregge al turno dopo nella lingua del cliente.
+- **Reservation ristorante** (`webhook.js` blocco `reservationRequest`): nuovo guard — la prenotazione deve cadere in una **meal band** (`tenant.restaurant_meal_bands`) E in giorno aperto/entro orari (`business_hours`). Fuori → NON salva + `[SISTEMA]` note. Se non ci sono band/orari configurati, il vincolo relativo è skippato.
+- **Meal bands ⊆ orari apertura** (`admin.js PUT /restaurant/settings`): al salvataggio valida che ogni fascia abbia start<end e stia dentro l'orario di ogni giorno aperto (`business_hours`). Fuori → 400 `band_outside_hours` / `band_invalid_range`.
+- NB: il prompt (`claude.js buildRestaurantStaticBlock`) già diceva a Sara di accettare reservation solo dentro le franjas; i guard sono il backstop server-side che impedisce salvataggi fuori regola.
+- Confronti orari normalizzati a `HH:MM` (slice 0,5) per gestire `open_time` con secondi.
+
 ## PROSSIME PRIORITÀ (sessione successiva)
 1. **Eseguire migration** `subscription_cancel_at_period_end` su Supabase
 2. **Fatturazione** — capire come mandare fatture ai merchant

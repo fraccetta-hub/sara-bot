@@ -1541,31 +1541,41 @@ async function handleCustomerMessage(tenant, customerPhone, messageText, locatio
       const duration = svc?.duration_min || 30;
       const end_at   = new Date(new Date(start_at).getTime() + duration * 60000).toISOString();
 
-      const { data: savedAppt } = await supabase.from('appointments').insert({
-        tenant_id:            tenant.id,
-        customer_phone:       customerPhone,
-        customer_name:        apptCustomerName || customerName || waProfileName || null,
-        service_id:           svc?.id || null,
-        service_name:         service_name || null,
-        service_duration_min: duration,
-        start_at,
-        end_at,
-        status: 'pending',
-      }).select('id').single();
-
-      // Notify merchant
-      if (tenant.merchant_phone && savedAppt) {
-        const startFmt = new Date(start_at).toLocaleString('es', {
-          weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit'
+      // Enforce business hours / blocks / capacity — Sara is told the valid slots
+      // but this guard stops out-of-hours bookings from ever being saved.
+      const slotCheck = await checkSlotAvailability(tenant.id, start_at, end_at, tenant.appointment_capacity);
+      if (!slotCheck.available) {
+        updatedHistory.push({
+          role: 'user',
+          content: `[SISTEMA] El turno solicitado (${start_at}) NO es válido (${slotCheck.reason}${slotCheck.open ? `, horario ${slotCheck.open}-${slotCheck.close}` : ''}) y NO se agendó. Decile al cliente en su idioma que ese horario no está disponible y ofrecé horarios dentro del horario de atención.`
         });
-        const msg = `📅 *Nuevo turno solicitado*\n` +
-          `👤 Cliente: ${apptCustomerName || customerPhone}\n` +
-          `📱 Teléfono: +${customerPhone}\n` +
-          `🛠 Servicio: ${service_name || '—'}\n` +
-          `🕐 Fecha/Hora: ${startFmt}\n` +
-          `⏱ Duración: ${duration} min\n\n` +
-          `Respondé CONFIRMAR o CANCELAR el turno desde el panel.`;
-        await sendMessage(tenant.merchant_phone, msg, phoneNumberId, token);
+      } else {
+        const { data: savedAppt } = await supabase.from('appointments').insert({
+          tenant_id:            tenant.id,
+          customer_phone:       customerPhone,
+          customer_name:        apptCustomerName || customerName || waProfileName || null,
+          service_id:           svc?.id || null,
+          service_name:         service_name || null,
+          service_duration_min: duration,
+          start_at,
+          end_at,
+          status: 'pending',
+        }).select('id').single();
+
+        // Notify merchant
+        if (tenant.merchant_phone && savedAppt) {
+          const startFmt = new Date(start_at).toLocaleString('es', {
+            weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit'
+          });
+          const msg = `📅 *Nuevo turno solicitado*\n` +
+            `👤 Cliente: ${apptCustomerName || customerPhone}\n` +
+            `📱 Teléfono: +${customerPhone}\n` +
+            `🛠 Servicio: ${service_name || '—'}\n` +
+            `🕐 Fecha/Hora: ${startFmt}\n` +
+            `⏱ Duración: ${duration} min\n\n` +
+            `Respondé CONFIRMAR o CANCELAR el turno desde el panel.`;
+          await sendMessage(tenant.merchant_phone, msg, phoneNumberId, token);
+        }
       }
     } catch (e) {
       console.error('[webhook] Error saving appointment:', e.message);
@@ -1610,6 +1620,25 @@ async function handleCustomerMessage(tenant, customerPhone, messageText, locatio
       const { customer_name, party_size, date, time, zone_preference, notes, status: reqStatus } = reservationRequest;
       const reservedAt = new Date(`${date}T${time || '20:00'}:00`).toISOString();
       const isPending = reqStatus === 'pending_merchant';
+
+      // Enforce reservation time: day must be open and time must fall inside a
+      // meal band (and inside opening hours). Sara is told the bands but this
+      // guard stops out-of-band/out-of-hours reservations from being saved.
+      const mealBands = (tenant.restaurant_meal_bands || []).filter(b => b.start && b.end);
+      const resHHMM   = (time || '20:00').slice(0, 5);
+      const resDow    = new Date(`${date}T00:00:00`).getDay();
+      const bhRow     = (businessHours || []).find(h => h.day_of_week === resDow);
+      const dayClosed = bhRow ? bhRow.is_closed : false;
+      const inHours   = !bhRow ? true : (!bhRow.is_closed && resHHMM >= String(bhRow.open_time).slice(0,5) && resHHMM <= String(bhRow.close_time).slice(0,5));
+      const inBand    = !mealBands.length || mealBands.some(b => resHHMM >= String(b.start).slice(0,5) && resHHMM <= String(b.end).slice(0,5));
+      const validTime = !dayClosed && inHours && inBand;
+
+      if (!validTime) {
+        updatedHistory.push({
+          role: 'user',
+          content: `[SISTEMA] La reserva solicitada (${date} ${resHHMM}) NO es válida (${dayClosed ? 'local cerrado ese día' : !inBand ? 'fuera de las franjas de reserva' : 'fuera del horario de apertura'}) y NO se guardó. Informá al cliente en su idioma y ofrecé un horario dentro de las franjas/horarios disponibles.`
+        });
+      } else {
 
       // Auto-assign smallest available table (skip if pending_merchant)
       let tableId = null, zoneId = null;
@@ -1662,6 +1691,7 @@ async function handleCustomerMessage(tenant, customerPhone, messageText, locatio
           `⚠️ *Reserva grupo grande — requiere tu atención*\n👤 ${customer_name || customerPhone} (+${customerPhone})\n👥 ${party_size} personas\n📅 ${dt}\n\nContactá al cliente para coordinar los lugares.`,
           phoneNumberId, token);
       }
+      } // end validTime else
     } catch (e) {
       console.error('[reservation] error:', e.message);
     }
