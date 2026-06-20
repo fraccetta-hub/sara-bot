@@ -2512,6 +2512,11 @@ router.post('/restaurant/reservations', requireAuth, async (req, res) => {
   if (!customer_name?.trim() || !party_size || !reserved_at)
     return res.status(400).json({ error: 'Nombre, personas y fecha requeridos' });
   const { table_ids, table_id } = normTableIds(req.body);
+  let defaultDur = 90;
+  if (!duration_min) {
+    const { data: tRow } = await supabase.from('tenants').select('restaurant_slot_duration').eq('id', req.tenant.tenantId).single();
+    defaultDur = tRow?.restaurant_slot_duration || 90;
+  }
   const { data, error } = await supabase.from('reservations')
     .insert({
       tenant_id: req.tenant.tenantId,
@@ -2519,7 +2524,7 @@ router.post('/restaurant/reservations', requireAuth, async (req, res) => {
       customer_phone: customer_phone?.trim() || null,
       party_size: parseInt(party_size),
       reserved_at,
-      duration_min: parseInt(duration_min || 90),
+      duration_min: parseInt(duration_min || defaultDur),
       zone_id: zone_id || null,
       table_id,
       table_ids,
