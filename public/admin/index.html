@@ -3473,7 +3473,7 @@ async function initReservationsView() {
     _rTables = await api('/admin/restaurant/tables').catch(() => []) || [];
     _rZones  = await api('/admin/restaurant/zones').catch(() => []) || [];
   }
-  document.getElementById('resvDate').value = new Date().toISOString().slice(0,10);
+  document.getElementById('resvDate').value = localDateStr();
   await loadReservations();
 }
 
@@ -3609,12 +3609,17 @@ function renderAvailGrid() {
     }
     html += `</div>`;
   }
-  el.innerHTML = html || `<p class="text-gray-400">${t('restaurant.availClosed')}</p>`;
+  const hasSlots = _availData.days.some(d => !d.closed && d.bands.some(b => b.slots.length));
+  el.innerHTML = html || (hasSlots ? '' : `<p class="text-xs text-gray-400 py-2">Nessun orario configurato. Vai in <b>Impostazioni → Orari del locale</b> per abilitare gli slot.</p>`);
 }
 
+function localDateStr(d) {
+  const n = d || new Date();
+  return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}`;
+}
 function openWalkinModal(date, time) {
   const now = new Date();
-  document.getElementById('walkinDate').value = date || now.toISOString().slice(0,10);
+  document.getElementById('walkinDate').value = date || localDateStr(now);
   document.getElementById('walkinTime').value = time || `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
   document.getElementById('walkinMsg').classList.add('hidden');
   refreshWalkinTypes();
