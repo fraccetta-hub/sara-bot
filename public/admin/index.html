@@ -721,9 +721,7 @@
             <input type="number" id="restaurantSlotDuration2" value="" min="30" max="300" step="15"
               class="w-24 border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-300"
               onchange="saveRestaurantSettings()">
-            <button onclick="clearSlotDuration2()" class="text-xs text-red-400 hover:text-red-600">✕ rimuovi</button>
           </div>
-          <button id="restDur2AddBtn" onclick="addSlotDuration2()" class="text-xs text-green-600 hover:text-green-800 font-medium">+ Aggiungi fascia 2 (orario spezzato)</button>
         </div>
       </div>
 
@@ -3493,33 +3491,22 @@ function toggleRestDur() {
   chev.style.transform = open ? 'rotate(0deg)' : 'rotate(180deg)';
 }
 
-function addSlotDuration2() {
-  document.getElementById('restDur2Row').classList.remove('hidden');
-  document.getElementById('restDur2AddBtn').classList.add('hidden');
-  document.getElementById('restaurantSlotDuration2').focus();
-}
-
-function clearSlotDuration2() {
-  document.getElementById('restaurantSlotDuration2').value = '';
-  document.getElementById('restDur2Row').classList.add('hidden');
-  document.getElementById('restDur2AddBtn').classList.remove('hidden');
-  saveRestaurantSettings();
-}
 
 async function loadRestaurant() {
-  const [settings, zones, tables] = await Promise.all([
+  const [settings, zones, tables, hours] = await Promise.all([
     api('/admin/settings'),
     api('/admin/restaurant/zones'),
     api('/admin/restaurant/tables'),
+    api('/admin/business-hours'),
   ]);
   _rZones  = zones  || [];
   _rTables = tables || [];
   document.getElementById('restaurantSlotDuration').value = settings.restaurant_slot_duration || 90;
-  const dur2 = settings.restaurant_slot_duration_2;
-  if (dur2) {
-    document.getElementById('restaurantSlotDuration2').value = dur2;
-    document.getElementById('restDur2Row').classList.remove('hidden');
-    document.getElementById('restDur2AddBtn').classList.add('hidden');
+  const hasSplitHours = (hours || []).some(h => h.open_time_2 && !h.is_closed);
+  const dur2Row = document.getElementById('restDur2Row');
+  dur2Row.classList.toggle('hidden', !hasSplitHours);
+  if (hasSplitHours) {
+    document.getElementById('restaurantSlotDuration2').value = settings.restaurant_slot_duration_2 || '';
   }
   renderZones();
   renderTables();
