@@ -879,6 +879,7 @@
             <button onclick="openResvModal(null)" class="btn-green px-3 py-1.5 rounded-lg text-sm font-semibold">+ <span data-i18n="restaurant.addResv">Nueva reserva</span></button>
           </div>
           <div id="resvList" class="space-y-2 text-sm"></div>
+          <div id="freeNow" class="mt-3 flex flex-wrap items-center gap-2 text-sm min-h-[1.5rem]"></div>
         </div>
 
         <!-- Free-tables availability grid (this day + next days) -->
@@ -3532,10 +3533,41 @@ function renderTables() {
     </div>`).join('');
 }
 
+function renderFreeNow() {
+  const el = document.getElementById('freeNow');
+  if (!el || !_rTables.length) return;
+  const now = new Date();
+  const occupied = new Set();
+  for (const r of _rReservations) {
+    if (['cancelled','no_show','done'].includes(r.status)) continue;
+    const ids = Array.isArray(r.table_ids) && r.table_ids.length ? r.table_ids : (r.table_id ? [r.table_id] : []);
+    if (!ids.length) continue;
+    const start = new Date(/Z|[+-]\d\d:/.test(r.reserved_at) ? r.reserved_at : r.reserved_at + 'Z');
+    const end = new Date(start.getTime() + (r.duration_min || 90) * 60000);
+    if (now >= start && now < end) ids.forEach(id => occupied.add(String(id)));
+  }
+  const groups = {};
+  let freeCount = 0;
+  for (const t of _rTables) {
+    if (t.is_active === false) continue;
+    if (occupied.has(String(t.id))) continue;
+    freeCount++;
+    const zone = t.restaurant_zones?.name || 'Senza zona';
+    const k = `${t.capacity}p — ${zone}`;
+    groups[k] = (groups[k] || 0) + 1;
+  }
+  if (!freeCount) { el.innerHTML = '<span class="text-xs font-semibold text-red-500">Tutti i tavoli occupati ora</span>'; return; }
+  const chips = Object.entries(groups)
+    .map(([k,n]) => `<span class="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium bg-green-50 text-green-700">${n}× ${k}</span>`)
+    .join('');
+  el.innerHTML = `<span class="text-xs text-gray-500 font-medium">Liberi ora:</span>${chips}`;
+}
+
 async function loadReservations() {
   const date = document.getElementById('resvDate').value;
   const data = await api(`/admin/restaurant/reservations?from=${date}&days=1`);
   _rReservations = data || [];
+  renderFreeNow();
   loadAvailGrid();
   const el = document.getElementById('resvList');
   const STATUS_COLOR = { confirmed:'bg-blue-100 text-blue-700', seated:'bg-green-100 text-green-700', done:'bg-gray-100 text-gray-500', cancelled:'bg-red-100 text-red-500', no_show:'bg-orange-100 text-orange-600', pending_merchant:'bg-yellow-100 text-yellow-700' };
@@ -3544,7 +3576,8 @@ async function loadReservations() {
     return;
   }
   el.innerHTML = data.map(r => {
-    const time = new Date(r.reserved_at).toLocaleTimeString('es', { hour:'2-digit', minute:'2-digit' });
+    const dt = new Date(/Z|[+-]\d\d:/.test(r.reserved_at) ? r.reserved_at : r.reserved_at + 'Z');
+    const time = dt.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
     const zone  = r.restaurant_zones?.name || '';
     const nTables = Array.isArray(r.table_ids) ? r.table_ids.length : (r.table_id ? 1 : 0);
     const table = nTables > 1
@@ -3595,7 +3628,15 @@ function renderAvailGrid() {
       : 'bg-green-50 text-green-700';
     const click = s.free > 0 ? `onclick="openWalkinModal('${date}','${s.time}')" ` : '';
     const cur = s.free > 0 ? 'cursor-pointer hover:ring-1 hover:ring-green-300' : 'opacity-70';
-    return `<span ${click}class="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium ${tone} ${cur}"><span class="font-mono">${s.time}</span><b>${s.free}</b></span>`;
+    const breakdown = {};
+    for (const t of (s.tables || [])) {
+      const full = _rTables.find(r => r.id === t.id);
+      const zone = full?.restaurant_zones?.name || '';
+      const k = `${t.capacity}p${zone ? ' ' + zone : ''}`;
+      breakdown[k] = (breakdown[k] || 0) + 1;
+    }
+    const tip = Object.entries(breakdown).map(([k,n]) => `${n}×${k}`).join(' · ') || `${s.free} liberi`;
+    return `<span ${click}title="${tip}" class="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium ${tone} ${cur}"><span class="font-mono">${s.time}</span><b>${s.free}</b></span>`;
   };
   let html = '';
   for (const d of _availData.days) {
