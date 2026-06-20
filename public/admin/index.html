@@ -919,7 +919,7 @@
     </div>
 
     <!-- Quick block / walk-in modal -->
-    <div id="blockModal" class="fixed inset-0 bg-black/40 z-50 hidden flex items-center justify-center p-4">
+    <div id="walkinModal" class="fixed inset-0 bg-black/40 z-50 hidden flex items-center justify-center p-4">
       <div class="bg-white rounded-xl shadow-xl w-full max-w-sm p-6">
         <h3 data-i18n="restaurant.blockTitle" class="font-semibold text-gray-800 mb-1">Ocupar mesas (sin reserva)</h3>
         <p data-i18n="restaurant.blockDesc" class="text-xs text-gray-400 mb-4">Bloqueá mesas para un walk-in en esta franja, sin cargar una reserva completa.</p>
@@ -927,22 +927,22 @@
           <div class="grid grid-cols-2 gap-3">
             <div>
               <label data-i18n="restaurant.resvDate" class="block text-xs text-gray-500 mb-1">Fecha</label>
-              <input id="blockDate" type="date" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-300">
+              <input id="walkinDate" type="date" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-300">
             </div>
             <div>
               <label data-i18n="restaurant.resvTime" class="block text-xs text-gray-500 mb-1">Hora</label>
-              <input id="blockTime" type="time" onchange="refreshBlockTables()" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-300">
+              <input id="walkinTime" type="time" onchange="refreshWalkinTables()" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-300">
             </div>
           </div>
           <div>
             <label data-i18n="restaurant.blockTables" class="block text-xs text-gray-500 mb-1">Mesas a ocupar</label>
-            <select id="blockTablesSel" multiple size="5" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-300"></select>
+            <select id="walkinTablesSel" multiple size="5" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-300"></select>
             <p data-i18n="restaurant.blockTablesHint" class="text-[11px] text-gray-400 mt-1">Solo se muestran las mesas libres en ese horario. Elegí varias con Ctrl/Cmd.</p>
           </div>
         </div>
         <div class="flex justify-end gap-2 mt-5">
-          <button onclick="closeBlockModal()" data-i18n="cancel" class="px-4 py-2 rounded-lg text-gray-600 border border-gray-200 text-sm">Cancelar</button>
-          <button onclick="saveBlock()" data-i18n="restaurant.blockSave" class="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg text-sm font-semibold">Ocupar</button>
+          <button onclick="closeWalkinModal()" data-i18n="cancel" class="px-4 py-2 rounded-lg text-gray-600 border border-gray-200 text-sm">Cancelar</button>
+          <button onclick="saveWalkin()" data-i18n="restaurant.blockSave" class="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg text-sm font-semibold">Ocupar</button>
         </div>
       </div>
     </div>
@@ -3545,7 +3545,7 @@ function renderAvailGrid() {
     const tone = s.free === 0 ? 'bg-red-50 text-red-400'
       : s.free <= 1 ? 'bg-amber-50 text-amber-700'
       : 'bg-green-50 text-green-700';
-    const click = s.free > 0 ? `onclick="openBlockModal('${date}','${s.time}')" ` : '';
+    const click = s.free > 0 ? `onclick="openWalkinModal('${date}','${s.time}')" ` : '';
     const cur = s.free > 0 ? 'cursor-pointer hover:ring-1 hover:ring-green-300' : 'opacity-70';
     return `<span ${click}class="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium ${tone} ${cur}"><span class="font-mono">${s.time}</span><b>${s.free}</b></span>`;
   };
@@ -3564,22 +3564,22 @@ function renderAvailGrid() {
   el.innerHTML = html || `<p class="text-gray-400">${t('restaurant.availClosed')}</p>`;
 }
 
-// Walk-in / quick block modal
-function openBlockModal(date, time) {
-  document.getElementById('blockDate').value = date || document.getElementById('resvDate').value;
-  if (time) document.getElementById('blockTime').value = time;
-  else if (!document.getElementById('blockTime').value) {
-    const now = new Date(); document.getElementById('blockTime').value = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+// Walk-in / quick block modal (distinct from the appointments time-block modal)
+function openWalkinModal(date, time) {
+  document.getElementById('walkinDate').value = date || document.getElementById('resvDate').value;
+  if (time) document.getElementById('walkinTime').value = time;
+  else if (!document.getElementById('walkinTime').value) {
+    const now = new Date(); document.getElementById('walkinTime').value = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
   }
-  refreshBlockTables();
-  document.getElementById('blockModal').classList.remove('hidden');
+  refreshWalkinTables();
+  document.getElementById('walkinModal').classList.remove('hidden');
 }
-function closeBlockModal() { document.getElementById('blockModal').classList.add('hidden'); }
+function closeWalkinModal() { document.getElementById('walkinModal').classList.add('hidden'); }
 // Show only tables free at the chosen date+time (from the cached grid; falls back to all).
-function refreshBlockTables() {
-  const sel = document.getElementById('blockTablesSel');
-  const date = document.getElementById('blockDate').value;
-  const time = document.getElementById('blockTime').value;
+function refreshWalkinTables() {
+  const sel = document.getElementById('walkinTablesSel');
+  const date = document.getElementById('walkinDate').value;
+  const time = document.getElementById('walkinTime').value;
   let freeTables = _rTables;
   const day = _availData?.days.find(d => d.date === date);
   const slot = day?.bands.flatMap(b => b.slots).find(s => s.time === time);
@@ -3587,17 +3587,17 @@ function refreshBlockTables() {
   sel.innerHTML = freeTables.map(tbl => `<option value="${tbl.id}">${tbl.label} (${tbl.capacity}p)</option>`).join('')
     || `<option disabled>${t('restaurant.blockNoFree')}</option>`;
 }
-async function saveBlock() {
-  const date = document.getElementById('blockDate').value;
-  const time = document.getElementById('blockTime').value;
-  const table_ids = Array.from(document.getElementById('blockTablesSel').selectedOptions).map(o => o.value).filter(Boolean);
+async function saveWalkin() {
+  const date = document.getElementById('walkinDate').value;
+  const time = document.getElementById('walkinTime').value;
+  const table_ids = Array.from(document.getElementById('walkinTablesSel').selectedOptions).map(o => o.value).filter(Boolean);
   if (!date || !time || !table_ids.length) return;
   const seats = _rTables.filter(t => table_ids.includes(t.id)).reduce((s, t) => s + (t.capacity || 0), 0);
   const reserved_at = new Date(`${date}T${time}:00`).toISOString();
   await api('/admin/restaurant/reservations', 'POST', {
     customer_name: 'walk-in', party_size: seats || 1, reserved_at, table_ids, status: 'seated',
   });
-  closeBlockModal();
+  closeWalkinModal();
   await loadReservations();
 }
 

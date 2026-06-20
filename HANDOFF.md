@@ -10,6 +10,8 @@ Griglia disponibilità multi-giorno nel pannello prenotazioni + modal walk-in pe
 
 **White page investigazione chiusa**: causa era apostrofo non escapato `un'email` in i18n.js IT (commit 7281fba). Già fixato da f38cb44. Nessuna azione richiesta.
 
+⚠️ **Fix collisione (post 6e96498)**: il commit della griglia usava `id="blockModal"` + funzioni `openBlockModal/closeBlockModal/saveBlock` GIÀ esistenti per il modal "blocco orario" degli appuntamenti → doppio id + funzioni duplicate (vinceva quella appuntamenti → modal walk-in rotto). Rinominati walk-in in `id="walkinModal"` + `openWalkinModal/closeWalkinModal/saveWalkin/refreshWalkinTables`. La griglia slot ora chiama `openWalkinModal`. Verificato: 1 solo `blockModal` (appuntamenti) + 1 `walkinModal`, script inline senza errori.
+
 ## ✅ FATTO (sessione 2026-06-20 — pannello "Mesas libres" per il merchant)
 
 Il merchant ora vede quanti tavoli (e di che capienza) sono liberi a una certa ora.
