@@ -10,7 +10,7 @@ const { sendMessage, sendImage } = require('../services/whatsapp');
 
 const crypto = require('crypto');
 const AdmZip = require('adm-zip');
-const { sendPasswordReset, sendAccountDeletion, sendUsernameChange, sendPhoneChange } = require('../services/mailer');
+const { sendPasswordReset, sendAccountDeletion, sendUsernameChange } = require('../services/mailer');
 const { invalidateClosures, invalidateOffers, invalidateRestaurant } = require('../services/stock');
 const { rateLimit } = require('express-rate-limit');
 
@@ -282,7 +282,7 @@ router.get('/settings', requireAuth, async (req, res) => {
              restaurant_enabled, restaurant_slot_duration, restaurant_meal_bands, appointment_capacity,
              sector, active, plan_expires, plan_currency, plan_price, phone_number_id, whatsapp_token_refresh_error,
              stripe_subscription_status, subscription_cancel_at_period_end,
-             pending_login_slug, pending_merchant_phone`)
+             pending_login_slug`)
     .eq('id', req.tenant.tenantId)
     .single();
   if (error) return res.status(500).json({ error: error.message });
@@ -418,49 +418,6 @@ router.get('/confirm-username-change', async (req, res) => {
     pending_login_slug: null, username_change_token: null, username_change_expires: null,
   }).eq('id', tenant.id);
   res.json({ ok: true, newUsername: tenant.pending_login_slug });
-});
-
-// ─── POST /admin/request-phone-change ────────────────────────────────────────
-
-const phoneChangeLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000, max: 5, standardHeaders: true, legacyHeaders: false,
-});
-
-router.post('/request-phone-change', requireAuth, phoneChangeLimiter, async (req, res) => {
-  const { phone, lang = 'es' } = req.body;
-  const cleaned = String(phone || '').replace(/\D/g, '');
-  if (!cleaned || cleaned.length < 8)
-    return res.status(400).json({ error: 'Número inválido', errorCode: 'invalid_phone' });
-  const { data: tenant } = await supabase.from('tenants').select('email, name').eq('id', req.tenant.tenantId).single();
-  if (!tenant?.email) return res.status(400).json({ error: 'Sin email asociado. Contactá soporte.', errorCode: 'no_email' });
-  const token = crypto.randomBytes(32).toString('hex');
-  const expires = new Date(Date.now() + 60 * 60 * 1000).toISOString();
-  await supabase.from('tenants').update({
-    pending_merchant_phone: cleaned, phone_change_token: token, phone_change_expires: expires,
-  }).eq('id', req.tenant.tenantId);
-  const confirmUrl = `${process.env.APP_URL}/admin/index.html?confirm_phone=${token}`;
-  await sendPhoneChange({ email: tenant.email, businessName: tenant.name, confirmUrl, newPhone: cleaned, lang });
-  res.json({ ok: true });
-});
-
-// ─── GET /admin/confirm-phone-change ─────────────────────────────────────────
-
-router.get('/confirm-phone-change', async (req, res) => {
-  const { token } = req.query;
-  if (!token) return res.status(400).json({ error: 'Token requerido' });
-  const { data: tenant } = await supabase
-    .from('tenants')
-    .select('id, pending_merchant_phone, phone_change_expires')
-    .eq('phone_change_token', token)
-    .maybeSingle();
-  if (!tenant) return res.status(400).json({ error: 'Token inválido o expirado', errorCode: 'invalid_token' });
-  if (new Date(tenant.phone_change_expires) < new Date())
-    return res.status(400).json({ error: 'Token expirado', errorCode: 'token_expired' });
-  await supabase.from('tenants').update({
-    merchant_phone: tenant.pending_merchant_phone,
-    pending_merchant_phone: null, phone_change_token: null, phone_change_expires: null,
-  }).eq('id', tenant.id);
-  res.json({ ok: true, newPhone: tenant.pending_merchant_phone });
 });
 
 // ─── POST /admin/stripe-portal ────────────────────────────────────────────────
