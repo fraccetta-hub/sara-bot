@@ -293,7 +293,7 @@ router.get('/settings', requireAuth, async (req, res) => {
 router.put('/settings', requireAuth, async (req, res) => {
   // products_enabled / services_enabled are admin-only (managed by superadmin)
   const allowed = [
-    'bot_name','bot_personality','merchant_phone','payment_instructions','custom_instructions',
+    'bot_name','bot_personality','payment_instructions','custom_instructions',
     'delivery_enabled','location_address','location_lat','location_lng',
     'delivery_type','delivery_base_fee','delivery_zone_km',
     'delivery_zone_outer_fee','delivery_per_km',
@@ -313,10 +313,23 @@ router.put('/settings', requireAuth, async (req, res) => {
   res.json({ ok: true });
 });
 
+// ─── helpers ──────────────────────────────────────────────────────────────────
+
+async function verifyCurrentPassword(tenantId, currentPassword) {
+  const { data } = await supabase
+    .from('tenants').select('admin_password_hash').eq('id', tenantId).single();
+  if (!data?.admin_password_hash) return false;
+  return bcrypt.compare(currentPassword, data.admin_password_hash);
+}
+
 // ─── POST /admin/change-password ─────────────────────────────────────────────
 
 router.post('/change-password', requireAuth, async (req, res) => {
-  const { newPassword } = req.body;
+  const { newPassword, currentPassword } = req.body;
+  if (!currentPassword)
+    return res.status(400).json({ error: 'Se requiere la contraseña actual', errorCode: 'wrong_password' });
+  const ok = await verifyCurrentPassword(req.tenant.tenantId, currentPassword);
+  if (!ok) return res.status(403).json({ error: 'Contraseña actual incorrecta', errorCode: 'wrong_password' });
   if (!newPassword || newPassword.length < 6)
     return res.status(400).json({ error: 'La contraseña debe tener al menos 6 caracteres', errorCode: 'password_too_short' });
   const hash = await bcrypt.hash(newPassword, 10);
@@ -327,11 +340,14 @@ router.post('/change-password', requireAuth, async (req, res) => {
 // ─── POST /admin/change-email ─────────────────────────────────────────────────
 
 router.post('/change-email', requireAuth, async (req, res) => {
-  const { email } = req.body;
+  const { email, currentPassword } = req.body;
+  if (!currentPassword)
+    return res.status(400).json({ error: 'Se requiere la contraseña actual', errorCode: 'wrong_password' });
+  const ok = await verifyCurrentPassword(req.tenant.tenantId, currentPassword);
+  if (!ok) return res.status(403).json({ error: 'Contraseña actual incorrecta', errorCode: 'wrong_password' });
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
     return res.status(400).json({ error: 'Email inválido', errorCode: 'invalid_email' });
   const normalized = email.toLowerCase().trim();
-  // Check uniqueness
   const { data: existing } = await supabase.from('tenants').select('id').eq('email', normalized).maybeSingle();
   if (existing && existing.id !== req.tenant.tenantId)
     return res.status(409).json({ error: 'Ese email ya está en uso', errorCode: 'email_taken' });
@@ -342,7 +358,11 @@ router.post('/change-email', requireAuth, async (req, res) => {
 // ─── POST /admin/change-username ──────────────────────────────────────────────
 
 router.post('/change-username', requireAuth, async (req, res) => {
-  const { username } = req.body;
+  const { username, currentPassword } = req.body;
+  if (!currentPassword)
+    return res.status(400).json({ error: 'Se requiere la contraseña actual', errorCode: 'wrong_password' });
+  const ok = await verifyCurrentPassword(req.tenant.tenantId, currentPassword);
+  if (!ok) return res.status(403).json({ error: 'Contraseña actual incorrecta', errorCode: 'wrong_password' });
   if (!username || username.length < 3)
     return res.status(400).json({ error: 'El usuario debe tener al menos 3 caracteres', errorCode: 'username_too_short' });
   if (!/^[a-z0-9_.-]+$/.test(username))
@@ -351,6 +371,20 @@ router.post('/change-username', requireAuth, async (req, res) => {
   if (existing && existing.id !== req.tenant.tenantId)
     return res.status(409).json({ error: 'Ese usuario ya está en uso', errorCode: 'username_taken' });
   await supabase.from('tenants').update({ login_slug: username }).eq('id', req.tenant.tenantId);
+  res.json({ ok: true });
+});
+
+// ─── POST /admin/change-merchant-phone ────────────────────────────────────────
+
+router.post('/change-merchant-phone', requireAuth, async (req, res) => {
+  const { phone, currentPassword } = req.body;
+  if (!currentPassword)
+    return res.status(400).json({ error: 'Se requiere la contraseña actual', errorCode: 'wrong_password' });
+  const ok = await verifyCurrentPassword(req.tenant.tenantId, currentPassword);
+  if (!ok) return res.status(403).json({ error: 'Contraseña actual incorrecta', errorCode: 'wrong_password' });
+  const cleaned = String(phone || '').replace(/\D/g, '');
+  if (!cleaned) return res.status(400).json({ error: 'Número inválido', errorCode: 'invalid_phone' });
+  await supabase.from('tenants').update({ merchant_phone: cleaned }).eq('id', req.tenant.tenantId);
   res.json({ ok: true });
 });
 

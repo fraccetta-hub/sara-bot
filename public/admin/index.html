@@ -1111,11 +1111,15 @@
             </div>
             <label data-i18n="settings.account.username" class="block text-xs font-medium text-gray-500 mb-1">Usuario (login)</label>
             <p data-i18n="settings.account.usernameHint" class="text-xs text-gray-400 mb-2">Solo letras minúsculas, números, puntos y guiones. Se usa para iniciar sesión.</p>
-            <div class="flex gap-2">
+            <div class="flex gap-2 mb-4">
               <input id="aUsername" type="text" class="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono"/>
               <button onclick="changeUsername()" data-i18n="settings.account.saveUsername"
                 class="btn-green px-4 py-2 rounded-lg text-sm font-semibold shrink-0">Guardar</button>
             </div>
+            <label data-i18n="settings.account.currentPwd" class="block text-xs font-medium text-gray-500 mb-1">Contraseña actual</label>
+            <input id="aCurrentPwd" type="password" data-i18n-ph="settings.account.currentPwdPh"
+              placeholder="Tu contraseña actual"
+              class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
           </div>
 
           <div class="bg-white rounded-xl shadow-sm p-6">
@@ -1123,6 +1127,10 @@
             <p data-i18n="settings.phone.desc" class="text-xs text-gray-400 mb-3">Sara te avisa aquí cuando llega un pedido nuevo. Formato internacional sin + ni espacios (ej: 595981123456).</p>
             <div id="merchantPhoneMsg" class="hidden rounded-lg px-4 py-2 text-sm mb-3"></div>
             <input id="sMerchantPhone" type="tel" placeholder="595981123456"
+              class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-3"/>
+            <label data-i18n="settings.account.currentPwd" class="block text-xs font-medium text-gray-500 mb-1">Contraseña actual</label>
+            <input id="sPhoneCurrentPwd" type="password" data-i18n-ph="settings.account.currentPwdPh"
+              placeholder="Tu contraseña actual"
               class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-3"/>
             <button onclick="saveMerchantPhone()" data-i18n="settings.phone.save"
               class="btn-green w-full py-2 rounded-lg text-sm font-semibold">Guardar número</button>
@@ -1148,6 +1156,9 @@
           <div class="bg-white rounded-xl shadow-sm p-6">
             <h3 data-i18n="settings.password.title" class="font-medium text-gray-800 mb-3">🔒 Cambiar contraseña</h3>
             <div id="pwdMsg" class="hidden rounded-lg px-4 py-2 text-sm mb-3"></div>
+            <label data-i18n="settings.account.currentPwd" class="block text-xs font-medium text-gray-500 mb-1">Contraseña actual</label>
+            <input id="currentPwd" type="password" data-i18n-ph="settings.account.currentPwdPh" placeholder="Tu contraseña actual"
+              class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-3"/>
             <input id="newPwd" type="password" data-i18n-ph="settings.password.placeholder" placeholder="Nueva contraseña (mín. 6 caracteres)"
               class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-3"/>
             <button onclick="changePassword()" data-i18n="settings.password.save"
@@ -4289,6 +4300,7 @@ async function saveMerchantPhone() {
   const msgEl = document.getElementById('merchantPhoneMsg');
   msgEl.classList.add('hidden');
   const phone = document.getElementById('sMerchantPhone').value.trim().replace(/\D/g, '');
+  const currentPassword = document.getElementById('sPhoneCurrentPwd').value;
   if (!phone) {
     msgEl.className = 'rounded-lg px-4 py-2 text-sm mb-3 bg-red-50 text-red-700';
     msgEl.textContent = t('settings.phone.invalid');
@@ -4296,8 +4308,9 @@ async function saveMerchantPhone() {
     return;
   }
   try {
-    await api('/admin/settings', 'PUT', { merchant_phone: phone });
+    await api('/admin/change-merchant-phone', 'POST', { phone, currentPassword });
     document.getElementById('sMerchantPhone').value = phone;
+    document.getElementById('sPhoneCurrentPwd').value = '';
     msgEl.className = 'rounded-lg px-4 py-2 text-sm mb-3 bg-green-50 text-green-700';
     msgEl.textContent = t('settings.phone.saved');
     msgEl.classList.remove('hidden');
@@ -4445,13 +4458,15 @@ async function saveCustomerNotes(phone) {
 }
 
 async function changePassword() {
+  const currentPassword = document.getElementById('currentPwd').value;
   const pwd   = document.getElementById('newPwd').value;
   const msgEl = document.getElementById('pwdMsg');
   try {
-    await api('/admin/change-password', 'POST', { newPassword: pwd });
+    await api('/admin/change-password', 'POST', { newPassword: pwd, currentPassword });
     msgEl.className = 'rounded-lg px-4 py-2 text-sm mb-3 bg-green-50 text-green-700';
     msgEl.textContent = t('settings.password.saved');
     msgEl.classList.remove('hidden');
+    document.getElementById('currentPwd').value = '';
     document.getElementById('newPwd').value = '';
   } catch (e) {
     msgEl.className = 'rounded-lg px-4 py-2 text-sm mb-3 bg-red-50 text-red-700';
@@ -4462,12 +4477,14 @@ async function changePassword() {
 
 async function changeEmail() {
   const email = document.getElementById('aEmail').value.trim();
+  const currentPassword = document.getElementById('aCurrentPwd').value;
   const msgEl = document.getElementById('accountMsg');
   try {
-    await api('/admin/change-email', 'POST', { email });
+    await api('/admin/change-email', 'POST', { email, currentPassword });
     msgEl.className = 'rounded-lg px-4 py-2 text-sm mb-3 bg-green-50 text-green-700';
     msgEl.textContent = t('settings.account.emailSaved');
     msgEl.classList.remove('hidden');
+    document.getElementById('aCurrentPwd').value = '';
   } catch (e) {
     msgEl.className = 'rounded-lg px-4 py-2 text-sm mb-3 bg-red-50 text-red-700';
     msgEl.textContent = errMsg(e);
@@ -4477,13 +4494,15 @@ async function changeEmail() {
 
 async function changeUsername() {
   const username = document.getElementById('aUsername').value.trim().toLowerCase();
+  const currentPassword = document.getElementById('aCurrentPwd').value;
   const msgEl = document.getElementById('accountMsg');
   try {
-    await api('/admin/change-username', 'POST', { username });
+    await api('/admin/change-username', 'POST', { username, currentPassword });
     msgEl.className = 'rounded-lg px-4 py-2 text-sm mb-3 bg-green-50 text-green-700';
     msgEl.textContent = t('settings.account.usernameSaved');
     msgEl.classList.remove('hidden');
     document.getElementById('aUsername').value = username;
+    document.getElementById('aCurrentPwd').value = '';
   } catch (e) {
     msgEl.className = 'rounded-lg px-4 py-2 text-sm mb-3 bg-red-50 text-red-700';
     msgEl.textContent = errMsg(e);
