@@ -3611,8 +3611,6 @@ function renderAvailGrid() {
   el.innerHTML = html || `<p class="text-gray-400">${t('restaurant.availClosed')}</p>`;
 }
 
-let _walkinTypeGroups = [];
-
 function openWalkinModal(date, time) {
   const now = new Date();
   document.getElementById('walkinDate').value = date || now.toISOString().slice(0,10);
