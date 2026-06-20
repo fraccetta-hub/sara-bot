@@ -199,6 +199,18 @@ router.put('/tenants/:id', requireSuper, async (req, res) => {
   res.json(data);
 });
 
+// ─── DELETE /superadmin/tenants/:id — elimina tenant e tutti i suoi dati ──────
+router.delete('/tenants/:id', requireSuper, async (req, res) => {
+  const id = req.params.id;
+  // Delete in dependency order (child tables first)
+  for (const table of ['support_messages','appointments','appointment_blocks','business_hours','orders','conversations','products','services','restaurant_tables','restaurant_reservations']) {
+    await supabase.from(table).delete().eq('tenant_id', id);
+  }
+  const { error } = await supabase.from('tenants').delete().eq('id', id);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ ok: true });
+});
+
 // ─── PATCH /superadmin/tenants/:id/toggle — attiva/disattiva ─────────────────
 
 router.patch('/tenants/:id/toggle', requireSuper, async (req, res) => {
