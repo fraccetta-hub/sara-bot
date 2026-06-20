@@ -293,7 +293,7 @@ router.get('/settings', requireAuth, async (req, res) => {
 router.put('/settings', requireAuth, async (req, res) => {
   // products_enabled / services_enabled are admin-only (managed by superadmin)
   const allowed = [
-    'bot_name','bot_personality','payment_instructions','custom_instructions',
+    'bot_name','bot_personality','merchant_phone','payment_instructions','custom_instructions',
     'delivery_enabled','location_address','location_lat','location_lng',
     'delivery_type','delivery_base_fee','delivery_zone_km',
     'delivery_zone_outer_fee','delivery_per_km',
