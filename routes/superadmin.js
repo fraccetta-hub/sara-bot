@@ -133,7 +133,9 @@ router.post('/tenants', requireSuper, async (req, res) => {
     name, login_slug, phone_number_id, bot_name, bot_personality,
     merchant_phone, payment_instructions,
     location_lat, location_lng,
-    delivery_base_fee, delivery_per_km
+    delivery_base_fee, delivery_per_km,
+    products_enabled, services_enabled, appointments_enabled, restaurant_enabled,
+    plan_currency, plan_expires, plan_price
   } = req.body;
 
   if (!name || !phone_number_id)
@@ -155,6 +157,13 @@ router.post('/tenants', requireSuper, async (req, res) => {
       location_lng:         location_lng      || null,
       delivery_base_fee:    delivery_base_fee || 5000,
       delivery_per_km:      delivery_per_km   || 1000,
+      products_enabled:     products_enabled  ?? true,
+      services_enabled:     services_enabled  ?? false,
+      appointments_enabled: appointments_enabled ?? false,
+      restaurant_enabled:   restaurant_enabled   ?? false,
+      plan_currency:        plan_currency     || null,
+      plan_expires:         plan_expires      || null,
+      plan_price:           plan_price        || null,
       admin_password_hash,
       active: true
     })

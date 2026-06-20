@@ -123,6 +123,15 @@
             <input id="nMerchant" type="text" placeholder="595981000001"
               class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
           </div>
+          <div class="sm:col-span-2">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Plan / Módulos *</label>
+            <select id="nPlan" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
+              <option value="shop">📦 Shop — Catálogo de productos</option>
+              <option value="bookings">📅 Bookings — Servicios + citas</option>
+              <option value="restaurant">🍽️ Restaurant — Menú + reservas de mesa</option>
+              <option value="pro">⭐ Pro — Todo (productos + servicios + citas)</option>
+            </select>
+          </div>
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Moneda (plan)</label>
             <select id="nCurrency" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
@@ -591,6 +600,9 @@ function renderTenants(list) {
       : (t.products_enabled && t.services_enabled && t.appointments_enabled) ? '⭐ Pro'
       : (t.services_enabled && t.appointments_enabled) ? '📅 Bookings'
       : t.products_enabled ? '📦 Shop' : null;
+    const toggleStatus = t.active
+      ? `class="badge ${statusClass} cursor-pointer hover:opacity-75 transition" onclick="toggleTenant('${t.id}')"`
+      : `class="badge ${statusClass} cursor-pointer hover:opacity-75 transition" onclick="toggleTenant('${t.id}')"`;
     return `
     <tr class="hover:bg-gray-50 transition border-t border-gray-50">
       <td class="px-4 py-3">
@@ -610,11 +622,127 @@ function renderTenants(list) {
         </button>
       </td>
       <td class="px-4 py-3 text-center">
-        <button onclick="openEditModal('${t.id}')"
-          class="text-purple-500 hover:text-purple-700 text-sm font-medium">✏️ Editar</button>
+        <button onclick="toggleDetail('${t.id}')" id="detail-btn-${t.id}"
+          class="text-purple-500 hover:text-purple-700 text-sm font-medium">▼ Ver</button>
+      </td>
+    </tr>
+    <tr id="row-detail-${t.id}" class="hidden bg-violet-50 border-t border-violet-100">
+      <td colspan="5" class="px-4 py-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+          <div class="space-y-3">
+            <div class="grid grid-cols-2 gap-2 text-xs">
+              <div><p class="text-gray-400 mb-0.5">Email</p><p id="di-email-${t.id}" class="text-gray-700 break-all">—</p></div>
+              <div><p class="text-gray-400 mb-0.5">Usuario</p><p id="di-slug-${t.id}" class="text-gray-700 font-mono">—</p></div>
+              <div><p class="text-gray-400 mb-0.5">📱 Merchant</p><p id="di-merchant-${t.id}" class="text-gray-700 font-mono">—</p></div>
+              <div><p class="text-gray-400 mb-0.5">🤖 Bot phone</p><p id="di-botphone-${t.id}" class="text-gray-700 font-mono">—</p></div>
+            </div>
+            <div id="di-meta-${t.id}" class="text-xs text-gray-500"></div>
+          </div>
+          <div class="space-y-3">
+            <div>
+              <p class="text-xs text-gray-500 font-medium mb-2">Módulos activos</p>
+              <div class="flex flex-wrap gap-3 text-xs mb-2">
+                <label class="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" id="mod-prod-${t.id}" class="accent-purple-600"> Productos</label>
+                <label class="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" id="mod-serv-${t.id}" class="accent-purple-600"> Servicios</label>
+                <label class="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" id="mod-appt-${t.id}" class="accent-purple-600"> Turnos/Citas</label>
+                <label class="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" id="mod-rest-${t.id}" class="accent-purple-600" onchange="onRestaurantToggle('${t.id}')"> Restaurante</label>
+              </div>
+              <button onclick="saveModules('${t.id}')"
+                class="px-3 py-1 bg-purple-600 text-white text-xs rounded-lg font-semibold hover:bg-purple-700 transition">
+                💾 Guardar módulos
+              </button>
+            </div>
+            <div class="flex gap-2 pt-1">
+              <button id="di-toggle-${t.id}" onclick="toggleTenantFromDetail('${t.id}')"
+                class="flex-1 py-1.5 rounded-lg text-xs font-semibold transition ${t.active ? 'bg-red-50 text-red-600 hover:bg-red-100' : 'bg-green-50 text-green-600 hover:bg-green-100'}">
+                ${t.active ? '🔴 Desactivar' : '✅ Activar'}
+              </button>
+              <button onclick="impersonateDetail('${t.id}')"
+                class="flex-1 bg-blue-50 text-blue-600 hover:bg-blue-100 py-1.5 rounded-lg text-xs font-semibold transition">
+                🔑 Impersonar
+              </button>
+            </div>
+          </div>
+        </div>
       </td>
     </tr>`;
   }).join('');
+}
+
+const detailLoaded = {};
+
+async function toggleDetail(id) {
+  const row = document.getElementById(`row-detail-${id}`);
+  const btn = document.getElementById(`detail-btn-${id}`);
+  const open = row.classList.toggle('hidden');
+  btn.textContent = open ? '▼ Ver' : '▲ Ocultar';
+  if (!open && !detailLoaded[id]) {
+    detailLoaded[id] = true;
+    editingTenantId = id;
+    const t = await api(`/superadmin/tenants/${id}`);
+    document.getElementById(`di-email-${id}`).textContent    = t.email || t.login_slug || '—';
+    document.getElementById(`di-slug-${id}`).textContent     = t.login_slug || '—';
+    document.getElementById(`di-merchant-${id}`).textContent = t.merchant_phone || '—';
+    document.getElementById(`di-botphone-${id}`).textContent = t.bot_phone_number || t.phone_number_id || '—';
+    const metaEl = document.getElementById(`di-meta-${id}`);
+    if (t.whatsapp_token_refresh_error) {
+      metaEl.innerHTML = `<span class="text-red-600">❌ ${t.whatsapp_token_refresh_error}</span>`;
+    } else if (t.meta_connected) {
+      metaEl.innerHTML = '<span class="text-green-600">✅ Token propio activo</span>';
+    } else {
+      metaEl.innerHTML = '<span class="text-blue-500">🔵 Token global</span>';
+    }
+    document.getElementById(`mod-prod-${id}`).checked = !!t.products_enabled;
+    document.getElementById(`mod-serv-${id}`).checked = !!t.services_enabled;
+    document.getElementById(`mod-appt-${id}`).checked = !!t.appointments_enabled;
+    document.getElementById(`mod-rest-${id}`).checked = !!t.restaurant_enabled;
+  } else if (!open) {
+    editingTenantId = id;
+  }
+}
+
+function onRestaurantToggle(id) {
+  const rest = document.getElementById(`mod-rest-${id}`).checked;
+  if (rest) {
+    document.getElementById(`mod-prod-${id}`).checked = true;
+    document.getElementById(`mod-appt-${id}`).checked = true;
+    document.getElementById(`mod-serv-${id}`).checked = false;
+  }
+}
+
+async function saveModules(id) {
+  const btn = document.querySelector(`button[onclick="saveModules('${id}')"]`);
+  btn.textContent = '⏳ Guardando...'; btn.disabled = true;
+  try {
+    await api(`/superadmin/tenants/${id}`, 'PUT', {
+      products_enabled:     document.getElementById(`mod-prod-${id}`).checked,
+      services_enabled:     document.getElementById(`mod-serv-${id}`).checked,
+      appointments_enabled: document.getElementById(`mod-appt-${id}`).checked,
+      restaurant_enabled:   document.getElementById(`mod-rest-${id}`).checked,
+    });
+    btn.textContent = '✅ Guardado';
+    await loadTenants();
+    detailLoaded[id] = false;
+    setTimeout(() => { btn.textContent = '💾 Guardar módulos'; btn.disabled = false; }, 1500);
+  } catch(e) {
+    btn.textContent = '❌ Error'; btn.disabled = false;
+    setTimeout(() => { btn.textContent = '💾 Guardar módulos'; }, 2000);
+  }
+}
+
+async function toggleTenantFromDetail(id) {
+  const t = allTenants.find(x => x.id === id);
+  const action = t?.active ? 'desactivar' : 'activar';
+  if (!confirm(`¿Seguro que querés ${action} "${t?.name}"?`)) return;
+  await api(`/superadmin/tenants/${id}/toggle`, 'PATCH');
+  detailLoaded[id] = false;
+  await loadTenants();
+}
+
+async function impersonateDetail(id) {
+  editingTenantId = id;
+  const res = await api(`/superadmin/tenants/${id}/impersonate`, 'POST');
+  window.open(`/admin/index.html?name=${encodeURIComponent(res.tenantName)}`, '_blank');
 }
 
 // ── Toggle active ──────────────────────────────────────────────────────────────
@@ -740,6 +868,13 @@ async function createTenant() {
 
   try {
     const slug = document.getElementById('nSlug').value.trim().toLowerCase().replace(/\s+/g,'');
+    const plan = document.getElementById('nPlan').value;
+    const planModules = {
+      shop:       { products_enabled: true,  services_enabled: false, appointments_enabled: false, restaurant_enabled: false },
+      bookings:   { products_enabled: false, services_enabled: true,  appointments_enabled: true,  restaurant_enabled: false },
+      restaurant: { products_enabled: true,  services_enabled: false, appointments_enabled: true,  restaurant_enabled: true  },
+      pro:        { products_enabled: true,  services_enabled: true,  appointments_enabled: true,  restaurant_enabled: false },
+    };
     const t = await api('/superadmin/tenants', 'POST', {
       name:            document.getElementById('nName').value.trim(),
       login_slug:      slug || null,
@@ -747,6 +882,7 @@ async function createTenant() {
       merchant_phone:  document.getElementById('nMerchant').value.trim() || null,
       plan_currency:   document.getElementById('nCurrency').value || 'USD',
       plan_expires:    document.getElementById('nExpires').value || null,
+      ...planModules[plan],
     });
 
     succEl.innerHTML = `
