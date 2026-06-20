@@ -685,38 +685,67 @@
     </div>
 
     <!-- ── RESTAURANT TAB ── -->
-    <div id="sectionRestaurant" class="hidden space-y-6">
+    <div id="sectionRestaurant" class="hidden space-y-4">
 
-      <!-- Slot duration -->
+      <!-- Slot duration + availability grid -->
       <div class="bg-white rounded-xl shadow-sm p-5">
         <h2 class="text-lg font-semibold text-gray-800 mb-4">🪑 <span data-i18n="restaurant.title">Tavoli e prenotazioni</span></h2>
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-3 mb-1">
           <label data-i18n="restaurant.slotDuration" class="text-sm text-gray-600 whitespace-nowrap">Duración de mesa (min):</label>
           <input type="number" id="restaurantSlotDuration" value="90" min="30" max="300" step="15"
             class="w-24 border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-300"
             onchange="saveRestaurantSettings()">
         </div>
+        <p class="text-xs text-gray-400 mb-5">Le prenotazioni esistenti mantengono la durata originale; la nuova durata vale solo per le future.</p>
+
+        <!-- Availability grid (tavoli liberi per fascia) -->
+        <div class="border-t border-gray-100 pt-4">
+          <div class="flex items-center justify-between mb-2">
+            <h3 class="font-semibold text-gray-700 text-sm">📊 Tavoli liberi per fascia</h3>
+            <select id="availDays" onchange="loadAvailGrid()" class="border border-gray-200 rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-green-300">
+              <option value="1" data-i18n="restaurant.avail1">Hoy</option>
+              <option value="3" data-i18n="restaurant.avail3">3 días</option>
+              <option value="7" selected data-i18n="restaurant.avail7">7 días</option>
+              <option value="14" data-i18n="restaurant.avail14">14 días</option>
+            </select>
+          </div>
+          <p class="text-xs text-gray-400 mb-3" data-i18n="restaurant.availLegend">El número = mesas libres a esa hora. Tocá un horario para ocupar mesas sin reserva.</p>
+          <div id="availGrid" class="text-sm"></div>
+        </div>
       </div>
 
-      <!-- Zones -->
-      <div class="bg-white rounded-xl shadow-sm p-5">
-        <div class="flex items-center justify-between mb-3">
-          <h3 data-i18n="restaurant.zones" class="font-semibold text-gray-800">Zonas / Salas</h3>
-          <button onclick="openZoneModal(null)" class="btn-green px-3 py-1.5 rounded-lg text-sm font-semibold">+ <span data-i18n="restaurant.addZone">Agregar zona</span></button>
-        </div>
-        <div id="zonesList" class="space-y-2 text-sm text-gray-600">
-          <p class="text-gray-400 py-4 text-center" data-i18n="restaurant.noZones">Sin zonas configuradas.</p>
-        </div>
-      </div>
+      <!-- Zone e Tavoli — accordion (config che cambia raramente) -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <button onclick="toggleRestAcc()" class="w-full flex items-center justify-between px-5 py-4 text-left">
+          <span class="font-medium text-gray-700 text-sm">🗺️ Zone e Tavoli <span class="text-xs text-gray-400 font-normal ml-1">— configurazione locale</span></span>
+          <svg id="restAccChevron" class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="transform:rotate(0deg);transition:transform .2s"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </button>
+        <div id="restAccBody" class="hidden px-5 pb-5 space-y-5">
 
-      <!-- Tables -->
-      <div class="bg-white rounded-xl shadow-sm p-5">
-        <div class="flex items-center justify-between mb-3">
-          <h3 data-i18n="restaurant.tables" class="font-semibold text-gray-800">Mesas</h3>
-          <button onclick="openTableModal(null)" class="btn-green px-3 py-1.5 rounded-lg text-sm font-semibold">+ <span data-i18n="restaurant.addTable">Agregar mesa</span></button>
-        </div>
-        <div id="tablesList" class="space-y-2 text-sm text-gray-600">
-          <p class="text-gray-400 py-4 text-center" data-i18n="restaurant.noTables">Sin mesas configuradas.</p>
+          <!-- Zones -->
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <h3 data-i18n="restaurant.zones" class="font-semibold text-gray-800">Zonas / Salas</h3>
+              <button onclick="openZoneModal(null)" class="btn-green px-3 py-1.5 rounded-lg text-sm font-semibold">+ <span data-i18n="restaurant.addZone">Agregar zona</span></button>
+            </div>
+            <div id="zonesList" class="space-y-2 text-sm text-gray-600">
+              <p class="text-gray-400 py-4 text-center" data-i18n="restaurant.noZones">Sin zonas configuradas.</p>
+            </div>
+          </div>
+
+          <div class="border-t border-gray-100"></div>
+
+          <!-- Tables -->
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <h3 data-i18n="restaurant.tables" class="font-semibold text-gray-800">Mesas</h3>
+              <button onclick="openTableModal(null)" class="btn-green px-3 py-1.5 rounded-lg text-sm font-semibold">+ <span data-i18n="restaurant.addTable">Agregar mesa</span></button>
+            </div>
+            <div id="tablesList" class="space-y-2 text-sm text-gray-600">
+              <p class="text-gray-400 py-4 text-center" data-i18n="restaurant.noTables">Sin mesas configuradas.</p>
+            </div>
+          </div>
+
         </div>
       </div>
 
@@ -876,28 +905,13 @@
               <input type="date" id="resvDate" onchange="loadReservations()"
                 class="border border-gray-200 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-green-300">
             </div>
-            <button onclick="openResvModal(null)" class="btn-green px-3 py-1.5 rounded-lg text-sm font-semibold">+ <span data-i18n="restaurant.addResv">Nueva reserva</span></button>
+            <div class="flex items-center gap-2">
+              <button onclick="openWalkinModal()" class="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-lg text-sm font-semibold whitespace-nowrap">🪑 Occupa tavolo</button>
+              <button onclick="openResvModal(null)" class="btn-green px-3 py-1.5 rounded-lg text-sm font-semibold">+ <span data-i18n="restaurant.addResv">Nueva reserva</span></button>
+            </div>
           </div>
           <div id="resvList" class="space-y-2 text-sm"></div>
           <div id="freeNow" class="mt-3 flex flex-wrap items-center gap-2 text-sm min-h-[1.5rem]"></div>
-        </div>
-
-        <!-- Free-tables availability grid (this day + next days) -->
-        <div class="bg-white rounded-xl shadow-sm p-5 mt-4">
-          <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
-            <h3 data-i18n="restaurant.availTitle" class="font-semibold text-gray-800">Mesas libres</h3>
-            <div class="flex items-center gap-2">
-              <select id="availDays" onchange="loadAvailGrid()" class="border border-gray-200 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-green-300">
-                <option value="1" data-i18n="restaurant.avail1">Hoy</option>
-                <option value="3" data-i18n="restaurant.avail3">3 días</option>
-                <option value="7" selected data-i18n="restaurant.avail7">7 días</option>
-                <option value="14" data-i18n="restaurant.avail14">14 días</option>
-              </select>
-              <button onclick="openWalkinModal()" class="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-lg text-sm font-semibold whitespace-nowrap">🍽️ <span data-i18n="restaurant.blockBtn">Ocupar mesa</span></button>
-            </div>
-          </div>
-          <p class="text-xs text-gray-400 mb-3" data-i18n="restaurant.availLegend">El número = mesas libres a esa hora. Tocá un horario para ocupar mesas sin reserva.</p>
-          <div id="availGrid" class="text-sm"></div>
         </div>
       </div>
     </div>
@@ -3452,6 +3466,13 @@ async function exportCustomers() {
 // ── Restaurant ────────────────────────────────────────────────────────────────
 let _rZones = [], _rTables = [], _rReservations = [], _walkinTypeGroups = [];
 
+function toggleRestAcc() {
+  const body = document.getElementById('restAccBody');
+  const chev = document.getElementById('restAccChevron');
+  const open = body.classList.toggle('hidden');
+  chev.style.transform = open ? 'rotate(0deg)' : 'rotate(180deg)';
+}
+
 async function loadRestaurant() {
   const [settings, zones, tables] = await Promise.all([
     api('/admin/settings'),
@@ -3463,6 +3484,7 @@ async function loadRestaurant() {
   document.getElementById('restaurantSlotDuration').value = settings.restaurant_slot_duration || 90;
   renderZones();
   renderTables();
+  loadAvailGrid();
 }
 
 
@@ -3571,6 +3593,7 @@ async function loadReservations() {
   loadAvailGrid();
   const el = document.getElementById('resvList');
   const STATUS_COLOR = { confirmed:'bg-blue-100 text-blue-700', seated:'bg-green-100 text-green-700', done:'bg-gray-100 text-gray-500', cancelled:'bg-red-100 text-red-500', no_show:'bg-orange-100 text-orange-600', pending_merchant:'bg-yellow-100 text-yellow-700' };
+  const STATUS_LABEL = { confirmed:'Confermata', seated:'Al tavolo', done:'Conclusa', cancelled:'Cancellata', no_show:'No show', pending_merchant:'In attesa' };
   if (!data?.length) {
     el.innerHTML = `<p class="text-gray-400 text-center py-6">${t('restaurant.noResvDay')}</p>`;
     return;
@@ -3597,7 +3620,7 @@ async function loadReservations() {
         ${r.status === 'seated' ? `<button onclick="updateResvStatus(${r.id},'done')" class="bg-green-500 hover:bg-green-600 text-white text-xs font-semibold px-2 py-1 rounded-lg whitespace-nowrap">✓ Libera</button>` : ''}
         <select onchange="updateResvStatus(${r.id}, this.value)" class="text-xs border border-gray-200 rounded-lg px-2 py-1 focus:outline-none ${sc}">
           ${['confirmed','seated','done','cancelled','no_show','pending_merchant'].map(s =>
-            `<option value="${s}" ${r.status===s?'selected':''}>${s}</option>`).join('')}
+            `<option value="${s}" ${r.status===s?'selected':''}>${STATUS_LABEL[s]||s}</option>`).join('')}
         </select>
         <button onclick="openResvModal(${r.id})" class="text-blue-500 hover:text-blue-700 text-sm">✏️</button>
         <button onclick="deleteResv(${r.id})" class="text-red-400 hover:text-red-600 text-sm">🗑️</button>
