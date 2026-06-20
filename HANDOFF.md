@@ -1,5 +1,24 @@
 # PROJECT HANDOFF — Sara Bot (whatsapp-bot) — 2026-06-20
 
+## ✅ FATTO (sessione 2026-06-20 — settings accordion + bug fixes + Sara type-awareness)
+
+### Settings panel → accordion collassabile (commit 5fcd0ea + 6685247)
+- `#sectionSettings` ristrutturato: da griglia 2 colonne a stack di 5 accordion per scopo.
+- Gruppi: 🤖 Asistente (apertura default) | 🏪 Mi negocio (apertura default) | 💰 Pagos y envíos (chiuso) | 👤 Mi cuenta (chiuso) | 💳 Plan y facturación (chiuso).
+- Danger zone spostata da tab Support → dentro accordion "Mi cuenta".
+- `deliverySection` ora dentro accordion "Pagos y envíos" (JS show/hide invariato).
+- `toggleAccordion(id)`: toggling `hidden` + rotazione chevron via inline style.
+- i18n: chiavi `settings.acc.bot/business/orders/account/plan` in ES/EN/IT/DE/FR/PT.
+- **Bugfix chevron**: accordions aperti avevano chevron puntato down (sbagliato) — fixato con inline `style="transform:rotate(180deg)"` sugli aperti, rimosso classe `rotate-180` dai chiusi.
+
+### Bug: restaurant + appointments_enabled → appointment slots caricati per ristorante (commit 6685247)
+- `routes/webhook.js`: `mightBeAboutAppointments` ora aggiunge `&& !tenant.restaurant_enabled`. Ristoranti usano il sistema `RESERVATION`, non `APPOINTMENT` — i due blocchi non si sovrappongono più.
+
+### Sara — business-type awareness (commit 6685247)
+- `services/claude.js` `buildStaticSystemPrompt`: nuovo blocco `bizTypeBlock` iniettato subito dopo "IDENTIDAD Y CARÁCTER".
+- Calcola `hasProducts/hasServices/hasAppointments/hasRestaurant/hasDelivery` da flags tenant.
+- Produce `TIPO DE NEGOCIO` + `LO QUE PODÉS HACER` + `LO QUE NO PODÉS OFRECER` → Sara non proporrà mai prenotazione tavolo a cliente di centro estetico, né cita di servizi a cliente di ristorante.
+
 ## ✅ FATTO (sessione 2026-06-20 — fix tab ristorante + bizinfo maps + phone confirm)
 
 ### Tab visibilità per tipo account
