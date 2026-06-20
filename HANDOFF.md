@@ -1143,6 +1143,24 @@ ALTER TABLE support_messages ADD  CONSTRAINT support_messages_role_check CHECK (
 - Rimosso toggle; `saveRestaurantSettings` invia sempre `restaurant_enabled: true`; `applyTabVisibility` non più chiamata da `saveRestaurantSettings`
 - Tab rinominata 🪑 "Tavoli" (era 🍽️ "Restaurante" — uguale a tab Menu)
 
+## COSA È STATO FATTO (sessione 2026-06-20 — delivery sector + email logo)
+
+### Settore Pizzeria/Delivery/Asporto — COMPLETATO (commit 7033423)
+- `services/sectorPrompts.js`: aggiunto settore `delivery` (prima di `restaurante`) — personalità rapida/diretta, 7 regole comportamentali specifiche delivery/asporto.
+- `routes/admin.js` `GET /settings`: aggiunto `sector` al select → frontend legge il settore.
+- `public/admin/index.html`:
+  - Global `isMenuMode = false`; settato a `true` se `settings.sector === 'delivery'` in ENTRAMBI `showDashboard()` e `loadSettings()`.
+  - `applyMenuLabels()`: usa `tab.menu` se `isRestaurantPlan || isMenuMode`.
+  - `applyTabVisibility()`: usa `tab.menu` se `restaurantEnabled || isMenuMode`.
+- `public/register/index.html`: card 5a col-span-2 `data-sector="delivery" data-plan="shop"` — cliente delivery vede piano Shop ma con label Menú.
+- `public/register/i18n.js`: chiavi `s1.sector.delivery` + `s1.sector.delivery.example` in 6 lingue.
+- `landingpage/index.html`: `pricing.shop.example` aggiornato con Pizzerías/Delivery in tutte e 6 le lingue.
+- **Comportamento**: merchant delivery → tab "Menú" invece di "Productos/Catálogo", stessa funzionalità Shop, Sara con personalità delivery.
+
+### Logo email aggiornato (commit 38c6046)
+- `images/mail.webp`: nuovo logo per email (committato nel repo).
+- `services/mailer.js`: 5 occorrenze `logosarabot.webp` → `mail.webp`. Tutte le email (welcome, reset password, phone change, delete account) ora usano il nuovo logo.
+
 ## PROSSIME PRIORITÀ (sessione successiva)
 1. **Migration Supabase** — eseguire `ALTER TABLE conversations ADD COLUMN customer_email/customer_address`
 2. **Fatturazione** — capire come mandare fatture ai merchant
