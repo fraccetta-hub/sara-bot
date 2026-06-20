@@ -208,11 +208,37 @@ UX redesign 10-punti completato e verificato in preview (static server `public/`
 - Applicato a: `initReservationsView`, `openWalkinModal`, `openResvModal`, `apptDate`.
 - Avail grid: mostra hint "Nessun orario configurato → Impostazioni" quando `business_hours` non configurati.
 
+## ✅ FATTO (sessione 2026-06-21 — ristruttura tab ristorante + logica slot)
+
+### Ristruttura tab Ristorante (commit dcec2a1 → d5b99a9)
+- **Ordine tab Ristorante** (dall'alto): griglia tavoli liberi (sempre visibile) → accordion "⏱ Durata media tavolo" → accordion "🗺️ Zone e Tavoli".
+- Griglia "tavoli liberi per fascia" spostata da tab Prenotazioni a tab Ristorante.
+- Tab Prenotazioni: lista prenotazioni + "Occupa tavolo" + "+ Nuova prenotazione" nell'header.
+- Accordion Zone+Tavoli chiuso di default (config set-and-forget).
+- `loadRestaurant()` carica business-hours per rilevare se esiste orario spezzato → mostra/nasconde campo "Fascia 2 (min)" automaticamente. Nessun toggle manuale.
+- `loadRestaurant()` chiama `loadAvailGrid()` → griglia si carica quando si apre il tab.
+
+### Status prenotazioni in italiano / lingua sistema (commit f4cadc5)
+- Nuove chiavi `resv.status.*` (pending_merchant/confirmed/seated/done/cancelled/no_show) in ES/EN/IT/DE/FR/PT in `i18n.js`.
+- Dropdown status usa `t('resv.status.' + s)` — segue lingua pannello.
+
+### Durata tavolo per fascia + logica overlap corretta (commit 006c85e → d5b99a9)
+- `restaurant_slot_duration_2` aggiunto a `tenants` (**migration da eseguire**):
+  ```sql
+  ALTER TABLE tenants ADD COLUMN IF NOT EXISTS restaurant_slot_duration_2 INTEGER;
+  ```
+- `GET /restaurant/availability`: window 1 usa `dur1`, window 2 usa `dur2` (fallback `dur1` se non configurato).
+- `freeAt` in admin.js e `_freeTablesAt` in claude.js: overlap tollerato se ≤10min su entrambi i lati (`Math.min(re,b) - Math.max(rs,a) > CLEAN_MS`). Prima qualsiasi overlap bloccava lo slot.
+- `buildAvailabilityBlock` in claude.js: usa `dur1`/`dur2` per finestra; Sara propone solo slot realmente liberi per la fascia corretta; giorni chiusi/closure già saltati.
+- Webhook reservation: rileva se l'orario cade in window 2 → salva `duration_min` corretto; overlap check con CLEAN_MS.
+- Warning confirm() prima di cambiare durata (6 lingue) — le prenotazioni esistenti mantengono il loro `duration_min` ma la nuova durata cambia come vengono calcolate le sovrapposizioni.
+- Prenotazioni fuori orario (inserite manualmente dal merchant) restano valide — è override consapevole, non un bug da correggere.
+
 ## STATO CORRENTE
 - Obiettivo generale: SaaS multi-tenant WhatsApp Business (Node/Express + Supabase + Anthropic Claude). Bot AI risponde a clienti, gestisce catalogo, delivery, turni/appuntamenti, ordini.
-- Fase attuale: ristorante funzionante (orari unificati, walk-in, libera tavolo). Prossimo: Stripe live env vars su Render, invoicing merchant.
-- Ultimo commit stabile: `bf31e50` — "fix: replace all toISOString date defaults with localDateStr"
-- **Migration pendente**: `business_hours.open_time_2/close_time_2` (orario spezzato) — eseguire su Supabase.
+- Fase attuale: tab ristorante ristrutturato, logica slot corretta. Prossimo: Stripe live env vars su Render, invoicing merchant.
+- Ultimo commit stabile: `d5b99a9`
+- **Migration pendente**: `tenants.restaurant_slot_duration_2 INTEGER` — eseguire su Supabase.
 
 ## COSA È STATO FATTO (sessione 2026-06-20 — i18n hardcoded in Ajustes)
 
