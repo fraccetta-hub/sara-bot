@@ -279,7 +279,7 @@ router.get('/settings', requireAuth, async (req, res) => {
              delivery_zone_outer_fee, delivery_per_km,
              delivery_min_order, delivery_disabled_dates,
              address, google_review_url,
-             restaurant_enabled, restaurant_slot_duration, restaurant_meal_bands, appointment_capacity,
+             restaurant_enabled, restaurant_slot_duration, appointment_capacity,
              sector, active, plan_expires, plan_currency, plan_price, phone_number_id, whatsapp_token_refresh_error,
              stripe_subscription_status, subscription_cancel_at_period_end,
              pending_login_slug`)
@@ -1378,11 +1378,13 @@ router.put('/business-hours', requireAuth, async (req, res) => {
   const days = req.body; // array of { day_of_week, open_time, close_time, is_closed }
   if (!Array.isArray(days)) return res.status(400).json({ error: 'Se esperaba un array' });
   const rows = days.map(d => ({
-    tenant_id:   req.tenant.tenantId,
-    day_of_week: d.day_of_week,
-    open_time:   d.is_closed ? null : (d.open_time  || '09:00'),
-    close_time:  d.is_closed ? null : (d.close_time || '18:00'),
-    is_closed:   !!d.is_closed,
+    tenant_id:    req.tenant.tenantId,
+    day_of_week:  d.day_of_week,
+    open_time:    d.is_closed ? null : (d.open_time  || '09:00'),
+    close_time:   d.is_closed ? null : (d.close_time || '18:00'),
+    open_time_2:  d.is_closed ? null : (d.open_time_2  || null),
+    close_time_2: d.is_closed ? null : (d.close_time_2 || null),
+    is_closed:    !!d.is_closed,
   }));
   const { error } = await supabase.from('business_hours')
     .upsert(rows, { onConflict: 'tenant_id,day_of_week' });
@@ -2539,7 +2541,7 @@ router.get('/restaurant/availability', requireAuth, async (req, res) => {
   const toTs = new Date(base.getTime() + days * 86400000).toISOString();
 
   const [tRes, tablesRes, hoursRes, closuresRes, resvRes] = await Promise.all([
-    supabase.from('tenants').select('restaurant_slot_duration, restaurant_meal_bands').eq('id', tenantId).single(),
+    supabase.from('tenants').select('restaurant_slot_duration').eq('id', tenantId).single(),
     supabase.from('restaurant_tables').select('id, label, capacity, is_active').eq('tenant_id', tenantId),
     supabase.from('business_hours').select('day_of_week, is_closed, open_time, close_time').eq('tenant_id', tenantId),
     supabase.from('business_closures').select('start_date, end_date').eq('tenant_id', tenantId),
@@ -2548,8 +2550,7 @@ router.get('/restaurant/availability', requireAuth, async (req, res) => {
       .gte('reserved_at', fromTs).lte('reserved_at', toTs),
   ]);
 
-  const dur   = tRes.data?.restaurant_slot_duration || 90;
-  const bands  = (tRes.data?.restaurant_meal_bands || []).filter(b => b.start && b.end);
+  const dur    = tRes.data?.restaurant_slot_duration || 90;
   const tables = (tablesRes.data || []).filter(t => t.is_active !== false);
   const hours  = hoursRes.data || [];
   const closes = closuresRes.data || [];
@@ -2573,9 +2574,13 @@ router.get('/restaurant/availability', requireAuth, async (req, res) => {
     const ymd = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;
     const bh = hours.find(h => h.day_of_week === day.getDay());
     const closed = closes.some(c => ymd >= c.start_date && ymd <= c.end_date) || (bh && bh.is_closed);
-    const windows = closed ? []
-      : (bands.length ? bands.map(b => ({ label: b.label || '', start: b.start, end: b.end }))
-        : (bh ? [{ label: '', start: String(bh.open_time).slice(0, 5), end: String(bh.close_time).slice(0, 5) }] : []));
+    const windows = closed || !bh ? []
+      : [
+          { label: '', start: String(bh.open_time).slice(0, 5), end: String(bh.close_time).slice(0, 5) },
+          ...(bh.open_time_2 && bh.close_time_2
+            ? [{ label: '', start: String(bh.open_time_2).slice(0, 5), end: String(bh.close_time_2).slice(0, 5) }]
+            : []),
+        ];
     const bandsOut = windows.map(w => {
       const slots = [];
       for (let m = toMin(w.start); m < toMin(w.end); m += dur) {
@@ -2634,33 +2639,10 @@ router.delete('/customers/:phone', requireAuth, async (req, res) => {
 // ─── Restaurant: settings (enable/disable + slot duration) ───────────────────
 
 router.put('/restaurant/settings', requireAuth, async (req, res) => {
-  const { restaurant_enabled, restaurant_slot_duration, restaurant_meal_bands } = req.body;
+  const { restaurant_enabled, restaurant_slot_duration } = req.body;
   const updates = {};
   if (restaurant_enabled !== undefined) updates.restaurant_enabled = Boolean(restaurant_enabled);
   if (restaurant_slot_duration) updates.restaurant_slot_duration = parseInt(restaurant_slot_duration);
-  if (Array.isArray(restaurant_meal_bands)) {
-    const bands = restaurant_meal_bands
-      .filter(b => b && b.start && b.end)
-      .map(b => ({ label: String(b.label || '').slice(0, 40), start: b.start, end: b.end }));
-
-    // Each band must start before it ends and fit inside the opening hours of
-    // every open day (so reservations within a band are always within hours).
-    for (const b of bands) {
-      if (b.start.slice(0,5) >= b.end.slice(0,5))
-        return res.status(400).json({ error: `La franja "${b.label || ''}" tiene una hora de inicio posterior a la de fin.`, errorCode: 'band_invalid_range' });
-    }
-    const { data: bhRows } = await supabase
-      .from('business_hours').select('day_of_week, open_time, close_time, is_closed')
-      .eq('tenant_id', req.tenant.tenantId);
-    const openDays = (bhRows || []).filter(h => !h.is_closed && h.open_time && h.close_time);
-    for (const b of bands) {
-      for (const d of openDays) {
-        if (b.start.slice(0,5) < String(d.open_time).slice(0,5) || b.end.slice(0,5) > String(d.close_time).slice(0,5))
-          return res.status(400).json({ error: `La franja "${b.label || ''}" (${b.start}–${b.end}) está fuera del horario de apertura (${String(d.open_time).slice(0,5)}–${String(d.close_time).slice(0,5)}).`, errorCode: 'band_outside_hours' });
-      }
-    }
-    updates.restaurant_meal_bands = bands;
-  }
   const { error } = await supabase.from('tenants').update(updates).eq('id', req.tenant.tenantId);
   if (error) return res.status(500).json({ error: error.message });
   res.json({ ok: true });

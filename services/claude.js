@@ -130,7 +130,7 @@ function matchOffer(offers, name, category, scopeProduct, scopeCategory, scopeAl
   ) || null;
 }
 
-function buildRestaurantStaticBlock(zones, tables, mealBands = []) {
+function buildRestaurantStaticBlock(zones, tables) {
   if (!zones.length && !tables.length) return '';
   const byZone = {};
   for (const t of tables) {
@@ -141,11 +141,7 @@ function buildRestaurantStaticBlock(zones, tables, mealBands = []) {
     .map(([z, ts]) => `• ${z}: ${ts.join(', ')}`)
     .join('\n');
   const maxSingle = tables.reduce((m, t) => Math.max(m, t.capacity), 0);
-  const bandsStr = (mealBands || []).filter(b => b.start && b.end)
-    .map(b => `• ${b.label || 'Servicio'}: ${b.start}–${b.end}`).join('\n');
-  const bandsBlock = bandsStr
-    ? `\nFRANJAS DE RESERVA (SOLO aceptás reservas dentro de estos horarios):\n${bandsStr}\nSi el cliente pide un horario fuera de estas franjas, explicá amablemente cuáles son los turnos disponibles y ofrecé el más cercano.`
-    : '';
+  const bandsBlock = '';
   return `\nRESERVAS DE MESA — CAPACIDAD DEL LOCAL:
 ${zonesStr}
 Mesa más grande: ${maxSingle} personas. Grupos de más de ${maxSingle} personas → NO confirmés directamente: usá <RESERVATION:{"status":"pending_merchant","customer_name":"NOMBRE","party_size":N,"date":"YYYY-MM-DD","time":"HH:MM","notes":""}> y decile al cliente que el titular lo contactará para coordinar (hace falta juntar mesas).
@@ -201,7 +197,7 @@ function buildStaticSystemPrompt(tenant, stock, services = [], offers = [], rest
     : null;
 
   const restaurantBlock = tenant.restaurant_enabled
-    ? buildRestaurantStaticBlock(restaurantZones, restaurantTables, tenant.restaurant_meal_bands || [])
+    ? buildRestaurantStaticBlock(restaurantZones, restaurantTables)
     : '';
 
   // Business-type awareness: explicit list of what this bot can/cannot do so Sara
@@ -365,10 +361,9 @@ function _freeTablesAt(tables, reservations, ymd, hhmm, dur) {
 
 // Real table availability grid for the next `days` open days so Sara only ever
 // offers/confirms times that actually have a free table.
-function buildAvailabilityBlock(tenant, tables, reservations, mealBands, businessHours, closures, days = 7) {
+function buildAvailabilityBlock(tenant, tables, reservations, businessHours, closures, days = 7) {
   if (!tables.length) return buildReservationsBlock(reservations, tenant.restaurant_slot_duration || 90);
-  const dur   = tenant.restaurant_slot_duration || 90;
-  const bands  = (mealBands || []).filter(b => b.start && b.end);
+  const dur    = tenant.restaurant_slot_duration || 90;
   const closes = (closures || []).filter(c => c.start_date && c.end_date);
   const today  = new Date();
   const lines  = [];
@@ -380,9 +375,12 @@ function buildAvailabilityBlock(tenant, tables, reservations, mealBands, busines
     const bh = (businessHours || []).find(h => h.day_of_week === day.getDay());
     if (bh && bh.is_closed) continue;
 
-    const windows = bands.length
-      ? bands.map(b => ({ label: b.label || '', start: b.start, end: b.end }))
-      : (bh ? [{ label: '', start: String(bh.open_time).slice(0, 5), end: String(bh.close_time).slice(0, 5) }] : []);
+    const windows = !bh ? [] : [
+      { label: '', start: String(bh.open_time).slice(0, 5), end: String(bh.close_time).slice(0, 5) },
+      ...(bh.open_time_2 && bh.close_time_2
+        ? [{ label: '', start: String(bh.open_time_2).slice(0, 5), end: String(bh.close_time_2).slice(0, 5) }]
+        : []),
+    ];
     if (!windows.length) continue;
 
     const parts = [];
@@ -545,7 +543,7 @@ A8. Después de emitir la reserva, informá al cliente que el local confirmará 
     : '';
 
   const reservationsBlock = (tenant.restaurant_enabled && upcomingReservations !== null)
-    ? buildAvailabilityBlock(tenant, restaurantTables || [], upcomingReservations, tenant.restaurant_meal_bands || [], businessHours, closures)
+    ? buildAvailabilityBlock(tenant, restaurantTables || [], upcomingReservations, businessHours, closures)
     : '';
 
   return `${deliveryBlock}\n${appointmentsBlock}\n${reservationsBlock}\n${closuresBlock}\n${hoursBlock}\n${firstMsgBlock}\n${customerBlock}\n${dateBlock}`.trim();

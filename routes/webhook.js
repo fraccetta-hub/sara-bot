@@ -1622,22 +1622,23 @@ async function handleCustomerMessage(tenant, customerPhone, messageText, locatio
       const reservedAt = new Date(`${date}T${time || '20:00'}:00`).toISOString();
       const isPending = reqStatus === 'pending_merchant';
 
-      // Enforce reservation time: day must be open and time must fall inside a
-      // meal band (and inside opening hours). Sara is told the bands but this
-      // guard stops out-of-band/out-of-hours reservations from being saved.
-      const mealBands = (tenant.restaurant_meal_bands || []).filter(b => b.start && b.end);
+      // Enforce reservation time: day must be open and time must fall within
+      // business hours (slot 1 or optional slot 2 for split schedules).
       const resHHMM   = (time || '20:00').slice(0, 5);
       const resDow    = new Date(`${date}T00:00:00`).getDay();
       const bhRow     = (businessHours || []).find(h => h.day_of_week === resDow);
       const dayClosed = bhRow ? bhRow.is_closed : false;
-      const inHours   = !bhRow ? true : (!bhRow.is_closed && resHHMM >= String(bhRow.open_time).slice(0,5) && resHHMM <= String(bhRow.close_time).slice(0,5));
-      const inBand    = !mealBands.length || mealBands.some(b => resHHMM >= String(b.start).slice(0,5) && resHHMM <= String(b.end).slice(0,5));
-      const validTime = !dayClosed && inHours && inBand;
+      const inSlot1   = bhRow && !bhRow.is_closed && bhRow.open_time && bhRow.close_time
+        && resHHMM >= String(bhRow.open_time).slice(0,5) && resHHMM <= String(bhRow.close_time).slice(0,5);
+      const inSlot2   = bhRow && bhRow.open_time_2 && bhRow.close_time_2
+        && resHHMM >= String(bhRow.open_time_2).slice(0,5) && resHHMM <= String(bhRow.close_time_2).slice(0,5);
+      const inHours   = !bhRow || inSlot1 || inSlot2;
+      const validTime = !dayClosed && inHours;
 
       if (!validTime) {
         updatedHistory.push({
           role: 'user',
-          content: `[SISTEMA] La reserva solicitada (${date} ${resHHMM}) NO es válida (${dayClosed ? 'local cerrado ese día' : !inBand ? 'fuera de las franjas de reserva' : 'fuera del horario de apertura'}) y NO se guardó. Informá al cliente en su idioma y ofrecé un horario dentro de las franjas/horarios disponibles.`
+          content: `[SISTEMA] La reserva solicitada (${date} ${resHHMM}) NO es válida (${dayClosed ? 'local cerrado ese día' : 'fuera del horario de apertura'}) y NO se guardó. Informá al cliente en su idioma y ofrecé un horario dentro de los horarios disponibles.`
         });
       } else {
 
