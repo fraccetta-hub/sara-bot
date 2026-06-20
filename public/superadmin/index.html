@@ -407,6 +407,10 @@
               class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
           </div>
         </div>
+        <p class="text-[10px] text-gray-400 mt-2 leading-snug">
+          El descuento se aplica al <b>próximo cobro</b> (una vez). Los meses gratis saltan N cobros.
+          Usá descuento <b>o</b> meses gratis, no ambos. El porcentaje no puede superar 100%.
+        </p>
       </div>
 
       <div class="border-t border-gray-100 pt-3">
@@ -950,6 +954,17 @@ async function savePromo() {
     valid_for_currency: document.getElementById('pCurrency').value || null,
     expires_at:         document.getElementById('pExpires').value || null,
   };
+  const benefitErr =
+    (body.discount_value > 0 && body.months_free > 0) ? 'Usá descuento O meses gratis, no ambos.'
+    : (body.discount_value <= 0 && body.months_free <= 0) ? 'El código debe dar un descuento o meses gratis.'
+    : (body.discount_value > 0 && body.discount_type === 'percent' && body.discount_value > 100) ? 'El porcentaje no puede superar 100%.'
+    : null;
+  if (benefitErr) {
+    errEl.textContent = benefitErr;
+    errEl.classList.remove('hidden');
+    btn.disabled = false;
+    return;
+  }
   try {
     if (editingPromoId) {
       await api(`/superadmin/promo-codes/${editingPromoId}`, 'PUT', body);

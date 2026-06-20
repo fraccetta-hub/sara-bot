@@ -545,6 +545,19 @@ router.get('/promo-codes', requireSuper, async (req, res) => {
   res.json(data || []);
 });
 
+// Promo codes map to Stripe coupons at redemption (discount -> duration:once,
+// free months -> 100%-off repeating). Enforce the constraints those coupons
+// need so a code can never be created in a shape Stripe will reject.
+function validatePromoBenefit({ discount_type, discount_value, months_free }) {
+  const dv = parseFloat(discount_value) || 0;
+  const mf = parseInt(months_free) || 0;
+  if (dv > 0 && mf > 0) return 'Un código aplica descuento O meses gratis, no ambos.';
+  if (dv <= 0 && mf <= 0) return 'El código debe dar un descuento o meses gratis.';
+  if (dv > 0 && (discount_type || 'percent') === 'percent' && dv > 100)
+    return 'El porcentaje no puede superar 100%.';
+  return null;
+}
+
 // ─── POST /superadmin/promo-codes ────────────────────────────────────────────
 
 router.post('/promo-codes', requireSuper, async (req, res) => {
@@ -554,6 +567,8 @@ router.post('/promo-codes', requireSuper, async (req, res) => {
   } = req.body;
 
   if (!code?.trim()) return res.status(400).json({ error: 'El código es obligatorio' });
+  const benefitError = validatePromoBenefit(req.body);
+  if (benefitError) return res.status(400).json({ error: benefitError });
 
   const { data, error } = await supabase
     .from('promo_codes')
@@ -581,6 +596,9 @@ router.put('/promo-codes/:id', requireSuper, async (req, res) => {
     description, discount_type, discount_value,
     months_free, max_uses, valid_for_currency, expires_at
   } = req.body;
+
+  const benefitError = validatePromoBenefit(req.body);
+  if (benefitError) return res.status(400).json({ error: benefitError });
 
   const { data, error } = await supabase
     .from('promo_codes')

@@ -812,6 +812,16 @@ ALTER TABLE tenants
   ADD COLUMN IF NOT EXISTS subscription_cancel_at_period_end BOOLEAN DEFAULT false;
 ```
 
+## COSA È STATO FATTO (sessione 2026-06-20 — superadmin genera codici Stripe-compatibili)
+
+### Guardrail creazione codici (superadmin) per compatibilità Stripe coupon
+- `routes/superadmin.js`: helper `validatePromoBenefit()` usato in POST e PUT `/promo-codes` (autoritativo):
+  - sconto XOR mesi gratis (non entrambi — il riscatto crea UN solo coupon)
+  - almeno un beneficio (>0)
+  - percent ≤ 100 (Stripe `percent_off` 0-100)
+- `public/superadmin/index.html`: stessa validazione in `savePromo` (feedback immediato) + nota nel modal ("descuento = próximo cobro una vez; meses gratis saltan N cobros; uno o el otro; % ≤ 100")
+- Il codice resta solo-DB alla creazione; il coupon Stripe nasce al riscatto (`/admin/redeem-promo`) — vedi sezione sotto
+
 ## COSA È STATO FATTO (sessione 2026-06-20 — promo codes applicati su Stripe)
 
 ### Riscatto promo ora applica un Coupon Stripe reale (`routes/admin.js POST /redeem-promo`)
