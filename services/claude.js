@@ -148,14 +148,14 @@ function buildRestaurantStaticBlock(zones, tables, mealBands = []) {
     : '';
   return `\nRESERVAS DE MESA — CAPACIDAD DEL LOCAL:
 ${zonesStr}
-Mesa más grande: ${maxSingle} personas. Grupos de más de ${maxSingle} personas → no confirmés directamente, usá <RESERVATION:{"status":"pending_merchant",...}> y decile al cliente que el titular lo contactará para coordinar.
+Mesa más grande: ${maxSingle} personas. Grupos de más de ${maxSingle} personas → NO confirmés directamente: usá <RESERVATION:{"status":"pending_merchant","customer_name":"NOMBRE","party_size":N,"date":"YYYY-MM-DD","time":"HH:MM","notes":""}> y decile al cliente que el titular lo contactará para coordinar (hace falta juntar mesas).
 ${bandsBlock}
 
 CÓMO GESTIONAR RESERVAS:
 R1. Preguntá primero cuántas personas, luego fecha y hora, luego si prefiere alguna zona (si hay más de una).
-R2. Verificá disponibilidad en el bloque de reservas del contexto dinámico. Si hay mesa disponible → confirmá.
+R2. Mirá "DISPONIBILIDAD REAL DE MESAS" en el contexto dinámico: proponé y confirmá SOLO horarios con mesas libres (número ≥1). NUNCA ofrezcas ni confirmes un horario marcado ✗ ni uno que no figure en esa lista.
 R3. Si hay disponibilidad: respondé afirmativamente y emitís <RESERVATION:{"customer_name":"NOMBRE","party_size":N,"date":"YYYY-MM-DD","time":"HH:MM","zone_preference":"zona o null","notes":""}> al final de tu mensaje.
-R4. Si no hay mesa: proponé horarios alternativos del mismo día o el día siguiente.
+R4. Si el horario pedido está completo (✗) o no existe: ofrecé el horario disponible más cercano de la lista (mismo día o días siguientes).
 R5. Nunca digas en qué mesa específica está — eso lo gestiona el local.`;
 }
 
@@ -292,7 +292,67 @@ function buildReservationsBlock(reservations, slotDuration) {
   return `\nRESERVAS PRÓXIMOS 7 DÍAS:\n${lines.join('\n')}\n(Duración estándar: ${slotDuration} min. Verificá solapamiento antes de confirmar una reserva nueva.)`;
 }
 
-function buildDynamicSystemPrompt(tenant, convState = {}, appointmentSlots = null, customerContext = null, closures = [], businessHours = [], isFirstMessage = false, customerNotes = null, upcomingReservations = null) {
+const _hhmmToMin = s => { const [h, m] = String(s).slice(0, 5).split(':').map(Number); return h * 60 + (m || 0); };
+const _minToHHMM = m => `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
+
+// Candidate seating start times inside a window, stepping by slot duration.
+function _genSlots(start, end, dur) {
+  const s = _hhmmToMin(start), e = _hhmmToMin(end), out = [];
+  for (let t = s; t < e; t += dur) out.push(_minToHHMM(t));
+  return out;
+}
+
+// Free tables at a given date+time: tables with no overlapping active reservation.
+function _freeTablesAt(tables, reservations, ymd, hhmm, dur) {
+  const reqStart = new Date(`${ymd}T${hhmm}:00`).getTime();
+  const reqEnd   = reqStart + dur * 60000;
+  return tables.filter(t => !reservations.some(r => {
+    if (r.table_id !== t.id) return false;
+    const rStart = new Date(r.reserved_at).getTime();
+    const rEnd   = rStart + (r.duration_min || dur) * 60000;
+    return reqStart < rEnd && reqEnd > rStart;
+  })).length;
+}
+
+// Real table availability grid for the next `days` open days so Sara only ever
+// offers/confirms times that actually have a free table.
+function buildAvailabilityBlock(tenant, tables, reservations, mealBands, businessHours, closures, days = 7) {
+  if (!tables.length) return buildReservationsBlock(reservations, tenant.restaurant_slot_duration || 90);
+  const dur   = tenant.restaurant_slot_duration || 90;
+  const bands  = (mealBands || []).filter(b => b.start && b.end);
+  const closes = (closures || []).filter(c => c.start_date && c.end_date);
+  const today  = new Date();
+  const lines  = [];
+
+  for (let d = 0; d < days; d++) {
+    const day = new Date(today.getFullYear(), today.getMonth(), today.getDate() + d);
+    const ymd = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;
+    if (closes.some(c => ymd >= c.start_date && ymd <= c.end_date)) continue;
+    const bh = (businessHours || []).find(h => h.day_of_week === day.getDay());
+    if (bh && bh.is_closed) continue;
+
+    const windows = bands.length
+      ? bands.map(b => ({ label: b.label || '', start: b.start, end: b.end }))
+      : (bh ? [{ label: '', start: String(bh.open_time).slice(0, 5), end: String(bh.close_time).slice(0, 5) }] : []);
+    if (!windows.length) continue;
+
+    const parts = [];
+    for (const w of windows) {
+      const slotStrs = _genSlots(w.start, w.end, dur).map(s => {
+        const free = _freeTablesAt(tables, reservations, ymd, s, dur);
+        return free > 0 ? `${s}(${free})` : `${s}✗`;
+      });
+      if (slotStrs.length) parts.push(`${w.label ? w.label + ' ' : ''}${slotStrs.join(' ')}`);
+    }
+    if (parts.length) lines.push(`• ${day.toLocaleDateString('es', { weekday: 'short', day: 'numeric', month: 'short' })}: ${parts.join(' | ')}`);
+  }
+
+  if (!lines.length) return '\nDISPONIBILIDAD DE MESAS: sin días abiertos en los próximos 7 días.';
+  return `\nDISPONIBILIDAD REAL DE MESAS (próximos 7 días) — el número entre paréntesis = mesas libres a esa hora; ✗ = completo:\n${lines.join('\n')}\nMesas totales: ${tables.length}. Duración por mesa: ${dur} min.
+REGLA CRÍTICA: proponé y confirmá SOLO horarios con mesas libres (número ≥1). NUNCA ofrezcas ni confirmes un horario marcado ✗, ni un horario que no figure en esta lista. Si el cliente pide un horario completo o inexistente, ofrecé el horario disponible más cercano de esta lista.`;
+}
+
+function buildDynamicSystemPrompt(tenant, convState = {}, appointmentSlots = null, customerContext = null, closures = [], businessHours = [], isFirstMessage = false, customerNotes = null, upcomingReservations = null, restaurantTables = []) {
   // ── Delivery block ──────────────────────────────────────────────────────────
   let deliveryBlock = '';
   if (tenant.delivery_enabled) {
@@ -436,7 +496,7 @@ A8. Después de emitir la reserva, informá al cliente que el local confirmará 
     : '';
 
   const reservationsBlock = (tenant.restaurant_enabled && upcomingReservations !== null)
-    ? buildReservationsBlock(upcomingReservations, tenant.restaurant_slot_duration || 90)
+    ? buildAvailabilityBlock(tenant, restaurantTables || [], upcomingReservations, tenant.restaurant_meal_bands || [], businessHours, closures)
     : '';
 
   return `${deliveryBlock}\n${appointmentsBlock}\n${reservationsBlock}\n${closuresBlock}\n${hoursBlock}\n${firstMsgBlock}\n${customerBlock}\n${dateBlock}`.trim();
@@ -444,7 +504,7 @@ A8. Después de emitir la reserva, informá al cliente que el local confirmará 
 
 async function chat({ tenant, stock, services, history, userMessage, convState, imageData, appointmentSlots, customerContext, closures, offers, businessHours, isFirstMessage, customerNotes, restaurantZones, restaurantTables, upcomingReservations }) {
   const staticPrompt  = buildStaticSystemPrompt(tenant, stock, services || [], offers || [], restaurantZones || [], restaurantTables || []);
-  const dynamicPrompt = buildDynamicSystemPrompt(tenant, convState || {}, appointmentSlots || null, customerContext || null, closures || [], businessHours || [], isFirstMessage || false, customerNotes || null, upcomingReservations || null);
+  const dynamicPrompt = buildDynamicSystemPrompt(tenant, convState || {}, appointmentSlots || null, customerContext || null, closures || [], businessHours || [], isFirstMessage || false, customerNotes || null, upcomingReservations || null, restaurantTables || []);
 
   // Static catalog/rules block is cached (only changes when the merchant edits
   // products/config) — avoids re-billing it at full price on every message.

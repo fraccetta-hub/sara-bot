@@ -1,5 +1,18 @@
 # PROJECT HANDOFF — Sara Bot (whatsapp-bot) — 2026-06-18
 
+## ✅ FATTO (sessione 2026-06-20 — gruppi grandi → merchant + disponibilità reale a Sara)
+
+### 1. Gruppo troppo grande → escala al merchant (`routes/webhook.js`)
+- Se `party_size` > capacità di OGNI tavolo singolo → `escalate=true` (prima rifiutava come "full"). Ora inserisce `pending_merchant` + notifica WhatsApp al titolare ("Reserva grupo grande — requiere tu atención") per coordinare l'unione tavoli. Vale sia se Sara marca `pending_merchant` sia come fallback se non l'ha fatto.
+- Distinzione: tavoli **idonei ma tutti occupati** → `full` (rifiuto + proponi altro orario); **nessun tavolo abbastanza grande** → `escalate` (merchant).
+
+### 2. Sara propone solo orari realmente disponibili (`services/claude.js`)
+- Nuovo `buildAvailabilityBlock(tenant, tables, reservations, mealBands, businessHours, closures)`: griglia "DISPONIBILIDAD REAL DE MESAS" per i prossimi 7 giorni aperti. Per ogni giorno/franja genera gli slot (`_genSlots`, passo = `restaurant_slot_duration`) e per ognuno conta i tavoli liberi (`_freeTablesAt`, overlap su durata). Formato compatto: `19:30(2) 21:00(✗) 22:30(1)`.
+- Salta giorni in chiusura (closures) e giorni `is_closed`. Se nessun tavolo configurato → fallback a `buildReservationsBlock`.
+- Regola critica nel prompt: proporre/confermare SOLO slot con numero ≥1; mai un `✗` o un orario non in lista. Regole statiche R2/R4 + large-group riscritte per puntare alla griglia.
+- `buildDynamicSystemPrompt` + `chat()` ora passano `restaurantTables`.
+- Limite: griglia non filtra per capacità del party (mostra tavoli liberi totali); Sara abbina la taglia, il backend valida comunque overlap+capacità all'insert.
+
 ## ✅ FATTO (sessione 2026-06-20 — fix doppia prenotazione ristorante)
 
 Bug: Sara (path cliente) prendeva prenotazioni infinite. `routes/webhook.js` blocco reservation auto-assegnava il tavolo libero più piccolo, ma **se tutti i tavoli erano occupati `table_id` restava null e inseriva comunque `confirmed`** → overbooking. Inoltre `upcomingReservations` poteva essere `null` (caricato solo su keyword match) → check conflitto saltato → doppia assegnazione.

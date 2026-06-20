@@ -1643,9 +1643,14 @@ async function handleCustomerMessage(tenant, customerPhone, messageText, locatio
       // Auto-assign smallest available table and BLOCK it for this slot.
       // Re-fetch reservations fresh (the cached list may be null/stale) so two
       // customers can't both grab the last table in the same time window.
-      let tableId = null, zoneId = null, full = false;
+      // Party too big for any single table → escalate to the merchant (join
+      // tables) instead of rejecting, same as Sara's explicit pending_merchant.
       const hasTables = restaurantTables?.length > 0;
-      if (!isPending && hasTables) {
+      const fitsParty = !hasTables || restaurantTables.some(t => t.capacity >= party_size);
+      const escalate  = isPending || (hasTables && !fitsParty);
+      let tableId = null, zoneId = null, full = false;
+
+      if (!escalate && hasTables) {
         const dur      = tenant.restaurant_slot_duration || 90;
         const reqStart = new Date(reservedAt).getTime();
         const reqEnd   = reqStart + dur * 60000;
@@ -1664,7 +1669,7 @@ async function handleCustomerMessage(tenant, customerPhone, messageText, locatio
           });
           if (!conflict) { tableId = t.id; zoneId = t.zone_id; break; }
         }
-        // No suitable free table → fully booked for this slot, do NOT save.
+        // Tables fit the party but all are busy → fully booked, do NOT save.
         if (!tableId) full = true;
       }
 
@@ -1681,7 +1686,7 @@ async function handleCustomerMessage(tenant, customerPhone, messageText, locatio
         if (z) zoneId = z.id;
       }
 
-      const finalStatus = isPending ? 'pending_merchant' : 'confirmed';
+      const finalStatus = escalate ? 'pending_merchant' : 'confirmed';
       await supabase.from('reservations').insert({
         tenant_id: tenant.id,
         table_id: tableId || null,
@@ -1695,8 +1700,8 @@ async function handleCustomerMessage(tenant, customerPhone, messageText, locatio
         notes: notes || null,
       });
 
-      // Notify merchant for pending_merchant reservations
-      if (isPending && tenant.merchant_phone) {
+      // Large-group / pending reservations need the merchant to coordinate.
+      if (escalate && tenant.merchant_phone) {
         const dt = new Date(reservedAt).toLocaleString('es', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
         await sendMessage(tenant.merchant_phone,
           `⚠️ *Reserva grupo grande — requiere tu atención*\n👤 ${customer_name || customerPhone} (+${customerPhone})\n👥 ${party_size} personas\n📅 ${dt}\n\nContactá al cliente para coordinar los lugares.`,
