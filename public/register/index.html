@@ -283,7 +283,7 @@
       <div id="step4Err" class="text-red-500 text-sm mb-3 hidden"></div>
       <div class="flex gap-2">
         <button onclick="goStep(3)" class="flex-1 py-3 border border-gray-200 text-gray-600 font-medium rounded-xl text-sm hover:bg-gray-50 transition" data-i18n="s4.back">← Atrás</button>
-        <button onclick="showDisclaimer()" id="submitBtn"
+        <button onclick="submitRegistration()" id="submitBtn"
           class="flex-1 py-3 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-xl transition text-sm" data-i18n="s4.btn">
           💳 Continuar al pago →
         </button>
@@ -696,14 +696,9 @@ async function checkEmail(input) {
   }, 500);
 }
 
-// ── Disclaimer → Stripe ───────────────────────────────────────────────────────
-function showDisclaimer() {
-  if (!validateStep(3) || !validateStep(4)) return;
-  submitRegistration();
-}
-
 // ── Submit ────────────────────────────────────────────────────────────────────
 async function submitRegistration() {
+  if (!validateStep(3) || !validateStep(4)) return;
   const btn = document.getElementById('submitBtn');
   btn.disabled = true;
   btn.textContent = t('js.preparing');

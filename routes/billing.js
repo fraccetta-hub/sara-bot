@@ -122,6 +122,18 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
         break;
       }
 
+      // Invoice paid — update plan_expires on each renewal cycle
+      case 'invoice.paid': {
+        const customerId = obj.customer;
+        const periodEnd = obj.lines?.data?.[0]?.period?.end;
+        if (customerId && periodEnd) {
+          await supabase.from('tenants')
+            .update({ plan_expires: new Date(periodEnd * 1000).toISOString(), plan_status: 'active' })
+            .eq('stripe_customer_id', customerId);
+        }
+        break;
+      }
+
       // Payment failed (e.g. card declined after trial)
       case 'invoice.payment_failed': {
         const customerId = obj.customer;
