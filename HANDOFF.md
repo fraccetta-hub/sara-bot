@@ -1,5 +1,23 @@
 # PROJECT HANDOFF — Sara Bot (whatsapp-bot) — 2026-06-20
 
+## ✅ FATTO (sessione 2026-06-20 — fix tab ristorante + bizinfo maps + phone confirm)
+
+### Tab visibilità per tipo account
+- `applyTabVisibility()`: Services tab SEMPRE nascosto per account ristorante. Appointments tab mostrato per ristorante (rinominato Prenotazioni). `apptCapacityRow` nascosto per ristorante, visibile solo per piani appuntamenti.
+
+### Bizinfo — campo Maps URL
+- Nuova card bizinfo: campo `sBizMapsUrl` estrae lat/lng via `parseMapsUrl()` e salva su `saveBusinessInfo()`. `loadSettings()` popola da `location_lat/lng`. i18n in 6 lingue.
+
+### Phone merchant — conferma via email
+- Numero WhatsApp non modificabile liberamente. `POST /admin/request-phone-change` (rate-limit 5/h) → email con link → `GET /admin/confirm-phone-change?token=`. `window.onload` gestisce `?confirm_phone=TOKEN`. `sendPhoneChange()` in mailer.js.
+- **⚠️ MIGRATION 14 DA ESEGUIRE su Supabase**:
+  ```sql
+  ALTER TABLE tenants
+    ADD COLUMN IF NOT EXISTS pending_merchant_phone TEXT,
+    ADD COLUMN IF NOT EXISTS phone_change_token     TEXT,
+    ADD COLUMN IF NOT EXISTS phone_change_expires   TIMESTAMPTZ;
+  ```
+
 ## ✅ FATTO (sessione 2026-06-20 — griglia disponibilità + walk-in quick block)
 
 Griglia disponibilità multi-giorno nel pannello prenotazioni + modal walk-in per occupare mesas senza inserire una prenotazione completa.
