@@ -1957,6 +1957,7 @@
 
 let currentLang = localStorage.getItem('sara_lang') || 'es';
 let isRestaurantPlan = false;
+let isMenuMode = false;
 let planProductsEnabled = true, planServicesEnabled = false, planAppointmentsEnabled = false;
 
 function t(key) {
@@ -2023,7 +2024,7 @@ function applyMenuLabels() {
     ['import.preview.found',  'menu.import.preview.found'],
   ];
   SWAPS.forEach(([normal, menu]) => {
-    const key = isRestaurantPlan ? menu : normal;
+    const key = (isRestaurantPlan || isMenuMode) ? menu : normal;
     document.querySelectorAll(`[data-i18n="${normal}"]`).forEach(el => { el.innerHTML = t(key); });
   });
 }
@@ -2615,6 +2616,7 @@ async function showDashboard() {
     document.getElementById('statPending').textContent  = stats.pendingOrders;
     document.getElementById('statRevenue').textContent  = formatGs(stats.todayRevenue);
     document.getElementById('statProducts').textContent = stats.activeProducts + '/' + stats.totalProducts;
+    isMenuMode = settings.sector === 'delivery';
     applyTabVisibility(settings.products_enabled !== false, !!settings.services_enabled, !!settings.appointments_enabled, !!settings.restaurant_enabled);
     if (settings.products_enabled !== false) loadProducts();
     const hasTokenError = !!settings.whatsapp_token_refresh_error;
@@ -2652,7 +2654,7 @@ function applyTabVisibility(productsEnabled, servicesEnabled, appointmentsEnable
   const tabA = document.getElementById('tabAppointments');
   const tabR = document.getElementById('tabRestaurant');
   if (tabP) tabP.style.display = productsEnabled     ? '' : 'none';
-  if (tabP) tabP.textContent  = t(restaurantEnabled ? 'tab.menu' : 'tab.products');
+  if (tabP) tabP.textContent  = t((restaurantEnabled || isMenuMode) ? 'tab.menu' : 'tab.products');
   applyMenuLabels();
   if (tabS) tabS.style.display = servicesEnabled     ? '' : 'none';
   if (tabA) tabA.style.display = appointmentsEnabled ? '' : 'none';
@@ -4106,6 +4108,7 @@ async function loadSettings() {
     document.getElementById('sDeliveryDisabledDates').value  =
       Array.isArray(s.delivery_disabled_dates) ? s.delivery_disabled_dates.join(', ') : (s.delivery_disabled_dates || '');
     updateDeliveryFields();
+    isMenuMode = s.sector === 'delivery';
     applyTabVisibility(s.products_enabled !== false, !!s.services_enabled, !!s.appointments_enabled, !!s.restaurant_enabled);
 
     // Business info fields
