@@ -1959,6 +1959,19 @@ let currentLang = localStorage.getItem('sara_lang') || 'es';
 let isRestaurantPlan = false;
 let isMenuMode = false;
 let planProductsEnabled = true, planServicesEnabled = false, planAppointmentsEnabled = false;
+let TENANT_CURRENCY = 'PYG';
+const CURRENCY_SYMBOL_MAP = { PYG:'Gs', USD:'$', EUR:'€', ARS:'$', BRL:'R$', MXN:'$', CLP:'$', COP:'$', UYU:'$U', PEN:'S/' };
+const CURRENCY_LOCALE_MAP = { PYG:'es-PY', USD:'en-US', EUR:'de-DE', ARS:'es-AR', BRL:'pt-BR', MXN:'es-MX', CLP:'es-CL', COP:'es-CO', UYU:'es-UY', PEN:'es-PE' };
+function fmtPrice(n) {
+  const c = TENANT_CURRENCY;
+  const sym = CURRENCY_SYMBOL_MAP[c] || c;
+  const loc = CURRENCY_LOCALE_MAP[c] || 'es-PY';
+  const isInt = ['PYG','CLP','COP'].includes(c);
+  const f = isInt
+    ? Math.round(n||0).toLocaleString(loc)
+    : parseFloat(n||0).toLocaleString(loc, {minimumFractionDigits:2, maximumFractionDigits:2});
+  return c === 'PYG' ? `${f} ${sym}` : `${sym}${f}`;
+}
 
 function t(key) {
   return (TR[currentLang] && TR[currentLang][key] !== undefined)
@@ -2011,6 +2024,12 @@ function applyTranslations() {
   // Re-render Help section
   renderHelp();
   applyMenuLabels();
+  // Replace {cur} token with tenant currency symbol in all translated text
+  const curSym = CURRENCY_SYMBOL_MAP[TENANT_CURRENCY] || TENANT_CURRENCY;
+  document.querySelectorAll('[data-i18n], [data-i18n-ph]').forEach(el => {
+    if (el.innerHTML && el.innerHTML.includes('{cur}')) el.innerHTML = el.innerHTML.replace(/\{cur\}/g, curSym);
+    if (el.placeholder && el.placeholder.includes('{cur}')) el.placeholder = el.placeholder.replace(/\{cur\}/g, curSym);
+  });
 }
 
 function applyMenuLabels() {
@@ -2614,7 +2633,8 @@ async function showDashboard() {
     ]);
     document.getElementById('statToday').textContent    = stats.todayOrders;
     document.getElementById('statPending').textContent  = stats.pendingOrders;
-    document.getElementById('statRevenue').textContent  = formatGs(stats.todayRevenue);
+    TENANT_CURRENCY = settings.plan_currency || 'PYG';
+    document.getElementById('statRevenue').textContent  = fmtPrice(stats.todayRevenue);
     document.getElementById('statProducts').textContent = stats.activeProducts + '/' + stats.totalProducts;
     isMenuMode = settings.sector === 'delivery';
     applyTabVisibility(settings.products_enabled !== false, !!settings.services_enabled, !!settings.appointments_enabled, !!settings.restaurant_enabled);
@@ -2903,7 +2923,7 @@ function renderProducts() {
       </td>
       <td class="px-4 py-3 hidden md:table-cell text-gray-400 font-mono text-xs">${p.sku ? escHtml(p.sku) : '—'}</td>
       <td class="px-4 py-3 text-gray-500 hidden sm:table-cell">${escHtml(p.category || '—')}</td>
-      <td class="px-4 py-3 text-right font-medium">${formatGs(p.price_guarani)}</td>
+      <td class="px-4 py-3 text-right font-medium">${fmtPrice(p.price_guarani)}</td>
       <td class="px-4 py-3 text-center">${stockCell}</td>
       <td class="px-4 py-3 text-center">
         <button onclick="toggleAvailable('${p.id}', ${!p.is_available})"
@@ -2945,7 +2965,7 @@ function renderMenu(filtered) {
         </td>
         <td class="px-4 py-3 text-gray-500 text-xs max-w-xs hidden sm:table-cell">${p.description ? escHtml(p.description) : '—'}</td>
         <td class="px-4 py-3 text-amber-700 text-xs hidden md:table-cell">${p.allergens ? '⚠️ ' + escHtml(p.allergens) : '—'}</td>
-        <td class="px-4 py-3 text-right font-medium whitespace-nowrap">${formatGs(p.price_guarani)}</td>
+        <td class="px-4 py-3 text-right font-medium whitespace-nowrap">${fmtPrice(p.price_guarani)}</td>
         <td class="px-4 py-3 text-center">
           <button onclick="toggleAvailable('${p.id}', ${!p.is_available})"
             class="status-badge ${p.is_available ? 'status-confirmed' : 'status-cancelled'} cursor-pointer hover:opacity-80">
@@ -3181,8 +3201,8 @@ async function loadOrders() {
           <div class="text-xs text-gray-400 mt-1">🕐 ${date}</div>
         </div>
         <div class="text-right flex-shrink-0">
-          <div class="font-bold text-green-600 text-lg">${formatGs(o.total_guarani + (o.delivery_fee||0))}</div>
-          <div class="text-xs text-gray-400 mb-1">${t('orders.delivery')} ${formatGs(o.delivery_fee||0)}</div>
+          <div class="font-bold text-green-600 text-lg">${fmtPrice(o.total_guarani + (o.delivery_fee||0))}</div>
+          <div class="text-xs text-gray-400 mb-1">${t('orders.delivery')} ${fmtPrice(o.delivery_fee||0)}</div>
           <select onchange="updateOrderStatus('${o.id}', this.value)"
             class="text-xs border border-gray-200 rounded-lg px-2 py-1 text-gray-600 cursor-pointer hover:border-green-400">
             ${['pending','confirmed','preparing','delivering','delivered','cancelled'].map(s =>
@@ -3551,8 +3571,8 @@ async function loadAnalytics(period) {
 
     // KPIs
     document.getElementById('akOrders').textContent    = data.totalOrders;
-    document.getElementById('akRevenue').textContent   = formatGs(data.totalRevenue);
-    document.getElementById('akAvg').textContent       = formatGs(data.avgOrderValue);
+    document.getElementById('akRevenue').textContent   = fmtPrice(data.totalRevenue);
+    document.getElementById('akAvg').textContent       = fmtPrice(data.avgOrderValue);
     document.getElementById('akCustomers').textContent = data.uniqueCustomers;
     document.getElementById('akCancelled').textContent = data.cancelledOrders;
     document.getElementById('akConvs').textContent     = data.activeConvs;
@@ -3645,7 +3665,7 @@ async function checkNewOrders() {
         ? order.items_json.map(i => `${i.qty||1}x ${i.name}`).join(', ')
         : '';
       const title = `🛒 ${t('notif.new_order')}`;
-      const body  = `${order.customer_name || order.customer_phone} · ${items} · ${formatGs(order.total_guarani)}`;
+      const body  = `${order.customer_name || order.customer_phone} · ${items} · ${fmtPrice(order.total_guarani)}`;
 
       // Browser notification
       if (_notifPermission) {
@@ -4108,8 +4128,10 @@ async function loadSettings() {
     document.getElementById('sDeliveryDisabledDates').value  =
       Array.isArray(s.delivery_disabled_dates) ? s.delivery_disabled_dates.join(', ') : (s.delivery_disabled_dates || '');
     updateDeliveryFields();
+    TENANT_CURRENCY = s.plan_currency || 'PYG';
     isMenuMode = s.sector === 'delivery';
     applyTabVisibility(s.products_enabled !== false, !!s.services_enabled, !!s.appointments_enabled, !!s.restaurant_enabled);
+    applyTranslations();
 
     // Business info fields
     document.getElementById('sAddress').value         = s.address || '';
@@ -4421,8 +4443,8 @@ function showAccountBanner(type) {
   }
 }
 
-function formatGs(n) { return (n || 0).toLocaleString('es-PY') + ' Gs'; }
-function fmtGs(n)    { return formatGs(n); }
+function fmtPrice(n) { return (n || 0).toLocaleString('es-PY') + ' Gs'; }
+function fmtPrice(n)    { return fmtPrice(n); }
 
 // ══════════════════════════════════════════════════════════════════════════════
 // SERVICES
@@ -4455,8 +4477,8 @@ function renderServices(services) {
   }
   list.innerHTML = services.map(s => {
     const price = s.price_type === 'hourly'
-      ? `${fmtGs(s.price_guarani)}${t('services.perHour')}`
-      : fmtGs(s.price_guarani);
+      ? `${fmtPrice(s.price_guarani)}${t('services.perHour')}`
+      : fmtPrice(s.price_guarani);
     const dur = s.duration_min ? ` · ${s.duration_min} min` : '';
     return `
     <div class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100 ${s.is_available ? '' : 'opacity-60'}">
@@ -4715,7 +4737,7 @@ async function refreshChat() {
       currentOrderId = conv.pending_order.id;
       const items = (conv.pending_order.items_json || [])
         .map(i => `${i.qty}× ${i.name}`).join(', ');
-      const total = fmtGs(conv.pending_order.total_guarani + (conv.pending_order.delivery_fee||0));
+      const total = fmtPrice(conv.pending_order.total_guarani + (conv.pending_order.delivery_fee||0));
       document.getElementById('orderBannerText').textContent =
         `${t('chat.pendingOrder')} ${items} — Total: ${total}`;
       banner.classList.remove('hidden');
