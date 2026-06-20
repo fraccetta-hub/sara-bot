@@ -946,8 +946,37 @@ ALTER TABLE support_messages ADD  CONSTRAINT support_messages_role_check CHECK (
 - `invoice.paid` non gestito in billing webhook → handler aggiunto in `routes/billing.js` (aggiorna `plan_expires` ad ogni rinnovo mensile)
 - `restaurant_enabled` mancante in `applyTabVisibility()` in settings reload → tab Restaurant spariva per piano Restaurant — fixato (commit 296cb04)
 
+## COSA È STATO FATTO (sessione corrente 2026-06-20 — UX admin vari)
+
+### Settings tab layout refactor (commit 8ad08d0)
+- Grid a 2 colonne con `md:col-span-2` lasciava righe con spazio vuoto → refactor con colonne esplicite LEFT/RIGHT (`space-y-5` indipendenti) + card full-width (Orari+Chiusure, Offerte, Delivery) sotto il blocco 2-col
+
+### Valuta tenant-aware in tutto il pannello admin (commit b9fd443)
+- `TENANT_CURRENCY` global settato da `plan_currency` al boot e in `loadSettings()`
+- `fmtPrice(n)` sostituisce `formatGs()`/`fmtGs()` — formato + simbolo corretti per PYG/USD/EUR/ARS/BRL/MXN/CLP/COP/UYU/PEN
+- i18n: 54 occorrenze `(Gs)` → `({cur})`; `applyTranslations()` sostituisce `{cur}` col simbolo reale dopo ogni pass
+
+### Parsing prezzi locale-aware (commit c660be9)
+- `parsePriceInput(str)` gestisce separatori migliaia/decimale per valuta:
+  - PYG/CLP/COP (intere): strip tutto tranne cifre → `250.000` = 250000
+  - EUR/ARS/BRL/UYU/PEN (virgola=decimale): `1.500,99`→1500.99, `250.000`→250000
+  - USD/MXN (punto=decimale): `1,500.00`→1500.00
+- Applicato a: prezzo prodotto, prezzo servizio, tutti i campi delivery fee
+
+### Clienti: email + indirizzo (commit e7dbd8f)
+- **Migration richiesta:**
+  ```sql
+  ALTER TABLE conversations ADD COLUMN IF NOT EXISTS customer_email TEXT;
+  ALTER TABLE conversations ADD COLUMN IF NOT EXISTS customer_address TEXT;
+  ```
+- `GET/POST /admin/customers` + export CSV includono i nuovi campi
+- `PUT /admin/customers/:phone/info` — nuovo endpoint per aggiornare email/indirizzo
+- Modal "Aggiungi cliente" → 2 campi opzionali extra
+- Tabella clienti → email (✉️) e indirizzo (📍) come subtext; bottone 📋 apre modal edit
+- i18n in ES/EN/IT/DE/FR/PT
+
 ## PROSSIME PRIORITÀ (sessione successiva)
-1. **Eseguire migration** `subscription_cancel_at_period_end` su Supabase
+1. **Migration Supabase** — eseguire `ALTER TABLE conversations ADD COLUMN customer_email/customer_address`
 2. **Fatturazione** — capire come mandare fatture ai merchant
 3. **Go-to-market** — pubblicità, test, vendita
 
