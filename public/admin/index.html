@@ -2829,15 +2829,8 @@ async function showDashboard() {
   applyTranslations();
   startOrderNotifications();
   try {
-    const [stats, settings] = await Promise.all([
-      api('/admin/stats'),
-      api('/admin/settings'),
-    ]);
-    document.getElementById('statToday').textContent    = stats.todayOrders;
-    document.getElementById('statPending').textContent  = stats.pendingOrders;
+    const settings = await api('/admin/settings');
     TENANT_CURRENCY = settings.plan_currency || 'PYG';
-    document.getElementById('statRevenue').textContent  = fmtPrice(stats.todayRevenue);
-    document.getElementById('statProducts').textContent = stats.activeProducts + '/' + stats.totalProducts;
     isMenuMode = settings.sector === 'delivery';
     applyTabVisibility(settings.products_enabled !== false, !!settings.services_enabled, !!settings.appointments_enabled, !!settings.restaurant_enabled);
     if (settings.products_enabled !== false) loadProducts();
@@ -2848,6 +2841,13 @@ async function showDashboard() {
   } catch (e) {
     if (e.status === 401) logout();
   }
+  api('/admin/stats').then(stats => {
+    if (!stats) return;
+    document.getElementById('statToday').textContent    = stats.todayOrders;
+    document.getElementById('statPending').textContent  = stats.pendingOrders;
+    document.getElementById('statRevenue').textContent  = fmtPrice(stats.todayRevenue);
+    document.getElementById('statProducts').textContent = stats.activeProducts + '/' + stats.totalProducts;
+  }).catch(() => {});
 }
 
 function showTokenErrorBanner() {
