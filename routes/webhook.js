@@ -1654,32 +1654,23 @@ async function handleCustomerMessage(tenant, customerPhone, messageText, locatio
         const dur      = tenant.restaurant_slot_duration || 90;
         const reqStart = new Date(reservedAt).getTime();
         const reqEnd   = reqStart + dur * 60000;
-        const maxCap   = restaurantTables.reduce((m, t) => Math.max(m, t.capacity || 0), 0) || 1;
         const existingRes = await getUpcomingReservations(tenant.id, 90);
+        // A reservation blocks the tables it has assigned (joined set or single).
+        // Pending/unconfirmed reservations have none → they never block.
+        const occupied = r => (Array.isArray(r.table_ids) && r.table_ids.length) ? r.table_ids : (r.table_id ? [r.table_id] : []);
         const overlaps = r => {
           const rStart = new Date(r.reserved_at).getTime();
           const rEnd   = rStart + (r.duration_min || dur) * 60000;
           return reqStart < rEnd && reqEnd > rStart;
         };
 
-        // Tables physically free in this slot (no assigned reservation overlaps).
-        const freeTables = restaurantTables.filter(t => !existingRes.some(r => r.table_id === t.id && overlaps(r)));
-        // Unassigned groups (pending_merchant) reserve the tables they'll need.
-        const pendingNeed = existingRes
-          .filter(r => !r.table_id && overlaps(r))
-          .reduce((s, r) => s + Math.max(1, Math.ceil((r.party_size || 1) / maxCap)), 0);
-
-        const fitting = freeTables
-          .filter(t => t.capacity >= party_size)
+        // Smallest free table big enough for the party.
+        const fitting = restaurantTables
+          .filter(t => t.capacity >= party_size && !existingRes.some(r => overlaps(r) && occupied(r).includes(t.id)))
           .sort((a, b) => a.capacity - b.capacity);
 
-        // Assign only if a fitting table is free AND the slot still has capacity
-        // once pending large groups are accounted for; otherwise it's full.
-        if (fitting.length && (freeTables.length - pendingNeed) >= 1) {
-          tableId = fitting[0].id; zoneId = fitting[0].zone_id;
-        } else {
-          full = true;
-        }
+        if (fitting.length) { tableId = fitting[0].id; zoneId = fitting[0].zone_id; }
+        else full = true;
       }
 
       if (full) {
@@ -1699,6 +1690,7 @@ async function handleCustomerMessage(tenant, customerPhone, messageText, locatio
       await supabase.from('reservations').insert({
         tenant_id: tenant.id,
         table_id: tableId || null,
+        table_ids: tableId ? [tableId] : [],
         zone_id: zoneId || null,
         customer_name: customer_name || convRow?.customer_name || customerPhone,
         customer_phone: customerPhone,

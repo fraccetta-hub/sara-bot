@@ -175,7 +175,7 @@ async function getUpcomingReservations(tenantId, days = 7) {
   const to   = new Date(Date.now() + days * 24 * 3600 * 1000).toISOString();
   const { data, error } = await supabase
     .from('reservations')
-    .select('id, customer_name, customer_phone, party_size, reserved_at, duration_min, status, notes, zone_id, table_id, restaurant_zones(name), restaurant_tables(label, capacity)')
+    .select('id, customer_name, customer_phone, party_size, reserved_at, duration_min, status, notes, zone_id, table_id, table_ids, restaurant_zones(name), restaurant_tables(label, capacity)')
     .eq('tenant_id', tenantId)
     .not('status', 'in', '("cancelled","done","no_show")')
     .gte('reserved_at', from)

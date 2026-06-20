@@ -2497,10 +2497,19 @@ router.get('/restaurant/reservations', requireAuth, async (req, res) => {
   res.json(data || []);
 });
 
+// Normalize a table_ids payload into a clean array; keep table_id as the primary.
+function normTableIds(body) {
+  let ids = Array.isArray(body.table_ids) ? body.table_ids.filter(Boolean)
+          : (body.table_id ? [body.table_id] : []);
+  ids = [...new Set(ids)];
+  return { table_ids: ids, table_id: ids[0] || null };
+}
+
 router.post('/restaurant/reservations', requireAuth, async (req, res) => {
-  const { customer_name, customer_phone, party_size, reserved_at, duration_min, zone_id, table_id, notes } = req.body;
+  const { customer_name, customer_phone, party_size, reserved_at, duration_min, zone_id, notes } = req.body;
   if (!customer_name?.trim() || !party_size || !reserved_at)
     return res.status(400).json({ error: 'Nombre, personas y fecha requeridos' });
+  const { table_ids, table_id } = normTableIds(req.body);
   const { data, error } = await supabase.from('reservations')
     .insert({
       tenant_id: req.tenant.tenantId,
@@ -2510,7 +2519,8 @@ router.post('/restaurant/reservations', requireAuth, async (req, res) => {
       reserved_at,
       duration_min: parseInt(duration_min || 90),
       zone_id: zone_id || null,
-      table_id: table_id || null,
+      table_id,
+      table_ids,
       notes: notes?.trim() || null,
       status: 'confirmed',
     }).select().single();
@@ -2519,9 +2529,15 @@ router.post('/restaurant/reservations', requireAuth, async (req, res) => {
 });
 
 router.put('/restaurant/reservations/:id', requireAuth, async (req, res) => {
-  const allowed = ['status', 'table_id', 'zone_id', 'notes', 'customer_name', 'customer_phone', 'party_size', 'reserved_at', 'duration_min'];
+  const allowed = ['status', 'zone_id', 'notes', 'customer_name', 'customer_phone', 'party_size', 'reserved_at', 'duration_min'];
   const updates = {};
   for (const k of allowed) if (req.body[k] !== undefined) updates[k] = req.body[k];
+  // table assignment travels as table_ids (multi-table) → also keep table_id in sync
+  if (req.body.table_ids !== undefined || req.body.table_id !== undefined) {
+    const { table_ids, table_id } = normTableIds(req.body);
+    updates.table_ids = table_ids;
+    updates.table_id  = table_id;
+  }
   if (!Object.keys(updates).length) return res.status(400).json({ error: 'Nada para actualizar' });
   const { error } = await supabase.from('reservations')
     .update(updates).eq('id', req.params.id).eq('tenant_id', req.tenant.tenantId);

@@ -828,9 +828,8 @@
             </div>
             <div>
               <label data-i18n="restaurant.resvTable" class="block text-xs text-gray-500 mb-1">Mesa</label>
-              <select id="resvModalTable" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-300">
-                <option value="" data-i18n="restaurant.autoAssign">Auto</option>
-              </select>
+              <select id="resvModalTable" multiple size="4" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-300"></select>
+              <p data-i18n="restaurant.resvTableHint" class="text-[11px] text-gray-400 mt-1">Dejá vacío para asignación automática. Elegí varias mesas (Ctrl/Cmd) para unirlas en grupos grandes.</p>
             </div>
           </div>
           <div>
@@ -3325,7 +3324,7 @@ async function exportCustomers() {
 }
 
 // ── Restaurant ────────────────────────────────────────────────────────────────
-let _rZones = [], _rTables = [], _mealBands = [];
+let _rZones = [], _rTables = [], _mealBands = [], _rReservations = [];
 
 async function loadRestaurant() {
   const [settings, zones, tables] = await Promise.all([
@@ -3442,6 +3441,7 @@ function renderTables() {
 async function loadReservations() {
   const date = document.getElementById('resvDate').value;
   const data = await api(`/admin/restaurant/reservations?from=${date}&days=1`);
+  _rReservations = data || [];
   const el = document.getElementById('resvList');
   const STATUS_COLOR = { confirmed:'bg-blue-100 text-blue-700', seated:'bg-green-100 text-green-700', done:'bg-gray-100 text-gray-500', cancelled:'bg-red-100 text-red-500', no_show:'bg-orange-100 text-orange-600', pending_merchant:'bg-yellow-100 text-yellow-700' };
   if (!data?.length) {
@@ -3451,7 +3451,10 @@ async function loadReservations() {
   el.innerHTML = data.map(r => {
     const time = new Date(r.reserved_at).toLocaleTimeString('es', { hour:'2-digit', minute:'2-digit' });
     const zone  = r.restaurant_zones?.name || '';
-    const table = r.restaurant_tables?.label || '';
+    const nTables = Array.isArray(r.table_ids) ? r.table_ids.length : (r.table_id ? 1 : 0);
+    const table = nTables > 1
+      ? `${r.restaurant_tables?.label || ''} +${nTables - 1}`
+      : (r.restaurant_tables?.label || '');
     const where = [table, zone].filter(Boolean).join(' / ');
     const sc = STATUS_COLOR[r.status] || 'bg-gray-100 text-gray-600';
     return `<div class="flex items-center justify-between bg-gray-50 rounded-lg px-4 py-2 gap-3">
@@ -3514,8 +3517,8 @@ function populateZoneDropdowns() {
       sel.innerHTML = `<option value="">${t('restaurant.noZone')}</option>` +
         _rZones.map(z => `<option value="${z.id}">${z.name}</option>`).join('');
     } else {
-      sel.innerHTML = `<option value="">${t('restaurant.autoAssign')}</option>` +
-        _rTables.map(tbl => `<option value="${tbl.id}">${tbl.label} (${tbl.capacity}p)${tbl.restaurant_zones?.name ? ' — ' + tbl.restaurant_zones.name : ''}</option>`).join('');
+      // multi-select: no placeholder option (empty selection = auto-assign)
+      sel.innerHTML = _rTables.map(tbl => `<option value="${tbl.id}">${tbl.label} (${tbl.capacity}p)${tbl.restaurant_zones?.name ? ' — ' + tbl.restaurant_zones.name : ''}</option>`).join('');
     }
   });
 }
@@ -3554,15 +3557,18 @@ async function deleteTable(id) {
 
 // Reservation modal
 function openResvModal(id) {
-  const r = id ? null : null; // existing reservations not cached — just clear for new
+  const r = id ? _rReservations.find(x => x.id === id) : null;
   populateZoneDropdowns();
   document.getElementById('resvModalId').value    = id || '';
-  document.getElementById('resvModalName').value  = '';
-  document.getElementById('resvModalPhone').value = '';
-  document.getElementById('resvModalDate').value  = document.getElementById('resvDate').value;
-  document.getElementById('resvModalTime').value  = '';
-  document.getElementById('resvModalParty').value = '';
-  document.getElementById('resvModalNotes').value = '';
+  document.getElementById('resvModalName').value  = r?.customer_name  || '';
+  document.getElementById('resvModalPhone').value = r?.customer_phone || '';
+  const dt = r ? new Date(r.reserved_at) : null;
+  document.getElementById('resvModalDate').value  = dt ? dt.toISOString().slice(0,10) : document.getElementById('resvDate').value;
+  document.getElementById('resvModalTime').value  = dt ? dt.toTimeString().slice(0,5) : '';
+  document.getElementById('resvModalParty').value = r?.party_size || '';
+  document.getElementById('resvModalNotes').value = r?.notes || '';
+  const selected = new Set(Array.isArray(r?.table_ids) && r.table_ids.length ? r.table_ids : (r?.table_id ? [r.table_id] : []));
+  Array.from(document.getElementById('resvModalTable').options).forEach(o => { o.selected = selected.has(o.value); });
   document.getElementById('resvModal').classList.remove('hidden');
 }
 function closeResvModal() { document.getElementById('resvModal').classList.add('hidden'); }
@@ -3572,13 +3578,13 @@ async function saveResv() {
   const date       = document.getElementById('resvModalDate').value;
   const time       = document.getElementById('resvModalTime').value;
   const party      = document.getElementById('resvModalParty').value;
-  const table_id   = document.getElementById('resvModalTable').value || null;
+  const table_ids  = Array.from(document.getElementById('resvModalTable').selectedOptions).map(o => o.value).filter(Boolean);
   const notes      = document.getElementById('resvModalNotes').value.trim();
   if (!name || !date || !time || !party) return;
   const reserved_at = new Date(`${date}T${time}:00`).toISOString();
   const id = document.getElementById('resvModalId').value;
-  if (id) await api(`/admin/restaurant/reservations/${id}`, 'PUT', { customer_name: name, customer_phone: phone || null, party_size: parseInt(party), reserved_at, table_id, notes: notes || null });
-  else    await api('/admin/restaurant/reservations', 'POST', { customer_name: name, customer_phone: phone || null, party_size: parseInt(party), reserved_at, table_id, notes: notes || null });
+  if (id) await api(`/admin/restaurant/reservations/${id}`, 'PUT', { customer_name: name, customer_phone: phone || null, party_size: parseInt(party), reserved_at, table_ids, notes: notes || null });
+  else    await api('/admin/restaurant/reservations', 'POST', { customer_name: name, customer_phone: phone || null, party_size: parseInt(party), reserved_at, table_ids, notes: notes || null });
   closeResvModal();
   await loadReservations();
 }

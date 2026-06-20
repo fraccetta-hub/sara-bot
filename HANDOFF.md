@@ -1,6 +1,26 @@
 # PROJECT HANDOFF — Sara Bot (whatsapp-bot) — 2026-06-18
 
-## ✅ FATTO (sessione 2026-06-20 — disponibilità conservativa per gruppi pending)
+## ✅ FATTO (sessione 2026-06-20 — multi-tavolo + pending NON blocca)
+
+⚠️ **MIGRATION 13 DA ESEGUIRE su Supabase** (`db/migrations.sql`):
+```sql
+ALTER TABLE reservations ADD COLUMN IF NOT EXISTS table_ids JSONB NOT NULL DEFAULT '[]'::jsonb;
+UPDATE reservations SET table_ids = jsonb_build_array(table_id)
+  WHERE table_id IS NOT NULL AND (table_ids IS NULL OR table_ids = '[]'::jsonb);
+```
+
+Regola definitiva utente: **una prenotazione non confermata NON blocca il locale** (un pending da 100 coperti non deve congelare tutto). Solo prenotazioni con **tavoli assegnati** bloccano. Supporto **multi-tavolo** (unione tavoli per gruppi grandi).
+- Schema: nuova colonna `reservations.table_ids` JSONB = TUTTI i tavoli occupati; `table_id` resta primario/display. Backfill da `table_id`.
+- `services/stock.js`: `getUpcomingReservations` seleziona anche `table_ids`.
+- `services/claude.js`: rimosso `pendingNeed`/`maxCap`. `_occupiedTables(r)` = `table_ids` o `[table_id]` o `[]` (pending). `_freeTablesAt` blocca solo i tavoli occupati → pending (nessun tavolo) non incide. Griglia disponibilità invariata nel formato.
+- `routes/webhook.js`: assegnazione usa `occupied(r)` (pending non blocca); insert salva `table_ids:[tableId]` (o `[]` se pending/escalate).
+- `routes/admin.js`: `normTableIds()` — POST/PUT `/restaurant/reservations` accettano `table_ids` (array, dedup), `table_id`=primo. PUT sincronizza entrambi.
+- Frontend (`public/admin/index.html`): modal `resvModalTable` ora `<select multiple>` + hint; `_rReservations` cache per prefill in edit; `openResvModal` precompila e preseleziona tavoli; `saveResv` invia `table_ids`; lista mostra `Mesa X +N`. i18n `restaurant.resvTableHint` in 6 lingue.
+- **Bugfix collaterale**: i18n.js riga IT `usernameCheckEmail` aveva apostrofo non escapato (`un'email`) → rompeva TUTTO il file TR (sintassi JS). Corretto `un\'email`.
+- Test logica: pending 100p → 4 tavoli liberi; confermata `[A,B]` → 2 liberi; legacy single → 3 liberi.
+- **Limite residuo**: il webhook auto-assegna sempre 1 tavolo (gruppi grandi → merchant che unisce manualmente i tavoli dal pannello). Sara non auto-unisce tavoli.
+
+## ✅ FATTO (sessione 2026-06-20 — disponibilità conservativa per gruppi pending) [SUPERATA dalla entry sopra]
 
 Buco: prenotazioni `pending_merchant` (table_id null, es. gruppo grande in attesa di unione tavoli) NON bloccavano alcun tavolo → griglia/assegnazione sovrastimavano la disponibilità.
 - `_freeTablesAt` (`services/claude.js`) + loop assegnazione (`routes/webhook.js`): i gruppi non assegnati che si sovrappongono allo slot ora consumano `ceil(party_size / maxCap)` tavoli (`maxCap` = tavolo più grande). `free = tavoliLiberiDiretti − pendingNeed`.

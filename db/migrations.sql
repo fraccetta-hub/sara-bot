@@ -66,6 +66,15 @@ ALTER TABLE tenants
 ALTER TABLE tenants
   ADD COLUMN IF NOT EXISTS restaurant_meal_bands JSONB NOT NULL DEFAULT '[]'::jsonb;
 
+-- Migration 13: Multi-table reservations (a large group can occupy several joined tables).
+-- table_ids holds ALL tables the reservation blocks; table_id stays as the primary/display
+-- table. Only reservations WITH assigned tables block availability — pending ones never do.
+ALTER TABLE reservations
+  ADD COLUMN IF NOT EXISTS table_ids JSONB NOT NULL DEFAULT '[]'::jsonb;
+-- Backfill existing single-table reservations into the array form.
+UPDATE reservations SET table_ids = jsonb_build_array(table_id)
+  WHERE table_id IS NOT NULL AND (table_ids IS NULL OR table_ids = '[]'::jsonb);
+
 -- ============================================================
 -- PRIMA DI TUTTO: crea il bucket per le foto su Supabase Storage
 -- Supabase Dashboard → Storage → New bucket
