@@ -1,5 +1,26 @@
 # PROJECT HANDOFF — Sara Bot (whatsapp-bot) — 2026-06-18
 
+## ⏭️ TODO PROSSIMA SESSIONE (2026-06-21) — UX redesign pannello admin
+
+Decisioni confermate dall'utente. **Fare quando la sessione concorrente è ferma** (index.html è file caldo → conflitti). `git status` pulito prima di iniziare.
+
+1. **Merge ❓ Ayuda → 💬 Soporte** (un tab unico "Ayuda y Soporte"):
+   - Render `renderHelp()` dentro la sezione Soporte (FAQ/guida in alto, collassabile), poi feedback + chat.
+   - Rimuovere bottone `#tabHelp` + sezione `#sectionHelp` standalone.
+   - `switchTab`: togliere ramo `'help'`; aggiornare l'array dei tab (riga ~`['chats','products',...]`) e quello in `applyTranslations`.
+   - Rinominare label tab Soporte → "Ayuda y Soporte" (i18n, 6 lingue).
+2. **Merge 💳 Plan → ⚙️ Ajustes**:
+   - Spostare contenuto `#sectionPlan` come card "Plan y facturación" dentro Ajustes; chiamare `loadPlan()` all'apertura di Ajustes.
+   - Rimuovere `#tabPlan` + ramo `'plan'` in switchTab; aggiornare array tab, `applyTranslations`, `LOCKED_TABS`, `applyTabGating`.
+3. **Larghezza piena**: `#sectionSupport`, `#sectionHelp`(merged), `#sectionAnalytics` da `max-w-2xl` → `max-w-6xl` (o togliere cap). Chat support larga + alta.
+4. **Chat support**: bolle `max-w-[75%]` che usano la larghezza, container più alto (`h-[calc(100vh-...)]`), input sticky in basso. Risolve "stretta, non si legge".
+5. **Font / tap target più grandi**: titoli/label/bolle `text-sm`→`text-base`; bottoni mobile `py-2.5/3`, min 44px tap.
+6. **Mobile**: verificare barra tab (overflow-x già presente), sezioni stack, nessun overflow orizzontale, tap target.
+7. **i18n 6 lingue** per ogni nuova/rinominata stringa; togliere uso `tab.help`/`tab.plan` o riusare.
+8. **Grep di sicurezza** dopo: `tabHelp`, `tabPlan`, `sectionHelp`, `sectionPlan`, `'help'`, `'plan'` — nessun ref orfano (pattern [[feedback-dom-js-sync]]).
+9. **Test preview** (servire `public/`, eval) desktop + mobile (resize), tenant ristorante e non.
+10. Commit + push + aggiornare MD.
+
 ## STATO CORRENTE
 - Obiettivo generale: SaaS multi-tenant WhatsApp Business (Node/Express + Supabase + Anthropic Claude). Bot AI risponde a clienti, gestisce catalogo, delivery, turni/appuntamenti, ordini.
 - Fase attuale: email transazionali operative (Brevo HTTP API). Prossimo: Stripe env vars + META_CONFIG_ID.
