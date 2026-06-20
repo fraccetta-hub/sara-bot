@@ -12,6 +12,12 @@
       "runtimeExecutable": "npx",
       "runtimeArgs": ["serve", "landingpage", "-p", "4000", "--no-clipboard"],
       "port": 4000
+    },
+    {
+      "name": "admin-static",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["serve", "public", "-p", "4100", "--no-clipboard"],
+      "port": 4100
     }
   ]
 }

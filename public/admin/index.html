@@ -357,18 +357,16 @@
     </div>
     <!-- Tabs -->
     <div class="max-w-6xl mx-auto px-4 flex gap-1 sm:gap-4 text-sm text-gray-500 overflow-x-auto scrollbar-hide">
-      <button class="py-2 px-1 sm:px-0 whitespace-nowrap flex-shrink-0" id="tabChats" onclick="switchTab('chats')">💬 Chats</button>
-      <button class="py-2 px-1 sm:px-0 whitespace-nowrap flex-shrink-0 tab-active" id="tabProducts" onclick="switchTab('products')">📦 Productos</button>
-      <button class="py-2 px-1 sm:px-0 whitespace-nowrap flex-shrink-0" id="tabServices" onclick="switchTab('services')">🛠 Servicios</button>
-      <button class="py-2 px-1 sm:px-0 whitespace-nowrap flex-shrink-0" id="tabOrders" onclick="switchTab('orders')">🛒 Pedidos</button>
-      <button class="py-2 px-1 sm:px-0 whitespace-nowrap flex-shrink-0" id="tabCustomers" data-i18n="tab.customers" onclick="switchTab('customers')">👥 Clientes</button>
-      <button class="py-2 px-1 sm:px-0 whitespace-nowrap flex-shrink-0" id="tabAppointments" onclick="switchTab('appointments')">📅 Turnos</button>
-      <button class="py-2 px-1 sm:px-0 whitespace-nowrap flex-shrink-0 hidden" id="tabRestaurant" onclick="switchTab('restaurant')">🍽️ <span data-i18n="tab.restaurant">Restaurante</span></button>
-      <button class="py-2 px-1 sm:px-0 whitespace-nowrap flex-shrink-0" id="tabSettings" onclick="switchTab('settings')">⚙️ Ajustes</button>
-      <button class="py-2 px-1 sm:px-0 whitespace-nowrap flex-shrink-0" id="tabAnalytics" data-i18n="tab.analytics" onclick="switchTab('analytics')">📊 Analytics</button>
-      <button class="py-2 px-1 sm:px-0 whitespace-nowrap flex-shrink-0" id="tabPlan" onclick="switchTab('plan')">💳 Plan</button>
-      <button class="py-2 px-1 sm:px-0 whitespace-nowrap flex-shrink-0" id="tabHelp" onclick="switchTab('help')">❓ Ayuda</button>
-      <button class="py-2 px-1 sm:px-0 whitespace-nowrap flex-shrink-0 relative" id="tabSupport" onclick="switchTab('support')">💬 Soporte<span id="supportUnreadBadge" class="hidden absolute -top-0.5 -right-1 w-4 h-4 bg-red-500 rounded-full text-white text-[9px] font-bold flex items-center justify-center">!</span></button>
+      <button class="py-2.5 px-1 sm:px-0 whitespace-nowrap flex-shrink-0" id="tabChats" onclick="switchTab('chats')">💬 Chats</button>
+      <button class="py-2.5 px-1 sm:px-0 whitespace-nowrap flex-shrink-0 tab-active" id="tabProducts" onclick="switchTab('products')">📦 Productos</button>
+      <button class="py-2.5 px-1 sm:px-0 whitespace-nowrap flex-shrink-0" id="tabServices" onclick="switchTab('services')">🛠 Servicios</button>
+      <button class="py-2.5 px-1 sm:px-0 whitespace-nowrap flex-shrink-0" id="tabOrders" onclick="switchTab('orders')">🛒 Pedidos</button>
+      <button class="py-2.5 px-1 sm:px-0 whitespace-nowrap flex-shrink-0" id="tabCustomers" data-i18n="tab.customers" onclick="switchTab('customers')">👥 Clientes</button>
+      <button class="py-2.5 px-1 sm:px-0 whitespace-nowrap flex-shrink-0" id="tabAppointments" onclick="switchTab('appointments')">📅 Turnos</button>
+      <button class="py-2.5 px-1 sm:px-0 whitespace-nowrap flex-shrink-0 hidden" id="tabRestaurant" onclick="switchTab('restaurant')">🍽️ <span data-i18n="tab.restaurant">Restaurante</span></button>
+      <button class="py-2.5 px-1 sm:px-0 whitespace-nowrap flex-shrink-0" id="tabSettings" onclick="switchTab('settings')">⚙️ Ajustes</button>
+      <button class="py-2.5 px-1 sm:px-0 whitespace-nowrap flex-shrink-0" id="tabAnalytics" data-i18n="tab.analytics" onclick="switchTab('analytics')">📊 Analytics</button>
+      <button class="py-2.5 px-1 sm:px-0 whitespace-nowrap flex-shrink-0 relative" id="tabSupport" onclick="switchTab('support')"><span data-i18n="tab.support">💬 Ayuda y Soporte</span><span id="supportUnreadBadge" class="hidden absolute -top-0.5 -right-1 w-4 h-4 bg-red-500 rounded-full text-white text-[9px] font-bold flex items-center justify-center">!</span></button>
     </div>
   </nav>
 
@@ -903,11 +901,8 @@
       </div>
     </div>
 
-    <!-- ── HELP TAB ── (rendered by renderHelp() JS function) -->
-    <div id="sectionHelp" class="hidden max-w-2xl space-y-5"></div>
-
     <!-- ── ANALYTICS TAB ── -->
-    <div id="sectionAnalytics" class="hidden max-w-2xl space-y-5">
+    <div id="sectionAnalytics" class="hidden max-w-6xl space-y-5">
 
       <!-- Period switcher -->
       <div class="bg-white rounded-xl shadow-sm p-4 flex items-center justify-between">
@@ -964,8 +959,18 @@
 
     </div>
 
-    <!-- ── SUPPORT TAB ── -->
-    <div id="sectionSupport" class="hidden max-w-2xl space-y-4">
+    <!-- ── SUPPORT TAB (Ayuda y Soporte) ── -->
+    <div id="sectionSupport" class="hidden max-w-6xl space-y-5">
+
+      <!-- Help / FAQ — collapsible, rendered by renderHelp() -->
+      <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+        <button onclick="toggleHelpPanel()" id="helpToggle"
+          class="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-gray-50 transition">
+          <span class="font-semibold text-gray-800 text-base">📖 <span data-i18n="support.guideTitle">Guía de uso</span></span>
+          <span id="helpChevron" class="text-gray-400 text-lg transition-transform">▾</span>
+        </button>
+        <div id="helpContent" class="hidden px-5 pb-5 space-y-5 border-t border-gray-100 pt-5"></div>
+      </div>
 
       <!-- Token error card — visible when token refresh failed (dismissible banner may be closed) -->
       <div id="tokenErrorCard" class="hidden bg-orange-50 border border-orange-200 rounded-xl p-5">
@@ -1026,13 +1031,13 @@
       </div>
 
       <!-- Support chat -->
-      <div class="bg-white rounded-xl shadow-sm flex flex-col" style="height:calc(100vh - 22rem); min-height:280px">
+      <div class="bg-white rounded-xl shadow-sm flex flex-col" style="height:calc(100vh - 18rem); min-height:360px">
         <!-- Header -->
         <div class="px-5 py-4 border-b flex items-center gap-3">
           <span class="text-xl">💬</span>
           <div>
-            <h2 data-i18n="support.title" class="font-semibold text-gray-800">Soporte técnico</h2>
-            <p data-i18n="support.subtitle" class="text-xs text-gray-400">Envianos tu consulta y te respondemos a la brevedad.</p>
+            <h2 data-i18n="support.title" class="font-semibold text-gray-800 text-base">Soporte técnico</h2>
+            <p data-i18n="support.subtitle" class="text-sm text-gray-400">Envianos tu consulta y te respondemos a la brevedad.</p>
           </div>
         </div>
         <!-- Messages -->
@@ -1044,10 +1049,10 @@
           <textarea id="supportInput" rows="2"
             data-i18n-ph="support.placeholder"
             placeholder="Escribí tu consulta aquí..."
-            class="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-green-400"
+            class="flex-1 border border-gray-200 rounded-xl px-3 py-2.5 text-base resize-none focus:outline-none focus:ring-2 focus:ring-green-400"
             onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendSupportMessage()}"></textarea>
           <button onclick="sendSupportMessage()"
-            class="btn-green px-4 py-2 rounded-xl text-sm font-semibold self-end flex-shrink-0"
+            class="btn-green px-5 py-3 rounded-xl text-base font-semibold self-end flex-shrink-0"
             data-i18n="support.send">
             Enviar
           </button>
@@ -1406,10 +1411,8 @@
       </div>
       </div><!-- /deliverySection -->
 
-    </div>
-
-    <!-- ════ PLAN & PAGOS ════ -->
-    <div id="sectionPlan" class="hidden max-w-xl space-y-5">
+      <!-- ════ PLAN Y FACTURACIÓN (merged from old Plan tab) ════ -->
+      <h2 data-i18n="plan.section.title" class="text-lg font-semibold text-gray-800 pt-2">💳 Plan y facturación</h2>
 
       <!-- Estado actual -->
       <div class="bg-white rounded-xl shadow-sm p-6">
@@ -1986,7 +1989,7 @@ function applyTranslations() {
   const langBtn = document.getElementById('langPickerBtn');
   if (langBtn) langBtn.textContent = LANG_LABELS[currentLang] || currentLang.toUpperCase() + ' ▾';
   // Tabs (have IDs already)
-  ['chats','products','services','orders','appointments','settings','help'].forEach(tab => {
+  ['chats','products','services','orders','appointments','settings'].forEach(tab => {
     const el = document.getElementById('tab' + cap(tab));
     if (!el) return;
     // Restaurant tenants relabel Products→Menu and Appointments→Reservations
@@ -2025,12 +2028,19 @@ function applyMenuLabels() {
   });
 }
 
+function toggleHelpPanel() {
+  const content = document.getElementById('helpContent');
+  const chevron = document.getElementById('helpChevron');
+  if (!content) return;
+  const open = content.classList.toggle('hidden');
+  if (chevron) chevron.style.transform = open ? '' : 'rotate(180deg)';
+}
+
 function renderHelp() {
-  const el = document.getElementById('sectionHelp');
+  const el = document.getElementById('helpContent');
   if (!el) return;
   const item = (html) => `<div class="p-2 rounded-lg bg-gray-50 text-sm text-gray-700">${html}</div>`;
   el.innerHTML = `
-    <h2 class="text-lg font-semibold text-gray-800">${t('help.title')}</h2>
     <p class="text-sm text-gray-500">${t('help.desc')}</p>
     <div class="p-3 bg-blue-50 border border-blue-100 rounded-xl text-sm text-blue-800">${t('help.nl.info')}</div>
     <div class="bg-white rounded-xl shadow-sm p-5">
@@ -2334,7 +2344,7 @@ function finishOnboarding() {
 }
 
 // ── Tab gating — locked when WhatsApp not connected ───────────────────────────
-const LOCKED_TABS = ['chats','products','services','orders','customers','appointments','analytics','plan','settings','help'];
+const LOCKED_TABS = ['chats','products','services','orders','customers','appointments','analytics','settings'];
 const FREE_TABS   = ['support'];
 
 function applyTabGating() {
@@ -2677,7 +2687,7 @@ function switchTab(tab) {
     setTimeout(() => { banner.style.opacity = '1'; }, 150);
     return;
   }
-  ['chats','products','services','orders','customers','restaurant','appointments','settings','analytics','plan','help','support'].forEach(t => {
+  ['chats','products','services','orders','customers','restaurant','appointments','settings','analytics','support'].forEach(t => {
     const sec = document.getElementById('section' + cap(t));
     const btn = document.getElementById('tab'     + cap(t));
     if (sec) sec.classList.toggle('hidden', t !== tab);
@@ -2698,9 +2708,8 @@ function switchTab(tab) {
   }
   if (tab === 'orders')       loadOrders();
   if (tab === 'customers')    loadCustomers();
-  if (tab === 'settings')     loadSettings();
+  if (tab === 'settings')     { loadSettings(); loadPlan(); }
   if (tab === 'analytics')    loadAnalytics();
-  if (tab === 'plan')         loadPlan();
   if (tab === 'services')     loadServices();
   if (tab === 'restaurant')   loadRestaurant();
   if (tab === 'appointments') { if (isRestaurantPlan) initReservationsView(); else initCalendar(); }
@@ -2741,7 +2750,7 @@ async function loadSupportMessages(scrollToBottom = true) {
           ? 'bg-green-500 text-white rounded-2xl rounded-br-sm'
           : 'bg-gray-100 text-gray-800 rounded-2xl rounded-bl-sm'
         } px-4 py-2.5 shadow-sm">
-          <p class="text-sm whitespace-pre-wrap">${escHtml(m.content)}</p>
+          <p class="text-base whitespace-pre-wrap">${escHtml(m.content)}</p>
           <p class="text-[10px] mt-1 ${isMerchant ? 'text-green-100' : 'text-gray-400'} text-right">${date} ${time}</p>
         </div>
       </div>`;
@@ -4405,7 +4414,7 @@ function showAccountBanner(type) {
     banner.innerHTML = `🔴 ${t('plan.banner.suspended')} <button onclick="switchTab('support')" class="underline ml-2">${t('plan.banner.contact')}</button>`;
   } else {
     banner.className += ' bg-amber-500 text-white';
-    banner.innerHTML = `⚠️ ${t('plan.banner.expired')} <button onclick="switchTab('plan')" class="underline ml-2">${t('plan.banner.view')}</button> · <button onclick="switchTab('support')" class="underline">${t('plan.banner.contact')}</button>`;
+    banner.innerHTML = `⚠️ ${t('plan.banner.expired')} <button onclick="switchTab('settings')" class="underline ml-2">${t('plan.banner.view')}</button> · <button onclick="switchTab('support')" class="underline">${t('plan.banner.contact')}</button>`;
   }
 }
 
