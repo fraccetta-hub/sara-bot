@@ -2569,7 +2569,8 @@ router.get('/restaurant/availability', requireAuth, async (req, res) => {
     return tables.filter(t => !resv.some(r => {
       if (!occ(r).includes(t.id)) return false;
       const a = new Date(r.reserved_at).getTime(), b = a + (r.duration_min || dur) * 60000;
-      return rs < b && re > a;
+      const CLEAN_MS = 10 * 60000; // <=10min overlap (start or end) is acceptable
+      return Math.min(re, b) - Math.max(rs, a) > CLEAN_MS;
     }));
   };
 
