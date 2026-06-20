@@ -1858,7 +1858,7 @@
         <input id="pName" type="text" data-i18n-ph="modal.product.namePh" placeholder="Ej: Ramo de Rosas Rojas (12 unidades)"
           class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
       </div>
-      <div class="grid grid-cols-2 gap-3">
+      <div id="catSkuGrid" class="grid grid-cols-2 gap-3">
         <div>
           <label data-i18n="modal.product.category" class="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
           <input id="pCategory" type="text" data-i18n-ph="modal.product.categoryPh" placeholder="Ej: Ramos"
@@ -2996,6 +2996,14 @@ function openProductModal(id) {
   document.getElementById('allergensField').classList.toggle('hidden', !isRestaurantPlan);
   document.getElementById('stockRow').classList.toggle('hidden', isRestaurantPlan);
   document.getElementById('skuField').classList.toggle('hidden', isRestaurantPlan);
+  // With SKU hidden, category should take the full row (not half)
+  const grid = document.getElementById('catSkuGrid');
+  grid.classList.toggle('grid-cols-2', !isRestaurantPlan);
+  grid.classList.toggle('grid-cols-1', isRestaurantPlan);
+  // Coherent placeholders per business type (dish vs product)
+  document.getElementById('pName').placeholder     = t(isRestaurantPlan ? 'menu.namePh'     : 'modal.product.namePh');
+  document.getElementById('pCategory').placeholder = t(isRestaurantPlan ? 'menu.categoryPh' : 'modal.product.categoryPh');
+  document.getElementById('pDesc').placeholder     = t(isRestaurantPlan ? 'menu.descPh'     : 'modal.product.descPh');
   document.getElementById('modalError').classList.add('hidden');
   // Show existing image preview if available
   if (p?.image_url) {
