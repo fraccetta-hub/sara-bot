@@ -313,7 +313,7 @@
       </div>
       <div class="flex gap-3 mt-5">
         <button onclick="wizBack(3)" data-i18n="wiz.back" class="flex-1 border border-gray-200 text-gray-500 py-2 rounded-xl text-sm hover:bg-gray-50">← Atrás</button>
-        <button id="wizNextBtn3" onclick="saveMerchantPhone()" disabled data-i18n="wiz.next"
+        <button id="wizNextBtn3" onclick="saveWizardMerchantPhone()" disabled data-i18n="wiz.next"
           class="flex-1 btn-green py-2 rounded-xl text-sm font-semibold disabled:opacity-40 disabled:cursor-not-allowed">
           Continuar →
         </button>
@@ -2158,7 +2158,7 @@ function applyTranslations() {
     el.textContent = t(key);
   });
   // Language picker active state (settings panel — larger flag buttons)
-  ['es','en','de','it','fr'].forEach(lang => {
+  ['es','en','de','it','fr','pt'].forEach(lang => {
     const el = document.getElementById('lang_' + lang);
     if (el) {
       el.className = currentLang === lang
@@ -2476,7 +2476,7 @@ async function saveManual() {
   }
 }
 
-async function saveMerchantPhone() {
+async function saveWizardMerchantPhone() {
   const phone = document.getElementById('wizMerchantPhone').value.trim();
   const errEl = document.getElementById('wizPhoneError');
   errEl.classList.add('hidden');
@@ -4770,9 +4770,6 @@ function showAccountBanner(type) {
     banner.innerHTML = `⚠️ ${t('plan.banner.expired')} <button onclick="switchTab('settings')" class="underline ml-2">${t('plan.banner.view')}</button> · <button onclick="switchTab('support')" class="underline">${t('plan.banner.contact')}</button>`;
   }
 }
-
-function fmtPrice(n) { return (n || 0).toLocaleString('es-PY') + ' Gs'; }
-function fmtPrice(n)    { return fmtPrice(n); }
 
 // ══════════════════════════════════════════════════════════════════════════════
 // SERVICES
