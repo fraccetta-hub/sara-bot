@@ -2136,10 +2136,12 @@ router.post('/account/request-deletion', requireAuth, async (req, res) => {
     const token   = crypto.randomBytes(32).toString('hex');
     const expires = new Date(Date.now() + 60 * 60 * 1000).toISOString(); // 1 hour
 
-    await supabase.from('tenants').update({
+    const { error: updErr } = await supabase.from('tenants').update({
       account_deletion_token: token,
       account_deletion_expires: expires,
     }).eq('id', tenantId);
+    // If the token can't be stored, never send a link that won't work
+    if (updErr) return res.status(500).json({ error: updErr.message });
 
     const confirmUrl = `${process.env.APP_URL}/admin/index.html?delete=${token}`;
     const sendTo = tenant.email || tenant.login_slug;

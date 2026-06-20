@@ -5,6 +5,18 @@
 - Fase attuale: email transazionali operative (Brevo HTTP API). Prossimo: Stripe env vars + META_CONFIG_ID.
 - Ultimo commit stabile: `3c91d96` — "security: rate limit forgot-password (5/h per IP), fix multer+nodemailer vulns"
 
+## COSA È STATO FATTO (sessione 2026-06-20 — fix eliminazione account email/link)
+
+### Email + link eliminazione account (feature sessione concorrente)
+- **Link rotto — causa probabile: migration NON eseguita.** `request-deletion` salvava `account_deletion_token/expires` ma le colonne potrebbero non esistere su Supabase → token mai salvato → `confirm-deletion` non trova il tenant → "token inválido". **ESEGUIRE su Supabase:**
+  ```sql
+  ALTER TABLE tenants ADD COLUMN IF NOT EXISTS account_deletion_token   TEXT;
+  ALTER TABLE tenants ADD COLUMN IF NOT EXISTS account_deletion_expires TIMESTAMPTZ;
+  ```
+- **Hardening** (`routes/admin.js` `request-deletion`): ora controlla l'errore dell'UPDATE → se fallisce ritorna 500 invece di mandare un link morto.
+- **Email** (`services/mailer.js` `buildDeleteHtml`): bordo header rosso → verde `#22c55e` per coerenza con welcome/reset (il bottone resta rosso = danger). Logo `https://sarabot.pro/images/logosarabot.webp` OK (servito da `/images` → dir root `images/`).
+- Nota: `APP_URL=https://sarabot.pro` — il reset password usa la stessa base e funziona, quindi la pagina è raggiungibile; il problema del link è il token/migration, non l'host.
+
 ## COSA È STATO FATTO (sessione 2026-06-20 — bugfix modal prodotto/piatto)
 
 ### Bug "+ Nuevo piatto/producto" non apriva il modal

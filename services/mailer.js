@@ -300,7 +300,7 @@ function buildDeleteHtml(td, businessName, confirmUrl) {
 <head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/></head>
 <body style="margin:0;padding:0;background:#fef2f2;font-family:sans-serif;">
 <div style="max-width:520px;margin:32px auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.06);">
-  <div style="background:#fff;padding:28px 32px;text-align:center;border-bottom:3px solid #ef4444;">
+  <div style="background:#fff;padding:28px 32px;text-align:center;border-bottom:3px solid #22c55e;">
     <img src="https://sarabot.pro/images/logosarabot.webp" alt="Sara Bot" style="height:44px;">
   </div>
   <div style="padding:32px;">
