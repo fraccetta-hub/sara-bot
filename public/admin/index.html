@@ -1972,6 +1972,39 @@ function fmtPrice(n) {
     : parseFloat(n||0).toLocaleString(loc, {minimumFractionDigits:2, maximumFractionDigits:2});
   return c === 'PYG' ? `${f} ${sym}` : `${sym}${f}`;
 }
+// Parse price input tolerating locale-specific thousand/decimal separators.
+// PYG/CLP/COP are integer currencies — strip all non-digits.
+// EUR/ARS/BRL/UYU/PEN use comma as decimal separator.
+// USD/MXN use dot as decimal separator, comma as thousands.
+function parsePriceInput(str) {
+  if (str === '' || str == null) return NaN;
+  str = String(str).trim().replace(/\s/g, '');
+  const c = TENANT_CURRENCY;
+  if (['PYG','CLP','COP'].includes(c)) {
+    const n = str.replace(/[^\d]/g, '');
+    return n ? parseInt(n, 10) : NaN;
+  }
+  if (['EUR','ARS','BRL','UYU','PEN'].includes(c)) {
+    if (str.includes('.') && str.includes(',')) {
+      // "1.500,99" → dot=thousands, comma=decimal
+      return parseFloat(str.replace(/\./g, '').replace(',', '.'));
+    }
+    if (str.includes(',')) {
+      // "1500,99" → comma=decimal
+      return parseFloat(str.replace(',', '.'));
+    }
+    if (str.includes('.')) {
+      // "250.000" (3 digits after sole dot) → thousands separator, not decimal
+      const parts = str.split('.');
+      if (parts.length === 2 && parts[1].length === 3 && /^\d+$/.test(parts[1])) {
+        return parseFloat(str.replace('.', ''));
+      }
+    }
+    return parseFloat(str);
+  }
+  // USD, MXN: dot=decimal, comma=thousands
+  return parseFloat(str.replace(/,/g, ''));
+}
 
 function t(key) {
   return (TR[currentLang] && TR[currentLang][key] !== undefined)
@@ -3090,7 +3123,7 @@ async function saveProduct() {
   const name          = document.getElementById('pName').value.trim();
   const category      = document.getElementById('pCategory').value.trim();
   const sku           = document.getElementById('pSku').value.trim() || null;
-  const price_guarani = parseFloat(document.getElementById('pPrice').value);
+  const price_guarani = parsePriceInput(document.getElementById('pPrice').value);
   const unlimited     = document.getElementById('pUnlimited').checked;
   // Restaurant menu items have no stock → always available (null = unlimited)
   const stock_qty     = isRestaurantPlan ? null : (unlimited ? null : (parseInt(document.getElementById('pStock').value) || 0));
@@ -4171,11 +4204,11 @@ async function saveDelivery() {
       location_lat:            parseFloat(document.getElementById('sLocationLat').value) || null,
       location_lng:            parseFloat(document.getElementById('sLocationLng').value) || null,
       delivery_type:           document.getElementById('sDeliveryType').value,
-      delivery_base_fee:       parseInt(document.getElementById('sDeliveryBaseFee').value) || 0,
+      delivery_base_fee:       parsePriceInput(document.getElementById('sDeliveryBaseFee').value) || 0,
       delivery_zone_km:        parseFloat(document.getElementById('sDeliveryZoneKm').value) || null,
-      delivery_zone_outer_fee: parseInt(document.getElementById('sDeliveryZoneOuterFee').value) || 0,
-      delivery_per_km:         parseInt(document.getElementById('sDeliveryPerKm').value) || 0,
-      delivery_min_order:      parseInt(document.getElementById('sDeliveryMinOrder').value) || 0,
+      delivery_zone_outer_fee: parsePriceInput(document.getElementById('sDeliveryZoneOuterFee').value) || 0,
+      delivery_per_km:         parsePriceInput(document.getElementById('sDeliveryPerKm').value) || 0,
+      delivery_min_order:      parsePriceInput(document.getElementById('sDeliveryMinOrder').value) || 0,
       delivery_disabled_dates: disabledArr,
     });
     msgEl.className = 'rounded-lg px-4 py-2 text-sm mb-4 bg-green-50 text-green-700';
@@ -4569,7 +4602,7 @@ async function saveService() {
   const errEl = document.getElementById('serviceModalError');
   errEl.classList.add('hidden');
   const name  = document.getElementById('svName').value.trim();
-  const price = parseInt(document.getElementById('svPrice').value);
+  const price = parsePriceInput(document.getElementById('svPrice').value);
   if (!name || isNaN(price)) {
     errEl.textContent = t('modal.service.error');
     errEl.classList.remove('hidden');
