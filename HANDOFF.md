@@ -923,6 +923,18 @@ ALTER TABLE support_messages ADD  CONSTRAINT support_messages_role_check CHECK (
 - NB: il prompt (`claude.js buildRestaurantStaticBlock`) già diceva a Sara di accettare reservation solo dentro le franjas; i guard sono il backstop server-side che impedisce salvataggi fuori regola.
 - Confronti orari normalizzati a `HH:MM` (slice 0,5) per gestire `open_time` con secondi.
 
+## COSA È STATO FATTO (sessione 2026-06-20 — audit completo + fix, commit ea7e60f)
+
+### Audit + fix batch (`public/admin/index.html`, `i18n.js`, `register/`, `landingpage/`, `routes/billing.js`)
+- `.btn-purple` CSS mancante → bottoni "Applica" promo e import-foto senza sfondo — aggiunto in `<style>`
+- Chiave i18n `cancel` mancante in 6 lingue → 4 bottoni modal stuck in spagnolo — aggiunta ES/EN/IT/DE/FR/PT
+- Dead keys `settings.plan.starter/enterprise/popular/custom/f1-f11` (vecchia griglia piani) — eliminate da tutti e 6 i blocchi lingua in `public/admin/i18n.js`
+- `saveRestaurantSettings()` leggeva visibilità tab dal DOM (`style.display !== 'none'`) — usa ora variabili globali `planProductsEnabled/planServicesEnabled/planAppointmentsEnabled`
+- Typo "Gestional" → "Gestión de" in `landingpage/index.html` (TR ES) e `public/register/i18n.js` (ES) — 6 occorrenze
+- `showDisclaimer()` wrapper rimosso da register — validazione inline in `submitRegistration()`, button chiama direttamente `submitRegistration()`
+- `invoice.paid` non gestito in billing webhook → handler aggiunto in `routes/billing.js` (aggiorna `plan_expires` ad ogni rinnovo mensile)
+- `restaurant_enabled` mancante in `applyTabVisibility()` in settings reload → tab Restaurant spariva per piano Restaurant — fixato (commit 296cb04)
+
 ## PROSSIME PRIORITÀ (sessione successiva)
 1. **Eseguire migration** `subscription_cancel_at_period_end` su Supabase
 2. **Fatturazione** — capire come mandare fatture ai merchant
