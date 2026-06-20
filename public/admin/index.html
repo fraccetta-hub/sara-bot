@@ -1101,25 +1101,20 @@
 
           <div class="bg-white rounded-xl shadow-sm p-6">
             <h3 data-i18n="settings.account.title" class="font-medium text-gray-800 mb-1">👤 Cuenta</h3>
-            <p data-i18n="settings.account.desc" class="text-xs text-gray-400 mb-4">Cambiá tu email y el nombre de usuario que usás para iniciar sesión.</p>
+            <p data-i18n="settings.account.desc" class="text-xs text-gray-400 mb-4">Tu email de acceso y nombre de usuario.</p>
             <div id="accountMsg" class="hidden rounded-lg px-4 py-2 text-sm mb-3"></div>
             <label data-i18n="settings.account.email" class="block text-xs font-medium text-gray-500 mb-1">Email</label>
-            <div class="flex gap-2 mb-4">
-              <input id="aEmail" type="email" class="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
-              <button onclick="changeEmail()" data-i18n="settings.account.saveEmail"
-                class="btn-green px-4 py-2 rounded-lg text-sm font-semibold shrink-0">Guardar</button>
-            </div>
+            <div id="aEmailDisplay" class="bg-gray-50 border border-gray-100 rounded-lg px-3 py-2 text-sm text-gray-500 mb-4 font-mono">—</div>
             <label data-i18n="settings.account.username" class="block text-xs font-medium text-gray-500 mb-1">Usuario (login)</label>
             <p data-i18n="settings.account.usernameHint" class="text-xs text-gray-400 mb-2">Solo letras minúsculas, números, puntos y guiones. Se usa para iniciar sesión.</p>
-            <div class="flex gap-2 mb-4">
+            <div class="flex gap-2 mb-1">
               <input id="aUsername" type="text" class="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono"/>
-              <button onclick="changeUsername()" data-i18n="settings.account.saveUsername"
+              <button onclick="requestUsernameChange()" data-i18n="settings.account.saveUsername"
                 class="btn-green px-4 py-2 rounded-lg text-sm font-semibold shrink-0">Guardar</button>
             </div>
-            <label data-i18n="settings.account.currentPwd" class="block text-xs font-medium text-gray-500 mb-1">Contraseña actual</label>
-            <input id="aCurrentPwd" type="password" data-i18n-ph="settings.account.currentPwdPh"
-              placeholder="Tu contraseña actual"
-              class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
+            <div id="usernamePendingNote" class="hidden text-xs text-amber-600 mt-1 flex items-center gap-1">
+              <span>⏳</span><span data-i18n="settings.account.usernamePending">Cambio pendiente de confirmación por email.</span>
+            </div>
           </div>
 
           <div class="bg-white rounded-xl shadow-sm p-6">
@@ -1127,10 +1122,6 @@
             <p data-i18n="settings.phone.desc" class="text-xs text-gray-400 mb-3">Sara te avisa aquí cuando llega un pedido nuevo. Formato internacional sin + ni espacios (ej: 595981123456).</p>
             <div id="merchantPhoneMsg" class="hidden rounded-lg px-4 py-2 text-sm mb-3"></div>
             <input id="sMerchantPhone" type="tel" placeholder="595981123456"
-              class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-3"/>
-            <label data-i18n="settings.account.currentPwd" class="block text-xs font-medium text-gray-500 mb-1">Contraseña actual</label>
-            <input id="sPhoneCurrentPwd" type="password" data-i18n-ph="settings.account.currentPwdPh"
-              placeholder="Tu contraseña actual"
               class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-3"/>
             <button onclick="saveMerchantPhone()" data-i18n="settings.phone.save"
               class="btn-green w-full py-2 rounded-lg text-sm font-semibold">Guardar número</button>
@@ -1153,44 +1144,6 @@
               class="btn-green w-full py-2 rounded-lg text-sm font-semibold">Guardar info</button>
           </div>
 
-          <div class="bg-white rounded-xl shadow-sm p-6">
-            <h3 data-i18n="settings.password.title" class="font-medium text-gray-800 mb-3">🔒 Cambiar contraseña</h3>
-            <div id="pwdMsg" class="hidden rounded-lg px-4 py-2 text-sm mb-3"></div>
-            <label data-i18n="settings.account.currentPwd" class="block text-xs font-medium text-gray-500 mb-1">Contraseña actual</label>
-            <input id="currentPwd" type="password" data-i18n-ph="settings.account.currentPwdPh" placeholder="Tu contraseña actual"
-              class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-3"/>
-            <input id="newPwd" type="password" data-i18n-ph="settings.password.placeholder" placeholder="Nueva contraseña (mín. 6 caracteres)"
-              class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-3"/>
-            <button onclick="changePassword()" data-i18n="settings.password.save"
-              class="btn-green w-full py-2 rounded-lg text-sm font-semibold">Guardar contraseña</button>
-          </div>
-
-          <div class="bg-white rounded-xl shadow-sm p-6">
-            <h3 data-i18n="settings.legal.title" class="font-medium text-gray-800 mb-3">📄 Legal</h3>
-            <div class="space-y-2">
-              <a href="/legal/terms" target="_blank"
-                class="flex items-center justify-between px-4 py-3 rounded-lg border border-gray-100 hover:bg-gray-50 transition">
-                <span class="text-sm text-gray-700" data-i18n="settings.legal.terms">📋 Términos de Servicio</span>
-                <span class="text-gray-400 text-xs">↗</span>
-              </a>
-              <a href="/legal/privacy" target="_blank"
-                class="flex items-center justify-between px-4 py-3 rounded-lg border border-gray-100 hover:bg-gray-50 transition">
-                <span class="text-sm text-gray-700" data-i18n="settings.legal.privacy">🔒 Política de Privacidad</span>
-                <span class="text-gray-400 text-xs">↗</span>
-              </a>
-              <a href="/legal/disclaimer" target="_blank"
-                class="flex items-center justify-between px-4 py-3 rounded-lg border border-gray-100 hover:bg-gray-50 transition">
-                <span class="text-sm text-gray-700" data-i18n="settings.legal.disclaimer">⚠️ Disclaimer</span>
-                <span class="text-gray-400 text-xs">↗</span>
-              </a>
-              <a href="/legal/dpa" target="_blank"
-                class="flex items-center justify-between px-4 py-3 rounded-lg border border-gray-100 hover:bg-gray-50 transition">
-                <span class="text-sm text-gray-700" data-i18n="settings.legal.dpa">📝 Acuerdo de Tratamiento de Datos (DPA)</span>
-                <span class="text-gray-400 text-xs">↗</span>
-              </a>
-            </div>
-            <p class="text-xs text-gray-400 mt-3" data-i18n="settings.legal.note">Al usar este servicio aceptás los términos y condiciones.</p>
-          </div>
 
         </div><!-- /LEFT -->
 
@@ -1369,19 +1322,13 @@
               </select>
             </div>
           </div>
-          <div class="grid grid-cols-2 gap-3 mb-3">
-            <div>
-              <label data-i18n="settings.delivery.lat" class="block text-sm font-medium text-gray-700 mb-1">Latitud</label>
-              <input id="sLocationLat" type="number" step="any" placeholder="-25.2867"
-                class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
-            </div>
-            <div>
-              <label data-i18n="settings.delivery.lng" class="block text-sm font-medium text-gray-700 mb-1">Longitud</label>
-              <input id="sLocationLng" type="number" step="any" placeholder="-57.6470"
-                class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
-            </div>
+          <div class="mb-4">
+            <label data-i18n="settings.delivery.mapsUrl" class="block text-sm font-medium text-gray-700 mb-1">Link de Google Maps</label>
+            <input id="sMapsUrl" type="url" data-i18n-ph="settings.delivery.mapsUrlPh"
+              placeholder="https://maps.google.com/..."
+              class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
+            <p data-i18n="settings.delivery.mapsUrlHint" class="text-xs text-gray-400 mt-1">Abrí Google Maps, buscá tu local y copiá el link de la barra del navegador.</p>
           </div>
-          <p data-i18n="settings.delivery.mapsHint" class="text-xs text-gray-400 mb-4">Abrí Google Maps, buscá tu local, clic derecho → "¿Qué hay aquí?" y copiá las coordenadas.</p>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
             <div>
               <label data-i18n="settings.delivery.baseFee" class="block text-sm font-medium text-gray-700 mb-1" id="baseFeeLabel">Costo de envío (Gs)</label>
@@ -1442,13 +1389,6 @@
             <div id="planStatusSub" class="text-sm mt-0.5"></div>
           </div>
         </div>
-        <div class="mt-4 text-center">
-          <button onclick="switchTab('support')"
-            class="text-sm text-gray-400 hover:text-gray-600 underline transition"
-            data-i18n="plan.change.plan">
-            ¿Querés cambiar de plan? Contactá soporte
-          </button>
-        </div>
       </div>
 
       <!-- Gestión de suscripción -->
@@ -1456,6 +1396,11 @@
         <h3 class="font-medium text-gray-800 mb-3" data-i18n="plan.manage.title">⚙️ Gestionar suscripción</h3>
         <div id="planBillingMsg" class="hidden rounded-lg px-4 py-2 text-sm mb-3"></div>
         <div id="planCancelScheduled" class="hidden bg-amber-50 border border-amber-200 text-amber-700 text-sm rounded-lg px-4 py-3 mb-3"></div>
+        <button onclick="openStripePortal()"
+          class="w-full py-2 rounded-lg text-sm font-semibold bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition mb-2"
+          data-i18n="plan.manage.payment">
+          💳 Gestionar método de pago
+        </button>
         <button id="planCancelBtn" onclick="cancelSubscription()"
           class="w-full py-2 rounded-lg text-sm font-semibold bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 transition"
           data-i18n="plan.cancel.btn">
@@ -1471,6 +1416,10 @@
       <!-- Código promocional -->
       <div class="bg-white rounded-xl shadow-sm p-6">
         <h3 class="font-medium text-gray-800 mb-3">🎟️ <span data-i18n="plan.promo.title">Código promocional</span></h3>
+        <div id="activePromoBox" class="hidden bg-green-50 border border-green-200 rounded-lg px-4 py-3 mb-3">
+          <div class="flex items-center gap-2 text-green-800 font-semibold text-sm" id="activePromoLabel"></div>
+          <div class="text-xs text-green-600 mt-0.5" id="activePromoExpiry"></div>
+        </div>
         <div id="promoRedeemSuccess" class="hidden bg-green-50 text-green-700 text-sm rounded-lg px-4 py-2 mb-3"></div>
         <div id="promoRedeemError"   class="hidden bg-red-50 text-red-700 text-sm rounded-lg px-4 py-2 mb-3"></div>
         <div class="flex gap-2">
@@ -1483,6 +1432,14 @@
             <span data-i18n="plan.promo.btn">Aplicar</span>
           </button>
         </div>
+      </div>
+
+      <!-- Legal — bottom row -->
+      <div class="flex flex-wrap items-center justify-center gap-x-5 gap-y-1 pt-2 pb-1">
+        <a href="/legal/terms" target="_blank" class="text-xs text-gray-400 hover:text-gray-600 transition" data-i18n="settings.legal.terms">📋 Términos</a>
+        <a href="/legal/privacy" target="_blank" class="text-xs text-gray-400 hover:text-gray-600 transition" data-i18n="settings.legal.privacy">🔒 Privacidad</a>
+        <a href="/legal/disclaimer" target="_blank" class="text-xs text-gray-400 hover:text-gray-600 transition" data-i18n="settings.legal.disclaimer">⚠️ Disclaimer</a>
+        <a href="/legal/dpa" target="_blank" class="text-xs text-gray-400 hover:text-gray-600 transition" data-i18n="settings.legal.dpa">📝 DPA</a>
       </div>
 
     </div>
@@ -2478,6 +2435,35 @@ window.onload = async () => {
     applyTranslations();
     showDeletePage(deleteToken);
     return;
+  }
+
+  // Username change confirmation link: ?confirm_username=<token>
+  const confirmUsernameToken = params.get('confirm_username');
+  if (confirmUsernameToken) {
+    applyTranslations();
+    window.history.replaceState({}, '', '/admin/index.html');
+    try {
+      const d = await (await fetch(`/admin/confirm-username-change?token=${confirmUsernameToken}`, { credentials: 'same-origin' })).json();
+      if (d.ok) {
+        // Show dashboard then open settings with success msg
+        const me = await fetch('/admin/me', { credentials: 'same-origin' });
+        if (me.ok) {
+          const data = await me.json();
+          document.getElementById('loginPage').classList.add('hidden');
+          document.getElementById('navTenant').textContent = data.tenantName || 'Mi negocio';
+          document.getElementById('navTitle').textContent  = data.botName || 'Sara Bot';
+          await showDashboard();
+          switchTab('settings');
+          const msg = document.getElementById('accountMsg');
+          if (msg) {
+            msg.className = 'rounded-lg px-4 py-2 text-sm mb-3 bg-green-50 text-green-700';
+            msg.textContent = `✅ ${t('settings.account.usernameSaved')} (${d.newUsername})`;
+            msg.classList.remove('hidden');
+          }
+          return;
+        }
+      }
+    } catch(e) { /* fall through to normal boot */ }
   }
 
   // Support impersonation: superadmin passes ?name=yyy (token now set via cookie server-side)
@@ -4082,6 +4068,7 @@ async function redeemPromo() {
     okEl.textContent = `✅ Código aplicado! ${d.description ? d.description + '. ' : ''}${parts.join(' · ')}`;
     okEl.classList.remove('hidden');
     input.value = '';
+    loadPlan(); // refresh active promo display
   } catch(e) {
     errEl.textContent = '❌ ' + e.message;
     errEl.classList.remove('hidden');
@@ -4153,7 +4140,7 @@ async function loadPlan() {
       title.className   = 'font-semibold text-base text-green-700';
       sub.textContent   = expires
         ? t('plan.status.expires_on').replace('{date}', fmtDate(expires)).replace('{days}', diffDays)
-        : t('plan.status.no_expiry');
+        : t('plan.status.active');
       sub.className     = 'text-sm mt-0.5 text-green-600';
     } else if (diffDays > 0) {
       box.className     = 'rounded-xl px-5 py-4 flex items-center gap-4 bg-amber-50 border border-amber-200';
@@ -4169,6 +4156,28 @@ async function loadPlan() {
       title.className   = 'font-semibold text-base text-red-700';
       sub.textContent   = t('plan.status.expired.sub').replace('{date}', fmtDate(expires));
       sub.className     = 'text-sm mt-0.5 text-red-500';
+    }
+    // Active promo
+    const promo = await api('/admin/active-promo').catch(() => null);
+    const promoBox = document.getElementById('activePromoBox');
+    if (promo && promoBox) {
+      const pc = promo.promo_codes;
+      let label = '🎟️ ';
+      if (pc.months_free > 0) label += `${pc.months_free} ${t('plan.promo.months_free') || 'mes(es) gratis'}`;
+      else if (pc.discount_type === 'percent') label += `-${pc.discount_value}%`;
+      else label += `-${fmtPrice(pc.discount_value)}`;
+      if (pc.description) label += ` — ${pc.description}`;
+      document.getElementById('activePromoLabel').textContent = label;
+      const expEl = document.getElementById('activePromoExpiry');
+      if (pc.expires_at) {
+        const exp = new Date(pc.expires_at);
+        expEl.textContent = `${t('plan.promo.expires') || 'Vence'}: ${exp.toLocaleDateString(undefined, { day:'2-digit', month:'long', year:'numeric' })}`;
+      } else {
+        expEl.textContent = t('plan.promo.no_expiry') || 'Sin fecha de vencimiento';
+      }
+      promoBox.classList.remove('hidden');
+    } else if (promoBox) {
+      promoBox.classList.add('hidden');
     }
   } catch(e) { /* ignore */ }
 }
@@ -4220,8 +4229,8 @@ async function loadSettings() {
     // Delivery
     document.getElementById('sDeliveryEnabled').checked      = !!s.delivery_enabled;
     document.getElementById('sLocationAddress').value        = s.location_address || '';
-    document.getElementById('sLocationLat').value            = s.location_lat || '';
-    document.getElementById('sLocationLng').value            = s.location_lng || '';
+    if (s.location_lat && s.location_lng)
+      document.getElementById('sMapsUrl').value = `https://www.google.com/maps?q=${s.location_lat},${s.location_lng}`;
     document.getElementById('sDeliveryType').value           = s.delivery_type || 'fixed';
     document.getElementById('sDeliveryBaseFee').value        = s.delivery_base_fee ?? '';
     document.getElementById('sDeliveryZoneKm').value         = s.delivery_zone_km ?? '';
@@ -4241,8 +4250,10 @@ async function loadSettings() {
     document.getElementById('sGoogleReviewUrl').value = s.google_review_url || '';
 
     // Account fields
-    document.getElementById('aEmail').value    = s.email    || s.login_slug || '';
+    document.getElementById('aEmailDisplay').textContent = s.email || s.login_slug || '—';
     document.getElementById('aUsername').value = s.login_slug || '';
+    const pendingNote = document.getElementById('usernamePendingNote');
+    pendingNote.classList.toggle('hidden', !s.pending_login_slug);
 
     // Load business hours
     const bh = await api('/admin/business-hours').catch(() => []);
@@ -4271,8 +4282,8 @@ async function saveDelivery() {
     await api('/admin/settings', 'PUT', {
       delivery_enabled:        document.getElementById('sDeliveryEnabled').checked,
       location_address:        document.getElementById('sLocationAddress').value.trim() || null,
-      location_lat:            parseFloat(document.getElementById('sLocationLat').value) || null,
-      location_lng:            parseFloat(document.getElementById('sLocationLng').value) || null,
+      location_lat:            parseMapsUrl(document.getElementById('sMapsUrl').value)?.lat || null,
+      location_lng:            parseMapsUrl(document.getElementById('sMapsUrl').value)?.lng || null,
       delivery_type:           document.getElementById('sDeliveryType').value,
       delivery_base_fee:       parsePriceInput(document.getElementById('sDeliveryBaseFee').value) || 0,
       delivery_zone_km:        parseFloat(document.getElementById('sDeliveryZoneKm').value) || null,
@@ -4295,7 +4306,6 @@ async function saveMerchantPhone() {
   const msgEl = document.getElementById('merchantPhoneMsg');
   msgEl.classList.add('hidden');
   const phone = document.getElementById('sMerchantPhone').value.trim().replace(/\D/g, '');
-  const currentPassword = document.getElementById('sPhoneCurrentPwd').value;
   if (!phone) {
     msgEl.className = 'rounded-lg px-4 py-2 text-sm mb-3 bg-red-50 text-red-700';
     msgEl.textContent = t('settings.phone.invalid');
@@ -4303,9 +4313,8 @@ async function saveMerchantPhone() {
     return;
   }
   try {
-    await api('/admin/change-merchant-phone', 'POST', { phone, currentPassword });
+    await api('/admin/settings', 'PUT', { merchant_phone: phone });
     document.getElementById('sMerchantPhone').value = phone;
-    document.getElementById('sPhoneCurrentPwd').value = '';
     msgEl.className = 'rounded-lg px-4 py-2 text-sm mb-3 bg-green-50 text-green-700';
     msgEl.textContent = t('settings.phone.saved');
     msgEl.classList.remove('hidden');
@@ -4452,56 +4461,40 @@ async function saveCustomerNotes(phone) {
   await api(`/admin/chats/${encodeURIComponent(phone)}/notes`, 'PATCH', { notes }).catch(() => {});
 }
 
-async function changePassword() {
-  const currentPassword = document.getElementById('currentPwd').value;
-  const pwd   = document.getElementById('newPwd').value;
-  const msgEl = document.getElementById('pwdMsg');
-  try {
-    await api('/admin/change-password', 'POST', { newPassword: pwd, currentPassword });
-    msgEl.className = 'rounded-lg px-4 py-2 text-sm mb-3 bg-green-50 text-green-700';
-    msgEl.textContent = t('settings.password.saved');
-    msgEl.classList.remove('hidden');
-    document.getElementById('currentPwd').value = '';
-    document.getElementById('newPwd').value = '';
-  } catch (e) {
-    msgEl.className = 'rounded-lg px-4 py-2 text-sm mb-3 bg-red-50 text-red-700';
-    msgEl.textContent = errMsg(e);
-    msgEl.classList.remove('hidden');
-  }
+function parseMapsUrl(url) {
+  if (!url) return null;
+  let m = url.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+  if (m) return { lat: parseFloat(m[1]), lng: parseFloat(m[2]) };
+  m = url.match(/[?&]q=(-?\d+\.\d+),(-?\d+\.\d+)/);
+  if (m) return { lat: parseFloat(m[1]), lng: parseFloat(m[2]) };
+  m = url.match(/\/place\/[^/]+\/@?(-?\d+\.\d+),(-?\d+\.\d+)/);
+  if (m) return { lat: parseFloat(m[1]), lng: parseFloat(m[2]) };
+  return null;
 }
 
-async function changeEmail() {
-  const email = document.getElementById('aEmail').value.trim();
-  const currentPassword = document.getElementById('aCurrentPwd').value;
-  const msgEl = document.getElementById('accountMsg');
-  try {
-    await api('/admin/change-email', 'POST', { email, currentPassword });
-    msgEl.className = 'rounded-lg px-4 py-2 text-sm mb-3 bg-green-50 text-green-700';
-    msgEl.textContent = t('settings.account.emailSaved');
-    msgEl.classList.remove('hidden');
-    document.getElementById('aCurrentPwd').value = '';
-  } catch (e) {
-    msgEl.className = 'rounded-lg px-4 py-2 text-sm mb-3 bg-red-50 text-red-700';
-    msgEl.textContent = errMsg(e);
-    msgEl.classList.remove('hidden');
-  }
-}
-
-async function changeUsername() {
+async function requestUsernameChange() {
   const username = document.getElementById('aUsername').value.trim().toLowerCase();
-  const currentPassword = document.getElementById('aCurrentPwd').value;
   const msgEl = document.getElementById('accountMsg');
+  const lang = localStorage.getItem('sara_lang') || 'es';
   try {
-    await api('/admin/change-username', 'POST', { username, currentPassword });
+    await api('/admin/request-username-change', 'POST', { username, lang });
     msgEl.className = 'rounded-lg px-4 py-2 text-sm mb-3 bg-green-50 text-green-700';
-    msgEl.textContent = t('settings.account.usernameSaved');
+    msgEl.textContent = t('settings.account.usernameCheckEmail');
     msgEl.classList.remove('hidden');
-    document.getElementById('aUsername').value = username;
-    document.getElementById('aCurrentPwd').value = '';
+    document.getElementById('usernamePendingNote').classList.remove('hidden');
   } catch (e) {
     msgEl.className = 'rounded-lg px-4 py-2 text-sm mb-3 bg-red-50 text-red-700';
     msgEl.textContent = errMsg(e);
     msgEl.classList.remove('hidden');
+  }
+}
+
+async function openStripePortal() {
+  try {
+    const d = await api('/admin/stripe-portal', 'POST');
+    if (d.url) window.location.href = d.url;
+  } catch (e) {
+    alert(errMsg(e));
   }
 }
 

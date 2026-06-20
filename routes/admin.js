@@ -10,7 +10,7 @@ const { sendMessage, sendImage } = require('../services/whatsapp');
 
 const crypto = require('crypto');
 const AdmZip = require('adm-zip');
-const { sendPasswordReset, sendAccountDeletion } = require('../services/mailer');
+const { sendPasswordReset, sendAccountDeletion, sendUsernameChange } = require('../services/mailer');
 const { invalidateClosures, invalidateOffers, invalidateRestaurant } = require('../services/stock');
 const { rateLimit } = require('express-rate-limit');
 
@@ -281,7 +281,8 @@ router.get('/settings', requireAuth, async (req, res) => {
              address, google_review_url,
              restaurant_enabled, restaurant_slot_duration, restaurant_meal_bands, appointment_capacity,
              sector, active, plan_expires, plan_currency, plan_price, phone_number_id, whatsapp_token_refresh_error,
-             stripe_subscription_status, subscription_cancel_at_period_end`)
+             stripe_subscription_status, subscription_cancel_at_period_end,
+             pending_login_slug`)
     .eq('id', req.tenant.tenantId)
     .single();
   if (error) return res.status(500).json({ error: error.message });
@@ -325,11 +326,7 @@ async function verifyCurrentPassword(tenantId, currentPassword) {
 // ─── POST /admin/change-password ─────────────────────────────────────────────
 
 router.post('/change-password', requireAuth, async (req, res) => {
-  const { newPassword, currentPassword } = req.body;
-  if (!currentPassword)
-    return res.status(400).json({ error: 'Se requiere la contraseña actual', errorCode: 'wrong_password' });
-  const ok = await verifyCurrentPassword(req.tenant.tenantId, currentPassword);
-  if (!ok) return res.status(403).json({ error: 'Contraseña actual incorrecta', errorCode: 'wrong_password' });
+  const { newPassword } = req.body;
   if (!newPassword || newPassword.length < 6)
     return res.status(400).json({ error: 'La contraseña debe tener al menos 6 caracteres', errorCode: 'password_too_short' });
   const hash = await bcrypt.hash(newPassword, 10);
@@ -340,11 +337,7 @@ router.post('/change-password', requireAuth, async (req, res) => {
 // ─── POST /admin/change-email ─────────────────────────────────────────────────
 
 router.post('/change-email', requireAuth, async (req, res) => {
-  const { email, currentPassword } = req.body;
-  if (!currentPassword)
-    return res.status(400).json({ error: 'Se requiere la contraseña actual', errorCode: 'wrong_password' });
-  const ok = await verifyCurrentPassword(req.tenant.tenantId, currentPassword);
-  if (!ok) return res.status(403).json({ error: 'Contraseña actual incorrecta', errorCode: 'wrong_password' });
+  const { email } = req.body;
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
     return res.status(400).json({ error: 'Email inválido', errorCode: 'invalid_email' });
   const normalized = email.toLowerCase().trim();
@@ -358,11 +351,7 @@ router.post('/change-email', requireAuth, async (req, res) => {
 // ─── POST /admin/change-username ──────────────────────────────────────────────
 
 router.post('/change-username', requireAuth, async (req, res) => {
-  const { username, currentPassword } = req.body;
-  if (!currentPassword)
-    return res.status(400).json({ error: 'Se requiere la contraseña actual', errorCode: 'wrong_password' });
-  const ok = await verifyCurrentPassword(req.tenant.tenantId, currentPassword);
-  if (!ok) return res.status(403).json({ error: 'Contraseña actual incorrecta', errorCode: 'wrong_password' });
+  const { username } = req.body;
   if (!username || username.length < 3)
     return res.status(400).json({ error: 'El usuario debe tener al menos 3 caracteres', errorCode: 'username_too_short' });
   if (!/^[a-z0-9_.-]+$/.test(username))
@@ -377,15 +366,89 @@ router.post('/change-username', requireAuth, async (req, res) => {
 // ─── POST /admin/change-merchant-phone ────────────────────────────────────────
 
 router.post('/change-merchant-phone', requireAuth, async (req, res) => {
-  const { phone, currentPassword } = req.body;
-  if (!currentPassword)
-    return res.status(400).json({ error: 'Se requiere la contraseña actual', errorCode: 'wrong_password' });
-  const ok = await verifyCurrentPassword(req.tenant.tenantId, currentPassword);
-  if (!ok) return res.status(403).json({ error: 'Contraseña actual incorrecta', errorCode: 'wrong_password' });
+  const { phone } = req.body;
   const cleaned = String(phone || '').replace(/\D/g, '');
   if (!cleaned) return res.status(400).json({ error: 'Número inválido', errorCode: 'invalid_phone' });
   await supabase.from('tenants').update({ merchant_phone: cleaned }).eq('id', req.tenant.tenantId);
   res.json({ ok: true });
+});
+
+// ─── POST /admin/request-username-change ─────────────────────────────────────
+
+const usernameChangeLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, max: 5, standardHeaders: true, legacyHeaders: false,
+});
+
+router.post('/request-username-change', requireAuth, usernameChangeLimiter, async (req, res) => {
+  const { username, lang = 'es' } = req.body;
+  if (!username || username.length < 3)
+    return res.status(400).json({ error: 'El usuario debe tener al menos 3 caracteres', errorCode: 'username_too_short' });
+  if (!/^[a-z0-9_.-]+$/.test(username))
+    return res.status(400).json({ error: 'Solo letras minúsculas, números, puntos, guiones y guión bajo', errorCode: 'username_invalid' });
+  const { data: existing } = await supabase.from('tenants').select('id').or(`login_slug.eq.${username},phone_number_id.eq.${username}`).maybeSingle();
+  if (existing && existing.id !== req.tenant.tenantId)
+    return res.status(409).json({ error: 'Ese usuario ya está en uso', errorCode: 'username_taken' });
+  const { data: tenant } = await supabase.from('tenants').select('email, name').eq('id', req.tenant.tenantId).single();
+  if (!tenant?.email) return res.status(400).json({ error: 'Sin email asociado. Contactá soporte.', errorCode: 'no_email' });
+  const token = crypto.randomBytes(32).toString('hex');
+  const expires = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+  await supabase.from('tenants').update({
+    pending_login_slug: username, username_change_token: token, username_change_expires: expires,
+  }).eq('id', req.tenant.tenantId);
+  const confirmUrl = `${process.env.APP_URL}/admin/index.html?confirm_username=${token}`;
+  await sendUsernameChange({ email: tenant.email, businessName: tenant.name, confirmUrl, newUsername: username, lang });
+  res.json({ ok: true });
+});
+
+// ─── GET /admin/confirm-username-change ───────────────────────────────────────
+
+router.get('/confirm-username-change', async (req, res) => {
+  const { token } = req.query;
+  if (!token) return res.status(400).json({ error: 'Token requerido' });
+  const { data: tenant } = await supabase
+    .from('tenants')
+    .select('id, pending_login_slug, username_change_expires')
+    .eq('username_change_token', token)
+    .maybeSingle();
+  if (!tenant) return res.status(400).json({ error: 'Token inválido o expirado', errorCode: 'invalid_token' });
+  if (new Date(tenant.username_change_expires) < new Date())
+    return res.status(400).json({ error: 'Token expirado', errorCode: 'token_expired' });
+  await supabase.from('tenants').update({
+    login_slug: tenant.pending_login_slug,
+    pending_login_slug: null, username_change_token: null, username_change_expires: null,
+  }).eq('id', tenant.id);
+  res.json({ ok: true, newUsername: tenant.pending_login_slug });
+});
+
+// ─── POST /admin/stripe-portal ────────────────────────────────────────────────
+
+router.post('/stripe-portal', requireAuth, async (req, res) => {
+  const { data: tenant } = await supabase.from('tenants').select('stripe_customer_id').eq('id', req.tenant.tenantId).single();
+  if (!tenant?.stripe_customer_id)
+    return res.status(400).json({ error: 'Sin suscripción activa', errorCode: 'no_subscription' });
+  try {
+    const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+    const session = await stripe.billingPortal.sessions.create({
+      customer: tenant.stripe_customer_id,
+      return_url: `${process.env.APP_URL}/admin/index.html`,
+    });
+    res.json({ url: session.url });
+  } catch (e) {
+    res.status(502).json({ error: e.message });
+  }
+});
+
+// ─── GET /admin/active-promo ─────────────────────────────────────────────────
+
+router.get('/active-promo', requireAuth, async (req, res) => {
+  const { data } = await supabase
+    .from('promo_redemptions')
+    .select('created_at, discount_applied, months_added, promo_codes(code, description, discount_type, discount_value, months_free, expires_at)')
+    .eq('tenant_id', req.tenant.tenantId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  res.json(data || null);
 });
 
 // ─── GET /admin/catalog-template ─────────────────────────────────────────────

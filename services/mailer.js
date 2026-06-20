@@ -339,4 +339,49 @@ async function sendAccountDeletion({ email, businessName, confirmUrl, lang = 'es
   }
 }
 
-module.exports = { sendWelcome, sendPasswordReset, sendAccountDeletion };
+// ── Username change confirmation email ────────────────────────────────────────
+const TU = {
+  es: { subject: 'Confirmá el cambio de usuario — Sara Bot', greeting: n => `Hola, ${n}`, body: (u) => `Recibimos una solicitud para cambiar tu nombre de usuario a <strong>${u}</strong>. Hacé clic en el botón para confirmarlo.`, btn: 'Confirmar cambio de usuario', expiry: 'El enlace expira en 1 hora.', ignore: 'Si no solicitaste esto, ignorá este correo. Tu usuario no cambiará.', noreply: 'Este mensaje es automático. Por favor, no respondas.' },
+  en: { subject: 'Confirm your username change — Sara Bot', greeting: n => `Hi, ${n}`, body: (u) => `We received a request to change your username to <strong>${u}</strong>. Click the button to confirm.`, btn: 'Confirm username change', expiry: 'The link expires in 1 hour.', ignore: "If you didn't request this, ignore this email. Your username won't change.", noreply: 'This is an automated message. Please do not reply.' },
+  it: { subject: 'Conferma il cambio di nome utente — Sara Bot', greeting: n => `Ciao, ${n}`, body: (u) => `Abbiamo ricevuto una richiesta di cambio nome utente in <strong>${u}</strong>. Clicca il pulsante per confermare.`, btn: 'Conferma cambio nome utente', expiry: 'Il link scade tra 1 ora.', ignore: 'Se non hai richiesto questo, ignora questa email. Il tuo nome utente non cambierà.', noreply: 'Questo messaggio è automatico. Non rispondere.' },
+  de: { subject: 'Bestätige deine Benutzernamen-Änderung — Sara Bot', greeting: n => `Hallo, ${n}`, body: (u) => `Wir haben eine Anfrage erhalten, deinen Benutzernamen in <strong>${u}</strong> zu ändern. Klicke auf den Button, um es zu bestätigen.`, btn: 'Benutzernamen-Änderung bestätigen', expiry: 'Der Link läuft in 1 Stunde ab.', ignore: 'Wenn du das nicht angefordert hast, ignoriere diese E-Mail.', noreply: 'Diese Nachricht wurde automatisch generiert.' },
+  fr: { subject: "Confirmez le changement de nom d'utilisateur — Sara Bot", greeting: n => `Bonjour, ${n}`, body: (u) => `Nous avons reçu une demande de modification de votre nom d'utilisateur en <strong>${u}</strong>. Cliquez sur le bouton pour confirmer.`, btn: "Confirmer le changement d'identifiant", expiry: 'Le lien expire dans 1 heure.', ignore: "Si vous n'avez pas fait cette demande, ignorez cet e-mail.", noreply: "Ce message est automatique. Merci de ne pas répondre." },
+  pt: { subject: 'Confirme a mudança de nome de usuário — Sara Bot', greeting: n => `Olá, ${n}`, body: (u) => `Recebemos uma solicitação para alterar seu nome de usuário para <strong>${u}</strong>. Clique no botão para confirmar.`, btn: 'Confirmar mudança de nome de usuário', expiry: 'O link expira em 1 hora.', ignore: 'Se não foi você, ignore este e-mail.', noreply: 'Esta mensagem é automática. Não responda.' },
+};
+
+function buildUsernameChangeHtml(tr, businessName, confirmUrl, newUsername) {
+  return `<!DOCTYPE html><html><head><meta charset="UTF-8"/></head>
+<body style="margin:0;padding:0;background:#f0fdf4;font-family:sans-serif;">
+<div style="max-width:520px;margin:32px auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.06);">
+  <div style="background:#fff;padding:28px 32px;text-align:center;border-bottom:3px solid #22c55e;">
+    <img src="https://sarabot.pro/images/logosarabot.webp" alt="Sara Bot" style="height:44px;">
+  </div>
+  <div style="padding:28px 32px;">
+    <p style="font-size:16px;color:#111;">${tr.greeting(businessName)},</p>
+    <p style="font-size:15px;color:#444;line-height:1.6;">${tr.body(newUsername)}</p>
+    <div style="text-align:center;margin:28px 0;">
+      <a href="${confirmUrl}" style="background:#22c55e;color:#fff;text-decoration:none;padding:14px 32px;border-radius:10px;font-weight:600;font-size:15px;display:inline-block;">${tr.btn}</a>
+    </div>
+    <p style="font-size:13px;color:#888;">${tr.expiry}</p>
+    <p style="font-size:13px;color:#888;">${tr.ignore}</p>
+  </div>
+  <div style="background:#f9fafb;padding:16px 32px;text-align:center;font-size:12px;color:#aaa;">${tr.noreply}</div>
+</div>
+</body></html>`;
+}
+
+async function sendUsernameChange({ email, businessName, confirmUrl, newUsername, lang = 'es' }) {
+  if (!process.env.BREVO_API_KEY) {
+    console.warn('[mailer] BREVO_API_KEY not configured — skipping username change email');
+    return;
+  }
+  const tr = TU[lang] || TU.es;
+  try {
+    await sendMail({ to: email, subject: tr.subject, html: buildUsernameChangeHtml(tr, businessName, confirmUrl, newUsername) });
+    console.log(`[mailer] Username change email sent to ${email}`);
+  } catch (err) {
+    console.error('[mailer] Failed to send username change email:', err.response?.data || err.message);
+  }
+}
+
+module.exports = { sendWelcome, sendPasswordReset, sendAccountDeletion, sendUsernameChange };
