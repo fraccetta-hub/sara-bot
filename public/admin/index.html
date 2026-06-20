@@ -363,7 +363,7 @@
       <button class="py-2.5 px-1 sm:px-0 whitespace-nowrap flex-shrink-0" id="tabOrders" onclick="switchTab('orders')">🛒 Pedidos</button>
       <button class="py-2.5 px-1 sm:px-0 whitespace-nowrap flex-shrink-0" id="tabCustomers" data-i18n="tab.customers" onclick="switchTab('customers')">👥 Clientes</button>
       <button class="py-2.5 px-1 sm:px-0 whitespace-nowrap flex-shrink-0" id="tabAppointments" onclick="switchTab('appointments')">📅 Turnos</button>
-      <button class="py-2.5 px-1 sm:px-0 whitespace-nowrap flex-shrink-0 hidden" id="tabRestaurant" onclick="switchTab('restaurant')">🍽️ <span data-i18n="tab.restaurant">Restaurante</span></button>
+      <button class="py-2.5 px-1 sm:px-0 whitespace-nowrap flex-shrink-0 hidden" id="tabRestaurant" onclick="switchTab('restaurant')">🪑 <span data-i18n="tab.restaurant">Tavoli</span></button>
       <button class="py-2.5 px-1 sm:px-0 whitespace-nowrap flex-shrink-0" id="tabSettings" onclick="switchTab('settings')">⚙️ Ajustes</button>
       <button class="py-2.5 px-1 sm:px-0 whitespace-nowrap flex-shrink-0" id="tabAnalytics" data-i18n="tab.analytics" onclick="switchTab('analytics')">📊 Analytics</button>
       <button class="py-2.5 px-1 sm:px-0 whitespace-nowrap flex-shrink-0 relative" id="tabSupport" onclick="switchTab('support')"><span data-i18n="tab.support">💬 Ayuda y Soporte</span><span id="supportUnreadBadge" class="hidden absolute -top-0.5 -right-1 w-4 h-4 bg-red-500 rounded-full text-white text-[9px] font-bold flex items-center justify-center">!</span></button>
@@ -687,18 +687,9 @@
     <!-- ── RESTAURANT TAB ── -->
     <div id="sectionRestaurant" class="hidden space-y-6">
 
-      <!-- Enable toggle + slot duration -->
+      <!-- Slot duration -->
       <div class="bg-white rounded-xl shadow-sm p-5">
-        <div class="flex items-center justify-between mb-4">
-          <div>
-            <h2 data-i18n="restaurant.title" class="text-lg font-semibold text-gray-800">🍽️ Restaurante</h2>
-            <p data-i18n="restaurant.desc" class="text-sm text-gray-500 mt-0.5">Activa la gestión de reservas de mesa con Sara.</p>
-          </div>
-          <label class="relative inline-flex items-center cursor-pointer">
-            <input type="checkbox" id="restaurantEnabled" class="sr-only peer" onchange="saveRestaurantSettings()">
-            <div class="w-11 h-6 bg-gray-200 peer-focus:ring-2 peer-focus:ring-green-300 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
-          </label>
-        </div>
+        <h2 class="text-lg font-semibold text-gray-800 mb-4">🪑 <span data-i18n="restaurant.title">Tavoli e prenotazioni</span></h2>
         <div class="flex items-center gap-3">
           <label data-i18n="restaurant.slotDuration" class="text-sm text-gray-600 whitespace-nowrap">Duración de mesa (min):</label>
           <input type="number" id="restaurantSlotDuration" value="90" min="30" max="300" step="15"
@@ -3491,7 +3482,6 @@ async function loadRestaurant() {
   _rZones  = zones  || [];
   _rTables = tables || [];
   _mealBands = Array.isArray(settings.restaurant_meal_bands) ? settings.restaurant_meal_bands : [];
-  document.getElementById('restaurantEnabled').checked = !!settings.restaurant_enabled;
   document.getElementById('restaurantSlotDuration').value = settings.restaurant_slot_duration || 90;
   renderZones();
   renderTables();
@@ -3538,10 +3528,8 @@ async function initReservationsView() {
 }
 
 async function saveRestaurantSettings() {
-  const enabled  = document.getElementById('restaurantEnabled').checked;
   const duration = parseInt(document.getElementById('restaurantSlotDuration').value) || 90;
-  await api('/admin/restaurant/settings', 'PUT', { restaurant_enabled: enabled, restaurant_slot_duration: duration });
-  applyTabVisibility(planProductsEnabled, planServicesEnabled, planAppointmentsEnabled, enabled);
+  await api('/admin/restaurant/settings', 'PUT', { restaurant_enabled: true, restaurant_slot_duration: duration });
 }
 
 function renderZones() {
