@@ -87,7 +87,7 @@ router.get('/stats', requireSuper, async (req, res) => {
 router.get('/tenants', requireSuper, async (req, res) => {
   const { data: tenants, error } = await supabase
     .from('tenants')
-    .select('id, name, active, plan_expires, phone_number_id, bot_name, merchant_phone, created_at, whatsapp_token_refresh_error, whatsapp_token, email, country, login_slug')
+    .select('id, name, active, plan_expires, phone_number_id, bot_name, merchant_phone, created_at, whatsapp_token_refresh_error, whatsapp_token, email, country, login_slug, products_enabled, services_enabled, appointments_enabled, restaurant_enabled')
     .order('created_at', { ascending: false });
 
   if (error) return res.status(500).json({ error: error.message });

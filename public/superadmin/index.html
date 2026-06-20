@@ -81,7 +81,9 @@
           <thead class="bg-gray-50 text-gray-500 uppercase text-xs">
             <tr>
               <th class="px-4 py-3 text-left">Local</th>
-              <th class="px-4 py-3 text-left hidden md:table-cell">Phone Number ID</th>
+              <th class="px-4 py-3 text-left hidden lg:table-cell">Email</th>
+              <th class="px-4 py-3 text-center hidden md:table-cell">WhatsApp</th>
+              <th class="px-4 py-3 text-center hidden sm:table-cell">Plan</th>
               <th class="px-4 py-3 text-center hidden sm:table-cell">Pedidos</th>
               <th class="px-4 py-3 text-center">Estado</th>
               <th class="px-4 py-3 text-center">Acciones</th>
@@ -614,31 +616,42 @@ function renderTenants(list) {
     return `
     <tr class="hover:bg-gray-50 transition border-t border-gray-50">
       <td class="px-4 py-3">
-        <div class="font-medium text-gray-800">${t.name}${tokenBadge}</div>
-        <div class="text-xs text-gray-400 mt-0.5">${t.email || t.login_slug || '—'} · ${t.merchant_phone || '—'} · ${metaHtml}${expiryHint}</div>
-        <div class="text-xs text-gray-300">${t.bot_name || 'Sara'} · desde ${new Date(t.created_at).toLocaleDateString('es-PY')}</div>
+        <div class="font-medium text-gray-800 text-sm">${t.name}</div>
+        <div class="text-xs text-gray-400 font-mono mt-0.5">${t.login_slug || '—'}${expiryHint}</div>
       </td>
-      <td class="px-4 py-3 text-gray-400 text-xs hidden md:table-cell font-mono">${t.phone_number_id}</td>
+      <td class="px-4 py-3 hidden lg:table-cell">
+        <div class="text-xs text-gray-600 break-all">${t.email || '—'}</div>
+        <div class="text-xs text-gray-300 mt-0.5">${t.merchant_phone || '—'}</div>
+      </td>
+      <td class="px-4 py-3 text-center hidden md:table-cell">
+        ${tokenBadge
+          ? `<div class="text-xs text-red-600 font-semibold">❌ Token</div><div class="text-xs text-gray-300 mt-0.5" title="${t.whatsapp_token_refresh_error?.replace(/"/g,'&quot;') || ''}">${(t.whatsapp_token_refresh_error || '').slice(0,24)}…</div>`
+          : t.meta_connected
+            ? '<div class="text-xs text-green-600 font-semibold">✅ Token propio</div>'
+            : '<div class="text-xs text-blue-500 font-semibold">🔵 Token global</div>'
+        }
+      </td>
       <td class="px-4 py-3 text-center hidden sm:table-cell">
-        <span class="font-medium">${t.totalOrders}</span>
-        ${t.pendingOrders > 0 ? `<span class="ml-1 badge status-inactive">${t.pendingOrders} pend.</span>` : ''}
+        <span class="text-xs font-semibold text-gray-700">${PLAN_LABELS[currentPlan] || '—'}</span>
+      </td>
+      <td class="px-4 py-3 text-center hidden sm:table-cell">
+        <span class="font-medium text-sm">${t.totalOrders}</span>
+        ${t.pendingOrders > 0 ? `<div class="text-xs badge status-inactive mt-0.5">${t.pendingOrders} pend.</div>` : ''}
       </td>
       <td class="px-4 py-3 text-center">
-        <button onclick="toggleTenant('${t.id}')"
-          class="badge ${statusClass} cursor-pointer hover:opacity-75 transition">
-          ${statusLabel}
-        </button>
+        <span class="badge ${statusClass}">${statusLabel}</span>
       </td>
-      <td class="px-4 py-3 text-right space-y-1.5">
-        <div class="text-xs font-semibold text-gray-500 mb-1">${PLAN_LABELS[currentPlan] || '—'}</div>
-        <div class="flex gap-1">
+      <td class="px-4 py-3 text-center">
+        <div class="flex gap-1 justify-center">
           <button onclick="toggleTenant('${t.id}')"
-            class="flex-1 py-1 rounded text-xs font-semibold ${t.active ? 'bg-red-50 text-red-600 hover:bg-red-100' : 'bg-green-50 text-green-600 hover:bg-green-100'} transition">
-            ${t.active ? '🔴 Desact.' : '✅ Activar'}
+            title="${t.active ? 'Desactivar' : 'Activar'}"
+            class="px-2 py-1 rounded text-xs font-semibold ${t.active ? 'bg-red-50 text-red-600 hover:bg-red-100' : 'bg-green-50 text-green-600 hover:bg-green-100'} transition">
+            ${t.active ? '🔴' : '✅'}
           </button>
           <button onclick="impersonateById('${t.id}')"
-            class="flex-1 py-1 rounded text-xs font-semibold bg-blue-50 text-blue-600 hover:bg-blue-100 transition">
-            🔑 Entr.
+            title="Entrar como este merchant"
+            class="px-2 py-1 rounded text-xs font-semibold bg-blue-50 text-blue-600 hover:bg-blue-100 transition">
+            🔑
           </button>
         </div>
       </td>
