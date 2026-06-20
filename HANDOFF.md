@@ -5,6 +5,13 @@
 - Fase attuale: email transazionali operative (Brevo HTTP API). Prossimo: Stripe env vars + META_CONFIG_ID.
 - Ultimo commit stabile: `3c91d96` — "security: rate limit forgot-password (5/h per IP), fix multer+nodemailer vulns"
 
+## COSA È STATO FATTO (sessione 2026-06-20 — riscrittura prompt support bot)
+
+### Support bot merchant — knowledge base aggiornata e precisa
+- `routes/admin.js` `SUPPORT_SYSTEM_PROMPT` riscritto: era vago/datato (citava "Business Hours tab"/"Blocks tab" inesistenti, stock sui piatti, niente reservations/franjas/capacità/cierres/broadcast/ZIP).
+- Nuovo prompt: regola "rispondi col percorso REALE passo-passo, label esatte tra virgolette, includi SEMPRE l'emoji del tab (uguale in ogni lingua), niente invenzioni — se non sai, escala". Knowledge allineata alla UI attuale: tutti i tab + bottoni reali verificati contro `index.html`/`i18n.js` (es. "+ Nuevo producto", "+ Nuevo ítem", "📥 Importar productos", "📦 Imágenes ZIP", "🕐 Horarios del local", "Citas en paralelo por horario", "Franjas de servicio", "Cantidad de mesas", "+ Nueva reserva", "🏖️ Cierres y Vacaciones", "¿Olvidaste tu contraseña?", "Conectar ahora", "Eliminar cuenta").
+- Label canoniche in spagnolo (default); il bot le cita + traduce nella lingua del merchant; emoji tab per disambiguare cross-lingua.
+
 ## COSA È STATO FATTO (sessione 2026-06-20 — fix eliminazione account email/link)
 
 ### Email + link eliminazione account (feature sessione concorrente)
