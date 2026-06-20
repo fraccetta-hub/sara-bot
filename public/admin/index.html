@@ -3530,6 +3530,7 @@ async function saveRestaurantSettings() {
   const dur1 = parseInt(document.getElementById('restaurantSlotDuration').value) || 90;
   const dur2Visible = !document.getElementById('restDur2Row').classList.contains('hidden');
   const dur2 = dur2Visible ? (parseInt(document.getElementById('restaurantSlotDuration2').value) || null) : null;
+  if (!confirm(t('restaurant.durationChangeWarning') || 'Modificando la durata, le prenotazioni esistenti manterranno il loro orario ma potrebbero risultare più o meno vicine alle altre. Continuare?')) return;
   await api('/admin/restaurant/settings', 'PUT', { restaurant_enabled: true, restaurant_slot_duration: dur1, restaurant_slot_duration_2: dur2 });
 }
 
