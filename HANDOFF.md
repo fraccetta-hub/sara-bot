@@ -12,6 +12,10 @@
 - Fix: rimossi i 2 `getElementById('pImage')` orfani in `clearImage` e `previewImage` (`public/admin/index.html`). Verificato in preview: modal apre sia restaurant (allergeni visibili, stock/sku nascosti) sia shop (stock visibile).
 - Pattern [[feedback-dom-js-sync]]: rimuovere i ref JS quando si elimina un elemento HTML.
 
+### Polish modal piatto ristorante (commit d4ed093)
+- Placeholder coerenti: tenant ristorante vede esempi piatto (`menu.namePh/categoryPh/descPh`, 6 lingue: Milanesa / Platos principales / Ingredientes...) invece di "Ramo de Rosas". Shop invariato. `openProductModal` setta `placeholder` via `t()` in base a `isRestaurantPlan`.
+- Categoria full-width: con SKU nascosto, `#catSkuGrid` passa `grid-cols-2`→`grid-cols-1` (era mezza riga con buco vuoto).
+
 ## COSA È STATO FATTO (sessione 2026-06-20 — menu ristorante)
 
 ### Menu ristorante — vista dedicata + invio menu da Sara
