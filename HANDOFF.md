@@ -1,4 +1,4 @@
-# PROJECT HANDOFF — Sara Bot (whatsapp-bot) — 2026-06-20
+# PROJECT HANDOFF — Sara Bot (whatsapp-bot) — 2026-06-21
 
 ## ✅ FATTO (sessione 2026-06-20 — dedup indirizzo/Maps nel delivery)
 
@@ -177,10 +177,42 @@ UX redesign 10-punti completato e verificato in preview (static server `public/`
 - **Admin panel "💳 Plan y facturación"** — nuova sezione "Cambiar de plan" con 4 card (Shop/Bookings/Restaurant/Pro). Piano attuale evidenziato e disabilitato. Visibile solo con Stripe sub attiva. i18n 6 lingue.
 - **Superadmin** — dropdown piano rimosso dalle righe. Il piano è read-only (badge testo). Il superadmin non gestisce più il piano; lo fa il merchant via Stripe. Le righe mostrano: nome+info+metaStatus | ordini | stato (toggle) | piano badge + Desact. + Impersonar.
 
+## ✅ FATTO (sessione 2026-06-21 — unificazione orari + walk-in ristorante)
+
+### Business hours unificati (commit 95edbcb)
+- `business_hours` è ora l'unica fonte di verità per orari, sia ristorante che non-ristorante.
+- **Orario spezzato**: nuove colonne `open_time_2`/`close_time_2` su `business_hours` per turni doppi (es. 12-15 e 19-23).
+- **Migration richiesta (ESEGUIRE su Supabase)**:
+  ```sql
+  ALTER TABLE business_hours ADD COLUMN IF NOT EXISTS open_time_2 TIME;
+  ALTER TABLE business_hours ADD COLUMN IF NOT EXISTS close_time_2 TIME;
+  ```
+- `restaurant_meal_bands` rimosso completamente da `routes/admin.js`, `routes/webhook.js`, `services/claude.js`, `public/admin/index.html`.
+- `routes/admin.js` `PUT /business-hours`: salva anche `open_time_2`/`close_time_2`. `GET /availability` usa entrambi i slot. `PUT /restaurant/settings`: rimossa validazione bande, rimossa colonna `restaurant_meal_bands`.
+- `routes/webhook.js` reservation time check: usa `open_time`/`close_time` + `open_time_2`/`close_time_2` invece di meal bands.
+- `services/claude.js` `buildAvailabilityBlock`: rimosso parametro `mealBands`, usa bh slot 1+2. `buildRestaurantStaticBlock`: rimosso parametro `mealBands`.
+- Frontend: sezione orari + chiusure ora stacked verticalmente (era `md:grid-cols-2` che causava overlap). Ogni giorno ha pulsante `+ turno` per 2° slot opzionale. `saveBusinessHours` invia `open_time_2`/`close_time_2`. Rimossa card "Franjas de servicio" dal tab Tavoli + tutte le funzioni `renderMealBands/addMealBand/saveMealBands`.
+
+### Walk-in modal redesign (commit f813067 + 21a0f43)
+- **"Occupa tavolo"**: modal non mostra più ID interni. Raggruppa tavoli liberi per (capacità, zona) con contatore `+/-`. Il merchant seleziona "2 da 4 pers. — Zona A", sistema assegna IDs automaticamente. `party_size` calcolato automaticamente.
+- **"✓ Libera"**: bottone verde su ogni prenotazione `seated` → setta status a `done` → tavolo torna disponibile nella griglia Sara. Funziona per walk-in registrati con "Occupa tavolo" (non per occupazioni fisiche non registrate).
+- **Migration richiesta (ESEGUITA)**:
+  ```sql
+  ALTER TABLE reservations DROP COLUMN IF EXISTS table_ids;
+  ALTER TABLE reservations ADD COLUMN IF NOT EXISTS table_ids BIGINT[];
+  ```
+  (`restaurant_tables.id` è BIGINT, non UUID.)
+
+### Fix date locale (commit 89ab29c + bf31e50)
+- `localDateStr(d)` helper usa `getFullYear/Month/Date` (locale browser, non UTC) — elimina bug "data di ieri" per timezone UTC+2.
+- Applicato a: `initReservationsView`, `openWalkinModal`, `openResvModal`, `apptDate`.
+- Avail grid: mostra hint "Nessun orario configurato → Impostazioni" quando `business_hours` non configurati.
+
 ## STATO CORRENTE
 - Obiettivo generale: SaaS multi-tenant WhatsApp Business (Node/Express + Supabase + Anthropic Claude). Bot AI risponde a clienti, gestisce catalogo, delivery, turni/appuntamenti, ordini.
-- Fase attuale: flusso piano completo (iscrizione → cambio → cancellazione via Stripe). Prossimo: Stripe env vars live su Render, invoicing merchant.
-- Ultimo commit stabile: `ed1dd3d` — "feat(billing): merchant plan change + superadmin read-only plan badge"
+- Fase attuale: ristorante funzionante (orari unificati, walk-in, libera tavolo). Prossimo: Stripe live env vars su Render, invoicing merchant.
+- Ultimo commit stabile: `bf31e50` — "fix: replace all toISOString date defaults with localDateStr"
+- **Migration pendente**: `business_hours.open_time_2/close_time_2` (orario spezzato) — eseguire su Supabase.
 
 ## COSA È STATO FATTO (sessione 2026-06-20 — i18n hardcoded in Ajustes)
 
