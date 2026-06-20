@@ -3593,7 +3593,7 @@ async function loadReservations() {
   loadAvailGrid();
   const el = document.getElementById('resvList');
   const STATUS_COLOR = { confirmed:'bg-blue-100 text-blue-700', seated:'bg-green-100 text-green-700', done:'bg-gray-100 text-gray-500', cancelled:'bg-red-100 text-red-500', no_show:'bg-orange-100 text-orange-600', pending_merchant:'bg-yellow-100 text-yellow-700' };
-  const STATUS_LABEL = { confirmed:'Confermata', seated:'Al tavolo', done:'Conclusa', cancelled:'Cancellata', no_show:'No show', pending_merchant:'In attesa' };
+  const STATUS_LABEL = s => t('resv.status.' + s) || s;
   if (!data?.length) {
     el.innerHTML = `<p class="text-gray-400 text-center py-6">${t('restaurant.noResvDay')}</p>`;
     return;
@@ -3620,7 +3620,7 @@ async function loadReservations() {
         ${r.status === 'seated' ? `<button onclick="updateResvStatus(${r.id},'done')" class="bg-green-500 hover:bg-green-600 text-white text-xs font-semibold px-2 py-1 rounded-lg whitespace-nowrap">✓ Libera</button>` : ''}
         <select onchange="updateResvStatus(${r.id}, this.value)" class="text-xs border border-gray-200 rounded-lg px-2 py-1 focus:outline-none ${sc}">
           ${['confirmed','seated','done','cancelled','no_show','pending_merchant'].map(s =>
-            `<option value="${s}" ${r.status===s?'selected':''}>${STATUS_LABEL[s]||s}</option>`).join('')}
+            `<option value="${s}" ${r.status===s?'selected':''}>${STATUS_LABEL(s)}</option>`).join('')}
         </select>
         <button onclick="openResvModal(${r.id})" class="text-blue-500 hover:text-blue-700 text-sm">✏️</button>
         <button onclick="deleteResv(${r.id})" class="text-red-400 hover:text-red-600 text-sm">🗑️</button>
