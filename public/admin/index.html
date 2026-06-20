@@ -3785,7 +3785,7 @@ function openResvModal(id) {
   document.getElementById('resvModalName').value  = r?.customer_name  || '';
   document.getElementById('resvModalPhone').value = r?.customer_phone || '';
   const dt = r ? new Date(r.reserved_at) : null;
-  document.getElementById('resvModalDate').value  = dt ? dt.toISOString().slice(0,10) : document.getElementById('resvDate').value;
+  document.getElementById('resvModalDate').value  = dt ? localDateStr(dt) : document.getElementById('resvDate').value;
   document.getElementById('resvModalTime').value  = dt ? dt.toTimeString().slice(0,5) : '';
   document.getElementById('resvModalParty').value = r?.party_size || '';
   document.getElementById('resvModalNotes').value = r?.notes || '';
@@ -5830,10 +5830,10 @@ function openApptModal(isoStart) {
   // Prefill date
   if (isoStart) {
     const d = new Date(isoStart);
-    document.getElementById('apptDate').value = d.toISOString().slice(0,10);
+    document.getElementById('apptDate').value = localDateStr(d);
     loadApptSlots(isoStart);
   } else {
-    document.getElementById('apptDate').value = new Date().toISOString().slice(0,10);
+    document.getElementById('apptDate').value = localDateStr();
     document.getElementById('apptSlot').innerHTML = '<option value="">Elegí fecha primero</option>';
     loadApptSlots();
   }
