@@ -1201,8 +1201,8 @@
           </div>
 
           <div class="bg-white rounded-xl shadow-sm p-6">
-            <h3 class="font-medium text-gray-800 mb-1">👤 Perfil de WhatsApp del bot</h3>
-            <p class="text-xs text-gray-400 mb-4">Foto de perfil y descripción que ven tus clientes al chatear. Se actualiza directamente en WhatsApp.</p>
+            <h3 data-i18n="settings.wp.title" class="font-medium text-gray-800 mb-1">👤 Perfil de WhatsApp del bot</h3>
+            <p data-i18n="settings.wp.desc" class="text-xs text-gray-400 mb-4">Foto de perfil y descripción que ven tus clientes al chatear. Se actualiza directamente en WhatsApp.</p>
             <div id="wpProfileMsg" class="hidden rounded-lg px-4 py-2 text-sm mb-4"></div>
             <div class="flex items-center gap-4 mb-4">
               <div class="relative w-20 h-20 flex-shrink-0">
@@ -1215,19 +1215,19 @@
                 <button id="wpRemoveBtn" onclick="removeWpPhoto()" class="hidden absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center shadow">×</button>
               </div>
               <div class="flex-1">
-                <p class="text-sm font-medium text-gray-700 mb-1">Foto de perfil</p>
-                <p class="text-xs text-gray-400 mb-2">JPG o PNG, mínimo 192×192 px. Recomendado: cuadrada.</p>
-                <button onclick="document.getElementById('wpPhotoInput').click()" class="text-xs text-purple-600 hover:underline font-medium">Elegir foto</button>
+                <p data-i18n="settings.wp.photo" class="text-sm font-medium text-gray-700 mb-1">Foto de perfil</p>
+                <p data-i18n="settings.wp.photoHint" class="text-xs text-gray-400 mb-2">JPG o PNG, mínimo 192×192 px. Recomendado: cuadrada.</p>
+                <button onclick="document.getElementById('wpPhotoInput').click()" data-i18n="settings.wp.choose" class="text-xs text-purple-600 hover:underline font-medium">Elegir foto</button>
                 <input type="file" id="wpPhotoInput" accept="image/jpeg,image/png" class="hidden" onchange="previewWpPhoto(this)"/>
               </div>
             </div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Descripción (About)</label>
-            <textarea id="sWpAbout" rows="2" maxlength="139"
+            <label data-i18n="settings.wp.about" class="block text-sm font-medium text-gray-700 mb-1">Descripción (About)</label>
+            <textarea id="sWpAbout" rows="2" maxlength="139" data-i18n-ph="settings.wp.aboutPh"
               placeholder="Ej: 🍕 Pizzería Don Carlos | Pedidos por WhatsApp 🕐 12:00–23:00"
               class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm resize-none mb-1"
               oninput="document.getElementById('wpAboutCount').textContent=this.value.length"></textarea>
             <p class="text-xs text-gray-400 text-right mb-4"><span id="wpAboutCount">0</span>/139</p>
-            <button onclick="saveWpProfile()" class="btn-green w-full py-2 rounded-lg text-sm font-semibold">
+            <button onclick="saveWpProfile()" data-i18n="settings.wp.save" class="btn-green w-full py-2 rounded-lg text-sm font-semibold">
               Actualizar perfil en WhatsApp
             </button>
           </div>
@@ -1264,8 +1264,8 @@
       <!-- Business hours + closures — full width -->
       <div class="bg-white rounded-xl shadow-sm p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <h3 class="font-medium text-gray-800 mb-1">🕐 Horarios del local</h3>
-          <p class="text-xs text-gray-400 mb-4">Definí los días y horarios de atención. Los turnos solo se pueden reservar en estos horarios.</p>
+          <h3 data-i18n="settings.hours.title" class="font-medium text-gray-800 mb-1">🕐 Horarios del local</h3>
+          <p data-i18n="settings.hours.desc" class="text-xs text-gray-400 mb-4">Definí los días y horarios de atención. Los turnos solo se pueden reservar en estos horarios.</p>
           <div class="flex items-center gap-2 mb-2">
             <label data-i18n="appt.capacity" class="text-sm text-gray-600">Citas en paralelo por horario</label>
             <input type="number" id="apptCapacity" min="1" max="50" value="1" onchange="saveApptCapacity()"
@@ -1274,7 +1274,7 @@
           <p data-i18n="appt.capacityHint" class="text-xs text-gray-400 mb-4">Cuántas citas podés atender a la vez en el mismo horario (ej: 1 para una sola sala, 3 si tenés 3 sillones).</p>
           <div id="businessHoursForm" class="space-y-2"></div>
           <div id="bhMsg" class="hidden rounded-lg px-4 py-2 text-sm mt-3"></div>
-          <button onclick="saveBusinessHours()" class="btn-green w-full py-2 rounded-lg text-sm font-semibold mt-4">Guardar horarios</button>
+          <button onclick="saveBusinessHours()" data-i18n="settings.hours.save" class="btn-green w-full py-2 rounded-lg text-sm font-semibold mt-4">Guardar horarios</button>
         </div>
         <div>
           <h3 data-i18n="settings.closures.title" class="font-medium text-gray-800 mb-1">🏖️ Cierres y Vacaciones</h3>
@@ -1283,7 +1283,7 @@
           <div class="flex gap-2 flex-wrap">
             <input id="closureStart" type="date" class="border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
             <input id="closureEnd" type="date" class="border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
-            <input id="closureLabel" type="text" data-i18n-placeholder="settings.closures.label_ph" placeholder="Ej: Vacaciones" class="border border-gray-200 rounded-lg px-3 py-2 text-sm flex-1 min-w-32"/>
+            <input id="closureLabel" type="text" data-i18n-ph="settings.closures.label_ph" placeholder="Ej: Vacaciones" class="border border-gray-200 rounded-lg px-3 py-2 text-sm flex-1 min-w-32"/>
             <button onclick="addClosure()" class="btn-green px-4 py-2 rounded-lg text-sm font-semibold" data-i18n="settings.closures.add">Agregar</button>
           </div>
           <div id="closureMsg" class="hidden rounded-lg px-4 py-2 text-sm mt-3"></div>
@@ -1296,7 +1296,7 @@
         <p data-i18n="settings.offers.desc" class="text-xs text-gray-400 mb-4">Sara menciona los precios con descuento automáticamente en la conversación.</p>
         <div id="offersList" class="space-y-2 mb-4"></div>
         <div class="grid grid-cols-1 gap-2">
-          <input id="offerLabel" type="text" data-i18n-placeholder="settings.offers.label_ph" placeholder="Nombre de la oferta" class="border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
+          <input id="offerLabel" type="text" data-i18n-ph="settings.offers.label_ph" placeholder="Nombre de la oferta" class="border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
           <div class="flex gap-2">
             <select id="offerType" class="border border-gray-200 rounded-lg px-3 py-2 text-sm">
               <option value="percent" data-i18n="settings.offers.percent">% descuento</option>
@@ -4100,7 +4100,7 @@ async function loadSettings() {
     document.getElementById('sDeliveryDisabledDates').value  =
       Array.isArray(s.delivery_disabled_dates) ? s.delivery_disabled_dates.join(', ') : (s.delivery_disabled_dates || '');
     updateDeliveryFields();
-    applyTabVisibility(s.products_enabled !== false, !!s.services_enabled, !!s.appointments_enabled);
+    applyTabVisibility(s.products_enabled !== false, !!s.services_enabled, !!s.appointments_enabled, !!s.restaurant_enabled);
 
     // Business info fields
     document.getElementById('sAddress').value         = s.address || '';
