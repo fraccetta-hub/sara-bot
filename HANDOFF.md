@@ -1112,6 +1112,37 @@ ALTER TABLE support_messages ADD  CONSTRAINT support_messages_role_check CHECK (
 - Tabella clienti → email (✉️) e indirizzo (📍) come subtext; bottone 📋 apre modal edit
 - i18n in ES/EN/IT/DE/FR/PT
 
+## COSA È STATO FATTO (sessione 2026-06-20 — fix superadmin + tab visibility + restaurant)
+
+### Support notifications persistence (commit b476a99)
+- `supportReadAt` era una Map in-memory → si resettava ad ogni restart Render → badge notifiche tornavano dopo refresh
+- Fix: `POST /superadmin/support/:tenantId/read` ora fa UPDATE `tenants.support_read_at = now()` nel DB; `GET /superadmin/support` legge `support_read_at` da `tenants` al posto della Map
+- **Migration richiesta (eseguita? ⚠️ verificare):** `ALTER TABLE tenants ADD COLUMN IF NOT EXISTS support_read_at TIMESTAMPTZ;`
+
+### Superadmin: delete tenant + fix icone token/meta (commit ec8a1e6)
+- `DELETE /superadmin/tenants/:id`: elimina tenant + tutti i dati (support_messages, appointments, orders, conversations, products, services, restaurant_tables, restaurant_reservations) in ordine di dipendenza
+- Bottone 🗑️ in colonna Acciones con doppia conferma
+- Token WA: ✅ attivo / ❌ con errore reale in tooltip
+- Meta: ✅ token Meta proprio / ❌ usa token globale — rimosso 🔵 blu confuso
+
+### Tenant di test creati (script: scripts/create-test-tenants.js)
+- Test Shop (`testshop`), Test Bookings (`testbookings`), Test Restaurant (`testrestaurant`), Test Pro (`testpro`)
+- Password: `sara1234`, token WA simulato (no errori), flag plan corretti nel DB
+
+### Bug: /admin/settings ritornava 500 per TUTTI i tenant
+- Causa: colonna `tenants.sector` non esiste nel DB → Supabase errore → 500 → `applyTabVisibility` mai chiamata → tutte le tab visibili
+- **Migration ESEGUITA:** `ALTER TABLE tenants ADD COLUMN IF NOT EXISTS sector TEXT;`
+- (Contemporaneamente: `ALTER TABLE tenants ADD COLUMN IF NOT EXISTS support_read_at TIMESTAMPTZ;`)
+
+### Fix showDashboard: singola fetch settings, tab sempre applicate (commit 7120615)
+- Prima: 2 chiamate separate a `/admin/settings`; se la seconda falliva → `applyTabVisibility` non chiamata
+- Ora: una sola fetch, risultato riusato per `waConnected` check e `applyTabVisibility`; stats caricati separatamente in fire-and-forget
+
+### Fix tab restaurant: rimosso toggle enable, icona 🍽️→🪑 (commit e7d2433)
+- Toggle "Gestisce prenotazione con Sara" era il checkbox `restaurantEnabled` — disattivandolo e salvando si chiamava `applyTabVisibility(..., false)` → tab Tavoli spariva
+- Rimosso toggle; `saveRestaurantSettings` invia sempre `restaurant_enabled: true`; `applyTabVisibility` non più chiamata da `saveRestaurantSettings`
+- Tab rinominata 🪑 "Tavoli" (era 🍽️ "Restaurante" — uguale a tab Menu)
+
 ## PROSSIME PRIORITÀ (sessione successiva)
 1. **Migration Supabase** — eseguire `ALTER TABLE conversations ADD COLUMN customer_email/customer_address`
 2. **Fatturazione** — capire come mandare fatture ai merchant
@@ -1167,7 +1198,7 @@ ALTER TABLE support_messages ADD  CONSTRAINT support_messages_role_check CHECK (
 
 ## COME RIPRENDERE
 Primo messaggio da mandare a Claude nella prossima sessione:
-"Leggi HANDOFF.md. Sessione precedente: protezione azioni sensibili (email/username/telefono/password richiedono password attuale). Prossimo: Stripe live mode env vars su Render, oppure fatturazione merchant."
+"Leggi HANDOFF.md. Sessione precedente: fix support persistence, delete tenant, fix tab visibility (sector migration), fix restaurant toggle. Prossimo: fatturazione merchant, oppure go-to-market."
 
 ## ERRORI NOTI / TRAPPOLE
 - NON leggere/query tabella prod `tenants` con `select('*')` o colonne sensibili senza autorizzazione esplicita utente per quella lettura specifica — bloccato da permission classifier (dati merchant: token WhatsApp, telefoni). `superadmin GET /tenants/:id` ora usa campi espliciti sicuri.
