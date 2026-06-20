@@ -2808,28 +2808,31 @@ async function submitReset() {
 // ── Dashboard ──────────────────────────────────────────────────────────────────
 async function showDashboard() {
   document.getElementById('loginPage').classList.add('hidden');
-  // Check WhatsApp connection — show wizard on first login, locked dashboard if dismissed
+
+  let settings;
   try {
-    const settings = await api('/admin/settings');
+    settings = await api('/admin/settings');
     if (!settings) return; // 401 → api() called logout(), abort
-    waConnected = !!settings.phone_number_id;
-    if (!waConnected && !localStorage.getItem('sara_wizard_dismissed')) {
-      showOnboarding();
-      return;
-    }
-  } catch(e) { /* fall through */ }
+  } catch(e) {
+    if (e?.status === 401) { logout(); return; }
+    // settings fetch failed — still show dashboard with defaults
+  }
+
+  waConnected = !!settings?.phone_number_id;
+  if (!waConnected && !localStorage.getItem('sara_wizard_dismissed')) {
+    showOnboarding();
+    return;
+  }
 
   document.getElementById('loginPage').classList.add('hidden');
   document.getElementById('onboardingPage').classList.add('hidden');
   document.getElementById('dashPage').classList.remove('hidden');
-
   document.getElementById('waBanner').classList.toggle('hidden', waConnected);
   applyTabGating();
-
   applyTranslations();
   startOrderNotifications();
-  try {
-    const settings = await api('/admin/settings');
+
+  if (settings) {
     TENANT_CURRENCY = settings.plan_currency || 'PYG';
     isMenuMode = settings.sector === 'delivery';
     applyTabVisibility(settings.products_enabled !== false, !!settings.services_enabled, !!settings.appointments_enabled, !!settings.restaurant_enabled);
@@ -2838,9 +2841,8 @@ async function showDashboard() {
     if (hasTokenError) showTokenErrorBanner();
     const tokenErrorCard = document.getElementById('tokenErrorCard');
     if (tokenErrorCard) tokenErrorCard.classList.toggle('hidden', !hasTokenError);
-  } catch (e) {
-    if (e.status === 401) logout();
   }
+
   api('/admin/stats').then(stats => {
     if (!stats) return;
     document.getElementById('statToday').textContent    = stats.todayOrders;
