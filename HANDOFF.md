@@ -1,5 +1,12 @@
 # PROJECT HANDOFF — Sara Bot (whatsapp-bot) — 2026-06-18
 
+## ✅ FATTO (sessione 2026-06-20 — fix doppia prenotazione ristorante)
+
+Bug: Sara (path cliente) prendeva prenotazioni infinite. `routes/webhook.js` blocco reservation auto-assegnava il tavolo libero più piccolo, ma **se tutti i tavoli erano occupati `table_id` restava null e inseriva comunque `confirmed`** → overbooking. Inoltre `upcomingReservations` poteva essere `null` (caricato solo su keyword match) → check conflitto saltato → doppia assegnazione.
+- Fix: nel handler ora **re-fetch fresco** `getUpcomingReservations(tenant.id, 90)` (finestra 90gg, non i 7 cached) → niente race/staleness; se **nessun tavolo idoneo libero** nella finestra (slot duration overlap) → `full=true`, **NON inserisce** e spinge `[SISTEMA]` per far scusare Sara e proporre altro orario/data (stesso pattern degli appuntamenti out-of-band → correzione al turno successivo).
+- Tavolo assegnato resta bloccato per la sua fascia (overlap reqStart<rEnd && reqEnd>rStart su `restaurant_slot_duration`). Manuale (merchant `POST /restaurant/reservations`) invariato = override volontario consentito.
+- Limite noto: la conferma ottimistica di Sara parte comunque quel turno (reply generato prima del guard); il [SISTEMA] corregge al messaggio dopo. Per eliminarlo servirebbe override del reply con lingua cliente (non disponibile in scope) — coerente col comportamento appuntamenti già esistente.
+
 ## ✅ FATTO (sessione 2026-06-20 — branding sarabot.pro su tutti i download)
 
 Regola: **form vuoti** (template xlsx) = con istruzioni; **form con dati** (export) = solo dati, CSV reimportabile. Tutti i file esportati portano il riferimento a sarabot.pro nei metadati.

@@ -1640,29 +1640,40 @@ async function handleCustomerMessage(tenant, customerPhone, messageText, locatio
         });
       } else {
 
-      // Auto-assign smallest available table (skip if pending_merchant)
-      let tableId = null, zoneId = null;
-      if (!isPending && restaurantTables?.length) {
-        // Find tables big enough for the party, sorted by capacity ascending
-        const candidates = (restaurantTables || [])
+      // Auto-assign smallest available table and BLOCK it for this slot.
+      // Re-fetch reservations fresh (the cached list may be null/stale) so two
+      // customers can't both grab the last table in the same time window.
+      let tableId = null, zoneId = null, full = false;
+      const hasTables = restaurantTables?.length > 0;
+      if (!isPending && hasTables) {
+        const dur      = tenant.restaurant_slot_duration || 90;
+        const reqStart = new Date(reservedAt).getTime();
+        const reqEnd   = reqStart + dur * 60000;
+        const existingRes = await getUpcomingReservations(tenant.id, 90);
+
+        const candidates = restaurantTables
           .filter(t => t.capacity >= party_size)
           .sort((a, b) => a.capacity - b.capacity);
 
         for (const t of candidates) {
-          // Check if table is free at this time (no overlap in existing reservations)
-          const dur = tenant.restaurant_slot_duration || 90;
-          const reqStart = new Date(reservedAt).getTime();
-          const reqEnd   = reqStart + dur * 60000;
-          const conflict = (upcomingReservations || []).some(r => {
+          const conflict = existingRes.some(r => {
             if (r.table_id !== t.id) return false;
-            if (['cancelled','done','no_show'].includes(r.status)) return false;
             const rStart = new Date(r.reserved_at).getTime();
             const rEnd   = rStart + (r.duration_min || dur) * 60000;
             return reqStart < rEnd && reqEnd > rStart;
           });
           if (!conflict) { tableId = t.id; zoneId = t.zone_id; break; }
         }
+        // No suitable free table → fully booked for this slot, do NOT save.
+        if (!tableId) full = true;
       }
+
+      if (full) {
+        updatedHistory.push({
+          role: 'user',
+          content: `[SISTEMA] No hay mesas disponibles para ${party_size} personas el ${date} a las ${resHHMM} (todas ocupadas en esa franja). La reserva NO se guardó. Informá al cliente en su idioma, pedí disculpas y ofrecé otro horario u otra fecha disponible. No confirmes la reserva.`
+        });
+      } else {
 
       // Match zone_preference to zone_id if not assigned via table
       if (!zoneId && zone_preference && restaurantZones?.length) {
@@ -1691,6 +1702,7 @@ async function handleCustomerMessage(tenant, customerPhone, messageText, locatio
           `⚠️ *Reserva grupo grande — requiere tu atención*\n👤 ${customer_name || customerPhone} (+${customerPhone})\n👥 ${party_size} personas\n📅 ${dt}\n\nContactá al cliente para coordinar los lugares.`,
           phoneNumberId, token);
       }
+      } // end full else
       } // end validTime else
     } catch (e) {
       console.error('[reservation] error:', e.message);
