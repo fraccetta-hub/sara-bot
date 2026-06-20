@@ -1019,9 +1019,26 @@ ALTER TABLE support_messages ADD  CONSTRAINT support_messages_role_check CHECK (
 - `public/admin/i18n.js` — **TR traduzioni admin** (ES/EN/IT/DE/FR/PT). Edita qui, non in index.html.
 - `public/register/i18n.js` — **TR traduzioni register** (ES/EN/IT/DE/FR/PT). Edita qui, non in index.html.
 
+## COSA È STATO FATTO (sessione 2026-06-20 — protezione azioni sensibili impostazioni)
+
+### Password richiesta per cambio email, username, telefono merchant, password
+- **Backend** (`routes/admin.js`): aggiunta helper `verifyCurrentPassword(tenantId, pwd)` → bcrypt compare vs `admin_password_hash`.
+- `POST /admin/change-email`: richiede `currentPassword`, verifica prima di aggiornare.
+- `POST /admin/change-username`: richiede `currentPassword`, verifica prima di aggiornare.
+- `POST /admin/change-password`: richiede `currentPassword`, verifica prima di aggiornare.
+- Nuovo `POST /admin/change-merchant-phone`: richiede `currentPassword`, verifica, aggiorna `merchant_phone`. Il campo `merchant_phone` rimosso da allowed in `PUT /admin/settings`.
+- ErrorCode `wrong_password` (HTTP 403) su verifica fallita.
+- **Frontend** (`public/admin/index.html`):
+  - Card Account: aggiunto campo `#aCurrentPwd` (password attuale) condiviso tra cambio email e cambio username.
+  - Card Password: aggiunto campo `#currentPwd` sopra il campo nuova password.
+  - Card Telefono WhatsApp: aggiunto campo `#sPhoneCurrentPwd`. `saveMerchantPhone()` ora chiama `POST /admin/change-merchant-phone` invece di `PUT /admin/settings`.
+  - Campi password svuotati dopo successo.
+- **i18n** (`public/admin/i18n.js`): chiavi `settings.account.currentPwd`, `settings.account.currentPwdPh`, `err.wrong_password` in ES/EN/IT/DE/FR/PT.
+- Commit: `cda5d9d` — push completato.
+
 ## COME RIPRENDERE
 Primo messaggio da mandare a Claude nella prossima sessione:
-"Leggi HANDOFF.md. Sessione precedente: Stripe test mode verificato end-to-end (LLC account). Register redesign completato (4 settori piano-linked, layout largo, restaurant popular, feature da landing). Prossimo: fatturazione merchant o go-to-market."
+"Leggi HANDOFF.md. Sessione precedente: protezione azioni sensibili (email/username/telefono/password richiedono password attuale). Prossimo: Stripe live mode env vars su Render, oppure fatturazione merchant."
 
 ## ERRORI NOTI / TRAPPOLE
 - NON leggere/query tabella prod `tenants` con `select('*')` o colonne sensibili senza autorizzazione esplicita utente per quella lettura specifica — bloccato da permission classifier (dati merchant: token WhatsApp, telefoni). `superadmin GET /tenants/:id` ora usa campi espliciti sicuri.
