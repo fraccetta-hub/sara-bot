@@ -144,10 +144,25 @@ UX redesign 10-punti completato e verificato in preview (static server `public/`
 
 **Nota infra**: aggiunta config `admin-static` in `.claude/launch.json` (npx serve public :4100) per preview statico del pannello.
 
+## ✅ FATTO (sessione 2026-06-20 — superadmin inline rows + tab visibility fix)
+
+### Superadmin — righe espandibili inline (commit 46449f1)
+- Rimosso il pattern "✏️ Editar → modal". Ogni riga tenant ha ora un toggle **▼ Ver / ▲ Ocultar** che espande una riga di dettaglio inline (no modal).
+- Dettaglio inline mostra: email, usuario/slug, merchant phone, bot phone, stato Meta.
+- **Module toggles** (Productos / Servicios / Turnos-Citas / Restaurante) con bottone "💾 Guardar módulos" → chiama `PUT /superadmin/tenants/:id` per aggiornare i flag live. Restaurant toggle auto-abilita Productos+Turnos e disabilita Servicios (non esiste concetto servizi per ristorante).
+- Azioni inline: Desactivar/Activar + Impersonar (no modal).
+- `detailLoaded[id]` cache: il fetch tenant avviene una sola volta per espansione, non ripetuto.
+- Modal HTML (`#editModal`) conservato come contenitore stub per le funzioni import legacy.
+
+### Tab visibility coherence — causa radice + fix (commit 46449f1)
+- **Root cause**: `POST /superadmin/tenants` non settava MAI `products_enabled/services_enabled/appointments_enabled/restaurant_enabled` → colonne rimanevano NULL nel DB → `products_enabled !== false` era `true` → tutti i tab visibili per qualsiasi piano.
+- **Fix 1 — tenant esistenti**: module toggles nella riga espandibile permettono di correggere i flag senza SQL.
+- **Fix 2 — nuovi tenant**: form "Registrar nuevo cliente" ora ha `<select id="nPlan">` (Shop / Bookings / Restaurant / Pro). `createTenant()` mappa il piano ai flag corretti e li manda nel POST. `routes/superadmin.js` `POST /tenants` ora accetta e persiste `products_enabled/services_enabled/appointments_enabled/restaurant_enabled` + `plan_currency/plan_expires/plan_price`.
+
 ## STATO CORRENTE
 - Obiettivo generale: SaaS multi-tenant WhatsApp Business (Node/Express + Supabase + Anthropic Claude). Bot AI risponde a clienti, gestisce catalogo, delivery, turni/appuntamenti, ordini.
-- Fase attuale: email transazionali operative (Brevo HTTP API). Prossimo: Stripe env vars + META_CONFIG_ID.
-- Ultimo commit stabile: `3c91d96` — "security: rate limit forgot-password (5/h per IP), fix multer+nodemailer vulns"
+- Fase attuale: superadmin UX completa. Prossimo: Stripe env vars + invoicing merchant.
+- Ultimo commit stabile: `46449f1` — "feat(superadmin): inline expandable tenant rows + plan module flags"
 
 ## COSA È STATO FATTO (sessione 2026-06-20 — i18n hardcoded in Ajustes)
 
