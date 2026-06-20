@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node index.js",
     "dev": "node --watch index.js",
+    "gen-templates": "node scripts/gen-templates.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -28,5 +29,8 @@
     "multer": "^2.1.1",
     "nodemailer": "^9.0.0",
     "stripe": "^22.2.1"
+  },
+  "devDependencies": {
+    "exceljs": "^4.4.0"
   }
 }

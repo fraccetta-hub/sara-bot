@@ -1,5 +1,20 @@
 # PROJECT HANDOFF — Sara Bot (whatsapp-bot) — 2026-06-18
 
+## ✅ FATTO (sessione 2026-06-20 — template import/export separati + CSV a colonne)
+
+### Due template separati (catalogo vs menu)
+- Generati 2 file: `public/catalog_template.xlsx` (shop: name/category/description/price/stock/available) e `public/menu_template.xlsx` (ristorante: name/category/description/**allergens**/price/available — niente stock). Header in **inglese**.
+- Ogni file ha 2 fogli istruzioni: **"Instructions"** (EN) + **"Instrucciones"** (ES), stesso contenuto, aggiornato (come compilare, available Yes/No, prezzo numero senza simbolo, non rinominare header, allergeni separati da virgola solo menu, foto via ZIP, dedup per nome).
+- Generatore: `scripts/gen-templates.js` (exceljs, dropdown Yes/No, freeze header, autofilter). `npm run gen-templates`. `exceljs` aggiunto a devDependencies (NON serve a runtime — il route fa solo `res.download` del file statico).
+- `routes/admin.js` `GET /admin/catalog-template`: ora **branch su `restaurant_enabled`** → ristorante scarica menu_template, altri catalog_template.
+- Frontend: `#importCsvColumnsHint` mostra colonne corrette per shop / menu / servizi.
+
+### Export CSV → si apre in colonne (era tutto in una colonna)
+- Nuovo helper `toCsv(headers, rows)` in `routes/admin.js`: delimitatore **`;`** + prima riga **`sep=;`** → Excel (anche locale ES/IT) splitta nelle colonne. BOM mantenuto. Quote su `;`/`"`/newline.
+- `products/export` ora **restaurant-aware** (colonne = template menu o catalogo) + `services/export` + `orders/export` + `customers/export` usano `toCsv`. Colonne export = colonne template → **round-trip pulito** al re-import.
+- Import reso delimiter-aware: `parseCSVLine(line, delim)`; import-preview rileva `sep=;` e auto-detect `;` vs `,` (export nostro = `;`, Google Sheets = `,`). Aggiunta colonna **allergens** al parsing. Stock importato `null` (non 0) quando colonna assente; import-confirm forza `stock_qty=null` per tenant ristorante.
+- Round-trip testato: export `;` con campo contenente `;`/`,` virgolettato → re-import parser lo ricostruisce correttamente.
+
 ## ✅ FATTO (sessione 2026-06-20 — UX redesign pannello admin)
 
 UX redesign 10-punti completato e verificato in preview (static server `public/` su :4100, eval + snapshot + resize mobile).

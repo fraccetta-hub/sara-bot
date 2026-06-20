@@ -280,7 +280,7 @@ router.get('/settings', requireAuth, async (req, res) => {
              delivery_min_order, delivery_disabled_dates,
              address, google_review_url,
              restaurant_enabled, restaurant_slot_duration, restaurant_meal_bands, appointment_capacity,
-             active, plan_expires, plan_currency, plan_price, phone_number_id, whatsapp_token_refresh_error,
+             sector, active, plan_expires, plan_currency, plan_price, phone_number_id, whatsapp_token_refresh_error,
              stripe_subscription_status, subscription_cancel_at_period_end`)
     .eq('id', req.tenant.tenantId)
     .single();
@@ -355,11 +355,15 @@ router.post('/change-username', requireAuth, async (req, res) => {
 });
 
 // ─── GET /admin/catalog-template ─────────────────────────────────────────────
-
-router.get('/catalog-template', requireAuth, (req, res) => {
+// Restaurant tenants get the menu template (dishes + allergens), everyone else
+// gets the catalog template (products + stock).
+router.get('/catalog-template', requireAuth, async (req, res) => {
   const path = require('path');
-  const file = path.join(__dirname, '../public/catalog_template.xlsx');
-  res.download(file, 'catalogo_template.xlsx');
+  const { data: t } = await supabase
+    .from('tenants').select('restaurant_enabled').eq('id', req.tenant.tenantId).single();
+  const isMenu = !!t?.restaurant_enabled;
+  const file = path.join(__dirname, isMenu ? '../public/menu_template.xlsx' : '../public/catalog_template.xlsx');
+  res.download(file, isMenu ? 'menu_template.xlsx' : 'catalog_template.xlsx');
 });
 
 // ─── GET /admin/products ──────────────────────────────────────────────────────
@@ -498,7 +502,7 @@ router.get('/orders', requireAuth, async (req, res) => {
 router.get('/customers', requireAuth, async (req, res) => {
   const { data, error } = await supabase
     .from('conversations')
-    .select('customer_phone, customer_name, updated_at')
+    .select('customer_phone, customer_name, customer_email, customer_address, updated_at')
     .eq('tenant_id', req.tenant.tenantId)
     .order('updated_at', { ascending: false });
   if (error) return res.status(500).json({ error: error.message });
@@ -508,7 +512,7 @@ router.get('/customers', requireAuth, async (req, res) => {
 // ─── POST /admin/customers — add customer manually ───────────────────────────
 
 router.post('/customers', requireAuth, async (req, res) => {
-  let { phone, name } = req.body;
+  let { phone, name, email, address } = req.body;
   if (!phone) return res.status(400).json({ error: 'phone required', errorCode: 'missing_phone' });
   phone = String(phone).replace(/\D/g, '');
   if (!phone) return res.status(400).json({ error: 'invalid phone', errorCode: 'invalid_phone' });
@@ -518,9 +522,11 @@ router.post('/customers', requireAuth, async (req, res) => {
     .upsert({
       tenant_id:     req.tenant.tenantId,
       customer_phone: phone,
-      customer_name: name?.trim() || null,
-      messages_json: [],
-      updated_at:    new Date().toISOString(),
+      customer_name:    name?.trim()    || null,
+      customer_email:   email?.trim()   || null,
+      customer_address: address?.trim() || null,
+      messages_json:    [],
+      updated_at:       new Date().toISOString(),
     }, { onConflict: 'tenant_id,customer_phone', ignoreDuplicates: false });
   if (error) return res.status(500).json({ error: error.message });
   res.json({ ok: true });
@@ -535,6 +541,22 @@ router.put('/customers/:phone/name', requireAuth, async (req, res) => {
   const { error } = await supabase
     .from('conversations')
     .update({ customer_name: name.trim() })
+    .eq('tenant_id', req.tenant.tenantId)
+    .eq('customer_phone', req.params.phone);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ ok: true });
+});
+
+// ─── PUT /admin/customers/:phone/info — update email + address ───────────────
+
+router.put('/customers/:phone/info', requireAuth, async (req, res) => {
+  const { email, address } = req.body;
+  const { error } = await supabase
+    .from('conversations')
+    .update({
+      customer_email:   email?.trim()   || null,
+      customer_address: address?.trim() || null,
+    })
     .eq('tenant_id', req.tenant.tenantId)
     .eq('customer_phone', req.params.phone);
   if (error) return res.status(500).json({ error: error.message });
@@ -913,8 +935,13 @@ router.post('/import-preview', requireAuth, async (req, res) => {
       csv = await response.text();
     }
 
-    // Parse CSV
-    const lines = csv.split('\n').map(l => l.trim()).filter(Boolean);
+    // Parse CSV — strip BOM, honor a leading "sep=;" Excel directive, and
+    // auto-detect ";" vs "," delimiter (our exports use ";", Google Sheets ",").
+    const lines = csv.replace(/^﻿/, '').split('\n').map(l => l.trim()).filter(Boolean);
+    let delim = ',';
+    const sepMatch = lines[0]?.match(/^sep=(.)$/i);
+    if (sepMatch) { delim = sepMatch[1]; lines.shift(); }
+    else if ((lines[0]?.split(';').length || 0) > (lines[0]?.split(',').length || 0)) delim = ';';
     if (lines.length < 2) return res.status(400).json({ error: 'El Sheet está vacío o tiene solo encabezados' });
 
     // Normalize header names
@@ -922,7 +949,7 @@ router.post('/import-preview', requireAuth, async (req, res) => {
       .replace(/[áà]/g,'a').replace(/[éè]/g,'e').replace(/[íì]/g,'i')
       .replace(/[óò]/g,'o').replace(/[úù]/g,'u').replace(/\s+/g,'_');
 
-    const headers = parseCSVLine(lines[0]).map(normalize);
+    const headers = parseCSVLine(lines[0], delim).map(normalize);
 
     const COL = {
       name:        headers.findIndex(h => ['nombre','name','producto','servicio'].includes(h)),
@@ -932,6 +959,7 @@ router.post('/import-preview', requireAuth, async (req, res) => {
       price_type:  headers.findIndex(h => ['tipo','type','price_type','tipo_precio'].includes(h)),
       duration:    headers.findIndex(h => ['duracion_min','duration_min','duracion','duracion_minutos'].includes(h)),
       stock:       headers.findIndex(h => ['stock','stock_qty','cantidad'].includes(h)),
+      allergens:   headers.findIndex(h => ['allergens','alergenos','alérgenos','alergeni','allergeni'].includes(h)),
       image_url:   headers.findIndex(h => ['imagen_url','image_url','imagen','image','foto','foto_url'].includes(h)),
       available:   headers.findIndex(h => ['disponible','available','activo','active'].includes(h)),
     };
@@ -941,7 +969,7 @@ router.post('/import-preview', requireAuth, async (req, res) => {
 
     const rows = [];
     for (let i = 1; i < lines.length; i++) {
-      const cells = parseCSVLine(lines[i]);
+      const cells = parseCSVLine(lines[i], delim);
       const name  = cells[COL.name]?.trim();
       if (!name) continue; // skip empty rows
 
@@ -959,7 +987,8 @@ router.post('/import-preview', requireAuth, async (req, res) => {
         price_guarani: price,
         price_type:  type,
         duration_min: COL.duration >= 0 ? (parseInt(cells[COL.duration]) || null) : null,
-        stock_qty:   COL.stock    >= 0 ? (parseInt(cells[COL.stock])    || 0)    : 0,
+        stock_qty:   COL.stock    >= 0 ? (parseInt(cells[COL.stock])    || 0)    : null,
+        allergens:   COL.allergens >= 0 ? (cells[COL.allergens]?.trim() || null) : null,
         image_url:   COL.image_url >= 0 ? (cells[COL.image_url]?.trim() || null) : null,
         is_available: isAvail,
       });
@@ -981,6 +1010,11 @@ router.post('/import-confirm', requireAuth, async (req, res) => {
     return res.status(400).json({ error: 'Sin datos para importar' });
 
   try {
+    // Restaurant dishes don't track stock — force stock_qty null on insert.
+    const { data: tn } = await supabase
+      .from('tenants').select('restaurant_enabled').eq('id', req.tenant.tenantId).single();
+    const isMenu = !!tn?.restaurant_enabled;
+
     // Fetch existing names to avoid duplicates (exact match)
     const { data: existing } = await supabase
       .from(target).select('name').eq('tenant_id', req.tenant.tenantId);
@@ -1008,7 +1042,7 @@ router.post('/import-confirm', requireAuth, async (req, res) => {
           price_guarani: r.price_guarani || 0,
           price_type:    r.price_type    || 'fixed',
           duration_min:  r.duration_min  || null,
-          stock_qty:     r.stock_qty     ?? 99,
+          stock_qty:     isMenu ? null : (r.stock_qty ?? 99),
           allergens:     r.allergens     || null,
           image_url:     r.image_url     || null,
           is_available:  r.is_available  ?? true,
@@ -1213,13 +1247,13 @@ router.post('/products/bulk-images', requireAuth, zipRateLimit, handleZipUpload,
 });
 
 // Helper: parse a single CSV line respecting quoted fields
-function parseCSVLine(line) {
+function parseCSVLine(line, delim = ',') {
   const result = [];
   let cur = '', inQ = false;
   for (let i = 0; i < line.length; i++) {
     const c = line[i];
     if (c === '"') { inQ = !inQ; continue; }
-    if (c === ',' && !inQ) { result.push(cur); cur = ''; continue; }
+    if (c === delim && !inQ) { result.push(cur); cur = ''; continue; }
     cur += c;
   }
   result.push(cur);
@@ -1770,14 +1804,6 @@ router.get('/orders/export', requireAuth, async (req, res) => {
     conversations: undefined,
   }));
 
-  // Build CSV
-  const escape = v => {
-    if (v == null) return '';
-    const s = typeof v === 'object' ? JSON.stringify(v) : String(v);
-    return s.includes(',') || s.includes('"') || s.includes('\n')
-      ? `"${s.replace(/"/g, '""')}"` : s;
-  };
-
   const headers = ['id','created_at','status','customer_phone','customer_name','items','total_guarani','delivery_fee'];
   const rows = orders.map(o => [
     o.id,
@@ -1790,14 +1816,12 @@ router.get('/orders/export', requireAuth, async (req, res) => {
       : '',
     o.total_guarani,
     o.delivery_fee || 0,
-  ].map(escape).join(','));
+  ]);
 
-  const csv = [headers.join(','), ...rows].join('\r\n');
   const date = new Date().toISOString().slice(0,10);
-
   res.setHeader('Content-Type', 'text/csv; charset=utf-8');
   res.setHeader('Content-Disposition', `attachment; filename="orders_${date}.csv"`);
-  res.send('﻿' + csv); // BOM for Excel UTF-8 compatibility
+  res.send(toCsv(headers, rows));
 });
 
 // ─── GET /admin/orders/new — check for orders newer than a timestamp ──────────
@@ -1818,71 +1842,71 @@ router.get('/orders/new', requireAuth, async (req, res) => {
   res.json({ orders });
 });
 
-// ─── GET /admin/products/export — CSV export of the full catalog ─────────────
+// Builds an Excel-friendly CSV: ";" delimiter + a "sep=;" directive so Excel
+// (incl. ES/IT locales whose list separator is ";") splits into proper columns.
+function toCsv(headers, rows) {
+  const escape = v => {
+    if (v == null) return '';
+    const s = String(v);
+    return /[;"\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  const body = [headers, ...rows].map(r => r.map(escape).join(';')).join('\r\n');
+  return '﻿' + 'sep=;\r\n' + body;
+}
+
+// ─── GET /admin/products/export — CSV export of the catalog/menu ─────────────
+// Columns mirror the downloadable template so the file round-trips on re-import.
 router.get('/products/export', requireAuth, async (req, res) => {
+  const { data: t } = await supabase
+    .from('tenants').select('restaurant_enabled').eq('id', req.tenant.tenantId).single();
+  const isMenu = !!t?.restaurant_enabled;
+
   const { data, error } = await supabase
     .from('products')
-    .select('name, category, price_guarani, stock_qty, is_available, description, image_url, created_at')
+    .select('name, category, description, allergens, price_guarani, stock_qty, is_available')
     .eq('tenant_id', req.tenant.tenantId)
     .order('category', { ascending: true });
   if (error) return res.status(500).json({ error: error.message });
 
-  const escape = v => {
-    if (v == null) return '';
-    const s = String(v);
-    return s.includes(',') || s.includes('"') || s.includes('\n')
-      ? `"${s.replace(/"/g, '""')}"` : s;
-  };
+  const headers = isMenu
+    ? ['name','category','description','allergens','price','available']
+    : ['name','category','description','price','stock','available'];
+  const rows = (data || []).map(p => isMenu
+    ? [p.name, p.category, p.description, p.allergens, p.price_guarani, p.is_available ? 'Yes' : 'No']
+    : [p.name, p.category, p.description, p.price_guarani, p.stock_qty ?? '', p.is_available ? 'Yes' : 'No']);
 
-  const headers = ['name','category','price','stock','active','description','image_url','created_at'];
-  const rows = (data || []).map(p => [
-    p.name, p.category, p.price_guarani, p.stock_qty ?? '',
-    p.is_available ? 'yes' : 'no', p.description, p.image_url,
-    p.created_at ? new Date(p.created_at).toISOString().slice(0,19).replace('T',' ') : '',
-  ].map(escape).join(','));
-
-  const csv = [headers.join(','), ...rows].join('\r\n');
   const date = new Date().toISOString().slice(0,10);
   res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-  res.setHeader('Content-Disposition', `attachment; filename="catalogo_${date}.csv"`);
-  res.send('﻿' + csv);
+  res.setHeader('Content-Disposition', `attachment; filename="${isMenu ? 'menu' : 'catalogo'}_${date}.csv"`);
+  res.send(toCsv(headers, rows));
 });
 
 // ─── GET /admin/services/export — CSV export of all services ─────────────────
 router.get('/services/export', requireAuth, async (req, res) => {
   const { data, error } = await supabase
     .from('services')
-    .select('name, category, price_type, price_guarani, duration_min, is_available, description, image_url, created_at')
+    .select('name, category, description, price_type, price_guarani, duration_min, is_available')
     .eq('tenant_id', req.tenant.tenantId)
     .order('category', { ascending: true });
   if (error) return res.status(500).json({ error: error.message });
 
-  const escape = v => {
-    if (v == null) return '';
-    const s = String(v);
-    return s.includes(',') || s.includes('"') || s.includes('\n')
-      ? `"${s.replace(/"/g, '""')}"` : s;
-  };
-
-  const headers = ['name','category','price_type','price','duration_min','active','description','image_url','created_at'];
+  const headers = ['name','category','description','price_type','price','duration_min','available'];
   const rows = (data || []).map(s => [
-    s.name, s.category, s.price_type, s.price_guarani, s.duration_min ?? '',
-    s.is_available ? 'yes' : 'no', s.description, s.image_url,
-    s.created_at ? new Date(s.created_at).toISOString().slice(0,19).replace('T',' ') : '',
-  ].map(escape).join(','));
+    s.name, s.category, s.description, s.price_type, s.price_guarani,
+    s.duration_min ?? '', s.is_available ? 'Yes' : 'No',
+  ]);
 
-  const csv = [headers.join(','), ...rows].join('\r\n');
   const date = new Date().toISOString().slice(0,10);
   res.setHeader('Content-Type', 'text/csv; charset=utf-8');
   res.setHeader('Content-Disposition', `attachment; filename="servicios_${date}.csv"`);
-  res.send('﻿' + csv);
+  res.send(toCsv(headers, rows));
 });
 
 // ─── GET /admin/customers/export — CSV export of all customers ────────────────
 router.get('/customers/export', requireAuth, async (req, res) => {
   const [convsRes, ordersRes] = await Promise.all([
     supabase.from('conversations')
-      .select('customer_phone, customer_name, updated_at')
+      .select('customer_phone, customer_name, customer_email, customer_address, updated_at')
       .eq('tenant_id', req.tenant.tenantId),
     supabase.from('orders')
       .select('customer_phone, total_guarani, status, created_at')
@@ -1892,14 +1916,7 @@ router.get('/customers/export', requireAuth, async (req, res) => {
   const convs  = convsRes.data  || [];
   const orders = ordersRes.data || [];
 
-  const escape = v => {
-    if (v == null) return '';
-    const s = String(v);
-    return s.includes(',') || s.includes('"') || s.includes('\n')
-      ? `"${s.replace(/"/g, '""')}"` : s;
-  };
-
-  const headers = ['telefono','nombre','total_pedidos','pedidos_completados','gasto_total_guarani','ultimo_contacto'];
+  const headers = ['telefono','nombre','email','direccion','total_pedidos','pedidos_completados','gasto_total','ultimo_contacto'];
   const rows = convs.map(c => {
     const cOrders = orders.filter(o => o.customer_phone === c.customer_phone);
     const completed = cOrders.filter(o => o.status === 'delivered').length;
@@ -1907,17 +1924,16 @@ router.get('/customers/export', requireAuth, async (req, res) => {
       .filter(o => !['cancelled'].includes(o.status))
       .reduce((s, o) => s + (o.total_guarani || 0), 0);
     return [
-      c.customer_phone, c.customer_name || '',
+      c.customer_phone, c.customer_name || '', c.customer_email || '', c.customer_address || '',
       cOrders.length, completed, spent,
       c.updated_at ? new Date(c.updated_at).toISOString().slice(0,19).replace('T',' ') : '',
-    ].map(escape).join(',');
+    ];
   });
 
-  const csv = [headers.join(','), ...rows].join('\r\n');
   const date = new Date().toISOString().slice(0,10);
   res.setHeader('Content-Type', 'text/csv; charset=utf-8');
   res.setHeader('Content-Disposition', `attachment; filename="clientes_${date}.csv"`);
-  res.send('﻿' + csv);
+  res.send(toCsv(headers, rows));
 });
 
 const broadcastRateLimit = rateLimit({
