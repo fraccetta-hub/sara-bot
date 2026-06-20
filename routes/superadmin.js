@@ -451,12 +451,11 @@ router.get('/analytics', requireSuper, async (req, res) => {
   });
 });
 
-// In-memory read timestamps: tenantId -> ISO string (resets on redeploy, acceptable)
-const supportReadAt = new Map();
-
 // ─── POST /superadmin/support/:tenantId/read — mark conversation as read ──────
-router.post('/support/:tenantId/read', requireSuper, (req, res) => {
-  supportReadAt.set(req.params.tenantId, new Date().toISOString());
+router.post('/support/:tenantId/read', requireSuper, async (req, res) => {
+  await supabase.from('tenants')
+    .update({ support_read_at: new Date().toISOString() })
+    .eq('id', req.params.tenantId);
   res.json({ ok: true });
 });
 
@@ -494,8 +493,12 @@ router.get('/support', requireSuper, async (req, res) => {
 
   const ids = Object.keys(byTenant);
   if (ids.length) {
-    const { data: tens } = await supabase.from('tenants').select('id, name').in('id', ids);
-    for (const tt of (tens || [])) if (byTenant[tt.id]) byTenant[tt.id].tenant_name = tt.name || tt.id;
+    const { data: tens } = await supabase.from('tenants').select('id, name, support_read_at').in('id', ids);
+    for (const tt of (tens || [])) {
+      if (!byTenant[tt.id]) continue;
+      byTenant[tt.id].tenant_name    = tt.name || tt.id;
+      byTenant[tt.id].support_read_at = tt.support_read_at || null;
+    }
   }
 
   // Count unread = merchant messages after the last support reply OR last read timestamp
@@ -503,12 +506,13 @@ router.get('/support', requireSuper, async (req, res) => {
     t.messages.reverse(); // now ascending
     let lastSupportIdx = -1;
     t.messages.forEach((m, i) => { if (m.role === 'support') lastSupportIdx = i; });
-    const readAt = supportReadAt.get(t.tenant_id);
+    const readAt = t.support_read_at;
     const afterSupport = t.messages.slice(lastSupportIdx + 1).filter(m => m.role === 'merchant');
     t.unread = readAt
       ? afterSupport.filter(m => new Date(m.created_at) > new Date(readAt)).length
       : afterSupport.length;
     delete t.messages;
+    delete t.support_read_at;
   }
 
   const list = Object.values(byTenant).sort((a, b) => new Date(b.last_at) - new Date(a.last_at));
