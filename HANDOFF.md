@@ -1,5 +1,13 @@
 # PROJECT HANDOFF — Sara Bot (whatsapp-bot) — 2026-06-20
 
+## ✅ FATTO (sessione 2026-06-20 — dedup indirizzo/Maps nel delivery)
+
+Indirizzo locale + link Google Maps erano ripetuti: una volta nella card "🏪 Mi negocio" e di nuovo nella sezione "Consegna a domicilio". Rimossi dal delivery (richiesta utente: tenerli solo in alto). Commit f813067.
+- `public/admin/index.html`: tolti `sLocationAddress` + `sMapsUrl` (label/input/hint) dalla sezione delivery. `saveDelivery` non invia più `location_address/location_lat/location_lng`; il load non li setta più.
+- Fonte unica ora: card "Mi negocio" → `sAddress`→`address` (usato da Sara nel prompt: `tenant.address`) + `sBizMapsUrl`→`location_lat/lng` (usati per il calcolo distanza consegna in webhook/geo).
+- `location_address` (colonna) non era usata da bot/backend → ora vestigiale, nessun impatto. Dati coord esistenti preservati (bizinfo li carica). Nessun ref orfano; script inline pulito.
+- Chiavi i18n `settings.delivery.address/mapsUrl*` ora inutilizzate (lasciate, innocue).
+
 ## ✅ FATTO (sessione 2026-06-20 — settings accordion + bug fixes + Sara type-awareness)
 
 ### Settings panel → accordion collassabile (commit 5fcd0ea + 6685247)
