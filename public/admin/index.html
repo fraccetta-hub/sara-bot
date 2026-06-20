@@ -904,28 +904,28 @@
     <!-- Quick block / walk-in modal -->
     <div id="walkinModal" class="fixed inset-0 bg-black/40 z-50 hidden flex items-center justify-center p-4">
       <div class="bg-white rounded-xl shadow-xl w-full max-w-sm p-6">
-        <h3 data-i18n="restaurant.blockTitle" class="font-semibold text-gray-800 mb-1">Ocupar mesas (sin reserva)</h3>
-        <p data-i18n="restaurant.blockDesc" class="text-xs text-gray-400 mb-4">Bloqueá mesas para un walk-in en esta franja, sin cargar una reserva completa.</p>
+        <h3 class="font-semibold text-gray-800 mb-1">🪑 Ocupar mesa</h3>
+        <p class="text-xs text-gray-400 mb-4">Walk-in — indicá cuántos tavoli occupare e de che tipo.</p>
         <div class="space-y-3">
           <div class="grid grid-cols-2 gap-3">
             <div>
-              <label data-i18n="restaurant.resvDate" class="block text-xs text-gray-500 mb-1">Fecha</label>
-              <input id="walkinDate" type="date" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-300">
+              <label class="block text-xs text-gray-500 mb-1">Data</label>
+              <input id="walkinDate" type="date" onchange="refreshWalkinTypes()" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300">
             </div>
             <div>
-              <label data-i18n="restaurant.resvTime" class="block text-xs text-gray-500 mb-1">Hora</label>
-              <input id="walkinTime" type="time" onchange="refreshWalkinTables()" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-300">
+              <label class="block text-xs text-gray-500 mb-1">Ora</label>
+              <input id="walkinTime" type="time" onchange="refreshWalkinTypes()" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300">
             </div>
           </div>
           <div>
-            <label data-i18n="restaurant.blockTables" class="block text-xs text-gray-500 mb-1">Mesas a ocupar</label>
-            <select id="walkinTablesSel" multiple size="5" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-300"></select>
-            <p data-i18n="restaurant.blockTablesHint" class="text-[11px] text-gray-400 mt-1">Solo se muestran las mesas libres en ese horario. Elegí varias con Ctrl/Cmd.</p>
+            <label class="block text-xs text-gray-500 mb-2">Tavoli da occupare</label>
+            <div id="walkinTableTypes" class="space-y-2"></div>
           </div>
         </div>
+        <div id="walkinMsg" class="hidden text-xs text-red-500 mt-3"></div>
         <div class="flex justify-end gap-2 mt-5">
-          <button onclick="closeWalkinModal()" data-i18n="cancel" class="px-4 py-2 rounded-lg text-gray-600 border border-gray-200 text-sm">Cancelar</button>
-          <button onclick="saveWalkin()" data-i18n="restaurant.blockSave" class="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg text-sm font-semibold">Ocupar</button>
+          <button onclick="closeWalkinModal()" class="px-4 py-2 rounded-lg text-gray-600 border border-gray-200 text-sm">Annulla</button>
+          <button onclick="saveWalkin()" class="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg text-sm font-semibold">Occupa</button>
         </div>
       </div>
     </div>
@@ -1275,28 +1275,14 @@
               <label for="sDeliveryEnabled" data-i18n="settings.delivery.enable" class="text-sm font-medium text-gray-700">Activar envíos</label>
             </div>
             <div id="deliveryFields">
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
-                <div>
-                  <label data-i18n="settings.delivery.address" class="block text-xs font-medium text-gray-600 mb-1">Dirección del local</label>
-                  <input id="sLocationAddress" type="text" placeholder="Ej: Av. Mariscal López 1234, Asunción"
-                    class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
-                </div>
-                <div>
-                  <label data-i18n="settings.delivery.type" class="block text-xs font-medium text-gray-600 mb-1">Tipo de tarifa</label>
-                  <select id="sDeliveryType" onchange="updateDeliveryFields()"
-                    class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
-                    <option value="fixed" data-i18n="settings.delivery.fixed">Tarifa fija</option>
-                    <option value="zone" data-i18n="settings.delivery.zone">Por zona (km)</option>
-                    <option value="per_km" data-i18n="settings.delivery.perkm">Por kilómetro</option>
-                  </select>
-                </div>
-              </div>
               <div class="mb-3">
-                <label data-i18n="settings.delivery.mapsUrl" class="block text-xs font-medium text-gray-600 mb-1">Link de Google Maps</label>
-                <input id="sMapsUrl" type="url" data-i18n-ph="settings.delivery.mapsUrlPh"
-                  placeholder="https://maps.google.com/..."
-                  class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
-                <p data-i18n="settings.delivery.mapsUrlHint" class="text-xs text-gray-400 mt-1">Abrí Google Maps, buscá tu local y copiá el link de la barra del navegador.</p>
+                <label data-i18n="settings.delivery.type" class="block text-xs font-medium text-gray-600 mb-1">Tipo de tarifa</label>
+                <select id="sDeliveryType" onchange="updateDeliveryFields()"
+                  class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                  <option value="fixed" data-i18n="settings.delivery.fixed">Tarifa fija</option>
+                  <option value="zone" data-i18n="settings.delivery.zone">Por zona (km)</option>
+                  <option value="per_km" data-i18n="settings.delivery.perkm">Por kilómetro</option>
+                </select>
               </div>
               <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
                 <div>
@@ -3463,7 +3449,7 @@ async function exportCustomers() {
 }
 
 // ── Restaurant ────────────────────────────────────────────────────────────────
-let _rZones = [], _rTables = [], _rReservations = [];
+let _rZones = [], _rTables = [], _rReservations = [], _walkinTypeGroups = [];
 
 async function loadRestaurant() {
   const [settings, zones, tables] = await Promise.all([
@@ -3625,41 +3611,88 @@ function renderAvailGrid() {
   el.innerHTML = html || `<p class="text-gray-400">${t('restaurant.availClosed')}</p>`;
 }
 
-// Walk-in / quick block modal (distinct from the appointments time-block modal)
+let _walkinTypeGroups = [];
+
 function openWalkinModal(date, time) {
-  document.getElementById('walkinDate').value = date || document.getElementById('resvDate').value;
-  if (time) document.getElementById('walkinTime').value = time;
-  else if (!document.getElementById('walkinTime').value) {
-    const now = new Date(); document.getElementById('walkinTime').value = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
-  }
-  refreshWalkinTables();
+  const now = new Date();
+  document.getElementById('walkinDate').value = date || now.toISOString().slice(0,10);
+  document.getElementById('walkinTime').value = time || `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  document.getElementById('walkinMsg').classList.add('hidden');
+  refreshWalkinTypes();
   document.getElementById('walkinModal').classList.remove('hidden');
 }
 function closeWalkinModal() { document.getElementById('walkinModal').classList.add('hidden'); }
-// Show only tables free at the chosen date+time (from the cached grid; falls back to all).
-function refreshWalkinTables() {
-  const sel = document.getElementById('walkinTablesSel');
+
+function refreshWalkinTypes() {
   const date = document.getElementById('walkinDate').value;
   const time = document.getElementById('walkinTime').value;
-  let freeTables = _rTables;
-  const day = _availData?.days.find(d => d.date === date);
-  const slot = day?.bands.flatMap(b => b.slots).find(s => s.time === time);
-  if (slot) freeTables = slot.tables;
-  sel.innerHTML = freeTables.map(tbl => `<option value="${tbl.id}">${tbl.label} (${tbl.capacity}p)</option>`).join('')
-    || `<option disabled>${t('restaurant.blockNoFree')}</option>`;
+  let freeTables = _rTables.filter(t => t.is_active !== false);
+  const day = _availData?.days?.find(d => d.date === date);
+  const slot = day?.bands?.flatMap(b => b.slots).find(s => s.time === time);
+  if (slot) {
+    const slotIds = new Set((slot.tables || []).map(t => t.id));
+    freeTables = freeTables.filter(t => slotIds.has(t.id));
+  }
+  const groups = {};
+  for (const tbl of freeTables) {
+    const zone = tbl.restaurant_zones?.name || 'Senza zona';
+    const cap  = tbl.capacity || 2;
+    const key  = cap + '||' + zone;
+    if (!groups[key]) groups[key] = { zone, capacity: cap, freeTables: [] };
+    groups[key].freeTables.push(tbl);
+  }
+  _walkinTypeGroups = Object.values(groups).sort((a, b) => a.capacity - b.capacity || a.zone.localeCompare(b.zone));
+  _walkinTypeGroups.forEach(g => g.qty = 0);
+  renderWalkinTypes();
 }
+
+function renderWalkinTypes() {
+  const el = document.getElementById('walkinTableTypes');
+  if (!_walkinTypeGroups.length) {
+    el.innerHTML = '<p class="text-xs text-gray-400 text-center py-3">Nessun tavolo libero in questo orario.</p>';
+    return;
+  }
+  el.innerHTML = _walkinTypeGroups.map((g, i) => `
+    <div class="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2">
+      <div>
+        <span class="text-sm font-semibold text-gray-800">${g.capacity} pers.</span>
+        <span class="text-xs text-gray-500 ml-1">— ${g.zone}</span>
+        <span class="text-xs text-gray-400 ml-2">(${g.freeTables.length} liber${g.freeTables.length === 1 ? 'o' : 'i'})</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <button onclick="walkinQty(${i},-1)" class="w-6 h-6 rounded-full border border-gray-300 text-gray-600 font-bold text-sm leading-none hover:bg-gray-100">−</button>
+        <span id="walkinQty_${i}" class="w-5 text-center text-sm font-semibold text-gray-800">${g.qty}</span>
+        <button onclick="walkinQty(${i},+1)" class="w-6 h-6 rounded-full border border-gray-300 text-gray-600 font-bold text-sm leading-none hover:bg-gray-100">+</button>
+      </div>
+    </div>`).join('');
+}
+
+function walkinQty(i, delta) {
+  const g = _walkinTypeGroups[i];
+  g.qty = Math.max(0, Math.min(g.freeTables.length, g.qty + delta));
+  document.getElementById('walkinQty_' + i).textContent = g.qty;
+}
+
 async function saveWalkin() {
+  const msg = document.getElementById('walkinMsg');
   const date = document.getElementById('walkinDate').value;
   const time = document.getElementById('walkinTime').value;
-  const table_ids = Array.from(document.getElementById('walkinTablesSel').selectedOptions).map(o => o.value).filter(Boolean);
-  if (!date || !time || !table_ids.length) return;
-  const seats = _rTables.filter(t => table_ids.includes(t.id)).reduce((s, t) => s + (t.capacity || 0), 0);
+  if (!date || !time) { msg.textContent = 'Inserisci data e ora.'; msg.classList.remove('hidden'); return; }
+  const selected = _walkinTypeGroups.filter(g => g.qty > 0);
+  if (!selected.length) { msg.textContent = 'Seleziona almeno un tavolo.'; msg.classList.remove('hidden'); return; }
+  const table_ids  = selected.flatMap(g => g.freeTables.slice(0, g.qty).map(t => t.id));
+  const party_size = selected.reduce((s, g) => s + g.qty * g.capacity, 0);
   const reserved_at = new Date(`${date}T${time}:00`).toISOString();
-  await api('/admin/restaurant/reservations', 'POST', {
-    customer_name: 'walk-in', party_size: seats || 1, reserved_at, table_ids, status: 'seated',
-  });
-  closeWalkinModal();
-  await loadReservations();
+  try {
+    await api('/admin/restaurant/reservations', 'POST', {
+      customer_name: 'walk-in', party_size, reserved_at, table_ids, status: 'seated',
+    });
+    closeWalkinModal();
+    await loadReservations();
+  } catch(e) {
+    msg.textContent = errMsg(e);
+    msg.classList.remove('hidden');
+  }
 }
 
 // Zone modal
@@ -4460,11 +4493,8 @@ async function loadSettings() {
     document.getElementById('sCustomInstructions').value  = s.custom_instructions || '';
     initPresets(s.bot_personality);
 
-    // Delivery
+    // Delivery (address + Maps position live in the "Mi negocio" card above)
     document.getElementById('sDeliveryEnabled').checked      = !!s.delivery_enabled;
-    document.getElementById('sLocationAddress').value        = s.location_address || '';
-    if (s.location_lat && s.location_lng)
-      document.getElementById('sMapsUrl').value = `https://www.google.com/maps?q=${s.location_lat},${s.location_lng}`;
     document.getElementById('sDeliveryType').value           = s.delivery_type || 'fixed';
     document.getElementById('sDeliveryBaseFee').value        = s.delivery_base_fee ?? '';
     document.getElementById('sDeliveryZoneKm').value         = s.delivery_zone_km ?? '';
@@ -4517,9 +4547,6 @@ async function saveDelivery() {
   try {
     await api('/admin/settings', 'PUT', {
       delivery_enabled:        document.getElementById('sDeliveryEnabled').checked,
-      location_address:        document.getElementById('sLocationAddress').value.trim() || null,
-      location_lat:            parseMapsUrl(document.getElementById('sMapsUrl').value)?.lat || null,
-      location_lng:            parseMapsUrl(document.getElementById('sMapsUrl').value)?.lng || null,
       delivery_type:           document.getElementById('sDeliveryType').value,
       delivery_base_fee:       parsePriceInput(document.getElementById('sDeliveryBaseFee').value) || 0,
       delivery_zone_km:        parseFloat(document.getElementById('sDeliveryZoneKm').value) || null,
