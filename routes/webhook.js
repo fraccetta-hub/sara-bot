@@ -1653,17 +1653,21 @@ async function handleCustomerMessage(tenant, customerPhone, messageText, locatio
       let tableId = null, zoneId = null, full = false;
 
       if (!escalate && hasTables) {
-        const dur      = tenant.restaurant_slot_duration || 90;
+        const dur1     = tenant.restaurant_slot_duration  || 90;
+        const dur2     = tenant.restaurant_slot_duration_2 || dur1;
+        const bhRow    = (businessHours || []).find(h => h.day_of_week === resDow);
+        const inW2     = bhRow?.open_time_2 && bhRow?.close_time_2
+          && resHHMM >= String(bhRow.open_time_2).slice(0, 5) && resHHMM <= String(bhRow.close_time_2).slice(0, 5);
+        const dur      = inW2 ? dur2 : dur1;
+        const CLEAN_MS = 10 * 60000;
         const reqStart = new Date(reservedAt).getTime();
         const reqEnd   = reqStart + dur * 60000;
         const existingRes = await getUpcomingReservations(tenant.id, 90);
-        // A reservation blocks the tables it has assigned (joined set or single).
-        // Pending/unconfirmed reservations have none → they never block.
         const occupied = r => (Array.isArray(r.table_ids) && r.table_ids.length) ? r.table_ids : (r.table_id ? [r.table_id] : []);
         const overlaps = r => {
           const rStart = new Date(r.reserved_at).getTime();
           const rEnd   = rStart + (r.duration_min || dur) * 60000;
-          return reqStart < rEnd && reqEnd > rStart;
+          return Math.min(reqEnd, rEnd) - Math.max(reqStart, rStart) > CLEAN_MS;
         };
 
         // Smallest free table big enough for the party.
@@ -1698,7 +1702,7 @@ async function handleCustomerMessage(tenant, customerPhone, messageText, locatio
         customer_phone: customerPhone,
         party_size: party_size || 2,
         reserved_at: reservedAt,
-        duration_min: tenant.restaurant_slot_duration || 90,
+        duration_min: dur,
         status: finalStatus,
         notes: notes || null,
       });

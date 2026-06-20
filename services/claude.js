@@ -348,6 +348,7 @@ const _occupiedTables = r => (Array.isArray(r.table_ids) && r.table_ids.length)
 
 // Free tables at a given date+time: tables not occupied by any overlapping
 // reservation that has tables assigned.
+const CLEAN_MS = 10 * 60000;
 function _freeTablesAt(tables, reservations, ymd, hhmm, dur) {
   const reqStart = new Date(`${ymd}T${hhmm}:00`).getTime();
   const reqEnd   = reqStart + dur * 60000;
@@ -355,7 +356,7 @@ function _freeTablesAt(tables, reservations, ymd, hhmm, dur) {
     if (!_occupiedTables(r).includes(t.id)) return false;
     const rStart = new Date(r.reserved_at).getTime();
     const rEnd   = rStart + (r.duration_min || dur) * 60000;
-    return reqStart < rEnd && reqEnd > rStart;
+    return Math.min(reqEnd, rEnd) - Math.max(reqStart, rStart) > CLEAN_MS;
   })).length;
 }
 
@@ -363,7 +364,8 @@ function _freeTablesAt(tables, reservations, ymd, hhmm, dur) {
 // offers/confirms times that actually have a free table.
 function buildAvailabilityBlock(tenant, tables, reservations, businessHours, closures, days = 7) {
   if (!tables.length) return buildReservationsBlock(reservations, tenant.restaurant_slot_duration || 90);
-  const dur    = tenant.restaurant_slot_duration || 90;
+  const dur1   = tenant.restaurant_slot_duration  || 90;
+  const dur2   = tenant.restaurant_slot_duration_2 || dur1;
   const closes = (closures || []).filter(c => c.start_date && c.end_date);
   const today  = new Date();
   const lines  = [];
@@ -373,29 +375,29 @@ function buildAvailabilityBlock(tenant, tables, reservations, businessHours, clo
     const ymd = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;
     if (closes.some(c => ymd >= c.start_date && ymd <= c.end_date)) continue;
     const bh = (businessHours || []).find(h => h.day_of_week === day.getDay());
-    if (bh && bh.is_closed) continue;
+    if (!bh || bh.is_closed) continue;
 
-    const windows = !bh ? [] : [
-      { label: '', start: String(bh.open_time).slice(0, 5), end: String(bh.close_time).slice(0, 5) },
+    const windows = [
+      { start: String(bh.open_time).slice(0, 5), end: String(bh.close_time).slice(0, 5), dur: dur1 },
       ...(bh.open_time_2 && bh.close_time_2
-        ? [{ label: '', start: String(bh.open_time_2).slice(0, 5), end: String(bh.close_time_2).slice(0, 5) }]
+        ? [{ start: String(bh.open_time_2).slice(0, 5), end: String(bh.close_time_2).slice(0, 5), dur: dur2 }]
         : []),
     ];
-    if (!windows.length) continue;
 
     const parts = [];
     for (const w of windows) {
-      const slotStrs = _genSlots(w.start, w.end, dur).map(s => {
-        const free = _freeTablesAt(tables, reservations, ymd, s, dur);
+      const slotStrs = _genSlots(w.start, w.end, w.dur).map(s => {
+        const free = _freeTablesAt(tables, reservations, ymd, s, w.dur);
         return free > 0 ? `${s}(${free})` : `${s}✗`;
       });
-      if (slotStrs.length) parts.push(`${w.label ? w.label + ' ' : ''}${slotStrs.join(' ')}`);
+      if (slotStrs.length) parts.push(slotStrs.join(' '));
     }
     if (parts.length) lines.push(`• ${day.toLocaleDateString('es', { weekday: 'short', day: 'numeric', month: 'short' })}: ${parts.join(' | ')}`);
   }
 
   if (!lines.length) return '\nDISPONIBILIDAD DE MESAS: sin días abiertos en los próximos 7 días.';
-  return `\nDISPONIBILIDAD REAL DE MESAS (próximos 7 días) — el número entre paréntesis = mesas libres a esa hora; ✗ = completo:\n${lines.join('\n')}\nMesas totales: ${tables.length}. Duración por mesa: ${dur} min.
+  const durNote = dur2 !== dur1 ? `${dur1}min (fascia 1) / ${dur2}min (fascia 2)` : `${dur1}min`;
+  return `\nDISPONIBILIDAD REAL DE MESAS (próximos 7 días) — el número entre paréntesis = mesas libres a esa hora; ✗ = completo:\n${lines.join('\n')}\nMesas totales: ${tables.length}. Duración por mesa: ${durNote}.
 REGLA CRÍTICA: proponé y confirmá SOLO horarios con mesas libres (número ≥1). NUNCA ofrezcas ni confirmes un horario marcado ✗, ni un horario que no figure en esta lista. Si el cliente pide un horario completo o inexistente, ofrecé el horario disponible más cercano de esta lista.`;
 }
 
