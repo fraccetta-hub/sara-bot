@@ -1824,7 +1824,7 @@ WHATSAPP TROUBLESHOOTING:
 - Use a permanent System User token (temporary tokens expire). Required permissions: whatsapp_business_messaging, whatsapp_business_management.
 - Sara stopped replying: confirm the WhatsApp number is still active in Meta and the token is valid; if a token error banner shows in the panel, use "Reconectar".
 
-SUPPORT CONTACT: for anything unresolved here, email support@sarabot.pro. This chat is monitored by the Sara Bot team.`;
+CONTEXT: The merchant is speaking to you RIGHT NOW through the 💬 Support tab in their admin panel. They are already in the support chat — never tell them to "use the support chat" or point them to a chat widget, because this IS that chat. For anything unresolved, tell them to email support@sarabot.pro.`;
 
 // ─── POST /admin/support — merchant sends a support message ──────────────────
 router.post('/support', requireAuth, async (req, res) => {
