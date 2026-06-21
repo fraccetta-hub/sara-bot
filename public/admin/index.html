@@ -3499,7 +3499,9 @@ async function loadRestaurant() {
   _rZones  = zones  || [];
   _rTables = tables || [];
   document.getElementById('restaurantSlotDuration').value = settings.restaurant_slot_duration || 90;
-  const openDay = (hours || []).find(h => !h.is_closed && h.open_time);
+  // prefer a weekday with daytime hours for the label (avoid Sun midnight edge case)
+  const openDay = (hours || []).find(h => !h.is_closed && h.open_time && h.day_of_week !== 0 && String(h.open_time).slice(0,2) >= '06')
+    || (hours || []).find(h => !h.is_closed && h.open_time);
   const hasSplitHours = (hours || []).some(h => h.open_time_2 && !h.is_closed);
   const dur2Row = document.getElementById('restDur2Row');
   dur2Row.classList.toggle('hidden', !hasSplitHours);
@@ -6275,18 +6277,21 @@ async function saveBusinessHours() {
   for (const r of rows) {
     if (r.is_closed) continue;
     const label = DAYS[r.day_of_week];
-    if (r.open_time >= r.close_time) {
+    // '00:00' as close_time means midnight (end of day) — treat as valid end
+    const ct1 = r.close_time === '00:00' ? '24:00' : r.close_time;
+    if (r.open_time >= ct1) {
       bhMsg.textContent = `${label}: l'orario di apertura deve essere prima della chiusura (${r.open_time} → ${r.close_time})`;
       bhMsg.className = 'rounded-lg px-4 py-2 text-sm mt-3 bg-red-50 text-red-700';
       bhMsg.classList.remove('hidden'); return;
     }
     if (r.open_time_2) {
-      if (r.open_time_2 <= r.close_time) {
+      if (r.open_time_2 <= ct1) {
         bhMsg.textContent = `${label}: lo slot 2 deve iniziare dopo la fine dello slot 1 (${r.close_time} → ${r.open_time_2})`;
         bhMsg.className = 'rounded-lg px-4 py-2 text-sm mt-3 bg-red-50 text-red-700';
         bhMsg.classList.remove('hidden'); return;
       }
-      if (r.open_time_2 >= r.close_time_2) {
+      const ct2 = r.close_time_2 === '00:00' ? '24:00' : r.close_time_2;
+      if (r.open_time_2 >= ct2) {
         bhMsg.textContent = `${label}: l'orario di apertura dello slot 2 deve essere prima della chiusura (${r.open_time_2} → ${r.close_time_2})`;
         bhMsg.className = 'rounded-lg px-4 py-2 text-sm mt-3 bg-red-50 text-red-700';
         bhMsg.classList.remove('hidden'); return;
