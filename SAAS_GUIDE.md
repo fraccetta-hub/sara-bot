@@ -255,11 +255,17 @@ Configura `tenants.payment_instructions` per tenant. Sara include istruzioni dop
 ## Appuntamenti
 
 Tenant con `appointments_enabled = true` hanno gestione turni:
-- `business_hours` — orari per giorno settimana
+- `business_hours` — orari per giorno settimana (con 2° turno `open_time_2/close_time_2`)
 - `appointment_blocks` — blocchi orario (chiusure/ferie)
-- `appointments` — prenotazioni confermate
+- `appointments` — prenotazioni (colonne: `paid`, `paid_at`, `price_guarani`, `refunded`)
 - Sara calcola slot liberi 14 giorni in avanti e propone al cliente
-- **Capacità parallela** (`tenants.appointment_capacity`, default 1): quanti appuntamenti simultanei nella stessa fascia. 1 = dentista/sala singola; N = studio con N risorse. Uno slot è "pieno" solo quando le sovrapposizioni raggiungono la capacità. `appointment_blocks` bloccano sempre. Configurabile in admin → tab appuntamenti → Horarios.
+- **Granularità slot 15 min**: step sempre 15 min, durata servizio usata per overlap check. I servizi devono avere `duration_min` multiplo di 15.
+- **Capacità parallela** (`tenants.appointment_capacity`, default 1): quanti appuntamenti simultanei. `appointment_blocks` bloccano sempre.
+- **Logica revenue appuntamenti** (due bucket separati):
+  1. `paid=true AND paid_at::date=oggi AND refunded=false` — pagato oggi (anche in anticipo per appuntamento futuro)
+  2. `paid=false AND start_at::date=oggi AND status!='cancelled' AND refunded=false` — appuntamento odierno non ancora pagato (sarà pagato all'appuntamento)
+- **Storno** (`refunded=true`): toglie l'appuntamento dall'incasso. Usato quando il merchant rimborsa un pagamento già ricevuto.
+- **Service mobility** (`tenants.service_location`: `own`/`client`/`both`): configurabile in Impostazioni → "Luogo del servizio". Visibile per piani con `services_enabled`. Se `client` o `both`: Sara chiede indirizzo al cliente e lo inserisce nelle note dell'appuntamento. Stesse opzioni tariffa della delivery (fissa/zona/per_km), valore minimo, giorni disabilitati.
 
 ---
 

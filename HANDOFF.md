@@ -1,4 +1,73 @@
-# PROJECT HANDOFF — Sara Bot (whatsapp-bot) — 2026-06-21
+# PROJECT HANDOFF — Sara Bot (whatsapp-bot) — 2026-06-22
+
+## ✅ FATTO (2026-06-22 — appuntamenti: paid_at, storno, slot 15min, autocomplete rubrica, mobility Pro plan) [commits 5f42e50…e06f9e1]
+
+### Servizi — fix coerenze (commit 5f42e50)
+- **`{cur}` letterale** nel label prezzo: `toggleServiceDuration` ora fa `.replace('{cur}', simbolo)`.
+- **Slot ogni 15 min** (era 30): `available-slots` step fisso 15 min, durata reale per overlap check. Secondo turno orario gestito.
+- **Durata servizio multiplo di 15**: validazione frontend (`step=15`, hint) + backend (400 se `duration_min % 15 !== 0`).
+- **Paid flag appuntamenti**: colonne `paid` + `price_guarani` su appointments. Modal: checkbox "Pagado". Detail: mostra prezzo + stato. Bottone "Segna pagato".
+- **Incasso appuntamenti**: `todayRevenue` include appuntamenti pagati oggi.
+- **Nessun appuntamento nel passato**: `min` date = oggi nel modal; backend rifiuta `start_at < now()`.
+- **Customer picker dalla rubrica**: input nome con autocomplete live dai clienti tab; selezione riempie nome + telefono.
+
+### Fix UX ordini e admin (commit 4d088c6)
+- **Nome cliente negli ordini**: fetch parallelo `conversations` + merge per phone → nome mostrato correttamente.
+- **Pillola status aggiornata subito**: id univoco sul badge + DOM update in `updateOrderStatus`.
+- **Incasso solo ordini confermati**: whitelist `['confirmed','preparing','delivering','delivered']` (era `!cancelled` → includeva pending).
+
+### Storno appuntamenti (commit a655010)
+- **Logica revenue corretta**: oggi = non cancellati non pagati (saranno pagati all'appuntamento) + pagati con `paid_at=oggi`.
+- **`refunded` boolean**: appuntamento pagato poi cancellato → merchant fa storno → esce dall'incasso.
+- **Bottone Storno**: visibile solo quando `paid=true AND status=cancelled`. Conferma prima di procedere.
+- **Migration 16**: `appointments.refunded BOOLEAN NOT NULL DEFAULT false`.
+
+### paid_at tracking (commit e06f9e1)
+- **`paid_at TIMESTAMPTZ`**: settato a `now()` al momento del pagamento (sia a booking sia via "mark as paid"). Null se non pagato o stornato.
+- **Revenue formula corretta**: pagato in anticipo conta nel giorno del pagamento, non dell'appuntamento.
+- **Migration 18**: `appointments.paid_at TIMESTAMPTZ`.
+
+### UX fix (commit 658c154)
+- **Titolo modal appuntamento**: `t('appt.modal.new')` invece di hardcoded `'Nuevo turno'`.
+- **Tab Ordini**: nascosta per piano Bookings (`products_enabled=false`).
+- **Card servizi compatta**: niente placeholder emoji h-36 quando nessuna foto.
+- **Foto unica per item**: `deleteImageByUrl()` elimina vecchia foto da Supabase Storage prima di caricare la nuova (prodotti + servizi).
+- **i18n**: `appt.paid/notPaid/markPaid/storno/stornoConfirm/refunded`, `modal.service.durationHint`, `err.duration_not_multiple_15/appt_in_past`, `appt.modal.customerPh` — 6 lingue.
+
+### Service mobility (commit e4042c0)
+- **Sezione "Luogo del servizio"** in Impostazioni: 3 radio (Mi sede / Domicilio cliente / Entrambi).
+- Quando non "solo sede": tariffa spostamento (fissa/zona/per km), costo, valore minimo, giorni disabilitati.
+- **Visibile per tutti i piani con servizi** (Bookings + Pro). Delivery resta per Shop/Restaurant/Pro.
+- **geo.js**: `isServiceMobilityDisabledToday` + `describeServiceMobility`.
+- **claude.js**: blocco `SERVICIO A DOMICILIO` nel dynamic prompt; Sara chiede indirizzo e lo mette nelle note appuntamento `<APPT_NOTE:domicilio: ...>`.
+- **Migrations 17**: 8 colonne `service_*` su `tenants`.
+
+### ⚠️ MIGRATIONS DA ESEGUIRE SU SUPABASE (se non ancora fatto)
+```sql
+-- Migration 15: appointment paid flag
+ALTER TABLE appointments
+  ADD COLUMN IF NOT EXISTS paid          BOOLEAN NOT NULL DEFAULT false,
+  ADD COLUMN IF NOT EXISTS price_guarani INTEGER;
+
+-- Migration 16: storno
+ALTER TABLE appointments
+  ADD COLUMN IF NOT EXISTS refunded BOOLEAN NOT NULL DEFAULT false;
+
+-- Migration 17: service mobility
+ALTER TABLE tenants
+  ADD COLUMN IF NOT EXISTS service_location       TEXT NOT NULL DEFAULT 'own',
+  ADD COLUMN IF NOT EXISTS service_fee_type       TEXT NOT NULL DEFAULT 'fixed',
+  ADD COLUMN IF NOT EXISTS service_base_fee       INTEGER DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS service_zone_km        NUMERIC DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS service_zone_outer_fee INTEGER DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS service_per_km         INTEGER DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS service_min_value      INTEGER DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS service_disabled_dates TEXT;
+
+-- Migration 18: paid_at timestamp
+ALTER TABLE appointments
+  ADD COLUMN IF NOT EXISTS paid_at TIMESTAMPTZ;
+```
 
 ## ✅ FATTO (2026-06-21 — security hardening bot: rate limit merchant, broadcast lock, injection block, delete confirm) [commit 4fc8511]
 
@@ -415,9 +484,9 @@ UX redesign 10-punti completato e verificato in preview (static server `public/`
 
 ## STATO CORRENTE
 - Obiettivo generale: SaaS multi-tenant WhatsApp Business (Node/Express + Supabase + Anthropic Claude). Bot AI risponde a clienti, gestisce catalogo, delivery, turni/appuntamenti, ordini.
-- Fase attuale: hardening sicurezza completato. Prossimo: Stripe live env vars su Render, invoicing merchant.
-- Ultimo commit stabile: `4fc8511`
-- **Migration pendente**: nessuna nuova.
+- Fase attuale: feature appuntamenti completate (paid, storno, slot 15min, rubrica, mobility). Prossimo: Stripe live env vars su Render, invoicing merchant.
+- Ultimo commit stabile: `e06f9e1`
+- **⚠️ MIGRATIONS PENDENTI (15-18)**: vedere blocco in cima — da eseguire su Supabase prima del prossimo deploy.
 - **DB maintenance**: job pulizia `conversations` > 90 giorni inserito dall'utente (Supabase pg_cron). Non urgente.
 
 ## COSA È STATO FATTO (sessione 2026-06-20 — i18n hardcoded in Ajustes)
