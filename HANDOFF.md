@@ -1,5 +1,51 @@
 # PROJECT HANDOFF — Sara Bot (whatsapp-bot) — 2026-06-21
 
+## ✅ FATTO (2026-06-21 — security hardening bot: rate limit merchant, broadcast lock, injection block, delete confirm) [commit 4fc8511]
+
+### Analisi sicurezza preventiva + implementazione
+**`services/ratelimit.js`** — aggiunto tier merchant separato:
+- Merchant: 120 msg/h, 400/giorno, 30 foto/h, 30 audio/h (cliente restava a 50/h, 8 foto, 10 audio)
+- Messaggi di blocco localizzati in 6 lingue per merchant (prima solo spagnolo per cliente)
+- Cleanup store ogni ora: rimuove entries > 1 giorno vecchio (prevenzione memory leak)
+
+**`routes/webhook.js`** — multipli fix:
+- **Merchant rate limiting**: applicato prima di `handleMerchantImage` / `handleMerchantMessage`
+- **Injection bloccata** (drop silenzioso, no feedback all'attaccante): testo + audio trascritto — prima solo loggata
+- **Broadcast lock**: `broadcastInProgress` Set per tenant — previene doppio invio se merchant invia "broadcast" due volte di fila (identico al lock già presente in admin.js)
+- **Broadcast length**: max 1000 caratteri (identico al limite admin panel)
+- **delete_product / delete_service** con 1 solo match: chiede conferma sì/no invece di eliminare subito; con più match → lista numerata (invariato)
+- **delete_customer**: sempre chiede conferma sì/no prima di eliminare (azione distruttiva)
+- `merchantLang` Map pulita ogni 7 giorni (cleanup cosmetic, non critico — max 1 entry per tenant)
+
+**`services/claude.js`** — regola 14 riscritta (output limitato):
+- Cliente chiede "tutto il catalogo" → Sara risponde con lista CATEGORIE + "quale ti interessa?"
+- Cliente sceglie categoria → max 4-5 prodotti + "ci sono altre opzioni, cerchi qualcosa in particolare?"
+- Cliente insiste → max 5 prodotti per risposta, mai dump completo
+- Vale anche per liste ordini/appuntamenti/prenotazioni (max 5 per risposta)
+
+**Analisi sicurezza — cose già protette (non modificate)**:
+- Firma webhook Meta (HMAC SHA-256) ✅
+- `max_tokens: 1024` cliente, 400 merchant intent parser ✅
+- Storico conversazione capped MAX_HISTORY=20 ✅
+- 47 query con filtro `tenant_id` ✅
+
+**Gap documentati non implementati** (bassa priorità, da valutare):
+- Guardia `.eq('tenant_id', ...)` difensiva sugli UPDATE prodotti/servizi (id viene già da query filtrata per tenant → safe ma non esplicito)
+- Reservation spam cliente anonimo (non critico — prenotazioni richiedono conferma merchant)
+
+### Manutenzione DB — conversations cleanup
+- Tabella `conversations`: ~2-3 KB per riga (20 messaggi max per `MAX_HISTORY`). 100K clienti ≈ 250 MB. Supabase free tier cap 500 MB.
+- Job pulizia 90 giorni INSERITO dall'utente (via Supabase pg_cron o cron esterno):
+  ```sql
+  DELETE FROM conversations WHERE updated_at < NOW() - INTERVAL '90 days';
+  ```
+- Non un fix sicurezza — manutenzione spazio disco. Non urgente sotto i 50K clienti attivi.
+
+## ✅ FATTO (2026-06-21 — merchant bot: azioni complete, rate limit, bot mirror admin panel) [commits 036a0ef…4fc8511]
+
+### Bot merchant — specchio completo pannello admin
+Vedere sezione `## COSA È STATO FATTO (sessione 2026-06-21 — merchant bot)` sotto.
+
 ## ✅ FATTO (2026-06-21 — audit sicurezza full-stack + fix S1/S2/S4) [commit 28a52ad]
 
 Audit read-only di tutto il backend (routes/services/index). Fix approvati dall'utente: S1, S2, S4 (S3 in attesa di decisione — vedi sotto).
@@ -369,9 +415,10 @@ UX redesign 10-punti completato e verificato in preview (static server `public/`
 
 ## STATO CORRENTE
 - Obiettivo generale: SaaS multi-tenant WhatsApp Business (Node/Express + Supabase + Anthropic Claude). Bot AI risponde a clienti, gestisce catalogo, delivery, turni/appuntamenti, ordini.
-- Fase attuale: fix UX pannello admin + supporto bot. Prossimo: Stripe live env vars su Render, invoicing merchant.
-- Ultimo commit stabile: `f25a4db`
+- Fase attuale: hardening sicurezza completato. Prossimo: Stripe live env vars su Render, invoicing merchant.
+- Ultimo commit stabile: `4fc8511`
 - **Migration pendente**: nessuna nuova.
+- **DB maintenance**: job pulizia `conversations` > 90 giorni inserito dall'utente (Supabase pg_cron). Non urgente.
 
 ## COSA È STATO FATTO (sessione 2026-06-20 — i18n hardcoded in Ajustes)
 
