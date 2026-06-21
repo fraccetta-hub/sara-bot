@@ -506,6 +506,43 @@ function missingApptFieldsMsg(params, lang) {
   return ask[lang] || ask.es;
 }
 
+function missingTableFieldsMsg(params, lang) {
+  const missing = [];
+  if (!params.date) {
+    const f = { es:'fecha y hora', it:'data e ora', en:'date and time', fr:'date et heure', de:'Datum und Uhrzeit', pt:'data e hora' };
+    missing.push(f[lang] || f.es);
+  }
+  if (!params.table_capacity && !params.num_tables) {
+    const f = { es:'capacidad de los mesas (ej: "2 mesas de 4")', it:'capienza dei tavoli (es: "2 tavoli da 4")', en:'table capacity (e.g. "2 tables for 4")', fr:'capacité des tables (ex: "2 tables de 4")', de:'Tischkapazität (z.B. "2 Tische à 4")', pt:'capacidade das mesas (ex: "2 mesas de 4")' };
+    missing.push(f[lang] || f.es);
+  }
+  if (!params.zone_preference) {
+    const f = { es:'zona (o "cualquier zona")', it:'zona (o "qualsiasi zona")', en:'zone (or "any zone")', fr:'zone (ou "n\'importe quelle zone")', de:'Zone (oder "beliebige Zone")', pt:'zona (ou "qualquer zona")' };
+    missing.push(f[lang] || f.es);
+  }
+  if (!missing.length) return null;
+  const ask = { es:`Faltan datos para bloquear el/los mesa/s:\n• ${missing.join('\n• ')}`, it:`Mancano dati per bloccare il/i tavolo/i:\n• ${missing.join('\n• ')}`, en:`Missing info to block table(s):\n• ${missing.join('\n• ')}`, fr:`Données manquantes pour bloquer la/les table(s):\n• ${missing.join('\n• ')}`, de:`Fehlende Angaben zum Sperren des/der Tischs/Tische:\n• ${missing.join('\n• ')}`, pt:`Dados faltando para bloquear a(s) mesa(s):\n• ${missing.join('\n• ')}` };
+  return ask[lang] || ask.es;
+}
+
+async function parseMissingTableFields(txt, existing, lang) {
+  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  const today = new Date().toISOString();
+  const resp = await client.messages.create({
+    model: 'claude-haiku-4-5-20251001',
+    max_tokens: 150,
+    system: `Extract table booking fields from merchant reply. Return ONLY valid JSON.
+Today: ${today}. Already known: ${JSON.stringify(existing)}.
+Schema: {"date":"YYYY-MM-DD or null","time":"HH:MM or null","num_tables":N or null,"table_capacity":N or null,"zone_preference":"... or null","customer_name":"... or null","notes":"... or null"}
+Only return fields mentioned in the reply. Null for unknown. Resolve relative dates.`,
+    messages: [{ role: 'user', content: txt }],
+  });
+  try {
+    const raw = resp.content[0].text.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
+    return JSON.parse(raw);
+  } catch { return {}; }
+}
+
 function findProductsFuzzy(products, query) {
   if (!query) return [];
   const q = query.toLowerCase();
@@ -667,6 +704,21 @@ async function handleMerchantMessage(tenant, messageText, phoneNumberId, token) 
         }
         merchantPending.delete(tenant.id);
         await completeAddAppointment(tenant, merged, pending.services || [], pending.lang, phoneNumberId, token);
+        return;
+      }
+
+      if (pending.type === 'awaiting_fields' && pending.action === 'book_table') {
+        const extra = await parseMissingTableFields(txt, pending.params, pending.lang);
+        const merged = { ...pending.params };
+        for (const [k, v] of Object.entries(extra)) { if (v != null) merged[k] = v; }
+        const stillMissing = missingTableFieldsMsg(merged, pending.lang);
+        if (stillMissing) {
+          merchantPending.set(tenant.id, { ...pending, params: merged });
+          await sendMessage(tenant.merchant_phone, stillMissing, phoneNumberId, token);
+          return;
+        }
+        merchantPending.delete(tenant.id);
+        await completeBookTable(tenant, merged, pending.lang, phoneNumberId, token);
         return;
       }
 
@@ -1091,45 +1143,14 @@ async function handleMerchantMessage(tenant, messageText, phoneNumberId, token) 
   }
 
   if (intent.action === 'book_table') {
-    const { customer_name, customer_phone, party_size, date, time, zone_preference, notes, num_tables, table_capacity } = intent.params || {};
-    if (!customer_name || !date) {
-      const ask = { es:'Necesito al menos el nombre del cliente y la fecha. Ej: "reserva para Mario, 3 personas, mañana a las 20"', it:'Ho bisogno almeno del nome del cliente e della data. Es: "prenotazione per Mario, 3 persone, domani alle 20"', en:'I need at least the customer name and date. E.g.: "reservation for Mario, 3 people, tomorrow at 8pm"', fr:'J\'ai besoin au moins du nom du client et de la date.', de:'Ich brauche mindestens den Kundennamen und das Datum.', pt:'Preciso pelo menos do nome do cliente e da data.' };
-      await sendMessage(tenant.merchant_phone, ask[lang] || ask.es, phoneNumberId, token); return;
+    const params = intent.params || {};
+    const missing = missingTableFieldsMsg(params, lang);
+    if (missing) {
+      merchantPending.set(tenant.id, { type: 'awaiting_fields', action: 'book_table', params, lang, expiresAt: Date.now() + 10 * 60 * 1000 });
+      await sendMessage(tenant.merchant_phone, missing, phoneNumberId, token);
+      return;
     }
-    const reservedAt = new Date(`${date}T${time || '20:00'}:00`).toISOString();
-    const dur = tenant.restaurant_slot_duration || 90;
-
-    // Resolve zone
-    let zoneId = null;
-    if (zone_preference) {
-      const zones = await getRestaurantZones(tenant.id);
-      const z = (zones || []).find(z => z.name.toLowerCase().includes(zone_preference.toLowerCase()));
-      if (z) zoneId = z.id;
-    }
-
-    // Find tables to block — merchant authority: no capacity validation
-    const wantedTables = Math.max(1, parseInt(num_tables) || 1);
-    let tableIds = [];
-    if (wantedTables > 0) {
-      let tq = supabase.from('restaurant_tables').select('id, capacity, zone_id').eq('tenant_id', tenant.id);
-      if (zoneId) tq = tq.eq('zone_id', zoneId);
-      if (table_capacity) tq = tq.eq('capacity', table_capacity);
-      const { data: allTables } = await tq.order('capacity');
-      tableIds = (allTables || []).slice(0, wantedTables).map(t => t.id);
-      if (!zoneId && tableIds.length) zoneId = (allTables || []).find(t => t.zone_id)?.zone_id || null;
-    }
-
-    await supabase.from('reservations').insert({
-      tenant_id: tenant.id, customer_name, customer_phone: customer_phone || null,
-      party_size: party_size || 2, reserved_at: reservedAt, duration_min: dur,
-      status: 'confirmed', zone_id: zoneId,
-      table_id: tableIds[0] || null, table_ids: tableIds,
-      notes: notes || null,
-    });
-    const dt = new Date(reservedAt).toLocaleString('es', { weekday:'short', day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
-    const tblNote = tableIds.length ? ` (${tableIds.length} ${tableIds.length > 1 ? { es:'mesas', it:'tavoli', en:'tables', fr:'tables', de:'Tische', pt:'mesas' }[lang] || 'tables' : { es:'mesa', it:'tavolo', en:'table', fr:'table', de:'Tisch', pt:'mesa' }[lang] || 'table'})` : '';
-    const ok = { es:`✅ Reserva confirmada: *${customer_name}*, ${party_size || 2} pers., ${dt}${tblNote}`, it:`✅ Prenotazione confermata: *${customer_name}*, ${party_size || 2} pers., ${dt}${tblNote}`, en:`✅ Reservation confirmed: *${customer_name}*, ${party_size || 2} ppl, ${dt}${tblNote}`, fr:`✅ Réservation confirmée: *${customer_name}*, ${party_size || 2} pers., ${dt}${tblNote}`, de:`✅ Reservierung bestätigt: *${customer_name}*, ${party_size || 2} Pers., ${dt}${tblNote}`, pt:`✅ Reserva confirmada: *${customer_name}*, ${party_size || 2} pes., ${dt}${tblNote}` };
-    await sendMessage(tenant.merchant_phone, ok[lang] || ok.es, phoneNumberId, token);
+    await completeBookTable(tenant, params, lang, phoneNumberId, token);
     return;
   }
 
@@ -1440,6 +1461,58 @@ async function handleMerchantImage(tenant, message, phoneNumberId, token) {
     const errMsg = { es:`❌ Error al subir la foto. Intentá de nuevo.`, it:`❌ Errore nel caricamento della foto. Riprova.`, en:`❌ Error uploading photo. Please try again.`, fr:`❌ Erreur lors du téléchargement. Réessayez.`, de:`❌ Fehler beim Hochladen. Bitte erneut versuchen.`, pt:`❌ Erro ao enviar foto. Tente novamente.` };
     await sendMessage(tenant.merchant_phone, errMsg[lang] || errMsg.es, phoneNumberId, token);
   }
+}
+
+// ─── Restaurant table booking helper ─────────────────────────────────────────
+
+async function completeBookTable(tenant, params, lang, phoneNumberId, token) {
+  const { customer_name, customer_phone, party_size, date, time, zone_preference, notes, num_tables, table_capacity } = params;
+  const reservedAt = new Date(`${date}T${time || '20:00'}:00`).toISOString();
+  const dur = tenant.restaurant_slot_duration || 90;
+
+  let zoneId = null;
+  if (zone_preference) {
+    const zones = await getRestaurantZones(tenant.id);
+    const z = (zones || []).find(z => z.name.toLowerCase().includes(zone_preference.toLowerCase()));
+    if (z) zoneId = z.id;
+  }
+
+  // Merchant authority — no capacity validation, block exactly what they asked
+  const wantedTables = Math.max(1, parseInt(num_tables) || 1);
+  let tableIds = [];
+  let tq = supabase.from('restaurant_tables').select('id, capacity, zone_id').eq('tenant_id', tenant.id);
+  if (zoneId) tq = tq.eq('zone_id', zoneId);
+  if (table_capacity) tq = tq.eq('capacity', parseInt(table_capacity));
+  const { data: allTables } = await tq.order('capacity');
+  tableIds = (allTables || []).slice(0, wantedTables).map(t => t.id);
+  if (!zoneId && allTables?.length) zoneId = allTables.find(t => t.zone_id)?.zone_id || null;
+
+  const name = customer_name || { es:'Reserva interna', it:'Prenotazione interna', en:'Internal block', fr:'Blocage interne', de:'Interner Block', pt:'Reserva interna' }[lang] || 'Reserva interna';
+
+  await supabase.from('reservations').insert({
+    tenant_id: tenant.id, customer_name: name, customer_phone: customer_phone || null,
+    party_size: party_size || (table_capacity * wantedTables) || 2,
+    reserved_at: reservedAt, duration_min: dur,
+    status: 'confirmed', zone_id: zoneId,
+    table_id: tableIds[0] || null, table_ids: tableIds,
+    notes: notes || null,
+  });
+
+  const dt = new Date(reservedAt).toLocaleString('es', { weekday:'short', day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
+  const tWord = tableIds.length > 1
+    ? { es:'mesas', it:'tavoli', en:'tables', fr:'tables', de:'Tische', pt:'mesas' }[lang] || 'tables'
+    : { es:'mesa', it:'tavolo', en:'table', fr:'table', de:'Tisch', pt:'mesa' }[lang] || 'table';
+  const tblNote = tableIds.length ? ` (${tableIds.length} ${tWord}${table_capacity ? ` x${table_capacity}` : ''})` : '';
+  const zNote = zone_preference ? ` — ${zone_preference}` : '';
+  const ok = {
+    es: `✅ *${tableIds.length || wantedTables} ${tWord}* bloqueadas${zNote} el ${dt}${notes ? `\n📝 ${notes}` : ''}`,
+    it: `✅ *${tableIds.length || wantedTables} ${tWord}* bloccati${zNote} — ${dt}${notes ? `\n📝 ${notes}` : ''}`,
+    en: `✅ *${tableIds.length || wantedTables} ${tWord}* blocked${zNote} — ${dt}${notes ? `\n📝 ${notes}` : ''}`,
+    fr: `✅ *${tableIds.length || wantedTables} ${tWord}* bloquées${zNote} — ${dt}${notes ? `\n📝 ${notes}` : ''}`,
+    de: `✅ *${tableIds.length || wantedTables} ${tWord}* gesperrt${zNote} — ${dt}${notes ? `\n📝 ${notes}` : ''}`,
+    pt: `✅ *${tableIds.length || wantedTables} ${tWord}* bloqueadas${zNote} — ${dt}${notes ? `\n📝 ${notes}` : ''}`,
+  };
+  await sendMessage(tenant.merchant_phone, ok[lang] || ok.es, phoneNumberId, token);
 }
 
 // ─── Appointment helper ───────────────────────────────────────────────────────
