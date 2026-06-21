@@ -706,17 +706,21 @@ router.get('/stats', requireAuth, async (req, res) => {
   const today = new Date().toISOString().slice(0, 10);
   const todayOrders = orders.filter(o => o.created_at.slice(0, 10) === today);
 
-  // Appointments today that count as revenue:
-  // any non-cancelled, non-refunded appointment today = happened = earned
-  // (paid upfront OR will be paid on the day — either way it's today's income)
-  const { data: apptData } = await supabase.from('appointments')
-    .select('price_guarani')
-    .eq('tenant_id', req.tenant.tenantId)
-    .neq('status', 'cancelled')
-    .neq('refunded', true)
-    .gte('start_at', today + 'T00:00:00')
-    .lte('start_at', today + 'T23:59:59');
-  const apptRevenue = (apptData || []).reduce((s, a) => s + (a.price_guarani || 0), 0);
+  // Appointment revenue today — two distinct buckets:
+  // 1. Paid today (paid_at::date = today): regardless of appointment date
+  // 2. Today's appointments not yet paid (paid=false, not cancelled, not refunded): will be paid today
+  const [apptPaidToday, apptDueToday] = await Promise.all([
+    supabase.from('appointments').select('price_guarani')
+      .eq('tenant_id', req.tenant.tenantId)
+      .eq('paid', true).neq('refunded', true)
+      .gte('paid_at', today + 'T00:00:00').lte('paid_at', today + 'T23:59:59'),
+    supabase.from('appointments').select('price_guarani')
+      .eq('tenant_id', req.tenant.tenantId)
+      .eq('paid', false).neq('status', 'cancelled').neq('refunded', true)
+      .gte('start_at', today + 'T00:00:00').lte('start_at', today + 'T23:59:59'),
+  ]);
+  const apptRevenue = [...(apptPaidToday.data || []), ...(apptDueToday.data || [])]
+    .reduce((s, a) => s + (a.price_guarani || 0), 0);
 
   res.json({
     totalOrders:     orders.length,
@@ -1537,6 +1541,7 @@ router.post('/appointments', requireAuth, async (req, res) => {
     status: 'confirmed',
     notes: notes || null,
     paid: paid === true || paid === 'true',
+    paid_at: (paid === true || paid === 'true') ? new Date().toISOString() : null,
     price_guarani: price_guarani || null,
   }).select().single();
 
@@ -1549,6 +1554,9 @@ router.put('/appointments/:id', requireAuth, async (req, res) => {
   const allowed = ['customer_name','customer_phone','status','notes','start_at','end_at','paid','price_guarani','refunded'];
   const updates = {};
   for (const f of allowed) if (req.body[f] !== undefined) updates[f] = req.body[f];
+  // Set paid_at when transitioning to paid=true
+  if (updates.paid === true) updates.paid_at = new Date().toISOString();
+  if (updates.paid === false) updates.paid_at = null;
   const { data, error } = await supabase.from('appointments')
     .update(updates).eq('id', req.params.id).eq('tenant_id', req.tenant.tenantId)
     .select().single();

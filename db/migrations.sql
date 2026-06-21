@@ -237,3 +237,7 @@ ALTER TABLE tenants
   ADD COLUMN IF NOT EXISTS service_per_km         INTEGER          DEFAULT 0,
   ADD COLUMN IF NOT EXISTS service_min_value      INTEGER          DEFAULT 0,
   ADD COLUMN IF NOT EXISTS service_disabled_dates TEXT;
+
+-- Migration 18: paid_at timestamp for appointment payment tracking
+ALTER TABLE appointments
+  ADD COLUMN IF NOT EXISTS paid_at TIMESTAMPTZ;

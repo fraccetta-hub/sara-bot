@@ -2976,9 +2976,9 @@ function applyTabVisibility(productsEnabled, servicesEnabled, appointmentsEnable
   // Show delivery section only for plans with products (Shop/Restaurant/Pro)
   const ds = document.getElementById('deliverySection');
   if (ds) ds.classList.toggle('hidden', !productsEnabled);
-  // Show service mobility section only for bookings-only plan (services, no products)
+  // Show service mobility section for any plan with services (bookings-only or Pro with both)
   const sm = document.getElementById('serviceMobilitySection');
-  if (sm) sm.classList.toggle('hidden', !(servicesEnabled && !productsEnabled));
+  if (sm) sm.classList.toggle('hidden', !servicesEnabled);
 }
 
 // ── Tab switching ──────────────────────────────────────────────────────────────
