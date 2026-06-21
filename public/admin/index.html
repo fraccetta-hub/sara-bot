@@ -2152,15 +2152,16 @@ function toggleLangPicker(e){e.stopPropagation();document.getElementById('langPi
 document.addEventListener('click',function(){const m=document.getElementById('langPickerMenu');if(m)m.classList.remove('open')});
 
 function applyTranslations() {
+  const curSym = CURRENCY_SYMBOL_MAP[TENANT_CURRENCY] || TENANT_CURRENCY;
   // data-i18n elements (innerHTML)
   document.querySelectorAll('[data-i18n]').forEach(el => {
     const val = t(el.dataset.i18n);
-    if (val !== undefined) el.innerHTML = val;
+    if (val !== undefined) el.innerHTML = val.replace(/\{cur\}/g, curSym);
   });
   // data-i18n-ph elements (placeholder)
   document.querySelectorAll('[data-i18n-ph]').forEach(el => {
     const val = t(el.dataset.i18nPh);
-    if (val !== undefined) el.placeholder = val;
+    if (val !== undefined) el.placeholder = val.replace(/\{cur\}/g, curSym);
   });
   const LANG_LABELS = {es:'ES ▾',en:'EN ▾',it:'IT ▾',de:'DE ▾',fr:'FR ▾',pt:'PT ▾'};
   const langBtn = document.getElementById('langPickerBtn');
@@ -4586,6 +4587,11 @@ async function loadSettings() {
       Array.isArray(s.delivery_disabled_dates) ? s.delivery_disabled_dates.join(', ') : (s.delivery_disabled_dates || '');
     updateDeliveryFields();
     TENANT_CURRENCY = s.plan_currency || 'PYG';
+    const isIntCur = ['PYG','CLP','COP'].includes(TENANT_CURRENCY);
+    ['sDeliveryBaseFee','sDeliveryMinOrder','sDeliveryZoneOuterFee','sDeliveryPerKm'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) { el.step = isIntCur ? '1' : '0.01'; el.type = 'text'; el.type = 'number'; }
+    });
     isMenuMode = s.sector === 'delivery';
     applyTabVisibility(s.products_enabled !== false, !!s.services_enabled, !!s.appointments_enabled, !!s.restaurant_enabled);
     applyTranslations();
