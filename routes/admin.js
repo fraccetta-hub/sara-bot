@@ -583,21 +583,15 @@ router.delete('/products/:id', requireAuth, async (req, res) => {
 // ─── GET /admin/orders ────────────────────────────────────────────────────────
 
 router.get('/orders', requireAuth, async (req, res) => {
-  // Join with conversations to get customer_name
-  const { data, error } = await supabase
-    .from('orders')
-    .select('*, conversations(customer_name)')
-    .eq('tenant_id', req.tenant.tenantId)
-    .order('created_at', { ascending: false })
-    .limit(100);
-  if (error) return res.status(500).json({ error: error.message });
+  const tenantId = req.tenant.tenantId;
+  const [ordersRes, convsRes] = await Promise.all([
+    supabase.from('orders').select('*').eq('tenant_id', tenantId).order('created_at', { ascending: false }).limit(100),
+    supabase.from('conversations').select('customer_phone, customer_name').eq('tenant_id', tenantId),
+  ]);
+  if (ordersRes.error) return res.status(500).json({ error: ordersRes.error.message });
 
-  // Flatten customer_name onto each order
-  const orders = (data || []).map(o => ({
-    ...o,
-    customer_name: o.conversations?.customer_name || null,
-    conversations: undefined
-  }));
+  const nameMap = Object.fromEntries((convsRes.data || []).map(c => [c.customer_phone, c.customer_name]));
+  const orders = (ordersRes.data || []).map(o => ({ ...o, customer_name: nameMap[o.customer_phone] || null }));
   res.json(orders);
 });
 
@@ -705,7 +699,7 @@ router.get('/stats', requireAuth, async (req, res) => {
   res.json({
     totalOrders:     orders.length,
     todayOrders:     todayOrders.length,
-    todayRevenue:    todayOrders.filter(o => o.status !== 'cancelled').reduce((s, o) => s + o.total_guarani, 0),
+    todayRevenue:    todayOrders.filter(o => ['confirmed','preparing','delivering','delivered'].includes(o.status)).reduce((s, o) => s + o.total_guarani + (o.delivery_fee || 0), 0),
     totalProducts:   products.length,
     activeProducts:  products.filter(p => p.is_available).length,
     pendingOrders:   orders.filter(o => o.status === 'pending').length,

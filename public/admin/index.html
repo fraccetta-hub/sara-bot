@@ -3388,7 +3388,7 @@ async function loadOrders() {
         <div class="flex-1 min-w-0">
           <div class="flex items-center gap-2 mb-1 flex-wrap">
             ${nameHtml}
-            <span class="status-badge status-${o.status}">${statusLabels[o.status]}</span>
+            <span id="order-badge-${o.id}" class="status-badge status-${o.status}">${statusLabels[o.status]}</span>
           </div>
           <div class="text-sm text-gray-500 mt-1">📦 ${items}</div>
           <div class="text-xs text-gray-400 mt-1">🕐 ${date}</div>
@@ -4228,6 +4228,19 @@ async function saveCustomerInfo() {
 
 async function updateOrderStatus(id, status) {
   await api(`/admin/orders/${id}/status`, 'PUT', { status });
+  const badge = document.getElementById(`order-badge-${id}`);
+  if (badge) {
+    const statusLabels = {
+      pending:    t('orders.status.pending'),
+      confirmed:  t('orders.status.confirmed'),
+      preparing:  t('orders.status.preparing'),
+      delivering: t('orders.status.delivering'),
+      delivered:  t('orders.status.delivered'),
+      cancelled:  t('orders.status.cancelled'),
+    };
+    badge.className = `status-badge status-${status}`;
+    badge.textContent = statusLabels[status] || status;
+  }
 }
 
 // ── Customers tab ────────────────────────────────────────────────────────────
