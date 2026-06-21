@@ -96,6 +96,14 @@ async function processIncoming(body) {
   const isMerchant = tenant.merchant_phone && senderPhone === tenant.merchant_phone;
 
   if (isMerchant) {
+    // ── Merchant rate limiting ─────────────────────────────────────────────
+    const mrlType = messageType === 'image' ? 'image' : messageType === 'audio' ? 'audio' : 'text';
+    const mrl = rateCheck(tenant.id, senderPhone, mrlType, 'merchant');
+    if (!mrl.allowed) {
+      const mlang = merchantLang.get(tenant.id) || 'es';
+      if (mrl.notify) await sendMessage(senderPhone, blockMessage(mrl.reason, 'merchant', mlang), phoneNumberId, token);
+      return;
+    }
     if (messageType === 'image') {
       await handleMerchantImage(tenant, message, phoneNumberId, token);
     } else if (messageType === 'text') {
@@ -107,19 +115,20 @@ async function processIncoming(body) {
 
   // ── Customer rate limiting ───────────────────────────────────────────────────
   const rlType = messageType === 'image' ? 'image' : messageType === 'audio' ? 'audio' : 'text';
-  const rl = rateCheck(tenant.id, senderPhone, rlType);
+  const rl = rateCheck(tenant.id, senderPhone, rlType, 'customer');
   if (!rl.allowed) {
     if (rl.notify) {
-      await sendMessage(senderPhone, blockMessage(rl.reason), phoneNumberId, token);
+      await sendMessage(senderPhone, blockMessage(rl.reason, 'customer'), phoneNumberId, token);
     }
     return;
   }
 
-  // ── Log potential prompt injection attempts (don't block — no feedback to attacker) ─────
+  // ── Prompt injection — block and log ────────────────────────────────────────
   if (messageText) {
-    const injectionPatterns = /ignore.*instruct|system\s*:|prompt\s*:|jailbreak|act as|modo desarrollador|developer mode|sin restricciones|unrestricted|ignore previous|olvida.*instruc|ignora.*instruc/i;
+    const injectionPatterns = /ignore.*instruct|system\s*:|prompt\s*:|jailbreak|act as|modo desarrollador|developer mode|sin restricciones|unrestricted|ignore previous|olvida.*instruc|ignora.*instruc|you are now|sei ora|ahora eres|tu es maintenant|du bist jetzt|você agora é/i;
     if (injectionPatterns.test(messageText)) {
-      console.warn(`[security] Possible prompt injection attempt from ${senderPhone} on tenant ${tenant.id}: "${messageText.slice(0, 100)}"`);
+      console.warn(`[security] Prompt injection blocked from ${senderPhone} on tenant ${tenant.id}: "${messageText.slice(0, 100)}"`);
+      return; // Drop silently — no feedback to attacker
     }
   }
 
@@ -196,6 +205,11 @@ async function processIncoming(body) {
         return;
       }
       console.log(`[webhook] Audio transcribed (len=${transcription.length})`);
+      const audioInjectionPatterns = /ignore.*instruct|system\s*:|prompt\s*:|jailbreak|act as|ignore previous|you are now|sei ora|ahora eres|sin restricciones|unrestricted/i;
+      if (audioInjectionPatterns.test(transcription)) {
+        console.warn(`[security] Injection attempt via audio from ${senderPhone} on tenant ${tenant.id}`);
+        return;
+      }
       await handleCustomerMessage(tenant, senderPhone, transcription, null, null, waProfileName, phoneNumberId, token);
     } catch (e) {
       console.error('[webhook] Audio transcription error:', e.message);
@@ -215,8 +229,12 @@ async function processIncoming(body) {
 // ─── Merchant NL bot ─────────────────────────────────────────────────────────
 
 const Anthropic = require('@anthropic-ai/sdk');
-const merchantPendingCache = new Map();  // L1: in-memory
-const merchantLang         = new Map();  // tenantId → last detected language (for notifications)
+const merchantPendingCache  = new Map();  // L1: in-memory
+const merchantLang          = new Map();  // tenantId → last detected language (for notifications)
+const broadcastInProgress   = new Set(); // prevent concurrent broadcast per tenant
+
+// Periodic cleanup — drop stale language entries every 7 days
+setInterval(() => { merchantLang.clear(); }, 7 * 86_400_000);
 
 // Pending state persisted in tenants.merchant_pending_json (L2: DB)
 // L1 is always checked first — DB only on cache miss (after server restart)
@@ -755,6 +773,54 @@ async function handleMerchantMessage(tenant, messageText, phoneNumberId, token) 
         merchantPending.delete(tenant.id);
         await completeBookTable(tenant, merged, pending.lang, phoneNumberId, token);
         return;
+      }
+
+      // Yes/no for delete_customer confirmation
+      if (pending.action === 'delete_customer' && pending.target) {
+        const lower = txt.toLowerCase();
+        const yes = /^(yes|sì|si|oui|ja|ok|yep|sure|y|s|j|1|👍|✅|certo|claro|ouais|klar|confirm)/.test(lower);
+        const no  = /^(no|nope|nein|non|cancel|nada|n|2|❌|👎|annulla|cancelar|pas ça)/.test(lower);
+        if (yes) {
+          const { target } = pending;
+          merchantPending.delete(tenant.id);
+          await supabase.from('conversations').delete().eq('tenant_id', tenant.id).eq('customer_phone', target.customer_phone);
+          const label = target.customer_name || target.customer_phone;
+          const ok = { es:`🗑️ Cliente *${label}* eliminado.`, it:`🗑️ Cliente *${label}* eliminato.`, en:`🗑️ Customer *${label}* deleted.`, fr:`🗑️ Client *${label}* supprimé.`, de:`🗑️ Kunde *${label}* gelöscht.`, pt:`🗑️ Cliente *${label}* eliminado.` };
+          await sendMessage(tenant.merchant_phone, ok[pending.lang] || ok.es, phoneNumberId, token);
+          return;
+        }
+        if (no) {
+          merchantPending.delete(tenant.id);
+          await sendMessage(tenant.merchant_phone, mt(pending.lang, 'canceled'), phoneNumberId, token);
+          return;
+        }
+      }
+
+      // Yes/no for delete_product / delete_service single-candidate confirmation
+      const isDeleteConfirm = (pending.action === 'delete_product' || pending.action === 'delete_service') && pending.candidates?.length === 1;
+      if (isDeleteConfirm) {
+        const lower = txt.toLowerCase();
+        const yes = /^(yes|sì|si|oui|ja|ok|yep|sure|y|s|j|1|👍|✅|certo|claro|ouais|klar|confirm)/.test(lower);
+        const no  = /^(no|nope|nein|non|cancel|nada|n|2|❌|👎|annulla|cancelar|pas ça)/.test(lower);
+        if (yes) {
+          const target = pending.candidates[0];
+          merchantPending.delete(tenant.id);
+          if (pending.action === 'delete_product') {
+            await supabase.from('products').delete().eq('id', target.id).eq('tenant_id', tenant.id);
+            invalidateStock(tenant.id);
+          } else {
+            await supabase.from('services').delete().eq('id', target.id).eq('tenant_id', tenant.id);
+            invalidateServices(tenant.id);
+          }
+          const ok = { es:`🗑️ *${target.name}* eliminado.`, it:`🗑️ *${target.name}* eliminato.`, en:`🗑️ *${target.name}* deleted.`, fr:`🗑️ *${target.name}* supprimé.`, de:`🗑️ *${target.name}* gelöscht.`, pt:`🗑️ *${target.name}* eliminado.` };
+          await sendMessage(tenant.merchant_phone, ok[pending.lang] || ok.es, phoneNumberId, token);
+          return;
+        }
+        if (no) {
+          merchantPending.delete(tenant.id);
+          await sendMessage(tenant.merchant_phone, mt(pending.lang, 'canceled'), phoneNumberId, token);
+          return;
+        }
       }
 
       // Yes/no for confirm_one flow
@@ -1325,14 +1391,13 @@ async function handleMerchantMessage(tenant, messageText, phoneNumberId, token) 
       const none = { es:`⚠️ No encontré el producto "${intent.product_query}".`, it:`⚠️ Prodotto "${intent.product_query}" non trovato.`, en:`⚠️ Product "${intent.product_query}" not found.`, fr:`⚠️ Produit "${intent.product_query}" introuvable.`, de:`⚠️ Produkt "${intent.product_query}" nicht gefunden.`, pt:`⚠️ Produto "${intent.product_query}" não encontrado.` };
       await sendMessage(tenant.merchant_phone, none[lang] || none.es, phoneNumberId, token); return;
     }
+    const dpCandidates = matches.slice(0, 5);
+    merchantPending.set(tenant.id, { action: 'delete_product', candidates: dpCandidates, lang, expiresAt: Date.now() + 5*60*1000 });
     if (matches.length === 1) {
-      await supabase.from('products').delete().eq('id', matches[0].id).eq('tenant_id', tenant.id);
-      invalidateStock(tenant.id);
-      const ok = { es:`🗑️ Producto *${matches[0].name}* eliminado.`, it:`🗑️ Prodotto *${matches[0].name}* eliminato.`, en:`🗑️ Product *${matches[0].name}* deleted.`, fr:`🗑️ Produit *${matches[0].name}* supprimé.`, de:`🗑️ Produkt *${matches[0].name}* gelöscht.`, pt:`🗑️ Produto *${matches[0].name}* eliminado.` };
-      await sendMessage(tenant.merchant_phone, ok[lang] || ok.es, phoneNumberId, token); return;
+      const confirm = { es:`¿Seguro que querés eliminar *${matches[0].name}*? Respondé *sí* para confirmar.`, it:`Sicuro di voler eliminare *${matches[0].name}*? Rispondi *sì* per confermare.`, en:`Are you sure you want to delete *${matches[0].name}*? Reply *yes* to confirm.`, fr:`Voulez-vous vraiment supprimer *${matches[0].name}*? Répondez *oui* pour confirmer.`, de:`Möchtest du *${matches[0].name}* wirklich löschen? Antworte mit *ja* zum Bestätigen.`, pt:`Tem certeza que quer eliminar *${matches[0].name}*? Responda *sim* para confirmar.` };
+      await sendMessage(tenant.merchant_phone, confirm[lang] || confirm.es, phoneNumberId, token); return;
     }
-    const list = matches.slice(0,5).map((p,i) => `${i+1}. *${p.name}*`).join('\n');
-    merchantPending.set(tenant.id, { action: 'delete_product', candidates: matches.slice(0,5), lang, expiresAt: Date.now() + 5*60*1000 });
+    const list = dpCandidates.map((p,i) => `${i+1}. *${p.name}*`).join('\n');
     const which = { es:`¿Cuál eliminar?\n${list}`, it:`Quale eliminare?\n${list}`, en:`Which to delete?\n${list}`, fr:`Lequel supprimer?\n${list}`, de:`Welches löschen?\n${list}`, pt:`Qual eliminar?\n${list}` };
     await sendMessage(tenant.merchant_phone, which[lang] || which.es, phoneNumberId, token);
     return;
@@ -1346,14 +1411,13 @@ async function handleMerchantMessage(tenant, messageText, phoneNumberId, token) 
       const none = { es:`⚠️ No encontré el servicio "${intent.service_query}".`, it:`⚠️ Servizio "${intent.service_query}" non trovato.`, en:`⚠️ Service "${intent.service_query}" not found.`, fr:`⚠️ Service "${intent.service_query}" introuvable.`, de:`⚠️ Dienst "${intent.service_query}" nicht gefunden.`, pt:`⚠️ Serviço "${intent.service_query}" não encontrado.` };
       await sendMessage(tenant.merchant_phone, none[lang] || none.es, phoneNumberId, token); return;
     }
+    const dsCandidates = sMatches.slice(0, 5);
+    merchantPending.set(tenant.id, { action: 'delete_service', candidates: dsCandidates, lang, expiresAt: Date.now() + 5*60*1000 });
     if (sMatches.length === 1) {
-      await supabase.from('services').delete().eq('id', sMatches[0].id).eq('tenant_id', tenant.id);
-      invalidateServices(tenant.id);
-      const ok = { es:`🗑️ Servicio *${sMatches[0].name}* eliminado.`, it:`🗑️ Servizio *${sMatches[0].name}* eliminato.`, en:`🗑️ Service *${sMatches[0].name}* deleted.`, fr:`🗑️ Service *${sMatches[0].name}* supprimé.`, de:`🗑️ Dienst *${sMatches[0].name}* gelöscht.`, pt:`🗑️ Serviço *${sMatches[0].name}* eliminado.` };
-      await sendMessage(tenant.merchant_phone, ok[lang] || ok.es, phoneNumberId, token); return;
+      const confirm = { es:`¿Seguro que querés eliminar *${sMatches[0].name}*? Respondé *sí* para confirmar.`, it:`Sicuro di voler eliminare *${sMatches[0].name}*? Rispondi *sì* per confermare.`, en:`Are you sure you want to delete *${sMatches[0].name}*? Reply *yes* to confirm.`, fr:`Voulez-vous vraiment supprimer *${sMatches[0].name}*? Répondez *oui* pour confirmer.`, de:`Möchtest du *${sMatches[0].name}* wirklich löschen? Antworte mit *ja* zum Bestätigen.`, pt:`Tem certeza que quer eliminar *${sMatches[0].name}*? Responda *sim* para confirmar.` };
+      await sendMessage(tenant.merchant_phone, confirm[lang] || confirm.es, phoneNumberId, token); return;
     }
-    const list = sMatches.slice(0,5).map((s,i) => `${i+1}. *${s.name}*`).join('\n');
-    merchantPending.set(tenant.id, { action: 'delete_service', candidates: sMatches.slice(0,5), lang, expiresAt: Date.now() + 5*60*1000 });
+    const list = dsCandidates.map((s,i) => `${i+1}. *${s.name}*`).join('\n');
     const which = { es:`¿Cuál eliminar?\n${list}`, it:`Quale eliminare?\n${list}`, en:`Which to delete?\n${list}`, fr:`Lequel supprimer?\n${list}`, de:`Welchen löschen?\n${list}`, pt:`Qual eliminar?\n${list}` };
     await sendMessage(tenant.merchant_phone, which[lang] || which.es, phoneNumberId, token);
     return;
@@ -1366,6 +1430,14 @@ async function handleMerchantMessage(tenant, messageText, phoneNumberId, token) 
       const ask = { es:'¿Qué mensaje querés enviar a todos tus clientes?', it:'Quale messaggio vuoi inviare a tutti i tuoi clienti?', en:'What message do you want to send to all your customers?', fr:'Quel message voulez-vous envoyer à tous vos clients?', de:'Welche Nachricht möchtest du an alle Kunden senden?', pt:'Qual mensagem deseja enviar a todos os clientes?' };
       await sendMessage(tenant.merchant_phone, ask[lang] || ask.es, phoneNumberId, token); return;
     }
+    if (message.trim().length > 1000) {
+      const tooLong = { es:'⚠️ Mensaje demasiado largo (máx. 1000 caracteres).', it:'⚠️ Messaggio troppo lungo (max 1000 caratteri).', en:'⚠️ Message too long (max 1000 characters).', fr:'⚠️ Message trop long (max 1000 caractères).', de:'⚠️ Nachricht zu lang (max. 1000 Zeichen).', pt:'⚠️ Mensagem muito longa (máx. 1000 caracteres).' };
+      await sendMessage(tenant.merchant_phone, tooLong[lang] || tooLong.es, phoneNumberId, token); return;
+    }
+    if (broadcastInProgress.has(tenant.id)) {
+      const busy = { es:'⏳ Ya hay un broadcast en curso. Esperá que termine.', it:'⏳ Broadcast già in corso. Aspetta che finisca.', en:'⏳ A broadcast is already in progress. Wait for it to finish.', fr:'⏳ Un broadcast est déjà en cours. Attendez la fin.', de:'⏳ Ein Broadcast läuft bereits. Bitte warten.', pt:'⏳ Já existe um broadcast em andamento. Aguarde.' };
+      await sendMessage(tenant.merchant_phone, busy[lang] || busy.es, phoneNumberId, token); return;
+    }
     const since = new Date(Date.now() - days_active * 86400000).toISOString();
     const { data: convs } = await supabase.from('conversations').select('customer_phone').eq('tenant_id', tenant.id).gte('updated_at', since);
     const phones = [...new Set((convs || []).map(c => c.customer_phone))];
@@ -1375,10 +1447,15 @@ async function handleMerchantMessage(tenant, messageText, phoneNumberId, token) 
     }
     const sending = { es:`📣 Enviando a *${phones.length}* clientes...`, it:`📣 Invio a *${phones.length}* clienti...`, en:`📣 Sending to *${phones.length}* customers...`, fr:`📣 Envoi à *${phones.length}* clients...`, de:`📣 Sende an *${phones.length}* Kunden...`, pt:`📣 Enviando para *${phones.length}* clientes...` };
     await sendMessage(tenant.merchant_phone, sending[lang] || sending.es, phoneNumberId, token);
+    broadcastInProgress.add(tenant.id);
     const broadcastToken = tenant.whatsapp_token || process.env.WHATSAPP_TOKEN;
     let sent = 0, failed = 0;
-    for (const phone of phones) {
-      try { await sendMessage(phone, message.trim(), phoneNumberId, broadcastToken); sent++; } catch { failed++; }
+    try {
+      for (const phone of phones) {
+        try { await sendMessage(phone, message.trim(), phoneNumberId, broadcastToken); sent++; } catch { failed++; }
+      }
+    } finally {
+      broadcastInProgress.delete(tenant.id);
     }
     const done = { es:`✅ Enviado a *${sent}* clientes${failed ? ` (${failed} fallidos)` : ''}.`, it:`✅ Inviato a *${sent}* clienti${failed ? ` (${failed} falliti)` : ''}.`, en:`✅ Sent to *${sent}* customers${failed ? ` (${failed} failed)` : ''}.`, fr:`✅ Envoyé à *${sent}* clients${failed ? ` (${failed} échoués)` : ''}.`, de:`✅ An *${sent}* Kunden gesendet${failed ? ` (${failed} fehlgeschlagen)` : ''}.`, pt:`✅ Enviado a *${sent}* clientes${failed ? ` (${failed} falhas)` : ''}.` };
     await sendMessage(tenant.merchant_phone, done[lang] || done.es, phoneNumberId, token);
@@ -1419,9 +1496,10 @@ async function handleMerchantMessage(tenant, messageText, phoneNumberId, token) 
       await sendMessage(tenant.merchant_phone, none[lang] || none.es, phoneNumberId, token); return;
     }
     const target = matches[0];
-    await supabase.from('conversations').delete().eq('tenant_id', tenant.id).eq('customer_phone', target.customer_phone);
-    const ok = { es:`🗑️ Cliente *${target.customer_name || target.customer_phone}* eliminado.`, it:`🗑️ Cliente *${target.customer_name || target.customer_phone}* eliminato.`, en:`🗑️ Customer *${target.customer_name || target.customer_phone}* deleted.`, fr:`🗑️ Client *${target.customer_name || target.customer_phone}* supprimé.`, de:`🗑️ Kunde *${target.customer_name || target.customer_phone}* gelöscht.`, pt:`🗑️ Cliente *${target.customer_name || target.customer_phone}* eliminado.` };
-    await sendMessage(tenant.merchant_phone, ok[lang] || ok.es, phoneNumberId, token);
+    const label = target.customer_name || target.customer_phone;
+    merchantPending.set(tenant.id, { action: 'delete_customer', target, lang, expiresAt: Date.now() + 5*60*1000 });
+    const confirm = { es:`¿Seguro que querés eliminar al cliente *${label}*? Respondé *sí* para confirmar.`, it:`Sicuro di voler eliminare il cliente *${label}*? Rispondi *sì* per confermare.`, en:`Are you sure you want to delete customer *${label}*? Reply *yes* to confirm.`, fr:`Voulez-vous vraiment supprimer le client *${label}*? Répondez *oui* pour confirmer.`, de:`Möchtest du Kunde *${label}* wirklich löschen? Antworte mit *ja* zum Bestätigen.`, pt:`Tem certeza que quer eliminar o cliente *${label}*? Responda *sim* para confirmar.` };
+    await sendMessage(tenant.merchant_phone, confirm[lang] || confirm.es, phoneNumberId, token);
     return;
   }
 

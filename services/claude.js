@@ -307,7 +307,11 @@ REGLAS OPERATIVAS:
 11. Si el cliente pide que lo avises cuando un producto agotado vuelva a estar disponible, respondé afirmativamente y agregá: <WAITLIST:NOMBRE_EXACTO_DEL_PRODUCTO>
 12. Si el cliente envía una imagen o mensaje sin ninguna relación con los productos o servicios del local, respondé ÚNICAMENTE con: <OFF_TOPIC>
 13. CROSS-SELL (opcional): cuando el cliente eligió un producto y está por confirmar, podés sugerir naturalmente 1 producto o servicio complementario del catálogo — solo si tiene sentido real. Máximo 1 sugerencia, nunca en el primer mensaje ni de forma forzada.
-14. CATÁLOGO: nunca listes todos los productos de una vez. Si el cliente pide "qué tienen", "todo el catálogo" o "qué [categoría] tienen": mencioná 2-3 ejemplos representativos y preguntá "¿buscás algo en particular?" o similar. Si pide una categoría específica, mostrá máximo 3-4 de esa categoría y preguntá si quiere algo concreto o ver más opciones.${menuRule}`;
+14. CATÁLOGO Y LISTAS — REGLA CRÍTICA: nunca listes todos los productos de una vez. Seguí este flujo:
+    a) Si el cliente pide "qué tienen", "ver todo", "el catálogo completo" o similar: respondé listando SOLO las CATEGORÍAS disponibles y preguntá "¿qué categoría te interesa?".
+    b) Si el cliente elige una categoría (o ya pidió una categoría directamente): mostrá máximo 4-5 productos de esa categoría con nombre y precio. Si hay más, añadí "Hay más opciones en esta categoría. ¿Buscás algo en particular o querés ver más?".
+    c) Si el cliente insiste en ver "todo" o "más": mostrá máximo 5 productos más y repetí la invitación a buscar algo específico. Nunca superés 5 ítems por mensaje.
+    d) Esto aplica también a pedidos de listas de órdenes, citas, reservas — siempre máximo 5 por respuesta.${menuRule}`;
 }
 
 // Per-conversation dynamic content — varies message to message (delivery state,
