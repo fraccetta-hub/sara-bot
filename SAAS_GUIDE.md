@@ -82,6 +82,66 @@ Comandi merchant:
 
 ---
 
+## Merchant Bot — specchio del pannello admin
+
+**Principio fondamentale:** il bot WhatsApp del merchant è la copia in linguaggio naturale del pannello admin. Ogni azione disponibile nell'interfaccia grafica è eseguibile via chat. Se il pannello richiede un campo obbligatorio, il bot lo chiede. Se è facoltativo, il bot lo chiede solo se mancante e rilevante. Se non è previsto nel pannello, il bot lo ignora anche se viene detto.
+
+### Regole invarianti
+
+1. **Isolamento tenant totale** — ogni query porta sempre `.eq('tenant_id', tenant.id)`. Un merchant non può mai vedere o modificare dati di un altro.
+2. **Feature gating** — le azioni disponibili dipendono dai moduli attivi del piano (`products_enabled`, `services_enabled`, `appointments_enabled`, `restaurant_enabled`). Se un'azione non è nel piano del merchant, il bot risponde con un messaggio localizzato che spiega il limite.
+3. **Lingua automatica** — il bot risponde nella lingua del merchant (rilevata da Haiku ad ogni messaggio e memorizzata in `merchantLang`). Tutte le risposte sono disponibili in ES/IT/EN/FR/DE/PT.
+4. **Dialogo progressivo** — se mancano campi obbligatori, il bot chiede solo quelli mancanti (pattern `awaiting_fields` in `merchantPending`), non riparte dall'inizio.
+5. **Autorità del merchant** — il merchant conosce la sua attività. Non si validano le sue scelte operative (es. bloccare tavoli con capienza diversa dal party). Si validano solo i campi obbligatori per l'integrità del dato in DB.
+
+### Azioni disponibili per tipo di piano
+
+| Azione | Shop | Bookings | Restaurant | Pro |
+|--------|:----:|:--------:|:----------:|:---:|
+| Catalogo prodotti (add/update/delete/stock/price) | ✅ | — | ✅ (menu) | ✅ |
+| Offerte e sconti | ✅ | — | ✅ | ✅ |
+| Ordini (list/confirm/cancel/status) | ✅ | — | ✅ | ✅ |
+| Servizi (add/update/delete) | — | ✅ | — | ✅ |
+| Appuntamenti (list/add/cancel/reschedule/block) | — | ✅ | — | ✅ |
+| Prenotazioni tavolo (list/book/block/cancel/confirm) | — | — | ✅ | ✅ |
+| Chat takeover (prendi/rilascia chat cliente) | ✅ | ✅ | ✅ | ✅ |
+| Broadcast (messaggio a tutti i clienti attivi) | ✅ | ✅ | ✅ | ✅ |
+| Clienti (aggiorna nome/email/indirizzo, elimina) | ✅ | ✅ | ✅ | ✅ |
+| Orari apertura (aggiorna per giorno o tutti) | ✅ | ✅ | ✅ | ✅ |
+| Chiusure straordinarie (ferie, festivi) | ✅ | ✅ | ✅ | ✅ |
+| Analytics (ordini, ricavi, clienti per periodo) | ✅ | ✅ | ✅ | ✅ |
+| Foto prodotto (invia immagine con caption = nome) | ✅ | — | ✅ | ✅ |
+
+### Flusso tecnico (`routes/webhook.js`)
+
+```
+Messaggio merchant → handleMerchantMessage()
+    → check takeover attivo → forwarda al cliente
+    → check merchantPending (awaiting_fields / candidate selection / yes-no)
+    → parseMerchantIntent(messageText, products, services, tenant)
+        → Haiku: restituisce {action, product_query, service_query, params, language}
+        → tenant.products/services/appointments/restaurant_enabled passati come contesto
+    → merchantLang.set(tenant.id, lang)  ← lingua persistita per notifiche
+    → featureGate(tenant, action, lang)  ← blocca se modulo non attivo
+    → handler specifico per action
+        → se campi mancanti → merchantPending.set (awaiting_fields) → chiedi
+        → se candidati multipli → merchantPending.set (candidates) → chiedi numero
+        → se confirm_one → merchantPending.set (product) → chiedi sì/no
+        → esegui azione → risposta localizzata
+```
+
+### Azioni non disponibili via bot (solo pannello)
+
+- Upload foto da file (il bot accetta immagini inviate direttamente su WhatsApp)
+- Import catalogo da immagini / CSV / Excel
+- Configurazione zone e tavoli ristorante
+- Configurazione WhatsApp (token, numero)
+- Gestione billing / Stripe
+- Cambio password / email account
+- Export CSV clienti/ordini/prodotti
+
+---
+
 ## Foto prodotti
 
 Aggiungi `image_url` ai prodotti (URL pubblico — Supabase Storage consigliato).
