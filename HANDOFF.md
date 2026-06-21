@@ -234,11 +234,36 @@ UX redesign 10-punti completato e verificato in preview (static server `public/`
 - Warning confirm() prima di cambiare durata (6 lingue) — le prenotazioni esistenti mantengono il loro `duration_min` ma la nuova durata cambia come vengono calcolate le sovrapposizioni.
 - Prenotazioni fuori orario (inserite manualmente dal merchant) restano valide — è override consapevole, non un bug da correggere.
 
+## ✅ FATTO (sessione 2026-06-21 — slot ristorante + i18n delivery)
+
+### Durata slot unica (commit 8e671c1)
+- Rimosso concetto `restaurant_slot_duration_2` — un'unica durata per tutte le fasce di tutti i giorni.
+- Motivo: slot 1/slot 2 sono posizioni strutturali (prima/seconda finestra del giorno), non semantiche. Con orari che attraversano mezzanotte (sabato 00:00–03:00) il mapping era invertito e confuso.
+- `routes/admin.js`: rimosso `dur2` da `GET /restaurant/availability` e `PUT /restaurant/settings`; tutti i window usano `dur1`.
+- `services/claude.js`: rimosso `dur2`; `buildAvailabilityBlock` usa `dur1` per tutti i window; `durNote` semplificato.
+- `routes/webhook.js`: rimossa logica `inW2` + `dur2`; reservation usa `tenant.restaurant_slot_duration || 90` direttamente.
+- `public/admin/index.html`: rimossa riga "Slot 2 (min)", rimosso `restDur2Row`; `saveRestaurantSettings` invia solo `restaurant_slot_duration`.
+- **Migration non più necessaria**: `tenants.restaurant_slot_duration_2` non viene né scritta né letta — colonna vestigiale innocua, ignorabile.
+
+### Fix label giorno domenica (commit 5621b69)
+- Label "Durata media tavolo" in tab Ristorante prendeva domenica (day_of_week=0, prima in array) come riferimento.
+- Fix: `loadRestaurant` ora preferisce primo giorno feriale con apertura ≥ 06:00.
+- Rimosso `toMin(s, isEnd)` (era modifica parziale non completata) → ripristinato `toMin(s)`.
+
+### i18n giorni tavoli liberi (commit 7f2aec6)
+- `renderAvailGrid()`: `WD` array era hardcoded in spagnolo (`['dom','lun',...]`).
+- Fix: `WD` usa `t('day.sun')…t('day.sat')` — chiavi già presenti in tutte e 6 le lingue.
+
+### Fix valuta labels consegna + step input (commit ed4d322)
+- `applyTranslations()`: i18n keys delivery contenevano `{cur}` mai sostituito → appariva letteralmente `((cur))`.
+- Fix: `applyTranslations` sostituisce `{cur}` con `CURRENCY_SYMBOL_MAP[TENANT_CURRENCY]` in tutti i `data-i18n` e `data-i18n-ph`.
+- Input delivery (`sDeliveryBaseFee/MinOrder/ZoneOuterFee/PerKm`): `step=1` per valute intere (PYG/CLP/COP), `step=0.01` per le altre — settato in `loadSettings()` dopo che `TENANT_CURRENCY` è noto.
+
 ## STATO CORRENTE
 - Obiettivo generale: SaaS multi-tenant WhatsApp Business (Node/Express + Supabase + Anthropic Claude). Bot AI risponde a clienti, gestisce catalogo, delivery, turni/appuntamenti, ordini.
-- Fase attuale: tab ristorante ristrutturato, logica slot corretta. Prossimo: Stripe live env vars su Render, invoicing merchant.
-- Ultimo commit stabile: `d5b99a9`
-- **Migration pendente**: `tenants.restaurant_slot_duration_2 INTEGER` — eseguire su Supabase.
+- Fase attuale: slot ristorante semplificato (durata unica), i18n delivery risolto. Prossimo: Stripe live env vars su Render, invoicing merchant.
+- Ultimo commit stabile: `ed4d322`
+- **Migration pendente**: nessuna nuova. Pendenti storiche invariate (vedi sotto).
 
 ## COSA È STATO FATTO (sessione 2026-06-20 — i18n hardcoded in Ajustes)
 
