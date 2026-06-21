@@ -1160,33 +1160,34 @@ async function handlePaymentProof(tenant, customerPhone, buffer, mimeType, phone
 async function handleMerchantImage(tenant, message, phoneNumberId, token) {
   const mediaId = message.image?.id;
   const caption = message.image?.caption?.trim() || null;
+  const lang = merchantLang.get(tenant.id) || 'es';
 
   if (!mediaId) return;
 
   // If no caption → ask which product
   if (!caption) {
-    await sendMessage(
-      tenant.merchant_phone,
-      '📸 ¡Foto recibida! Reenviala con el *nombre del producto* como caption (texto de la foto) para que la pueda asociar.\n\nEjemplo: enviá la foto con el texto "Ramo de Rosas Rojas"',
-      phoneNumberId,
-      token
-    );
+    const msg = {
+      es: '📸 ¡Foto recibida! Reenviala con el *nombre del producto* como caption (texto de la foto).\n\nEjemplo: enviá la foto con el texto "Pizza Margherita"',
+      it: '📸 Foto ricevuta! Rimandamela con il *nome del prodotto* come didascalia (testo della foto).\n\nEsempio: invia la foto con il testo "Pizza Margherita"',
+      en: '📸 Photo received! Resend it with the *product name* as caption.\n\nExample: send the photo with the text "Margherita Pizza"',
+      fr: '📸 Photo reçue! Renvoyez-la avec le *nom du produit* comme légende.\n\nExemple: envoyez la photo avec le texte "Pizza Margherita"',
+      de: '📸 Foto erhalten! Schick es erneut mit dem *Produktnamen* als Beschriftung.\n\nBeispiel: Foto mit dem Text "Pizza Margherita" senden',
+      pt: '📸 Foto recebida! Reenvie com o *nome do produto* como legenda.\n\nExemplo: envie a foto com o texto "Pizza Margherita"',
+    };
+    await sendMessage(tenant.merchant_phone, msg[lang] || msg.es, phoneNumberId, token);
     return;
   }
 
-  await sendMessage(tenant.merchant_phone, `⏳ Subiendo foto para "${caption}"...`, phoneNumberId, token);
+  const uploading = { es:`⏳ Subiendo foto para "${caption}"...`, it:`⏳ Caricamento foto per "${caption}"...`, en:`⏳ Uploading photo for "${caption}"...`, fr:`⏳ Téléchargement de la photo pour "${caption}"...`, de:`⏳ Foto wird hochgeladen für "${caption}"...`, pt:`⏳ Enviando foto para "${caption}"...` };
+  await sendMessage(tenant.merchant_phone, uploading[lang] || uploading.es, phoneNumberId, token);
 
   try {
     const allP = await getProductsForTenant(tenant.id);
     const matches = findProductsFuzzy(allP, caption);
     const product = matches[0] || null;
     if (!product) {
-      await sendMessage(
-        tenant.merchant_phone,
-        `⚠️ No encontré el producto: "${caption}". Verificá el nombre en el catálogo.`,
-        phoneNumberId,
-        token
-      );
+      const notFound = { es:`⚠️ No encontré el producto: "${caption}". Verificá el nombre en el catálogo.`, it:`⚠️ Prodotto non trovato: "${caption}". Verifica il nome nel catalogo.`, en:`⚠️ Product not found: "${caption}". Check the name in the catalog.`, fr:`⚠️ Produit introuvable: "${caption}". Vérifiez le nom dans le catalogue.`, de:`⚠️ Produkt nicht gefunden: "${caption}". Überprüfe den Namen im Katalog.`, pt:`⚠️ Produto não encontrado: "${caption}". Verifique o nome no catálogo.` };
+      await sendMessage(tenant.merchant_phone, notFound[lang] || notFound.es, phoneNumberId, token);
       return;
     }
 
@@ -1197,22 +1198,14 @@ async function handleMerchantImage(tenant, message, phoneNumberId, token) {
     // Save URL to product
     await supabase.from('products').update({ image_url: publicUrl }).eq('id', product.id);
 
-    await sendMessage(
-      tenant.merchant_phone,
-      `✅ ¡Foto guardada para *${product.name}*!\nAhora Sara la enviará automáticamente cuando los clientes pregunten por este producto.`,
-      phoneNumberId,
-      token
-    );
+    const ok = { es:`✅ ¡Foto guardada para *${product.name}*! Sara la enviará automáticamente a los clientes.`, it:`✅ Foto salvata per *${product.name}*! Sara la invierà automaticamente ai clienti.`, en:`✅ Photo saved for *${product.name}*! Sara will send it automatically to customers.`, fr:`✅ Photo enregistrée pour *${product.name}*! Sara l'enverra automatiquement aux clients.`, de:`✅ Foto gespeichert für *${product.name}*! Sara sendet sie automatisch an Kunden.`, pt:`✅ Foto salva para *${product.name}*! Sara a enviará automaticamente aos clientes.` };
+    await sendMessage(tenant.merchant_phone, ok[lang] || ok.es, phoneNumberId, token);
     console.log(`[storage] Image uploaded for product "${product.name}": ${publicUrl}`);
 
   } catch (err) {
     console.error('[storage] Image upload error:', err.message);
-    await sendMessage(
-      tenant.merchant_phone,
-      `❌ Error al subir la foto. Intentá de nuevo en un momento.`,
-      phoneNumberId,
-      token
-    );
+    const errMsg = { es:`❌ Error al subir la foto. Intentá de nuevo.`, it:`❌ Errore nel caricamento della foto. Riprova.`, en:`❌ Error uploading photo. Please try again.`, fr:`❌ Erreur lors du téléchargement. Réessayez.`, de:`❌ Fehler beim Hochladen. Bitte erneut versuchen.`, pt:`❌ Erro ao enviar foto. Tente novamente.` };
+    await sendMessage(tenant.merchant_phone, errMsg[lang] || errMsg.es, phoneNumberId, token);
   }
 }
 
