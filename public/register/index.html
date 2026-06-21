@@ -184,9 +184,38 @@
           <p id="emailStatus" class="text-xs mt-1 text-gray-400" data-i18n="s3.email.hint">Este email será tu usuario para entrar al panel.</p>
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1" data-i18n="s3.phone.label">WhatsApp personal (con código de país, sin +) *</label>
-          <input id="phoneInput" type="tel" placeholder="5491123456789" data-i18n-ph="s3.phone.placeholder"
-            class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm"/>
+          <label class="block text-sm font-medium text-gray-700 mb-1" data-i18n="s3.phone.label">Número de WhatsApp *</label>
+          <div class="flex gap-2">
+            <select id="phonePrefix" onchange="this.dataset.touched='1'" class="border border-gray-200 rounded-xl px-2 py-2.5 text-sm shrink-0 max-w-[8.5rem]">
+              <option value="54"  data-cc="AR">🇦🇷 +54</option>
+              <option value="55"  data-cc="BR">🇧🇷 +55</option>
+              <option value="52"  data-cc="MX">🇲🇽 +52</option>
+              <option value="56"  data-cc="CL">🇨🇱 +56</option>
+              <option value="57"  data-cc="CO">🇨🇴 +57</option>
+              <option value="598" data-cc="UY">🇺🇾 +598</option>
+              <option value="51"  data-cc="PE">🇵🇪 +51</option>
+              <option value="595" data-cc="PY">🇵🇾 +595</option>
+              <option value="591" data-cc="BO">🇧🇴 +591</option>
+              <option value="593" data-cc="EC">🇪🇨 +593</option>
+              <option value="58"  data-cc="VE">🇻🇪 +58</option>
+              <option value="506" data-cc="CR">🇨🇷 +506</option>
+              <option value="507" data-cc="PA">🇵🇦 +507</option>
+              <option value="502" data-cc="GT">🇬🇹 +502</option>
+              <option value="503" data-cc="SV">🇸🇻 +503</option>
+              <option value="504" data-cc="HN">🇭🇳 +504</option>
+              <option value="505" data-cc="NI">🇳🇮 +505</option>
+              <option value="1"   data-cc="US">🇺🇸 +1</option>
+              <option value="34"  data-cc="ES">🇪🇸 +34</option>
+              <option value="39"  data-cc="IT">🇮🇹 +39</option>
+              <option value="351" data-cc="PT">🇵🇹 +351</option>
+              <option value="33"  data-cc="FR">🇫🇷 +33</option>
+              <option value="49"  data-cc="DE">🇩🇪 +49</option>
+              <option value="44"  data-cc="GB">🇬🇧 +44</option>
+            </select>
+            <input id="phoneInput" type="tel" inputmode="numeric" placeholder="981 123 456" data-i18n-ph="s3.phone.placeholder"
+              oninput="this.value=this.value.replace(/[^0-9]/g,'')"
+              class="flex-1 border border-gray-200 rounded-xl px-3 py-2.5 text-sm"/>
+          </div>
           <p class="text-xs text-gray-400 mt-1" data-i18n="s3.phone.hint">Sara te avisará aquí cuando llegue un pedido. Este número NO es el número del bot.</p>
         </div>
         <div>
@@ -211,7 +240,7 @@
     <!-- ── STEP 4: Plan ────────────────────────────────────────────────────── -->
     <div class="step fade-in" id="step4">
       <h2 class="text-lg font-bold text-gray-800 mb-1" data-i18n="s4.title">Elegí tu plan</h2>
-      <p class="text-sm text-gray-400 mb-5" data-i18n="s4.sub">7 días gratis en cualquier plan. Sin tarjeta ahora — pagás al terminar el período de prueba.</p>
+      <p class="text-sm text-gray-400 mb-5" data-i18n="s4.sub">7 días de prueba gratis en cualquier plan. No se te cobra durante la prueba y cancelás cuando quieras.</p>
 
       <div id="currencyNote" class="hidden bg-blue-50 border border-blue-100 rounded-xl px-4 py-2.5 mb-4 text-xs text-blue-700"></div>
 
@@ -541,11 +570,13 @@ document.getElementById('emailSupport').href = 'mailto:' + (window._supportEmail
 // ── Step navigation ──────────────────────────────────────────────────────────
 const STEPS = 4;
 function goStep(n) {
-  if (!validateStep(currentStep())) return;
+  // Only validate when moving forward — going back must never be blocked.
+  if (n > currentStep() && !validateStep(currentStep())) return;
 
   document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
   document.getElementById('step' + n).classList.add('active');
   window.scrollTo({ top: 0, behavior: 'smooth' });
+  if (n === 3) syncPhonePrefix();
   if (n === 4) applyPlanRecommendation();
 
   const pct = Math.round((n / STEPS) * 100);
@@ -588,20 +619,30 @@ function validateStep(n) {
   }
   if (n === 3) {
     const email = document.getElementById('emailInput').value.trim();
-    const phone = document.getElementById('phoneInput').value.trim();
+    const prefix = document.getElementById('phonePrefix').value;
+    const local  = document.getElementById('phoneInput').value.replace(/[^0-9]/g, '');
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showErr('step3Err', t('js.err.email')); return false; }
     if (!emailAvailable) { showErr('step3Err', t('js.err.emailTaken')); return false; }
-    if (!phone || phone.length < 8) { showErr('step3Err', t('js.err.phone')); return false; }
+    // Local part: 6–12 digits, no leading 0 (callers must drop the trunk 0).
+    if (local.length < 6 || local.length > 12) { showErr('step3Err', t('js.err.phone')); return false; }
     const pwd = document.getElementById('passwordInput').value;
     const pwd2 = document.getElementById('passwordConfirmInput').value;
     if (!pwd || pwd.length < 8) { showErr('step3Err', t('js.err.passShort')); return false; }
     if (pwd !== pwd2) { showErr('step3Err', t('js.err.passMismatch')); return false; }
     formData.email = email;
-    formData.phone = phone;
+    formData.phone = prefix + local.replace(/^0+/, ''); // full international number, no +
     formData.password = pwd;
     clearErr('step3Err'); return true;
   }
   return true;
+}
+
+// Default the dial-code prefix from the country chosen in step 1.
+function syncPhonePrefix() {
+  const sel = document.getElementById('phonePrefix');
+  if (!sel || !formData.country || formData.country === 'OTHER') return;
+  const opt = Array.from(sel.options).find(o => o.dataset.cc === formData.country);
+  if (opt && !sel.dataset.touched) sel.value = opt.value;
 }
 
 // ── Currency by country ───────────────────────────────────────────────────────
