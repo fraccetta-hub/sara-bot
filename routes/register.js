@@ -3,11 +3,24 @@ const router  = express.Router();
 const bcrypt  = require('bcryptjs');
 const jwt     = require('jsonwebtoken');
 const { createClient } = require('@supabase/supabase-js');
+const { rateLimit } = require('express-rate-limit');
 const { getSectorPrompt, getCurrencyForCountry } = require('../services/sectorPrompts');
 
 const supabase   = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
 const JWT_SECRET = process.env.ADMIN_JWT_SECRET;
 const TRIAL_DAYS = 7;
+
+// Throttle signup (mass fake accounts) and email lookup (address enumeration).
+const signupLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, max: 10,
+  standardHeaders: true, legacyHeaders: false,
+  message: { error: 'Demasiados intentos. Probá de nuevo en una hora.' },
+});
+const checkEmailLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, max: 30,
+  standardHeaders: true, legacyHeaders: false,
+  message: { available: false, error: 'Demasiadas consultas. Probá más tarde.' },
+});
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -26,7 +39,7 @@ function trialExpiry() {
 
 // ── POST /register — create new self-registered tenant ────────────────────────
 
-router.post('/', async (req, res) => {
+router.post('/', signupLimiter, async (req, res) => {
   const {
     business_name, sector, country, language,
     owner_name, email, phone, password,
@@ -115,7 +128,7 @@ router.post('/', async (req, res) => {
 
 // ── GET /register/check-email?email=... — check availability before submit ───
 
-router.get('/check-email', async (req, res) => {
+router.get('/check-email', checkEmailLimiter, async (req, res) => {
   const { email } = req.query;
   if (!email) return res.json({ available: false });
   const { data } = await supabase
