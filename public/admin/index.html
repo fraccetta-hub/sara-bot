@@ -561,16 +561,17 @@
           <thead class="bg-gray-50 text-gray-500 uppercase text-xs">
             <tr>
               <th data-i18n="products.col.product" class="px-4 py-3 text-left">Producto</th>
-              <th class="px-4 py-3 text-left hidden md:table-cell text-gray-400 font-mono text-xs">SKU</th>
               <th data-i18n="products.col.category" class="px-4 py-3 text-left hidden sm:table-cell">Categoría</th>
-              <th data-i18n="products.col.price" class="px-4 py-3 text-right">Precio (Gs)</th>
+              <th data-i18n="products.col.description" class="px-4 py-3 text-left hidden lg:table-cell">Descripción</th>
+              <th data-i18n="products.col.price" class="px-4 py-3 text-right">Precio ({cur})</th>
               <th data-i18n="products.col.stock" class="px-4 py-3 text-center">Stock</th>
+              <th data-i18n="products.col.sku" class="px-4 py-3 text-left hidden md:table-cell">SKU</th>
               <th data-i18n="products.col.status" class="px-4 py-3 text-center">Estado</th>
               <th data-i18n="products.col.actions" class="px-4 py-3 text-center">Acciones</th>
             </tr>
           </thead>
           <tbody id="productsTable" class="divide-y divide-gray-50">
-            <tr><td colspan="7" class="text-center py-8 text-gray-400">Cargando...</td></tr>
+            <tr><td colspan="8" class="text-center py-8 text-gray-400">Cargando...</td></tr>
           </tbody>
         </table>
       </div>
@@ -3094,7 +3095,7 @@ function renderProducts() {
   if (menuView) menuView.classList.add('hidden');
   const tbody = document.getElementById('productsTable');
   if (!filtered.length) {
-    tbody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-gray-400">${t('products.empty')}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8" class="text-center py-8 text-gray-400">${t('products.empty')}</td></tr>`;
     return;
   }
   tbody.innerHTML = filtered.map(p => {
@@ -3112,10 +3113,11 @@ function renderProducts() {
           <span class="font-medium text-gray-800">${escHtml(p.name)}</span>
         </div>
       </td>
-      <td class="px-4 py-3 hidden md:table-cell text-gray-400 font-mono text-xs">${p.sku ? escHtml(p.sku) : '—'}</td>
       <td class="px-4 py-3 text-gray-500 hidden sm:table-cell">${escHtml(p.category || '—')}</td>
+      <td class="px-4 py-3 text-gray-500 text-xs hidden lg:table-cell max-w-xs truncate" title="${p.description ? escHtml(p.description) : ''}">${p.description ? escHtml(p.description) : '—'}</td>
       <td class="px-4 py-3 text-right font-medium">${fmtPrice(p.price_guarani)}</td>
       <td class="px-4 py-3 text-center">${stockCell}</td>
+      <td class="px-4 py-3 hidden md:table-cell text-gray-400 font-mono text-xs">${p.sku ? escHtml(p.sku) : '—'}</td>
       <td class="px-4 py-3 text-center">
         <button onclick="toggleAvailable('${p.id}', ${!p.is_available})"
           class="status-badge ${p.is_available ? 'status-confirmed' : 'status-cancelled'} cursor-pointer hover:opacity-80">
@@ -4864,7 +4866,7 @@ async function openStripePortal() {
 // ── API helper ─────────────────────────────────────────────────────────────────
 function errMsg(e) { return e.code ? (t('err.' + e.code) || e.message) : e.message; }
 
-async function api(path, method = 'GET', body = null) {
+async function api(path, method = 'GET', body = null, auth = true) {
   const opts = {
     method,
     credentials: 'same-origin',

@@ -1,5 +1,11 @@
 # PROJECT HANDOFF — Sara Bot (whatsapp-bot) — 2026-06-21
 
+## ✅ FATTO (2026-06-21 — fix "auth not defined" + colonne tab prodotti = Excel)
+
+- **Bug "auth not defined"** (creazione prodotto / qualsiasi 401): `login()` chiamava `api('/admin/login','POST',{...}, false)` con un 4° arg, ma `api()` aveva solo 3 parametri → dentro `if (res.status===401 && auth)` la var `auth` era undefined → ReferenceError su ogni risposta 401 (residuo della migrazione a cookie HttpOnly). Fix: aggiunto `auth = true` come 4° parametro di `api()` (`public/admin/index.html`). Login passa `false` → 401 mostra "credenziali errate"; chiamate autenticate → 401 fa logout.
+- **Colonne tab prodotti riordinate per matchare l'Excel**: ora `Producto, Categoría, Descripción, Precio ({cur}), Stock, SKU, Estado, Acciones` (era Producto, SKU, Categoría, Precio, Stock, Estado, Acciones — ordine diverso, SKU fuori posto, niente descrizione). Aggiunta **colonna Descripción** (troncata `hidden lg:table-cell`, testo completo nel `title` + nel modal di modifica). i18n `products.col.description` + `products.col.sku` in 6 lingue.
+- Verificato preview: header e righe 8 colonne allineate nell'ordine dell'Excel; prezzo `$12.50` con account USD; `api.length===4`.
+
 ## ✅ FATTO (2026-06-21 — fix valuta header: Gs nei prodotti, $ nell'incasso)
 
 Bug: stesso account, prezzi prodotti con header "Precio (Gs)" ma incasso in "$". Causa: in `showDashboard` (`public/admin/index.html`) `applyTranslations()` girava PRIMA di `TENANT_CURRENCY = settings.plan_currency` → i token `{cur}` (header prezzo) risolvevano col default PYG; le celle + l'incasso (renderizzati dopo) usavano la valuta vera → mismatch. Fix: setto `TENANT_CURRENCY` prima di `applyTranslations` (rimossa l'assegnazione duplicata più sotto). Ora header, celle e incasso usano tutti la valuta dell'account.
