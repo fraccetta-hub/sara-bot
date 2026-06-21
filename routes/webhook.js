@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const crypto = require('crypto');
 const { createClient } = require('@supabase/supabase-js');
 const { getTenantConfig, getStock, decrementStock, getServices, getOffers, getBusinessClosures, getBusinessHours, getRestaurantZones, getRestaurantTables, getUpcomingReservations, invalidateStock, invalidateServices, invalidateClosures, invalidateOffers, invalidateBusinessHours } = require('../services/stock');
 const { sendMessage, sendImage, notifyMerchant } = require('../services/whatsapp');
@@ -26,7 +27,24 @@ router.get('/', (req, res) => {
 });
 
 // POST /webhook — incoming WhatsApp messages
+const META_APP_SECRET = process.env.META_APP_SECRET;
+
+// Verify the payload really comes from Meta (HMAC-SHA256 over the raw body).
+// Skips only if no app secret is configured (keeps local/dev working).
+function validMetaSignature(req) {
+  if (!META_APP_SECRET) return true;
+  const sig = req.get('x-hub-signature-256') || '';
+  const expected = 'sha256=' + crypto.createHmac('sha256', META_APP_SECRET).update(req.rawBody || Buffer.alloc(0)).digest('hex');
+  const a = Buffer.from(sig);
+  const b = Buffer.from(expected);
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
+}
+
 router.post('/', (req, res) => {
+  if (!validMetaSignature(req)) {
+    console.warn('[webhook] rejected: invalid X-Hub-Signature-256');
+    return res.sendStatus(401);
+  }
   res.status(200).send('OK');
   processIncoming(req.body).catch(err => console.error('[webhook] Unhandled error:', err));
 });

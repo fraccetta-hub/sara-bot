@@ -45,7 +45,13 @@ async function notifySuperadmin(tenantName, tenantId, content) {
 }
 
 // ── POST /telegram-webhook ────────────────────────────────────────────────────
+const WEBHOOK_SECRET = process.env.TELEGRAM_WEBHOOK_SECRET;
+
 router.post('/', async (req, res) => {
+  // Reject spoofed calls: Telegram echoes the secret_token set at setWebhook time.
+  if (WEBHOOK_SECRET && req.get('x-telegram-bot-api-secret-token') !== WEBHOOK_SECRET) {
+    return res.sendStatus(401);
+  }
   res.sendStatus(200); // always ack immediately
 
   const update = req.body;

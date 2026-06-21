@@ -59,7 +59,8 @@ app.use(cookieParser());
 app.use('/billing/webhook', express.raw({ type: 'application/json' }));
 
 // ── Limit JSON body size to prevent payload attacks ───────────────────────────
-app.use(express.json({ limit: '512kb' }));
+// Keep the raw body so the WhatsApp webhook can verify Meta's X-Hub-Signature-256.
+app.use(express.json({ limit: '512kb', verify: (req, _res, buf) => { req.rawBody = buf; } }));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/images', express.static(path.join(__dirname, 'images')));
 

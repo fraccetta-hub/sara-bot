@@ -21,6 +21,13 @@ const forgotPasswordLimiter = rateLimit({
   legacyHeaders: false,
   message: { error: 'Too many requests, try again in 1 hour.' },
 });
+const resetPasswordLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests, try again in 1 hour.', errorCode: 'rate_limit' },
+});
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 const uploadCatalog = multer({ storage: multer.memoryStorage(), limits: { fileSize: 4 * 1024 * 1024, files: 6 } });
 const uploadZip = multer({ storage: multer.memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } });
@@ -242,7 +249,7 @@ router.post('/forgot-password', forgotPasswordLimiter, async (req, res) => {
 
 // ─── POST /admin/reset-password ──────────────────────────────────────────────
 
-router.post('/reset-password', async (req, res) => {
+router.post('/reset-password', resetPasswordLimiter, async (req, res) => {
   const { token, password } = req.body;
   if (!token || !password) return res.status(400).json({ error: 'Datos incompletos' });
   if (password.length < 8) return res.status(400).json({ error: 'La contraseña debe tener al menos 8 caracteres', errorCode: 'password_too_short' });
