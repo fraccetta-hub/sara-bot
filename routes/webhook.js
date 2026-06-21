@@ -335,7 +335,10 @@ block_time, unblock_time,
 create_closure, delete_closure,
 create_offer, delete_offer,
 get_services, update_service, add_service,
-unknown.
+greeting, unknown.
+
+Use "greeting" for salutations (ciao, hola, hello, hi, buongiorno, bonjour, etc.) or small talk with no business intent.
+Use "unknown" only when you cannot identify any of the above actions.
 
 JSON schema: {"action":"...","product_query":null,"service_query":null,"params":{},"language":"es|it|en|fr|de|pt"}
 
@@ -365,7 +368,8 @@ Resolve relative dates using today's ISO above. "domani alle 15" → compute cor
     messages: [{ role: 'user', content: `Products:\n${catalog}\n\nServices:\n${svcList}\n\nMessage: ${messageText}` }],
   });
   try {
-    return JSON.parse(resp.content[0].text.trim());
+    const raw = resp.content[0].text.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
+    return JSON.parse(raw);
   } catch {
     return { action: 'unknown', product_query: null, service_query: null, params: {}, language: 'es' };
   }
@@ -792,7 +796,10 @@ async function handleMerchantMessage(tenant, messageText, phoneNumberId, token) 
   // ── Add product ───────────────────────────────────────────────────────────
   if (intent.action === 'add_product') {
     const { name, category, price, stock, description } = intent.params;
-    if (!name) { await sendMessage(tenant.merchant_phone, mt(lang, 'unknown'), phoneNumberId, token); return; }
+    if (!name) {
+      const ask = { es:'¿Cómo se llama el producto que querés agregar?', it:'Come si chiama il prodotto che vuoi aggiungere?', en:'What is the name of the product you want to add?', fr:'Quel est le nom du produit à ajouter?', de:'Wie heißt das Produkt, das du hinzufügen möchtest?', pt:'Qual é o nome do produto que deseja adicionar?' };
+      await sendMessage(tenant.merchant_phone, ask[lang] || ask.es, phoneNumberId, token); return;
+    }
     await supabase.from('products').insert({
       tenant_id: tenant.id,
       name, category: category || 'General',
@@ -1020,6 +1027,13 @@ async function handleMerchantMessage(tenant, messageText, phoneNumberId, token) 
     merchantPending.set(tenant.id, { action: 'update_service', candidates: sMatches.slice(0, 5), params: { updates }, lang, expiresAt: Date.now() + 5 * 60 * 1000 });
     const MT_WHICH_SVC = { es:`Varios servicios:\n${list}\n¿Cuál actualizar?`, it:`Più servizi:\n${list}\nQuale aggiornare?`, en:`Multiple services:\n${list}\nWhich to update?`, fr:`Plusieurs services:\n${list}\nLequel mettre à jour?`, de:`Mehrere Dienste:\n${list}\nWelchen aktualisieren?`, pt:`Vários serviços:\n${list}\nQual atualizar?` };
     await sendMessage(tenant.merchant_phone, MT_WHICH_SVC[lang] || MT_WHICH_SVC.es, phoneNumberId, token);
+    return;
+  }
+
+  // ── Greeting ──────────────────────────────────────────────────────────────
+  if (intent.action === 'greeting') {
+    const greet = { es:'👋 ¡Hola! ¿En qué te puedo ayudar?', it:'👋 Ciao! Come posso aiutarti?', en:'👋 Hi! How can I help you?', fr:'👋 Bonjour! Comment puis-je vous aider?', de:'👋 Hallo! Wie kann ich helfen?', pt:'👋 Olá! Como posso ajudar?' };
+    await sendMessage(tenant.merchant_phone, greet[lang] || greet.es, phoneNumberId, token);
     return;
   }
 
