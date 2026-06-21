@@ -67,15 +67,16 @@ async function buildCatalog() {
     { header: 'description', key: 'description',  width: 42 },
     { header: 'price',       key: 'price',       width: 12 },
     { header: 'stock',       key: 'stock',       width: 10 },
+    { header: 'sku',         key: 'sku',         width: 14 },
     { header: 'available',   key: 'available',   width: 12 },
   ];
   ws.addRows([
-    { name: 'Red Roses Bouquet',     category: 'Bouquets',     description: 'Dozen of fresh red roses',        price: 90000,  stock: 15, available: 'Yes' },
-    { name: 'Sunflower Arrangement', category: 'Arrangements', description: 'Bright sunflowers in a glass vase', price: 75000,  stock: 8,  available: 'Yes' },
-    { name: 'Orchid Pot',            category: 'Plants',       description: 'Purple phalaenopsis orchid',       price: 120000, stock: 5,  available: 'No'  },
+    { name: 'Red Roses Bouquet',     category: 'Bouquets',     description: 'Dozen of fresh red roses',        price: 90000,  stock: 15, sku: 'ROS-12', available: 'Yes' },
+    { name: 'Sunflower Arrangement', category: 'Arrangements', description: 'Bright sunflowers in a glass vase', price: 75000,  stock: 8,  sku: 'SUN-01', available: 'Yes' },
+    { name: 'Orchid Pot',            category: 'Plants',       description: 'Purple phalaenopsis orchid',       price: 120000, stock: 5,  sku: 'ORC-05', available: 'No'  },
   ]);
-  styleHeader(ws, 6);
-  availableDropdown(ws, 'F');
+  styleHeader(ws, 7);
+  availableDropdown(ws, 'G');
 
   writeInstructions(wb.addWorksheet('Instructions'), INSTRUCTIONS_EN_CATALOG);
   writeInstructions(wb.addWorksheet('Instrucciones'), INSTRUCTIONS_ES_CATALOG);
@@ -134,6 +135,7 @@ const INSTRUCTIONS_EN_CATALOG = [
   ...COMMON_EN('catalog', 'product'),
   PRICE_EN('catalog'),
   { text: 'stock — quantity available, a whole number. Leave blank if you do not track stock.' },
+  { text: 'sku — your internal product code (e.g. ROS-12). Optional; shown only to you.' },
   AVAIL_EN,
   { text: '' },
   { text: 'Notes', h: 2 },
@@ -173,6 +175,7 @@ const INSTRUCTIONS_ES_CATALOG = [
   ...COMMON_ES('catalog', 'producto', 'Catalog'),
   PRICE_ES,
   { text: 'stock — cantidad disponible, número entero. Dejala vacía si no llevás control de stock.' },
+  { text: 'sku — tu código interno de producto (ej: ROS-12). Opcional; solo lo ves vos.' },
   AVAIL_ES,
   { text: '' },
   { text: 'Notas', h: 2 },

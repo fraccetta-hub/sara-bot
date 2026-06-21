@@ -1058,6 +1058,7 @@ router.post('/import-preview', requireAuth, async (req, res) => {
       price_type:  headers.findIndex(h => ['tipo','type','price_type','tipo_precio'].includes(h)),
       duration:    headers.findIndex(h => ['duracion_min','duration_min','duracion','duracion_minutos'].includes(h)),
       stock:       headers.findIndex(h => ['stock','stock_qty','cantidad'].includes(h)),
+      sku:         headers.findIndex(h => ['sku','codigo','código','code','cod'].includes(h)),
       allergens:   headers.findIndex(h => ['allergens','alergenos','alérgenos','alergeni','allergeni'].includes(h)),
       image_url:   headers.findIndex(h => ['imagen_url','image_url','imagen','image','foto','foto_url'].includes(h)),
       available:   headers.findIndex(h => ['disponible','available','activo','active'].includes(h)),
@@ -1087,6 +1088,7 @@ router.post('/import-preview', requireAuth, async (req, res) => {
         price_type:  type,
         duration_min: COL.duration >= 0 ? (parseInt(cells[COL.duration]) || null) : null,
         stock_qty:   COL.stock    >= 0 ? (parseInt(cells[COL.stock])    || 0)    : null,
+        sku:         COL.sku       >= 0 ? (cells[COL.sku]?.trim()       || null) : null,
         allergens:   COL.allergens >= 0 ? (cells[COL.allergens]?.trim() || null) : null,
         image_url:   COL.image_url >= 0 ? (cells[COL.image_url]?.trim() || null) : null,
         is_available: isAvail,
@@ -1142,6 +1144,7 @@ router.post('/import-confirm', requireAuth, async (req, res) => {
           price_type:    r.price_type    || 'fixed',
           duration_min:  r.duration_min  || null,
           stock_qty:     isMenu ? null : (r.stock_qty ?? 99),
+          sku:           isMenu ? null : (r.sku || null),
           allergens:     r.allergens     || null,
           image_url:     r.image_url     || null,
           is_available:  r.is_available  ?? true,
@@ -1967,17 +1970,17 @@ router.get('/products/export', requireAuth, async (req, res) => {
 
   const { data, error } = await supabase
     .from('products')
-    .select('name, category, description, allergens, price_guarani, stock_qty, is_available')
+    .select('name, category, description, allergens, price_guarani, stock_qty, sku, is_available')
     .eq('tenant_id', req.tenant.tenantId)
     .order('category', { ascending: true });
   if (error) return res.status(500).json({ error: error.message });
 
   const headers = isMenu
     ? ['name','category','description','allergens','price','available']
-    : ['name','category','description','price','stock','available'];
+    : ['name','category','description','price','stock','sku','available'];
   const rows = (data || []).map(p => isMenu
     ? [p.name, p.category, p.description, p.allergens, p.price_guarani, p.is_available ? 'Yes' : 'No']
-    : [p.name, p.category, p.description, p.price_guarani, p.stock_qty ?? '', p.is_available ? 'Yes' : 'No']);
+    : [p.name, p.category, p.description, p.price_guarani, p.stock_qty ?? '', p.sku ?? '', p.is_available ? 'Yes' : 'No']);
 
   const date = new Date().toISOString().slice(0,10);
   res.setHeader('Content-Type', 'text/csv; charset=utf-8');

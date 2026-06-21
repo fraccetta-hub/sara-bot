@@ -3177,7 +3177,7 @@ function renderMenu(filtered) {
             <th class="px-4 py-2 text-left">${t('menu.col.dish')}</th>
             <th class="px-4 py-2 text-left hidden sm:table-cell">${t('menu.col.desc')}</th>
             <th class="px-4 py-2 text-left hidden md:table-cell">${t('menu.col.allergens')}</th>
-            <th class="px-4 py-2 text-right">${t('menu.col.price')}</th>
+            <th class="px-4 py-2 text-right">${t('menu.col.price').replace('{cur}', CURRENCY_SYMBOL_MAP[TENANT_CURRENCY] || TENANT_CURRENCY)}</th>
             <th class="px-4 py-2 text-center">${t('menu.col.status')}</th>
             <th class="px-4 py-2 text-center">${t('menu.col.actions')}</th>
           </tr>

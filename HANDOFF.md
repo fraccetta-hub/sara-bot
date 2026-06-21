@@ -1,5 +1,16 @@
 # PROJECT HANDOFF — Sara Bot (whatsapp-bot) — 2026-06-21
 
+## ✅ FATTO (2026-06-21 — coerenza colonne prodotti/menu + SKU + valuta)
+
+Allineate le colonne prodotti (shop) e menu (ristorante) tra tabella UI, template Excel, import e export CSV; nomi i18n e prezzo per valuta account.
+- **Valuta prezzo**: i label prezzo prodotti usavano già `{cur}` (currency-aware via applyTranslations). Mancava solo `menu.col.price` (era "Precio" senza valuta) → aggiunto `{cur}` in 6 lingue; in `renderMenu` l'header è JS-injected quindi sostituisco `{cur}` con `CURRENCY_SYMBOL_MAP[TENANT_CURRENCY]`. Verificato preview: prodotti+menu → €/$/Gs secondo account.
+- **SKU shop ovunque**: era solo nel modal/tabella, mancava in template/import/export.
+  - `scripts/gen-templates.js`: colonna `sku` nel catalogo (name, category, description, price, stock, sku, available) + esempi + istruzioni EN/ES. Rigenerati xlsx.
+  - `routes/admin.js` import-preview: alias `sku`/`codigo`/`code` + campo riga. import-confirm shop: `sku` inserito (null per menu). products/export shop: colonna `sku` (round-trip pulito col template).
+- Menu resta: name, category, description, allergens, price, available (no stock/sku) — coerente tra tabella/template/import/export.
+- Confermato: prezzo nelle celle già currency-aware (`fmtPrice` + `CURRENCY_SYMBOL_MAP`); l'header prodotti mostra "Gs" solo se l'account è PYG (corretto), "$"/"€" per USD/EUR.
+- Nota: la tabella prodotti non mostra la colonna `description` (testo lungo, visibile nel modal) — gli altri campi combaciano con template/import/export.
+
 ## ✅ FATTO (2026-06-21 — fix UX register: back nav, prefisso tel, copy trial)
 
 Commit 211f95e (`public/register/index.html` + `i18n.js`):
