@@ -2809,12 +2809,14 @@ async function showDashboard() {
   document.getElementById('onboardingPage').classList.add('hidden');
   document.getElementById('dashPage').classList.remove('hidden');
   document.getElementById('waBanner').classList.toggle('hidden', waConnected);
+  // Set currency BEFORE applyTranslations so {cur} tokens (e.g. price headers)
+  // resolve to the account currency, not the default.
+  if (settings) TENANT_CURRENCY = settings.plan_currency || 'PYG';
   applyTabGating();
   applyTranslations();
   startOrderNotifications();
 
   if (settings) {
-    TENANT_CURRENCY = settings.plan_currency || 'PYG';
     isMenuMode = settings.sector === 'delivery';
     applyTabVisibility(settings.products_enabled !== false, !!settings.services_enabled, !!settings.appointments_enabled, !!settings.restaurant_enabled);
     if (settings.products_enabled !== false) loadProducts();

@@ -1,5 +1,9 @@
 # PROJECT HANDOFF — Sara Bot (whatsapp-bot) — 2026-06-21
 
+## ✅ FATTO (2026-06-21 — fix valuta header: Gs nei prodotti, $ nell'incasso)
+
+Bug: stesso account, prezzi prodotti con header "Precio (Gs)" ma incasso in "$". Causa: in `showDashboard` (`public/admin/index.html`) `applyTranslations()` girava PRIMA di `TENANT_CURRENCY = settings.plan_currency` → i token `{cur}` (header prezzo) risolvevano col default PYG; le celle + l'incasso (renderizzati dopo) usavano la valuta vera → mismatch. Fix: setto `TENANT_CURRENCY` prima di `applyTranslations` (rimossa l'assegnazione duplicata più sotto). Ora header, celle e incasso usano tutti la valuta dell'account.
+
 ## ✅ FATTO (2026-06-21 — coerenza colonne prodotti/menu + SKU + valuta)
 
 Allineate le colonne prodotti (shop) e menu (ristorante) tra tabella UI, template Excel, import e export CSV; nomi i18n e prezzo per valuta account.
