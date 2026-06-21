@@ -62,18 +62,18 @@ async function buildCatalog() {
   brand(wb, 'SaraBot — Catalog import template');
   const ws = wb.addWorksheet('Catalog');
   ws.columns = [
-    { header: 'name',        key: 'name',        width: 28 },
+    { header: 'product',     key: 'product',     width: 28 },
     { header: 'category',    key: 'category',    width: 18 },
-    { header: 'description', key: 'description',  width: 42 },
+    { header: 'description', key: 'description', width: 42 },
     { header: 'price',       key: 'price',       width: 12 },
     { header: 'stock',       key: 'stock',       width: 10 },
     { header: 'sku',         key: 'sku',         width: 14 },
     { header: 'available',   key: 'available',   width: 12 },
   ];
   ws.addRows([
-    { name: 'Red Roses Bouquet',     category: 'Bouquets',     description: 'Dozen of fresh red roses',        price: 90000,  stock: 15, sku: 'ROS-12', available: 'Yes' },
-    { name: 'Sunflower Arrangement', category: 'Arrangements', description: 'Bright sunflowers in a glass vase', price: 75000,  stock: 8,  sku: 'SUN-01', available: 'Yes' },
-    { name: 'Orchid Pot',            category: 'Plants',       description: 'Purple phalaenopsis orchid',       price: 120000, stock: 5,  sku: 'ORC-05', available: 'No'  },
+    { product: 'Red Roses Bouquet',     category: 'Bouquets',     description: 'Dozen of fresh red roses',          price: 90000,  stock: 15, sku: 'ROS-12', available: 'Yes' },
+    { product: 'Sunflower Arrangement', category: 'Arrangements', description: 'Bright sunflowers in a glass vase', price: 75000,  stock: 8,  sku: 'SUN-01', available: 'Yes' },
+    { product: 'Orchid Pot',            category: 'Plants',       description: 'Purple phalaenopsis orchid',         price: 120000, stock: 5,  sku: 'ORC-05', available: 'No'  },
   ]);
   styleHeader(ws, 7);
   availableDropdown(ws, 'G');
@@ -91,17 +91,17 @@ async function buildMenu() {
   brand(wb, 'SaraBot — Menu import template');
   const ws = wb.addWorksheet('Menu');
   ws.columns = [
-    { header: 'name',        key: 'name',        width: 28 },
+    { header: 'dish',        key: 'dish',        width: 28 },
     { header: 'category',    key: 'category',    width: 18 },
-    { header: 'description', key: 'description',  width: 42 },
+    { header: 'description', key: 'description', width: 42 },
     { header: 'allergens',   key: 'allergens',   width: 26 },
     { header: 'price',       key: 'price',       width: 12 },
     { header: 'available',   key: 'available',   width: 12 },
   ];
   ws.addRows([
-    { name: 'Milanesa Napolitana', category: 'Main dishes', description: 'Breaded beef with ham, cheese and tomato sauce', allergens: 'Gluten, Dairy, Egg',  price: 45000, available: 'Yes' },
-    { name: 'Caesar Salad',        category: 'Starters',    description: 'Romaine, croutons, parmesan, caesar dressing',    allergens: 'Gluten, Dairy, Fish', price: 30000, available: 'Yes' },
-    { name: 'Tiramisu',            category: 'Desserts',    description: 'Classic Italian coffee dessert',                  allergens: 'Gluten, Dairy, Egg',  price: 25000, available: 'Yes' },
+    { dish: 'Milanesa Napolitana', category: 'Main dishes', description: 'Breaded beef with ham, cheese and tomato sauce', allergens: 'Gluten, Dairy, Egg',  price: 45000, available: 'Yes' },
+    { dish: 'Caesar Salad',        category: 'Starters',    description: 'Romaine, croutons, parmesan, caesar dressing',    allergens: 'Gluten, Dairy, Fish', price: 30000, available: 'Yes' },
+    { dish: 'Tiramisu',            category: 'Desserts',    description: 'Classic Italian coffee dessert',                  allergens: 'Gluten, Dairy, Egg',  price: 25000, available: 'Yes' },
   ]);
   styleHeader(ws, 6);
   availableDropdown(ws, 'F');
@@ -122,7 +122,7 @@ const COMMON_EN = (kind, itemWord) => [
   { text: '3. When finished, import it from the admin panel: Products → Import → CSV. You can paste the data, upload a .csv file, or link a public Google Sheet.' },
   { text: '' },
   { text: 'Columns', h: 2 },
-  { text: 'name (required) — the name customers see and search for.' },
+  { text: `${kind === 'menu' ? 'dish' : 'product'} (required) — the name customers see and search for.` },
   { text: 'category — used to group items (e.g. Bouquets, Starters). Optional but recommended.' },
   { text: 'description — short text shown to customers. Optional.' },
 ];
@@ -162,7 +162,7 @@ const COMMON_ES = (kind, itemWord, sheetName) => [
   { text: '3. Cuando termines, importalo desde el panel: Productos → Importar → CSV. Podés pegar los datos, subir un archivo .csv o enlazar un Google Sheet público.' },
   { text: '' },
   { text: 'Columnas', h: 2 },
-  { text: 'name (obligatorio) — el nombre que ven y buscan los clientes.' },
+  { text: `${kind === 'menu' ? 'dish' : 'product'} (obligatorio) — el nombre que ven y buscan los clientes.` },
   { text: 'category — agrupa los ítems (ej: Ramos, Entradas). Opcional pero recomendado.' },
   { text: 'description — texto corto que ven los clientes. Opcional.' },
 ];

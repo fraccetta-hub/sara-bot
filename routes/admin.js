@@ -1058,7 +1058,7 @@ router.post('/import-preview', requireAuth, async (req, res) => {
     const headers = parseCSVLine(lines[0], delim).map(normalize);
 
     const COL = {
-      name:        headers.findIndex(h => ['nombre','name','producto','servicio'].includes(h)),
+      name:        headers.findIndex(h => ['nombre','name','producto','servicio','product','dish','plato','piatto','plat','produkt','prodotto','produit'].includes(h)),
       category:    headers.findIndex(h => ['categoria','category'].includes(h)),
       description: headers.findIndex(h => ['descripcion','description','descripción'].includes(h)),
       price:       headers.findIndex(h => ['precio_gs','precio','price','price_gs','precio_guarani','precio_guaraní'].includes(h)),
@@ -1983,8 +1983,8 @@ router.get('/products/export', requireAuth, async (req, res) => {
   if (error) return res.status(500).json({ error: error.message });
 
   const headers = isMenu
-    ? ['name','category','description','allergens','price','available']
-    : ['name','category','description','price','stock','sku','available'];
+    ? ['dish','category','description','allergens','price','available']
+    : ['product','category','description','price','stock','sku','available'];
   const rows = (data || []).map(p => isMenu
     ? [p.name, p.category, p.description, p.allergens, p.price_guarani, p.is_available ? 'Yes' : 'No']
     : [p.name, p.category, p.description, p.price_guarani, p.stock_qty ?? '', p.sku ?? '', p.is_available ? 'Yes' : 'No']);
