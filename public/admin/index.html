@@ -6273,12 +6273,24 @@ async function saveBusinessHours() {
   }
   const DAYS = ['Dom','Lun','Mar','Mer','Gio','Ven','Sab'];
   for (const r of rows) {
-    if (r.is_closed || !r.open_time_2) continue;
-    if (r.close_time >= r.open_time_2) {
-      bhMsg.textContent = `${DAYS[r.day_of_week]}: Slot 2 deve iniziare dopo la fine di Slot 1 (${r.close_time} → ${r.open_time_2})`;
+    if (r.is_closed) continue;
+    const label = DAYS[r.day_of_week];
+    if (r.open_time >= r.close_time) {
+      bhMsg.textContent = `${label}: l'orario di apertura deve essere prima della chiusura (${r.open_time} → ${r.close_time})`;
       bhMsg.className = 'rounded-lg px-4 py-2 text-sm mt-3 bg-red-50 text-red-700';
-      bhMsg.classList.remove('hidden');
-      return;
+      bhMsg.classList.remove('hidden'); return;
+    }
+    if (r.open_time_2) {
+      if (r.open_time_2 <= r.close_time) {
+        bhMsg.textContent = `${label}: lo slot 2 deve iniziare dopo la fine dello slot 1 (${r.close_time} → ${r.open_time_2})`;
+        bhMsg.className = 'rounded-lg px-4 py-2 text-sm mt-3 bg-red-50 text-red-700';
+        bhMsg.classList.remove('hidden'); return;
+      }
+      if (r.open_time_2 >= r.close_time_2) {
+        bhMsg.textContent = `${label}: l'orario di apertura dello slot 2 deve essere prima della chiusura (${r.open_time_2} → ${r.close_time_2})`;
+        bhMsg.className = 'rounded-lg px-4 py-2 text-sm mt-3 bg-red-50 text-red-700';
+        bhMsg.classList.remove('hidden'); return;
+      }
     }
   }
   try {
