@@ -2188,12 +2188,6 @@ function applyTranslations() {
   // Re-render Help section
   renderHelp();
   applyMenuLabels();
-  // Replace {cur} token with tenant currency symbol in all translated text
-  const curSym = CURRENCY_SYMBOL_MAP[TENANT_CURRENCY] || TENANT_CURRENCY;
-  document.querySelectorAll('[data-i18n], [data-i18n-ph]').forEach(el => {
-    if (el.innerHTML && el.innerHTML.includes('{cur}')) el.innerHTML = el.innerHTML.replace(/\{cur\}/g, curSym);
-    if (el.placeholder && el.placeholder.includes('{cur}')) el.placeholder = el.placeholder.replace(/\{cur\}/g, curSym);
-  });
 }
 
 function applyMenuLabels() {
