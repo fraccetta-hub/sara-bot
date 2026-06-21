@@ -1,5 +1,15 @@
 # PROJECT HANDOFF — Sara Bot (whatsapp-bot) — 2026-06-21
 
+## ✅ FATTO (2026-06-21 — fix UX register: back nav, prefisso tel, copy trial)
+
+Commit 211f95e (`public/register/index.html` + `i18n.js`):
+- **Back bloccato**: `goStep` validava SEMPRE lo step corrente → "← Atrás" da step2 senza nome bloccato. Fix: valida solo in avanti (`if (n > currentStep() && !validateStep(...))`).
+- **Telefono**: campo testo libero ("código de país, sin +") → `<select id="phonePrefix">` dial-code (pre-compilato dal paese dello step1 via `syncPhonePrefix`/`data-cc`) + input solo cifre. `validateStep(3)` unisce prefisso+locale (toglie junk e trunk-0), rifiuta locale fuori 6–12 cifre. `formData.phone` = numero internazionale senza +.
+- **Step4 copy**: tolto il falso "Sin tarjeta ahora" (la carta si inserisce subito dopo) → "prueba gratis, no se cobra durante la prueba, cancelás cuando quieras". 6 lingue (`s4.sub`).
+- i18n `s3.phone.label/placeholder`, `s4.sub`, `js.err.phone` in 6 lingue.
+- Confermato: register usa **email come username** (`login_slug=email` in register.js) + `merchant_phone=phone` → il testo step3 è corretto; il campo username separato è in Ajustes (modificabile dopo).
+- Verificato in preview: back step2→1 ok; PY→+595 auto; `0981-123-456`→`595981123456`; copy step4 aggiornata.
+
 ## ✅ FATTO (2026-06-21 — fix pagina bianca admin + hook pre-commit anti-white-page)
 
 - **Pagina bianca** (`https://sarabot.pro/admin/index.html` tutto bianco): doppia dichiarazione `const curSym` nella stessa funzione `applyTranslations()` (`public/admin/index.html`, dal lavoro currency concorrente) → `SyntaxError: Identifier 'curSym' has already been declared` → l'intero script inline non parsava → UI vuota. Rimosso il 2° blocco `{cur}` ridondante (il primo già sostituisce `{cur}` in data-i18n/-ph). Commit 5cf75a4.
