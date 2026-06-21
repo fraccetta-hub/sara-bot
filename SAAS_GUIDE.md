@@ -1,6 +1,8 @@
 # WhatsApp Bot SaaS — Guida Operativa
 
-_Aggiornato: 2026-06-18_
+_Aggiornato: 2026-06-21_
+
+> **Tooling**: pre-commit hook `.githooks/pre-commit` (→ `scripts/check-syntax.js`, anche `npm run check`) valida la sintassi JS dei file UI serviti al browser (i18n.js + script inline di `public/{admin,register,superadmin}/index.html`) per evitare commit che azzerano l'UI (white page). Attivazione su clone nuova: `git config core.hooksPath .githooks`.
 
 ## Stack tecnico
 
@@ -103,6 +105,24 @@ Tenant con `restaurant_enabled = true` vedono il tab Productos come **vista Menu
 ### Tab admin ristorante (dal 2026-06-20)
 - Tenant ristorante: il tab "Turnos" diventa "📅 Prenotazioni" e mostra le `reservations` (vista giornaliera, calendario). Il tab "Restaurante" è solo configurazione.
 - Tab Restaurante = config: enable, durata prenotazione, zone, tavoli (creazione in blocco per capienza+quantità), **fasce di servizio** (`tenants.restaurant_meal_bands` JSON — pranzo/cena con start/end). Sara accetta reservas solo dentro le fasce.
+
+### Prenotazioni mesa — capacità e disponibilità (dal 2026-06-21)
+- **Multi-tavolo**: `reservations.table_ids` (JSONB, Migration 13) = tutti i tavoli occupati; `table_id` = primario/display. Una prenotazione blocca i tavoli in `table_ids`/`table_id`. Le prenotazioni **senza tavolo assegnato (pending_merchant) NON bloccano** (regola: un pending non deve congelare il locale).
+- **Assegnazione Sara** (`routes/webhook.js`): auto-assegna il tavolo libero più piccolo che ospita il party; se nessun tavolo idoneo libero → "completo", non salva e fa proporre a Sara un altro orario. Gruppo > tavolo più grande → `pending_merchant` + notifica WhatsApp al titolare (unione tavoli = decisione manuale). Sara non unisce tavoli da sola.
+- **Griglia disponibilità a Sara** (`services/claude.js` `buildAvailabilityBlock`): nel prompt dinamico, slot liberi per i prossimi 7 giorni aperti → Sara propone/conferma SOLO orari con tavoli liberi.
+- **Pannello merchant** (`GET /admin/restaurant/availability`): griglia 1/3/7/14 giorni con tavoli liberi per slot; modal "Ocupar mesa" (walk-in) crea una reservation `seated` `customer_name='walk-in'` con `table_ids`, senza ordine completo.
+- Modal prenotazione admin: multi-select tavoli; `POST/PUT /admin/restaurant/reservations` accettano `table_ids` (`normTableIds` dedup, `table_id`=primo).
+
+## Catalogo / Menu — import / export / template (dal 2026-06-20)
+
+Stesse "voci" (campi) tra tabella UI, template Excel scaricabile, import CSV e export CSV. Due template separati generati da `scripts/gen-templates.js` (`npm run gen-templates`, dep dev `exceljs`):
+- **Catalogo (shop)** `public/catalog_template.xlsx`: `name, category, description, price, stock, sku, available`.
+- **Menu (ristorante)** `public/menu_template.xlsx`: `name, category, description, allergens, price, available` (no stock/sku).
+- Header file in inglese (chiavi canoniche; l'import accetta alias ES/EN). Ogni file ha 2 fogli istruzioni: "Instructions" (EN) + "Instrucciones" (ES). Metadati workbook con riferimento `sarabot.pro`.
+- `GET /admin/catalog-template` serve il template giusto in base a `restaurant_enabled`.
+- **Export CSV** (`toCsv` in `routes/admin.js`): delimitatore `;` + riga `sep=;` (Excel apre in colonne) + riga metadati `# sarabot.pro`. Colonne = template → round-trip pulito al reimport.
+- **Import** delimiter-aware (`;`/`,`), salta `sep=;` e righe `#`; rileva colonna header anche dopo righe di metadati.
+- **Valuta**: prezzi e label currency-aware via `fmtPrice` + token `{cur}` (sostituito in `applyTranslations` / `renderMenu` con `CURRENCY_SYMBOL_MAP[plan_currency]`). `TENANT_CURRENCY` va impostato PRIMA di `applyTranslations` (vedi `showDashboard`).
 
 ## Billing SaaS (Stripe)
 
