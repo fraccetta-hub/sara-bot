@@ -7,7 +7,8 @@ Audit read-only di tutto il backend (routes/services/index). Fix approvati dall'
 - **S2 — secret Telegram**: `POST /telegram-webhook` verifica header `X-Telegram-Bot-Api-Secret-Token` vs `TELEGRAM_WEBHOOK_SECRET`. ⚠️ **Deploy (2 step)**: 1) settare `TELEGRAM_WEBHOOK_SECRET` su Render; 2) ri-registrare il webhook con `secret_token`:
   `curl "https://api.telegram.org/bot<TOKEN>/setWebhook?url=https://sarabot.pro/telegram-webhook&secret_token=<SECRET>"`. Se setti l'env ma NON ri-registri, Telegram non manda l'header → updates rifiutati (superadmin non può rispondere via Telegram).
 - **S4 — rate-limit reset-password**: `POST /admin/reset-password` ora 10/h per IP (`resetPasswordLimiter`).
-- **S3 (PENDENTE)**: rate-limit su `POST /register` + `GET /register/check-email` (signup di massa + enumerazione email). Da decidere.
+- **S3 — rate-limit register** [commit e2f7c90]: `POST /register` 10/h, `GET /register/check-email` 30/h per IP.
+- **⚠️ FOLLOW-UP (trust proxy)**: `index.js` non ha `app.set('trust proxy', 1)`. Dietro il proxy Render, TUTTI i rate-limiter (forgot-password, broadcast, S3, S4) keyano sull'IP del proxy → throttling collettivo invece che per-IP. Fix consigliato: `app.set('trust proxy', 1)` (1 hop = Render). Migliora anche il flag Secure dei cookie e il logging IP. NON usare `true` (permette spoofing di X-Forwarded-For). Da valutare con l'utente.
 - Note audit (non bug): billing cancel/reactivate/change-plan hanno auth inline (cookie+JWT); confirm-deletion/confirm-username-change validano token+scadenza; `getTenantConfig` usa `select('*')` ma è interno/server-side; nessun error-handler Express globale (bassa); header sicurezza base presenti; nessun leak segreti nei log; register e superadmin frontend puliti.
 
 ## ✅ FATTO (2026-06-21 — audit i18n: chiavi mancanti/duplicate/morte) [commit 561930e]
