@@ -346,7 +346,7 @@ block_time, unblock_time,
 create_closure, delete_closure,
 create_offer, delete_offer,
 get_services, update_service, add_service,
-get_reservations, book_table, cancel_reservation, confirm_reservation,
+get_reservations, block_tables, book_table, cancel_reservation, confirm_reservation,
 get_stats,
 greeting, unknown.
 
@@ -377,7 +377,8 @@ delete_offer: {"label_query":"..."}
 update_service: {"updates":{"price_guarani":null,"duration_min":null,"is_available":null,"name":null,"category":null,"description":null}}
 add_service: {"name":"...","category":null,"price":0,"duration_min":null,"price_type":"fixed"}
 get_reservations: {"from":"ISO","to":"ISO","customer_query":null} — default from=today, to=+7days. Use when merchant asks "prenotazioni di oggi/domani/settimana", "chi viene stasera", "reservas"
-book_table: {"customer_name":"...","customer_phone":null,"party_size":N,"date":"YYYY-MM-DD","time":"HH:MM","zone_preference":null,"notes":null,"num_tables":1,"table_capacity":null} — merchant books/blocks tables directly (always confirmed, no capacity validation — merchant decides). num_tables=how many tables to block, table_capacity=filter by seats per table (e.g. "2 tavoli da 4" → num_tables:2, table_capacity:4)
+block_tables: {"num_tables":N,"table_capacity":null,"zone_preference":null,"date":"YYYY-MM-DD or null","time":"HH:MM or null","notes":null} — internal block, NO customer name. Use when merchant says "blocca tavoli", "occupa tavolo", "metti occupato". Merchant authority, no validation.
+book_table: {"customer_name":"...","customer_phone":null,"party_size":N,"date":"YYYY-MM-DD or null","time":"HH:MM or null","zone_preference":null,"notes":null,"num_tables":1,"table_capacity":null} — customer reservation. Use when merchant says "prenota", "aggiungi prenotazione", "reserva para X". Customer name is the key field.
 cancel_reservation: {"customer_query":"...","date":"YYYY-MM-DD or null"}
 confirm_reservation: {"customer_query":"...","date":"YYYY-MM-DD or null"} — confirm a pending_merchant reservation
 get_stats: {"period":"today|week|month|all","metric":"orders|revenue|customers|all"} — analytics. Use for: "quanti ordini", "fatturato settimana", "clienti nuovi", "report"
@@ -398,7 +399,7 @@ function featureGate(tenant, action, lang) {
   const productActions  = new Set(['update_stock','set_stock','set_price','mark_unavailable','mark_available','add_product','get_catalog']);
   const serviceActions  = new Set(['get_services','add_service','update_service']);
   const apptActions     = new Set(['get_appointments','add_appointment','cancel_appointment','reschedule_appointment','block_time','unblock_time']);
-  const restaurantActions = new Set(['get_reservations','book_table','cancel_reservation','confirm_reservation']);
+  const restaurantActions = new Set(['get_reservations','block_tables','book_table','cancel_reservation','confirm_reservation']);
   if (productActions.has(action) && !tenant.products_enabled) {
     const m = { es:'⚠️ El módulo de productos no está activado en tu plan.', it:'⚠️ Il modulo prodotti non è attivo nel tuo piano.', en:'⚠️ Product module is not enabled on your plan.', fr:'⚠️ Le module produits n\'est pas activé.', de:'⚠️ Produktmodul ist nicht aktiviert.', pt:'⚠️ O módulo de produtos não está ativo.' };
     return m[lang] || m.es;
@@ -506,23 +507,37 @@ function missingApptFieldsMsg(params, lang) {
   return ask[lang] || ask.es;
 }
 
-function missingTableFieldsMsg(params, lang) {
+function missingTableFieldsMsg(params, lang, action) {
   const missing = [];
+  const isBlock = action === 'block_tables';
+
+  // block_tables: need date+time, capacity, zone — no customer name
+  // book_table: need customer name, date+time, party size
+  if (!isBlock && !params.customer_name) {
+    const f = { es:'nombre del cliente', it:'nome del cliente', en:'customer name', fr:'nom du client', de:'Name des Gastes', pt:'nome do cliente' };
+    missing.push(f[lang] || f.es);
+  }
   if (!params.date) {
     const f = { es:'fecha y hora', it:'data e ora', en:'date and time', fr:'date et heure', de:'Datum und Uhrzeit', pt:'data e hora' };
     missing.push(f[lang] || f.es);
   }
-  if (!params.table_capacity && !params.num_tables) {
-    const f = { es:'capacidad de los mesas (ej: "2 mesas de 4")', it:'capienza dei tavoli (es: "2 tavoli da 4")', en:'table capacity (e.g. "2 tables for 4")', fr:'capacité des tables (ex: "2 tables de 4")', de:'Tischkapazität (z.B. "2 Tische à 4")', pt:'capacidade das mesas (ex: "2 mesas de 4")' };
+  if (isBlock && !params.table_capacity) {
+    const f = { es:'capacidad de las mesas (ej: "2 mesas de 4")', it:'capienza dei tavoli (es: "2 tavoli da 4")', en:'table capacity (e.g. "2 tables for 4")', fr:'capacité des tables (ex: "2 tables de 4")', de:'Tischkapazität (z.B. "2 Tische à 4")', pt:'capacidade das mesas (ex: "2 mesas de 4")' };
     missing.push(f[lang] || f.es);
   }
-  if (!params.zone_preference) {
+  if (isBlock && !params.zone_preference) {
     const f = { es:'zona (o "cualquier zona")', it:'zona (o "qualsiasi zona")', en:'zone (or "any zone")', fr:'zone (ou "n\'importe quelle zone")', de:'Zone (oder "beliebige Zone")', pt:'zona (ou "qualquer zona")' };
     missing.push(f[lang] || f.es);
   }
+  if (!isBlock && !params.party_size) {
+    const f = { es:'número de personas', it:'numero di persone', en:'number of guests', fr:'nombre de personnes', de:'Anzahl der Gäste', pt:'número de pessoas' };
+    missing.push(f[lang] || f.es);
+  }
   if (!missing.length) return null;
-  const ask = { es:`Faltan datos para bloquear el/los mesa/s:\n• ${missing.join('\n• ')}`, it:`Mancano dati per bloccare il/i tavolo/i:\n• ${missing.join('\n• ')}`, en:`Missing info to block table(s):\n• ${missing.join('\n• ')}`, fr:`Données manquantes pour bloquer la/les table(s):\n• ${missing.join('\n• ')}`, de:`Fehlende Angaben zum Sperren des/der Tischs/Tische:\n• ${missing.join('\n• ')}`, pt:`Dados faltando para bloquear a(s) mesa(s):\n• ${missing.join('\n• ')}` };
-  return ask[lang] || ask.es;
+  const hdr = isBlock
+    ? { es:'Faltan datos para bloquear:\n• ', it:'Mancano dati per bloccare:\n• ', en:'Missing info to block:\n• ', fr:'Données manquantes pour bloquer:\n• ', de:'Fehlende Angaben zum Sperren:\n• ', pt:'Dados faltando para bloquear:\n• ' }
+    : { es:'Faltan datos para la reserva:\n• ', it:'Mancano dati per la prenotazione:\n• ', en:'Missing info for reservation:\n• ', fr:'Données manquantes pour la réservation:\n• ', de:'Fehlende Angaben für die Reservierung:\n• ', pt:'Dados faltando para a reserva:\n• ' };
+  return (hdr[lang] || hdr.es) + missing.join('\n• ');
 }
 
 async function parseMissingTableFields(txt, existing, lang) {
@@ -707,11 +722,11 @@ async function handleMerchantMessage(tenant, messageText, phoneNumberId, token) 
         return;
       }
 
-      if (pending.type === 'awaiting_fields' && pending.action === 'book_table') {
+      if (pending.type === 'awaiting_fields' && (pending.action === 'book_table' || pending.action === 'block_tables')) {
         const extra = await parseMissingTableFields(txt, pending.params, pending.lang);
         const merged = { ...pending.params };
         for (const [k, v] of Object.entries(extra)) { if (v != null) merged[k] = v; }
-        const stillMissing = missingTableFieldsMsg(merged, pending.lang);
+        const stillMissing = missingTableFieldsMsg(merged, pending.lang, pending.action);
         if (stillMissing) {
           merchantPending.set(tenant.id, { ...pending, params: merged });
           await sendMessage(tenant.merchant_phone, stillMissing, phoneNumberId, token);
@@ -1142,9 +1157,21 @@ async function handleMerchantMessage(tenant, messageText, phoneNumberId, token) 
     return;
   }
 
+  if (intent.action === 'block_tables') {
+    const params = intent.params || {};
+    const missing = missingTableFieldsMsg(params, lang, 'block_tables');
+    if (missing) {
+      merchantPending.set(tenant.id, { type: 'awaiting_fields', action: 'block_tables', params, lang, expiresAt: Date.now() + 10 * 60 * 1000 });
+      await sendMessage(tenant.merchant_phone, missing, phoneNumberId, token);
+      return;
+    }
+    await completeBookTable(tenant, params, lang, phoneNumberId, token);
+    return;
+  }
+
   if (intent.action === 'book_table') {
     const params = intent.params || {};
-    const missing = missingTableFieldsMsg(params, lang);
+    const missing = missingTableFieldsMsg(params, lang, 'book_table');
     if (missing) {
       merchantPending.set(tenant.id, { type: 'awaiting_fields', action: 'book_table', params, lang, expiresAt: Date.now() + 10 * 60 * 1000 });
       await sendMessage(tenant.merchant_phone, missing, phoneNumberId, token);
