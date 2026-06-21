@@ -2871,6 +2871,8 @@ function applyTabVisibility(productsEnabled, servicesEnabled, appointmentsEnable
   const tabS = document.getElementById('tabServices');
   const tabA = document.getElementById('tabAppointments');
   const tabR = document.getElementById('tabRestaurant');
+  const tabO = document.getElementById('tabOrders');
+  if (tabO) tabO.style.display = productsEnabled ? '' : 'none';
   if (tabP) tabP.style.display = productsEnabled     ? '' : 'none';
   if (tabP) tabP.textContent  = t((restaurantEnabled || isMenuMode) ? 'tab.menu' : 'tab.products');
   applyMenuLabels();
@@ -2889,6 +2891,7 @@ function applyTabVisibility(productsEnabled, servicesEnabled, appointmentsEnable
   if (activeEl) {
     const id = activeEl.id;
     if ((id === 'tabProducts'     && !productsEnabled)     ||
+        (id === 'tabOrders'       && !productsEnabled)     ||
         (id === 'tabServices'     && !servicesEnabled)     ||
         (id === 'tabAppointments' && !appointmentsEnabled) ||
         (id === 'tabRestaurant'   && !restaurantEnabled)) {
@@ -4971,9 +4974,7 @@ function renderServices(services) {
     const dur = s.duration_min ? ` · ${s.duration_min} min` : '';
     return `
     <div class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100 ${s.is_available ? '' : 'opacity-60'}">
-      ${s.image_url
-        ? `<img src="${s.image_url}" class="w-full h-36 object-cover"/>`
-        : `<div class="w-full h-36 bg-gray-100 flex items-center justify-center text-4xl">🛠</div>`}
+      ${s.image_url ? `<img src="${s.image_url}" class="w-full h-36 object-cover"/>` : ''}
       <div class="p-4">
         <div class="flex items-start justify-between gap-2 mb-1">
           <h3 class="font-semibold text-gray-800 text-sm leading-tight">${escHtml(s.name)}</h3>
@@ -5045,7 +5046,7 @@ async function uploadServiceImg(input) {
   }
   const form = new FormData();
   form.append('image', file);
-  const res   = await fetch(`/admin/services/${editingServiceId}/image`, {
+  const res  = await fetch(`/admin/services/${editingServiceId}/image`, {
     method: 'POST', credentials: 'same-origin', body: form
   });
   const data = await res.json();
@@ -5053,6 +5054,10 @@ async function uploadServiceImg(input) {
     currentServiceImgUrl = data.image_url;
     document.getElementById('svImgPreviewImg').src = data.image_url;
     document.getElementById('svImgPreview').classList.remove('hidden');
+    loadServices();
+  } else if (data.error) {
+    document.getElementById('serviceModalError').textContent = data.error;
+    document.getElementById('serviceModalError').classList.remove('hidden');
   }
 }
 
@@ -5088,18 +5093,22 @@ async function saveService() {
       saved = await api(`/admin/services/${editingServiceId}`, 'PUT', body);
     } else {
       saved = await api('/admin/services', 'POST', body);
-      // Upload pending image if any
       if (window._pendingServiceImg) {
         const form = new FormData();
         form.append('image', window._pendingServiceImg);
-        await fetch(`/admin/services/${saved.id}/image`, {
+        const imgRes = await fetch(`/admin/services/${saved.id}/image`, {
           method: 'POST', credentials: 'same-origin', body: form
         });
+        if (!imgRes.ok) {
+          const d = await imgRes.json().catch(() => ({}));
+          errEl.textContent = d.error || t('error.save');
+          errEl.classList.remove('hidden');
+        }
         window._pendingServiceImg = null;
       }
     }
     closeServiceModal();
-    loadServices();
+    await loadServices();
   } catch(e) {
     errEl.textContent = errMsg(e);
     errEl.classList.remove('hidden');
@@ -5931,7 +5940,7 @@ let _apptCustomers = [];
 
 async function openApptModal(isoStart) {
   editingApptId = null;
-  document.getElementById('apptModalTitle').textContent = 'Nuevo turno';
+  document.getElementById('apptModalTitle').textContent = t('appt.modal.new');
   document.getElementById('apptError').classList.add('hidden');
 
   // Min date = today

@@ -5,7 +5,7 @@ const bcrypt = require('bcryptjs');
 const multer = require('multer');
 const Anthropic = require('@anthropic-ai/sdk');
 const { createClient } = require('@supabase/supabase-js');
-const { uploadImageBuffer } = require('../services/storage');
+const { uploadImageBuffer, deleteImageByUrl } = require('../services/storage');
 const { sendMessage, sendImage } = require('../services/whatsapp');
 
 const crypto = require('crypto');
@@ -546,11 +546,15 @@ router.post('/products/:id/image', requireAuth, upload.single('image'), async (r
   if (!req.file) return res.status(400).json({ error: 'Ningún archivo recibido' });
 
   try {
+    const { data: cur } = await supabase.from('products').select('image_url')
+      .eq('id', req.params.id).eq('tenant_id', req.tenant.tenantId).single();
+    if (cur?.image_url) deleteImageByUrl(cur.image_url).catch(() => {});
+
     const publicUrl = await uploadImageBuffer(
       req.file.buffer,
       req.file.originalname,
       req.file.mimetype,
-      req.tenant.tenantId       // ← cartella separata per tenant
+      req.tenant.tenantId
     );
 
     const { data, error } = await supabase
@@ -765,6 +769,10 @@ router.put('/services/:id', requireAuth, async (req, res) => {
 router.post('/services/:id/image', requireAuth, upload.single('image'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'Ningún archivo recibido' });
   try {
+    const { data: cur } = await supabase.from('services').select('image_url')
+      .eq('id', req.params.id).eq('tenant_id', req.tenant.tenantId).single();
+    if (cur?.image_url) deleteImageByUrl(cur.image_url).catch(() => {});
+
     const publicUrl = await uploadImageBuffer(req.file.buffer, req.file.originalname, req.file.mimetype, req.tenant.tenantId);
     const { data, error } = await supabase.from('services')
       .update({ image_url: publicUrl }).eq('id', req.params.id).eq('tenant_id', req.tenant.tenantId)

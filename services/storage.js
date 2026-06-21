@@ -69,4 +69,12 @@ async function getTenantStorageUsage(tenantId) {
   return data.reduce((sum, file) => sum + (file.metadata?.size || 0), 0);
 }
 
-module.exports = { uploadImageBuffer, downloadAndStore, getTenantStorageUsage };
+async function deleteImageByUrl(publicUrl) {
+  if (!publicUrl) return;
+  const prefix = `${process.env.SUPABASE_URL}/storage/v1/object/public/${BUCKET}/`;
+  if (!publicUrl.startsWith(prefix)) return;
+  const path = publicUrl.slice(prefix.length);
+  await supabase.storage.from(BUCKET).remove([path]);
+}
+
+module.exports = { uploadImageBuffer, downloadAndStore, getTenantStorageUsage, deleteImageByUrl };
