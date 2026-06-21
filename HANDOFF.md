@@ -1,5 +1,15 @@
 # PROJECT HANDOFF — Sara Bot (whatsapp-bot) — 2026-06-21
 
+## ✅ FATTO (2026-06-21 — audit i18n: chiavi mancanti/duplicate/morte) [commit 561930e]
+
+Audit read-only su `public/admin/i18n.js`, poi fix approvati dall'utente:
+- **A** — DE `settings.delivery.zoneOuter` aveva `(Gs)` letterale invece di `{cur}` → utenti DE vedevano Gs sempre. Corretto.
+- **B** — 3 chiavi mancanti aggiunte in 6 lingue: `restaurant.slotDurationTitle` (prima ripiegava sul testo italiano hardcoded per TUTTE le lingue), `settings.personality.saved` (mostrava "undefined" al salvataggio personalità), `wiz.fb.error`.
+- **C** — rimossi duplicati nel blocco PT (`usernameCheckEmail`, `usernamePending`, `plan.manage.payment`, `plan.promo.*`) → ora 6 occorrenze ciascuna.
+- **D** — rimosse chiavi morte `settings.delivery.mapsUrl/mapsUrlPh/mapsUrlHint/address` (residue dopo il dedup delivery).
+- Cleanup C+D fatto con script line-based (dedup per blocco-lingua); A+B con edit mirati. Verificato preview: slotDurationTitle traduce per lingua, DE zoneOuter risolve il simbolo valuta. Re-audit chiavi mancanti: NONE.
+- Audit non ha trovato bug critici backend; register pulito; gli "orfani" getElementById sono elementi creati a runtime.
+
 ## ✅ FATTO (2026-06-21 — fix "auth not defined" + colonne tab prodotti = Excel)
 
 - **Bug "auth not defined"** (creazione prodotto / qualsiasi 401): `login()` chiamava `api('/admin/login','POST',{...}, false)` con un 4° arg, ma `api()` aveva solo 3 parametri → dentro `if (res.status===401 && auth)` la var `auth` era undefined → ReferenceError su ogni risposta 401 (residuo della migrazione a cookie HttpOnly). Fix: aggiunto `auth = true` come 4° parametro di `api()` (`public/admin/index.html`). Login passa `false` → 401 mostra "credenziali errate"; chiamate autenticate → 401 fa logout.
