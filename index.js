@@ -32,6 +32,11 @@ const { setupCronJobs } = require('./services/cron');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Behind Render's proxy: trust exactly 1 hop so req.ip is the real client IP
+// (rate limiters key per-IP, Secure cookies detect HTTPS). NOT `true` — that
+// would let clients spoof X-Forwarded-For to bypass rate limits.
+app.set('trust proxy', 1);
+
 // ── Admin HTML with injected env vars (before static middleware) ──────────────
 const adminHtmlPath = path.join(__dirname, 'public', 'admin', 'index.html');
 function serveAdminHtml(req, res) {
@@ -84,6 +89,22 @@ app.get('/legal/disclaimer', (req, res) => res.sendFile(path.join(__dirname, 'pu
 app.get('/legal/dpa',        (req, res) => res.sendFile(path.join(__dirname, 'public', 'legal', 'dpa.html')));
 
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'landingpage', 'index.html')));
+
+// ── Global error handler — log server-side, never leak stack traces to clients ─
+app.use((err, req, res, next) => {
+  console.error('[express] Unhandled error:', err.stack || err.message);
+  if (res.headersSent) return next(err);
+  res.status(err.status || 500).json({ error: 'Error interno del servidor', errorCode: 'server_error' });
+});
+
+// Keep the process alive on stray async errors instead of crashing the webhook
+// server; each request is isolated and already wrapped in try/catch.
+process.on('unhandledRejection', (reason) => {
+  console.error('[process] Unhandled promise rejection:', reason);
+});
+process.on('uncaughtException', (err) => {
+  console.error('[process] Uncaught exception:', err.stack || err.message);
+});
 
 app.listen(PORT, () => {
   console.log(`WhatsApp Bot server listening on port ${PORT}`);
