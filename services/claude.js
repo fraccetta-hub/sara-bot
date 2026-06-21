@@ -168,7 +168,6 @@ function buildStaticSystemPrompt(tenant, stock, services = [], offers = [], rest
   const catalog = (tenant.products_enabled !== false && stock.length)
     ? stock.map(p => {
         const offer = matchOffer(activeOffers, p.name, p.category, 'product', 'category', 'all_products');
-        const price = offer ? applyOffer(p.price_guarani, currency === 'PYG' ? p.price_guarani : p.price_guarani) : p.price_guarani;
         const priceStr = formatPrice(offer ? applyOffer(p.price_guarani, offer) : p.price_guarani, currency);
         const offerNote = offer ? ` 🏷️ ${offer.label} (precio original: ${formatPrice(p.price_guarani, currency)})` : '';
         return `• ${p.name}${p.sku ? ` [SKU:${p.sku}]` : ''} [${p.category}] — ${priceStr}` +

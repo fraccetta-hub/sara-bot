@@ -258,7 +258,7 @@ const MT = {
   stock_set:        { es:(n,q)=>`✅ *${n}*\nStock: ${q} unidades.`, it:(n,q)=>`✅ *${n}*\nStock: ${q} unità.`, en:(n,q)=>`✅ *${n}*\nStock: ${q} units.`, fr:(n,q)=>`✅ *${n}*\nStock: ${q} unités.`, de:(n,q)=>`✅ *${n}*\nBestand: ${q} Einheiten.`, pt:(n,q)=>`✅ *${n}*\nEstoque: ${q} unidades.` },
   stock_added:      { es:(n,d,t)=>`✅ *${n}*\n+${d} agregadas → ${t} en total.`, it:(n,d,t)=>`✅ *${n}*\n+${d} aggiunte → ${t} in totale.`, en:(n,d,t)=>`✅ *${n}*\n+${d} added → ${t} total.`, fr:(n,d,t)=>`✅ *${n}*\n+${d} ajoutées → ${t} au total.`, de:(n,d,t)=>`✅ *${n}*\n+${d} hinzugefügt → ${t} gesamt.`, pt:(n,d,t)=>`✅ *${n}*\n+${d} adicionadas → ${t} no total.` },
   stock_removed:    { es:(n,d,t)=>`✅ *${n}*\n-${d} descontadas → ${t} en total.`, it:(n,d,t)=>`✅ *${n}*\n-${d} rimosse → ${t} in totale.`, en:(n,d,t)=>`✅ *${n}*\n-${d} removed → ${t} total.`, fr:(n,d,t)=>`✅ *${n}*\n-${d} retirées → ${t} au total.`, de:(n,d,t)=>`✅ *${n}*\n-${d} entfernt → ${t} gesamt.`, pt:(n,d,t)=>`✅ *${n}*\n-${d} removidas → ${t} no total.` },
-  price_updated:    { es:(n,p)=>`✅ *${n}*\nPrecio: ${p.toLocaleString()} Gs.`, it:(n,p)=>`✅ *${n}*\nPrezzo: ${p.toLocaleString()} Gs.`, en:(n,p)=>`✅ *${n}*\nPrice: ${p.toLocaleString()} Gs.`, fr:(n,p)=>`✅ *${n}*\nPrix: ${p.toLocaleString()} Gs.`, de:(n,p)=>`✅ *${n}*\nPreis: ${p.toLocaleString()} Gs.`, pt:(n,p)=>`✅ *${n}*\nPreço: ${p.toLocaleString()} Gs.` },
+  price_updated:    { es:(n,p,c)=>`✅ *${n}*\nPrecio: ${formatPrice(p,c)}.`, it:(n,p,c)=>`✅ *${n}*\nPrezzo: ${formatPrice(p,c)}.`, en:(n,p,c)=>`✅ *${n}*\nPrice: ${formatPrice(p,c)}.`, fr:(n,p,c)=>`✅ *${n}*\nPrix: ${formatPrice(p,c)}.`, de:(n,p,c)=>`✅ *${n}*\nPreis: ${formatPrice(p,c)}.`, pt:(n,p,c)=>`✅ *${n}*\nPreço: ${formatPrice(p,c)}.` },
   unavailable:      { es:n=>`🔴 *${n}* marcado como agotado.`, it:n=>`🔴 *${n}* segnato come esaurito.`, en:n=>`🔴 *${n}* marked as out of stock.`, fr:n=>`🔴 *${n}* marqué comme épuisé.`, de:n=>`🔴 *${n}* als ausverkauft markiert.`, pt:n=>`🔴 *${n}* marcado como esgotado.` },
   available:        { es:n=>`✅ *${n}* marcado como disponible.`, it:n=>`✅ *${n}* segnato come disponibile.`, en:n=>`✅ *${n}* marked as available.`, fr:n=>`✅ *${n}* marqué comme disponible.`, de:n=>`✅ *${n}* als verfügbar markiert.`, pt:n=>`✅ *${n}* marcado como disponível.` },
   product_added:    { es:n=>`✅ Producto *${n}* agregado.`, it:n=>`✅ Prodotto *${n}* aggiunto.`, en:n=>`✅ Product *${n}* added.`, fr:n=>`✅ Produit *${n}* ajouté.`, de:n=>`✅ Produkt *${n}* hinzugefügt.`, pt:n=>`✅ Produto *${n}* adicionado.` },
@@ -512,7 +512,7 @@ async function executeMerchantAction(tenant, action, product, params, lang, phon
     const price = params.price || 0;
     await supabase.from('products').update({ price_guarani: price }).eq('id', product.id);
     invalidateStock(tenant.id);
-    await sendMessage(tenant.merchant_phone, mt(lang, 'price_updated', product.name, price), phoneNumberId, token);
+    await sendMessage(tenant.merchant_phone, mt(lang, 'price_updated', product.name, price, currency), phoneNumberId, token);
     return;
   }
   if (action === 'mark_unavailable') {
@@ -533,6 +533,7 @@ async function executeMerchantAction(tenant, action, product, params, lang, phon
 // ─── Merchant message handler ─────────────────────────────────────────────────
 
 async function handleMerchantMessage(tenant, messageText, phoneNumberId, token) {
+  const currency = tenant.plan_currency || 'PYG';
   // ── Takeover forward (highest priority — merchant free-texts go to customer) ─
   const { data: activeConv } = await supabase
     .from('conversations')
@@ -662,7 +663,7 @@ async function handleMerchantMessage(tenant, messageText, phoneNumberId, token) 
     }
     const lines = allProducts.map(p => {
       const estado = !p.is_available ? '🔴' : p.stock_qty === 0 ? '🔴' : `🟢 ${p.stock_qty}`;
-      return `• *${p.name}* — ${p.price_guarani.toLocaleString()} Gs — ${estado}`;
+      return `• *${p.name}* — ${formatPrice(p.price_guarani, currency)} — ${estado}`;
     });
     await sendMessage(tenant.merchant_phone, `📦 *${allProducts.length} productos:*\n\n${lines.join('\n')}`, phoneNumberId, token);
     return;
@@ -720,11 +721,11 @@ async function handleMerchantMessage(tenant, messageText, phoneNumberId, token) 
     const STATUS_ICON = { pending:'🟡', confirmed:'✅', preparing:'🔧', delivering:'🚚', delivered:'✔️' };
     const lines = orders.map(o => {
       const id = o.id.substring(0,8).toUpperCase();
-      const total = (o.total_guarani + (o.delivery_fee||0)).toLocaleString();
+      const total = formatPrice(o.total_guarani + (o.delivery_fee||0), currency);
       const icon = STATUS_ICON[o.status] || '•';
       const phone = o.customer_phone;
       const names = (o.items_json||[]).map(i=>`${i.name} x${i.qty}`).join(', ');
-      return `${icon} *#${id}* +${phone}\n   ${names} — ${total} Gs`;
+      return `${icon} *#${id}* +${phone}\n   ${names} — ${total}`;
     });
     const HDR = { es:`📋 *Pedidos activos (${orders.length}):*`, it:`📋 *Ordini attivi (${orders.length}):*`, en:`📋 *Active orders (${orders.length}):*`, fr:`📋 *Commandes actives (${orders.length}):*`, de:`📋 *Aktive Bestellungen (${orders.length}):*`, pt:`📋 *Pedidos ativos (${orders.length}):*` };
     await sendMessage(tenant.merchant_phone, `${HDR[lang]||HDR.es}\n\n${lines.join('\n\n')}`, phoneNumberId, token);
@@ -954,7 +955,7 @@ async function handleMerchantMessage(tenant, messageText, phoneNumberId, token) 
   if (intent.action === 'get_services') {
     if (!allServices.length) { await sendMessage(tenant.merchant_phone, mt(lang, 'svc_none'), phoneNumberId, token); return; }
     const lines = allServices.map(s => {
-      const price = s.price_type === 'hourly' ? `${s.price_guarani.toLocaleString()} Gs/h` : `${s.price_guarani.toLocaleString()} Gs`;
+      const price = s.price_type === 'hourly' ? `${formatPrice(s.price_guarani, currency)}/h` : formatPrice(s.price_guarani, currency);
       const dur = s.duration_min ? ` · ${s.duration_min}min` : '';
       const avail = s.is_available ? '🟢' : '🔴';
       return `${avail} *${s.name}*${s.category ? ` [${s.category}]` : ''} — ${price}${dur}`;
@@ -1231,6 +1232,7 @@ async function getProductsForTenant(tenantId) {
 // ─── Customer message handler ─────────────────────────────────────────────────
 
 async function handleCustomerMessage(tenant, customerPhone, messageText, locationMsg, imageData, waProfileName, phoneNumberId, token) {
+  const currency = tenant.plan_currency || 'PYG';
   // Load conversation
   const { data: convRow } = await supabase
     .from('conversations')
@@ -1385,7 +1387,7 @@ async function handleCustomerMessage(tenant, customerPhone, messageText, locatio
     }
 
     // Save delivery state and inject into history
-    const systemNote = `[SISTEMA] El cliente compartió su ubicación (${distKm.toFixed(1)} km del local). Costo de envío calculado: ${fee.toLocaleString('es-PY')} Gs. Confirmá el total incluyendo el envío.`;
+    const systemNote = `[SISTEMA] El cliente compartió su ubicación (${distKm.toFixed(1)} km del local). Costo de envío calculado: ${formatPrice(fee, currency)}. Confirmá el total incluyendo el envío.`;
     const updatedHistory = [...history, { role: 'user', content: systemNote }];
 
     await supabase.from('conversations').upsert({
@@ -1400,8 +1402,7 @@ async function handleCustomerMessage(tenant, customerPhone, messageText, locatio
     }, { onConflict: 'tenant_id,customer_phone' });
 
     await sendMessage(customerPhone,
-      `📍 ¡Ubicación recibida! Estás a ${distKm.toFixed(1)} km del local.\n` +
-      `🚚 Costo de envío: *${fee.toLocaleString('es-PY')} Gs*\n\nConfirmamos tu pedido con este costo de envío incluido.`,
+      `📍 ${distKm.toFixed(1)} km — 🚚 ${formatPrice(fee, currency)}`,
       phoneNumberId, token);
     return;
   }
@@ -1478,7 +1479,7 @@ async function handleCustomerMessage(tenant, customerPhone, messageText, locatio
         convUpdates.delivery_fee_calc = fee;
         updatedHistory.push({
           role: 'user',
-          content: `[SISTEMA] Dirección geocodificada: ${distKm.toFixed(1)} km del local. Costo de envío: ${fee.toLocaleString('es-PY')} Gs. Confirmá el total con el cliente.`
+          content: `[SISTEMA] Dirección geocodificada: ${distKm.toFixed(1)} km del local. Costo de envío: ${formatPrice(fee, currency)}. Confirmá el total con el cliente.`
         });
       }
     } else {
@@ -1785,7 +1786,6 @@ async function activateTakeover(tenant, conv, lang, phoneNumberId, token) {
   };
 
   await sendMessage(tenant.merchant_phone, TAKEOVER_ON[lang] || TAKEOVER_ON.es, phoneNumberId, token);
-  await sendMessage(customerPhone, `En este momento te atiendo yo directamente 👋 ¿En qué te ayudo?`, phoneNumberId, token);
   console.log(`[takeover] activated: tenant=${tenant.name} customer=${customerPhone}`);
 }
 
