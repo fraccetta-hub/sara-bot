@@ -377,7 +377,7 @@ delete_offer: {"label_query":"..."}
 update_service: {"updates":{"price_guarani":null,"duration_min":null,"is_available":null,"name":null,"category":null,"description":null}}
 add_service: {"name":"...","category":null,"price":0,"duration_min":null,"price_type":"fixed"}
 get_reservations: {"from":"ISO","to":"ISO","customer_query":null} — default from=today, to=+7days. Use when merchant asks "prenotazioni di oggi/domani/settimana", "chi viene stasera", "reservas"
-book_table: {"customer_name":"...","customer_phone":null,"party_size":N,"date":"YYYY-MM-DD","time":"HH:MM","zone_preference":null,"notes":null} — merchant books table directly (always confirmed)
+book_table: {"customer_name":"...","customer_phone":null,"party_size":N,"date":"YYYY-MM-DD","time":"HH:MM","zone_preference":null,"notes":null,"num_tables":1,"table_capacity":null} — merchant books/blocks tables directly (always confirmed, no capacity validation — merchant decides). num_tables=how many tables to block, table_capacity=filter by seats per table (e.g. "2 tavoli da 4" → num_tables:2, table_capacity:4)
 cancel_reservation: {"customer_query":"...","date":"YYYY-MM-DD or null"}
 confirm_reservation: {"customer_query":"...","date":"YYYY-MM-DD or null"} — confirm a pending_merchant reservation
 get_stats: {"period":"today|week|month|all","metric":"orders|revenue|customers|all"} — analytics. Use for: "quanti ordini", "fatturato settimana", "clienti nuovi", "report"
@@ -1091,25 +1091,44 @@ async function handleMerchantMessage(tenant, messageText, phoneNumberId, token) 
   }
 
   if (intent.action === 'book_table') {
-    const { customer_name, customer_phone, party_size, date, time, zone_preference, notes } = intent.params || {};
+    const { customer_name, customer_phone, party_size, date, time, zone_preference, notes, num_tables, table_capacity } = intent.params || {};
     if (!customer_name || !date) {
       const ask = { es:'Necesito al menos el nombre del cliente y la fecha. Ej: "reserva para Mario, 3 personas, mañana a las 20"', it:'Ho bisogno almeno del nome del cliente e della data. Es: "prenotazione per Mario, 3 persone, domani alle 20"', en:'I need at least the customer name and date. E.g.: "reservation for Mario, 3 people, tomorrow at 8pm"', fr:'J\'ai besoin au moins du nom du client et de la date.', de:'Ich brauche mindestens den Kundennamen und das Datum.', pt:'Preciso pelo menos do nome do cliente e da data.' };
       await sendMessage(tenant.merchant_phone, ask[lang] || ask.es, phoneNumberId, token); return;
     }
     const reservedAt = new Date(`${date}T${time || '20:00'}:00`).toISOString();
+    const dur = tenant.restaurant_slot_duration || 90;
+
+    // Resolve zone
     let zoneId = null;
     if (zone_preference) {
       const zones = await getRestaurantZones(tenant.id);
       const z = (zones || []).find(z => z.name.toLowerCase().includes(zone_preference.toLowerCase()));
       if (z) zoneId = z.id;
     }
+
+    // Find tables to block — merchant authority: no capacity validation
+    const wantedTables = Math.max(1, parseInt(num_tables) || 1);
+    let tableIds = [];
+    if (wantedTables > 0) {
+      let tq = supabase.from('restaurant_tables').select('id, capacity, zone_id').eq('tenant_id', tenant.id);
+      if (zoneId) tq = tq.eq('zone_id', zoneId);
+      if (table_capacity) tq = tq.eq('capacity', table_capacity);
+      const { data: allTables } = await tq.order('capacity');
+      tableIds = (allTables || []).slice(0, wantedTables).map(t => t.id);
+      if (!zoneId && tableIds.length) zoneId = (allTables || []).find(t => t.zone_id)?.zone_id || null;
+    }
+
     await supabase.from('reservations').insert({
       tenant_id: tenant.id, customer_name, customer_phone: customer_phone || null,
-      party_size: party_size || 2, reserved_at: reservedAt, status: 'confirmed',
-      zone_id: zoneId, notes: notes || null,
+      party_size: party_size || 2, reserved_at: reservedAt, duration_min: dur,
+      status: 'confirmed', zone_id: zoneId,
+      table_id: tableIds[0] || null, table_ids: tableIds,
+      notes: notes || null,
     });
     const dt = new Date(reservedAt).toLocaleString('es', { weekday:'short', day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
-    const ok = { es:`✅ Reserva confirmada: *${customer_name}*, ${party_size || 2} pers., ${dt}`, it:`✅ Prenotazione confermata: *${customer_name}*, ${party_size || 2} pers., ${dt}`, en:`✅ Reservation confirmed: *${customer_name}*, ${party_size || 2} ppl, ${dt}`, fr:`✅ Réservation confirmée: *${customer_name}*, ${party_size || 2} pers., ${dt}`, de:`✅ Reservierung bestätigt: *${customer_name}*, ${party_size || 2} Pers., ${dt}`, pt:`✅ Reserva confirmada: *${customer_name}*, ${party_size || 2} pes., ${dt}` };
+    const tblNote = tableIds.length ? ` (${tableIds.length} ${tableIds.length > 1 ? { es:'mesas', it:'tavoli', en:'tables', fr:'tables', de:'Tische', pt:'mesas' }[lang] || 'tables' : { es:'mesa', it:'tavolo', en:'table', fr:'table', de:'Tisch', pt:'mesa' }[lang] || 'table'})` : '';
+    const ok = { es:`✅ Reserva confirmada: *${customer_name}*, ${party_size || 2} pers., ${dt}${tblNote}`, it:`✅ Prenotazione confermata: *${customer_name}*, ${party_size || 2} pers., ${dt}${tblNote}`, en:`✅ Reservation confirmed: *${customer_name}*, ${party_size || 2} ppl, ${dt}${tblNote}`, fr:`✅ Réservation confirmée: *${customer_name}*, ${party_size || 2} pers., ${dt}${tblNote}`, de:`✅ Reservierung bestätigt: *${customer_name}*, ${party_size || 2} Pers., ${dt}${tblNote}`, pt:`✅ Reserva confirmada: *${customer_name}*, ${party_size || 2} pes., ${dt}${tblNote}` };
     await sendMessage(tenant.merchant_phone, ok[lang] || ok.es, phoneNumberId, token);
     return;
   }
