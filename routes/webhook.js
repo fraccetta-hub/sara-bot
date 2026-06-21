@@ -313,7 +313,7 @@ async function notifyCustomerOrderStatus(order, status, phoneNumberId, token, te
   }
 }
 
-async function parseMerchantIntent(messageText, products, services) {
+async function parseMerchantIntent(messageText, products, services, tenant) {
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
   const catalog = products.length
     ? products.map(p => `• ${p.name} (stock: ${p.stock_qty ?? 'N/A'}, price: ${p.price_guarani})`).join('\n')
@@ -322,19 +322,32 @@ async function parseMerchantIntent(messageText, products, services) {
     ? services.map(s => `• ${s.name} (${s.duration_min ?? '?'}min, price: ${s.price_guarani})`).join('\n')
     : 'empty';
   const today = new Date().toISOString();
+
+  // Build capability context so AI only offers valid actions for this account type
+  const caps = [];
+  if (tenant?.products_enabled)     caps.push('products/stock/catalog/offers');
+  if (tenant?.services_enabled)     caps.push('services');
+  if (tenant?.appointments_enabled && !tenant?.restaurant_enabled) caps.push('appointments');
+  if (tenant?.restaurant_enabled)   caps.push('restaurant reservations/tables');
+  caps.push('orders', 'chat-takeover', 'analytics/stats');
+
   const resp = await client.messages.create({
     model: 'claude-haiku-4-5-20251001',
-    max_tokens: 300,
+    max_tokens: 400,
     system: `You parse merchant WhatsApp messages. Return ONLY valid JSON, no explanation.
 Today: ${today}
+This merchant's active modules: ${caps.join(', ')}.
 
-Actions: update_stock, set_stock, set_price, mark_unavailable, mark_available, add_product, get_catalog,
+Actions:
+update_stock, set_stock, set_price, mark_unavailable, mark_available, add_product, get_catalog,
 get_orders, confirm_order, cancel_order, update_order_status, chat_takeover, name_customer,
 get_appointments, add_appointment, cancel_appointment, reschedule_appointment,
 block_time, unblock_time,
 create_closure, delete_closure,
 create_offer, delete_offer,
 get_services, update_service, add_service,
+get_reservations, book_table, cancel_reservation, confirm_reservation,
+get_stats,
 greeting, unknown.
 
 Use "greeting" for salutations (ciao, hola, hello, hi, buongiorno, bonjour, etc.) or small talk with no business intent.
@@ -348,23 +361,28 @@ set_stock: {"qty": N} absolute value
 set_price: {"price": N}
 add_product: {"name":"...","category":"...","price":0,"stock":0,"description":null}
 name_customer: {"phone":"...","name":"..."}
-get_orders: {} — list pending/active orders
+get_orders: {"status_filter": "active|all|pending", "customer_query": null} — active=in progress, pending=awaiting confirmation
 update_order_status: {"customer_query":null,"status":"preparing|delivering|delivered"}
 chat_takeover: {"customer_query":"..."} partial name or phone, null if not specified
 get_appointments: {"from":"ISO","to":"ISO","customer_query":null} — default from=today, to=+7days
-add_appointment: {"customer_name":"...","customer_phone":null,"service_query":null,"start_at":"ISO or null","duration_override":null} — duration_override in minutes when merchant says "serve mezz'ora/30 minuti/1 ora" without a service
+add_appointment: {"customer_name":"...","customer_phone":null,"service_query":null,"start_at":"ISO or null","duration_override":null}
 cancel_appointment: {"customer_query":"...","start_at":"ISO or null"}
 reschedule_appointment: {"customer_query":"...","current_start":"ISO or null","new_start":"ISO"}
 block_time: {"start_at":"ISO","end_at":"ISO","reason":null}
 unblock_time: {"start_at":"ISO or null","reason_query":null}
-create_closure: {"start_date":"YYYY-MM-DD","end_date":"YYYY-MM-DD","label":"..."} — multi-day business closure (ferie, vacanze, festività). Use when merchant says "siamo chiusi dal X al Y", "ferie agosto", "vacaciones semana santa"
-delete_closure: {"label_query":"...","start_date":"YYYY-MM-DD or null"} — remove a business closure by label or date
-create_offer: {"label":"...","discount_type":"percent|fixed","discount_value":N,"scope":"all_products|category|product|all_services|service_category|service","scope_target":"category or product name or null","valid_from":"YYYY-MM-DD or null","valid_to":"YYYY-MM-DD or null"} — discount offer. Use when merchant says "20% su tutte le rose", "sconto 5000 Gs su massaggi", "offerta weekend su tutte le torte"
-delete_offer: {"label_query":"..."} — remove an offer by label
+create_closure: {"start_date":"YYYY-MM-DD","end_date":"YYYY-MM-DD","label":"..."}
+delete_closure: {"label_query":"...","start_date":"YYYY-MM-DD or null"}
+create_offer: {"label":"...","discount_type":"percent|fixed","discount_value":N,"scope":"all_products|category|product|all_services|service_category|service","scope_target":null,"valid_from":"YYYY-MM-DD or null","valid_to":"YYYY-MM-DD or null"}
+delete_offer: {"label_query":"..."}
 update_service: {"updates":{"price_guarani":null,"duration_min":null,"is_available":null,"name":null,"category":null,"description":null}}
 add_service: {"name":"...","category":null,"price":0,"duration_min":null,"price_type":"fixed"}
+get_reservations: {"from":"ISO","to":"ISO","customer_query":null} — default from=today, to=+7days. Use when merchant asks "prenotazioni di oggi/domani/settimana", "chi viene stasera", "reservas"
+book_table: {"customer_name":"...","customer_phone":null,"party_size":N,"date":"YYYY-MM-DD","time":"HH:MM","zone_preference":null,"notes":null} — merchant books table directly (always confirmed)
+cancel_reservation: {"customer_query":"...","date":"YYYY-MM-DD or null"}
+confirm_reservation: {"customer_query":"...","date":"YYYY-MM-DD or null"} — confirm a pending_merchant reservation
+get_stats: {"period":"today|week|month|all","metric":"orders|revenue|customers|all"} — analytics. Use for: "quanti ordini", "fatturato settimana", "clienti nuovi", "report"
 
-Resolve relative dates using today's ISO above. "domani alle 15" → compute correct ISO datetime.`,
+Resolve relative dates using today's ISO above. "domani alle 15" → correct ISO. "questa settimana" → from=Monday ISO, to=Sunday ISO.`,
     messages: [{ role: 'user', content: `Products:\n${catalog}\n\nServices:\n${svcList}\n\nMessage: ${messageText}` }],
   });
   try {
@@ -377,9 +395,10 @@ Resolve relative dates using today's ISO above. "domani alle 15" → compute cor
 
 // Feature gate — returns localised error string if action not allowed, null if OK
 function featureGate(tenant, action, lang) {
-  const productActions = new Set(['update_stock','set_stock','set_price','mark_unavailable','mark_available','add_product','get_catalog']);
+  const productActions  = new Set(['update_stock','set_stock','set_price','mark_unavailable','mark_available','add_product','get_catalog']);
   const serviceActions  = new Set(['get_services','add_service','update_service']);
   const apptActions     = new Set(['get_appointments','add_appointment','cancel_appointment','reschedule_appointment','block_time','unblock_time']);
+  const restaurantActions = new Set(['get_reservations','book_table','cancel_reservation','confirm_reservation']);
   if (productActions.has(action) && !tenant.products_enabled) {
     const m = { es:'⚠️ El módulo de productos no está activado en tu plan.', it:'⚠️ Il modulo prodotti non è attivo nel tuo piano.', en:'⚠️ Product module is not enabled on your plan.', fr:'⚠️ Le module produits n\'est pas activé.', de:'⚠️ Produktmodul ist nicht aktiviert.', pt:'⚠️ O módulo de produtos não está ativo.' };
     return m[lang] || m.es;
@@ -390,6 +409,10 @@ function featureGate(tenant, action, lang) {
   }
   if (apptActions.has(action) && !tenant.appointments_enabled) {
     const m = { es:'⚠️ El módulo de citas no está activado en tu plan.', it:'⚠️ Il modulo appuntamenti non è attivo nel tuo piano.', en:'⚠️ Appointments module is not enabled on your plan.', fr:'⚠️ Le module rendez-vous n\'est pas activé.', de:'⚠️ Terminmodul ist nicht aktiviert.', pt:'⚠️ O módulo de agendamentos não está ativo.' };
+    return m[lang] || m.es;
+  }
+  if (restaurantActions.has(action) && !tenant.restaurant_enabled) {
+    const m = { es:'⚠️ El módulo de reservas de restaurante no está activado en tu plan.', it:'⚠️ Il modulo prenotazioni ristorante non è attivo nel tuo piano.', en:'⚠️ Restaurant reservations module is not enabled on your plan.', fr:'⚠️ Le module réservations restaurant n\'est pas activé.', de:'⚠️ Restaurantreservierungsmodul ist nicht aktiviert.', pt:'⚠️ O módulo de reservas de restaurante não está ativo.' };
     return m[lang] || m.es;
   }
   return null;
@@ -606,6 +629,16 @@ async function handleMerchantMessage(tenant, messageText, phoneNumberId, token) 
             await supabase.from('services').update(pending.params.updates).eq('id', chosen.id);
             invalidateServices(tenant.id);
             await sendMessage(tenant.merchant_phone, mt(pending.lang, 'svc_updated', chosen.name), phoneNumberId, token);
+          } else if (pending.action === 'cancel_reservation') {
+            await supabase.from('reservations').update({ status: 'cancelled' }).eq('id', chosen.id);
+            const dt = new Date(chosen.reserved_at).toLocaleString('es', { weekday:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
+            const ok = { es:`❌ Reserva de *${chosen.customer_name}* (${dt}) cancelada.`, it:`❌ Prenotazione di *${chosen.customer_name}* (${dt}) annullata.`, en:`❌ Reservation for *${chosen.customer_name}* (${dt}) cancelled.`, fr:`❌ Réservation de *${chosen.customer_name}* (${dt}) annulée.`, de:`❌ Reservierung von *${chosen.customer_name}* (${dt}) storniert.`, pt:`❌ Reserva de *${chosen.customer_name}* (${dt}) cancelada.` };
+            await sendMessage(tenant.merchant_phone, ok[pending.lang] || ok.es, phoneNumberId, token);
+          } else if (pending.action === 'confirm_reservation') {
+            await supabase.from('reservations').update({ status: 'confirmed' }).eq('id', chosen.id);
+            const dt = new Date(chosen.reserved_at).toLocaleString('es', { weekday:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
+            const ok = { es:`✅ Reserva de *${chosen.customer_name}* (${dt}) confirmada.`, it:`✅ Prenotazione di *${chosen.customer_name}* (${dt}) confermata.`, en:`✅ Reservation for *${chosen.customer_name}* (${dt}) confirmed.`, fr:`✅ Réservation de *${chosen.customer_name}* (${dt}) confirmée.`, de:`✅ Reservierung von *${chosen.customer_name}* (${dt}) bestätigt.`, pt:`✅ Reserva de *${chosen.customer_name}* (${dt}) confirmada.` };
+            await sendMessage(tenant.merchant_phone, ok[pending.lang] || ok.es, phoneNumberId, token);
           } else {
             await executeMerchantAction(tenant, pending.action, chosen, pending.params, pending.lang, phoneNumberId, token);
           }
@@ -667,7 +700,7 @@ async function handleMerchantMessage(tenant, messageText, phoneNumberId, token) 
 
   const allProducts = products || [];
   const allServices = services || [];
-  const intent = await parseMerchantIntent(messageText, allProducts, allServices);
+  const intent = await parseMerchantIntent(messageText, allProducts, allServices, tenant);
   const lang = intent.language || 'es';
 
   // Save detected language for outbound notifications (e.g. new order alerts)
@@ -1030,6 +1063,173 @@ async function handleMerchantMessage(tenant, messageText, phoneNumberId, token) 
     return;
   }
 
+  // ── Restaurant reservations ───────────────────────────────────────────────
+  if (intent.action === 'get_reservations') {
+    const from = intent.params?.from || new Date().toISOString();
+    const to   = intent.params?.to   || new Date(Date.now() + 7 * 86400000).toISOString();
+    let q = supabase.from('reservations')
+      .select('customer_name, customer_phone, party_size, reserved_at, status, notes, zone_id')
+      .eq('tenant_id', tenant.id)
+      .neq('status', 'cancelled')
+      .gte('reserved_at', from)
+      .lte('reserved_at', to)
+      .order('reserved_at');
+    if (intent.params?.customer_query) q = q.ilike('customer_name', `%${intent.params.customer_query}%`);
+    const { data: res } = await q;
+    if (!res?.length) {
+      const none = { es:'📅 No hay reservas en ese período.', it:'📅 Nessuna prenotazione in quel periodo.', en:'📅 No reservations in that period.', fr:'📅 Aucune réservation sur cette période.', de:'📅 Keine Reservierungen in diesem Zeitraum.', pt:'📅 Nenhuma reserva nesse período.' };
+      await sendMessage(tenant.merchant_phone, none[lang] || none.es, phoneNumberId, token); return;
+    }
+    const lines = res.map(r => {
+      const dt = new Date(r.reserved_at).toLocaleString('es', { weekday:'short', day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
+      const pending = r.status === 'pending_merchant' ? ' ⚠️' : '';
+      return `• *${r.customer_name || r.customer_phone}* — ${r.party_size} pers. — ${dt}${pending}${r.notes ? `\n  📝 ${r.notes}` : ''}`;
+    });
+    const hdr = { es:`📋 *${res.length} reservas:*\n\n`, it:`📋 *${res.length} prenotazioni:*\n\n`, en:`📋 *${res.length} reservations:*\n\n`, fr:`📋 *${res.length} réservations:*\n\n`, de:`📋 *${res.length} Reservierungen:*\n\n`, pt:`📋 *${res.length} reservas:*\n\n` };
+    await sendMessage(tenant.merchant_phone, (hdr[lang] || hdr.es) + lines.join('\n'), phoneNumberId, token);
+    return;
+  }
+
+  if (intent.action === 'book_table') {
+    const { customer_name, customer_phone, party_size, date, time, zone_preference, notes } = intent.params || {};
+    if (!customer_name || !date) {
+      const ask = { es:'Necesito al menos el nombre del cliente y la fecha. Ej: "reserva para Mario, 3 personas, mañana a las 20"', it:'Ho bisogno almeno del nome del cliente e della data. Es: "prenotazione per Mario, 3 persone, domani alle 20"', en:'I need at least the customer name and date. E.g.: "reservation for Mario, 3 people, tomorrow at 8pm"', fr:'J\'ai besoin au moins du nom du client et de la date.', de:'Ich brauche mindestens den Kundennamen und das Datum.', pt:'Preciso pelo menos do nome do cliente e da data.' };
+      await sendMessage(tenant.merchant_phone, ask[lang] || ask.es, phoneNumberId, token); return;
+    }
+    const reservedAt = new Date(`${date}T${time || '20:00'}:00`).toISOString();
+    let zoneId = null;
+    if (zone_preference) {
+      const zones = await getRestaurantZones(tenant.id);
+      const z = (zones || []).find(z => z.name.toLowerCase().includes(zone_preference.toLowerCase()));
+      if (z) zoneId = z.id;
+    }
+    await supabase.from('reservations').insert({
+      tenant_id: tenant.id, customer_name, customer_phone: customer_phone || null,
+      party_size: party_size || 2, reserved_at: reservedAt, status: 'confirmed',
+      zone_id: zoneId, notes: notes || null,
+    });
+    const dt = new Date(reservedAt).toLocaleString('es', { weekday:'short', day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
+    const ok = { es:`✅ Reserva confirmada: *${customer_name}*, ${party_size || 2} pers., ${dt}`, it:`✅ Prenotazione confermata: *${customer_name}*, ${party_size || 2} pers., ${dt}`, en:`✅ Reservation confirmed: *${customer_name}*, ${party_size || 2} ppl, ${dt}`, fr:`✅ Réservation confirmée: *${customer_name}*, ${party_size || 2} pers., ${dt}`, de:`✅ Reservierung bestätigt: *${customer_name}*, ${party_size || 2} Pers., ${dt}`, pt:`✅ Reserva confirmada: *${customer_name}*, ${party_size || 2} pes., ${dt}` };
+    await sendMessage(tenant.merchant_phone, ok[lang] || ok.es, phoneNumberId, token);
+    return;
+  }
+
+  if (intent.action === 'cancel_reservation') {
+    const { customer_query, date } = intent.params || {};
+    let q = supabase.from('reservations').select('id, customer_name, reserved_at').eq('tenant_id', tenant.id).neq('status', 'cancelled');
+    if (customer_query) q = q.ilike('customer_name', `%${customer_query}%`);
+    if (date) q = q.gte('reserved_at', `${date}T00:00:00`).lte('reserved_at', `${date}T23:59:59`);
+    const { data: matches } = await q.order('reserved_at').limit(10);
+    if (!matches?.length) {
+      const none = { es:'⚠️ No encontré esa reserva.', it:'⚠️ Prenotazione non trovata.', en:'⚠️ Reservation not found.', fr:'⚠️ Réservation introuvable.', de:'⚠️ Reservierung nicht gefunden.', pt:'⚠️ Reserva não encontrada.' };
+      await sendMessage(tenant.merchant_phone, none[lang] || none.es, phoneNumberId, token); return;
+    }
+    if (matches.length === 1) {
+      await supabase.from('reservations').update({ status: 'cancelled' }).eq('id', matches[0].id);
+      const dt = new Date(matches[0].reserved_at).toLocaleString('es', { weekday:'short', day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
+      const ok = { es:`❌ Reserva de *${matches[0].customer_name}* (${dt}) cancelada.`, it:`❌ Prenotazione di *${matches[0].customer_name}* (${dt}) annullata.`, en:`❌ Reservation for *${matches[0].customer_name}* (${dt}) cancelled.`, fr:`❌ Réservation de *${matches[0].customer_name}* (${dt}) annulée.`, de:`❌ Reservierung von *${matches[0].customer_name}* (${dt}) storniert.`, pt:`❌ Reserva de *${matches[0].customer_name}* (${dt}) cancelada.` };
+      await sendMessage(tenant.merchant_phone, ok[lang] || ok.es, phoneNumberId, token); return;
+    }
+    const list = matches.slice(0,5).map((r,i) => { const dt = new Date(r.reserved_at).toLocaleString('es',{weekday:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}); return `${i+1}. *${r.customer_name}* — ${dt}`; }).join('\n');
+    merchantPending.set(tenant.id, { action: 'cancel_reservation', candidates: matches.slice(0,5), lang, expiresAt: Date.now() + 5*60*1000 });
+    const which = { es:`Varias reservas:\n${list}\n¿Cuál cancelar?`, it:`Più prenotazioni:\n${list}\nQuale annullare?`, en:`Multiple reservations:\n${list}\nWhich to cancel?`, fr:`Plusieurs réservations:\n${list}\nLaquelle annuler?`, de:`Mehrere Reservierungen:\n${list}\nWelche stornieren?`, pt:`Várias reservas:\n${list}\nQual cancelar?` };
+    await sendMessage(tenant.merchant_phone, which[lang] || which.es, phoneNumberId, token);
+    return;
+  }
+
+  if (intent.action === 'confirm_reservation') {
+    const { customer_query, date } = intent.params || {};
+    let q = supabase.from('reservations').select('id, customer_name, reserved_at').eq('tenant_id', tenant.id).eq('status', 'pending_merchant');
+    if (customer_query) q = q.ilike('customer_name', `%${customer_query}%`);
+    if (date) q = q.gte('reserved_at', `${date}T00:00:00`).lte('reserved_at', `${date}T23:59:59`);
+    const { data: matches } = await q.order('reserved_at').limit(10);
+    if (!matches?.length) {
+      const none = { es:'⚠️ No hay reservas pendientes que confirmar.', it:'⚠️ Nessuna prenotazione in attesa da confermare.', en:'⚠️ No pending reservations to confirm.', fr:'⚠️ Aucune réservation en attente à confirmer.', de:'⚠️ Keine ausstehenden Reservierungen zu bestätigen.', pt:'⚠️ Nenhuma reserva pendente para confirmar.' };
+      await sendMessage(tenant.merchant_phone, none[lang] || none.es, phoneNumberId, token); return;
+    }
+    if (matches.length === 1) {
+      await supabase.from('reservations').update({ status: 'confirmed' }).eq('id', matches[0].id);
+      const dt = new Date(matches[0].reserved_at).toLocaleString('es', { weekday:'short', day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
+      const ok = { es:`✅ Reserva de *${matches[0].customer_name}* (${dt}) confirmada.`, it:`✅ Prenotazione di *${matches[0].customer_name}* (${dt}) confermata.`, en:`✅ Reservation for *${matches[0].customer_name}* (${dt}) confirmed.`, fr:`✅ Réservation de *${matches[0].customer_name}* (${dt}) confirmée.`, de:`✅ Reservierung von *${matches[0].customer_name}* (${dt}) bestätigt.`, pt:`✅ Reserva de *${matches[0].customer_name}* (${dt}) confirmada.` };
+      await sendMessage(tenant.merchant_phone, ok[lang] || ok.es, phoneNumberId, token); return;
+    }
+    const list = matches.slice(0,5).map((r,i) => { const dt = new Date(r.reserved_at).toLocaleString('es',{weekday:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}); return `${i+1}. *${r.customer_name}* — ${dt}`; }).join('\n');
+    merchantPending.set(tenant.id, { action: 'confirm_reservation', candidates: matches.slice(0,5), lang, expiresAt: Date.now() + 5*60*1000 });
+    const which = { es:`Varias reservas pendientes:\n${list}\n¿Cuál confirmar?`, it:`Più prenotazioni in attesa:\n${list}\nQuale confermare?`, en:`Multiple pending reservations:\n${list}\nWhich to confirm?`, fr:`Plusieurs réservations en attente:\n${list}\nLaquelle confirmer?`, de:`Mehrere ausstehende Reservierungen:\n${list}\nWelche bestätigen?`, pt:`Várias reservas pendentes:\n${list}\nQual confirmar?` };
+    await sendMessage(tenant.merchant_phone, which[lang] || which.es, phoneNumberId, token);
+    return;
+  }
+
+  // ── Stats / Analytics ─────────────────────────────────────────────────────
+  if (intent.action === 'get_stats') {
+    const period = intent.params?.period || 'week';
+    const metric = intent.params?.metric || 'all';
+    const now = new Date();
+    let fromDate;
+    if (period === 'today') {
+      fromDate = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+    } else if (period === 'week') {
+      const day = now.getDay() || 7;
+      fromDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - day + 1).toISOString();
+    } else if (period === 'month') {
+      fromDate = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+    } else {
+      fromDate = '2000-01-01T00:00:00Z';
+    }
+
+    const [{ data: ordersData }, { data: apptData }, { data: resData }] = await Promise.all([
+      supabase.from('orders').select('id, total_guarani, customer_phone, status, created_at')
+        .eq('tenant_id', tenant.id).gte('created_at', fromDate),
+      tenant.appointments_enabled && !tenant.restaurant_enabled
+        ? supabase.from('appointments').select('id, customer_phone, status, created_at').eq('tenant_id', tenant.id).gte('created_at', fromDate).neq('status', 'cancelled')
+        : { data: null },
+      tenant.restaurant_enabled
+        ? supabase.from('reservations').select('id, party_size, status, reserved_at').eq('tenant_id', tenant.id).gte('reserved_at', fromDate).neq('status', 'cancelled')
+        : { data: null },
+    ]);
+
+    const orders = ordersData || [];
+    const currency = tenant.plan_currency || 'PYG';
+    const totalRevenue = orders.reduce((s, o) => s + (o.total_guarani || 0), 0);
+    const uniqueCustomers = new Set(orders.map(o => o.customer_phone)).size;
+    const completedOrders = orders.filter(o => o.status === 'delivered').length;
+    const activeOrders    = orders.filter(o => ['pending','confirmed','preparing','delivering'].includes(o.status)).length;
+
+    const periodLabel = { today: { es:'hoy', it:'oggi', en:'today', fr:'aujourd\'hui', de:'heute', pt:'hoje' }, week: { es:'esta semana', it:'questa settimana', en:'this week', fr:'cette semaine', de:'diese Woche', pt:'esta semana' }, month: { es:'este mes', it:'questo mese', en:'this month', fr:'ce mois', de:'diesen Monat', pt:'este mês' }, all: { es:'total', it:'totale', en:'total', fr:'total', de:'gesamt', pt:'total' } };
+    const plabel = (periodLabel[period] || periodLabel.week)[lang] || (periodLabel[period] || periodLabel.week).es;
+
+    let lines = [`📊 *Estadísticas ${plabel}:*`];
+    if (lang === 'it') lines = [`📊 *Statistiche ${plabel}:*`];
+    else if (lang === 'en') lines = [`📊 *Stats ${plabel}:*`];
+    else if (lang === 'fr') lines = [`📊 *Statistiques ${plabel}:*`];
+    else if (lang === 'de') lines = [`📊 *Statistiken ${plabel}:*`];
+    else if (lang === 'pt') lines = [`📊 *Estatísticas ${plabel}:*`];
+
+    if (orders.length || metric === 'orders' || metric === 'all') {
+      const lbl = { es:`🛒 Pedidos: *${orders.length}* (${completedOrders} entregados, ${activeOrders} activos)`, it:`🛒 Ordini: *${orders.length}* (${completedOrders} consegnati, ${activeOrders} attivi)`, en:`🛒 Orders: *${orders.length}* (${completedOrders} delivered, ${activeOrders} active)`, fr:`🛒 Commandes: *${orders.length}* (${completedOrders} livrées, ${activeOrders} actives)`, de:`🛒 Bestellungen: *${orders.length}* (${completedOrders} geliefert, ${activeOrders} aktiv)`, pt:`🛒 Pedidos: *${orders.length}* (${completedOrders} entregues, ${activeOrders} ativos)` };
+      lines.push(lbl[lang] || lbl.es);
+    }
+    if ((metric === 'revenue' || metric === 'all') && orders.length) {
+      const lbl = { es:`💰 Ingresos: *${formatPrice(totalRevenue, currency)}*`, it:`💰 Ricavi: *${formatPrice(totalRevenue, currency)}*`, en:`💰 Revenue: *${formatPrice(totalRevenue, currency)}*`, fr:`💰 Chiffre d'affaires: *${formatPrice(totalRevenue, currency)}*`, de:`💰 Einnahmen: *${formatPrice(totalRevenue, currency)}*`, pt:`💰 Receita: *${formatPrice(totalRevenue, currency)}*` };
+      lines.push(lbl[lang] || lbl.es);
+    }
+    if (metric === 'customers' || metric === 'all') {
+      const lbl = { es:`👥 Clientes únicos: *${uniqueCustomers}*`, it:`👥 Clienti unici: *${uniqueCustomers}*`, en:`👥 Unique customers: *${uniqueCustomers}*`, fr:`👥 Clients uniques: *${uniqueCustomers}*`, de:`👥 Einzigartige Kunden: *${uniqueCustomers}*`, pt:`👥 Clientes únicos: *${uniqueCustomers}*` };
+      lines.push(lbl[lang] || lbl.es);
+    }
+    if (apptData?.length) {
+      const lbl = { es:`📆 Citas: *${apptData.length}*`, it:`📆 Appuntamenti: *${apptData.length}*`, en:`📆 Appointments: *${apptData.length}*`, fr:`📆 Rendez-vous: *${apptData.length}*`, de:`📆 Termine: *${apptData.length}*`, pt:`📆 Agendamentos: *${apptData.length}*` };
+      lines.push(lbl[lang] || lbl.es);
+    }
+    if (resData?.length) {
+      const covers = resData.reduce((s, r) => s + (r.party_size || 0), 0);
+      const lbl = { es:`🍽️ Reservas: *${resData.length}* (${covers} cubiertos)`, it:`🍽️ Prenotazioni: *${resData.length}* (${covers} coperti)`, en:`🍽️ Reservations: *${resData.length}* (${covers} covers)`, fr:`🍽️ Réservations: *${resData.length}* (${covers} couverts)`, de:`🍽️ Reservierungen: *${resData.length}* (${covers} Gedecke)`, pt:`🍽️ Reservas: *${resData.length}* (${covers} cobertos)` };
+      lines.push(lbl[lang] || lbl.es);
+    }
+    await sendMessage(tenant.merchant_phone, lines.join('\n'), phoneNumberId, token);
+    return;
+  }
+
   // ── Greeting ──────────────────────────────────────────────────────────────
   if (intent.action === 'greeting') {
     const greet = { es:'👋 ¡Hola! ¿En qué te puedo ayudar?', it:'👋 Ciao! Come posso aiutarti?', en:'👋 Hi! How can I help you?', fr:'👋 Bonjour! Comment puis-je vous aider?', de:'👋 Hallo! Wie kann ich helfen?', pt:'👋 Olá! Como posso ajudar?' };
@@ -1037,9 +1237,23 @@ async function handleMerchantMessage(tenant, messageText, phoneNumberId, token) 
     return;
   }
 
-  // ── Unknown ───────────────────────────────────────────────────────────────
+  // ── Unknown — show relevant help for this account type ───────────────────
   if (intent.action === 'unknown') {
-    await sendMessage(tenant.merchant_phone, mt(lang, 'unknown'), phoneNumberId, token);
+    const lines = [];
+    if (tenant.products_enabled)     lines.push({ es:'• ver/actualizar catálogo, stock, precios', it:'• vedere/aggiornare catalogo, stock, prezzi', en:'• view/update catalog, stock, prices', fr:'• voir/mettre à jour catalogue, stock, prix', de:'• Katalog, Bestand, Preise anzeigen/aktualisieren', pt:'• ver/atualizar catálogo, estoque, preços' });
+    if (tenant.products_enabled)     lines.push({ es:'• agregar producto, marcar agotado/disponible', it:'• aggiungere prodotto, segnare esaurito/disponibile', en:'• add product, mark unavailable/available', fr:'• ajouter produit, marquer épuisé/disponible', de:'• Produkt hinzufügen, als ausverkauft/verfügbar markieren', pt:'• adicionar produto, marcar esgotado/disponível' });
+    if (tenant.products_enabled)     lines.push({ es:'• crear/eliminar oferta o descuento', it:'• creare/eliminare offerta o sconto', en:'• create/delete offer or discount', fr:'• créer/supprimer offre ou remise', de:'• Angebot oder Rabatt erstellen/löschen', pt:'• criar/remover oferta ou desconto' });
+    lines.push({ es:'• confirmar/cancelar/actualizar pedido', it:'• confermare/annullare/aggiornare ordine', en:'• confirm/cancel/update order', fr:'• confirmer/annuler/mettre à jour commande', de:'• Bestellung bestätigen/stornieren/aktualisieren', pt:'• confirmar/cancelar/atualizar pedido' });
+    lines.push({ es:'• tomar/terminar chat con cliente', it:'• prendere/terminare chat con cliente', en:'• take over/end customer chat', fr:'• prendre/terminer chat client', de:'• Kundenchat übernehmen/beenden', pt:'• assumir/terminar chat do cliente' });
+    lines.push({ es:'• estadísticas: pedidos, ingresos, clientes', it:'• statistiche: ordini, ricavi, clienti', en:'• stats: orders, revenue, customers', fr:'• statistiques: commandes, revenus, clients', de:'• Statistiken: Bestellungen, Einnahmen, Kunden', pt:'• estatísticas: pedidos, receita, clientes' });
+    if (tenant.appointments_enabled && !tenant.restaurant_enabled) lines.push({ es:'• ver/agregar/cancelar citas, bloquear horario', it:'• vedere/aggiungere/annullare appuntamenti, bloccare orario', en:'• view/add/cancel appointments, block time', fr:'• voir/ajouter/annuler rendez-vous, bloquer horaire', de:'• Termine anzeigen/hinzufügen/absagen, Zeit sperren', pt:'• ver/adicionar/cancelar agendamentos, bloquear horário' });
+    if (tenant.services_enabled)     lines.push({ es:'• ver/agregar/actualizar servicios', it:'• vedere/aggiungere/aggiornare servizi', en:'• view/add/update services', fr:'• voir/ajouter/mettre à jour services', de:'• Dienstleistungen anzeigen/hinzufügen/aktualisieren', pt:'• ver/adicionar/atualizar serviços' });
+    if (tenant.restaurant_enabled)   lines.push({ es:'• ver/crear/cancelar/confirmar reservas de mesa', it:'• vedere/creare/annullare/confermare prenotazioni tavolo', en:'• view/create/cancel/confirm table reservations', fr:'• voir/créer/annuler/confirmer réservations table', de:'• Tischreservierungen anzeigen/erstellen/stornieren/bestätigen', pt:'• ver/criar/cancelar/confirmar reservas de mesa' });
+    lines.push({ es:'• cerrar local (vacaciones, festivos)', it:'• chiudere il locale (ferie, festività)', en:'• close business (holidays, days off)', fr:'• fermer le commerce (vacances, jours fériés)', de:'• Geschäft schließen (Urlaub, Feiertage)', pt:'• fechar o negócio (férias, feriados)' });
+
+    const hdr = { es:'No entendí. Puedo ayudarte con:\n', it:'Non ho capito. Posso aiutarti con:\n', en:'Didn\'t understand. I can help you with:\n', fr:'Pas compris. Je peux vous aider avec:\n', de:'Nicht verstanden. Ich kann helfen mit:\n', pt:'Não entendi. Posso ajudar com:\n' };
+    const body = lines.map(l => l[lang] || l.es).join('\n');
+    await sendMessage(tenant.merchant_phone, (hdr[lang] || hdr.es) + body, phoneNumberId, token);
     return;
   }
 
