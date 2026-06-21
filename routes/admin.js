@@ -2546,7 +2546,7 @@ router.get('/restaurant/availability', requireAuth, async (req, res) => {
   const toTs = new Date(base.getTime() + days * 86400000).toISOString();
 
   const [tRes, tablesRes, hoursRes, closuresRes, resvRes] = await Promise.all([
-    supabase.from('tenants').select('restaurant_slot_duration, restaurant_slot_duration_2').eq('id', tenantId).single(),
+    supabase.from('tenants').select('restaurant_slot_duration').eq('id', tenantId).single(),
     supabase.from('restaurant_tables').select('id, label, capacity, is_active').eq('tenant_id', tenantId),
     supabase.from('business_hours').select('day_of_week, is_closed, open_time, close_time').eq('tenant_id', tenantId),
     supabase.from('business_closures').select('start_date, end_date').eq('tenant_id', tenantId),
@@ -2555,8 +2555,7 @@ router.get('/restaurant/availability', requireAuth, async (req, res) => {
       .gte('reserved_at', fromTs).lte('reserved_at', toTs),
   ]);
 
-  const dur1   = tRes.data?.restaurant_slot_duration  || 90;
-  const dur2   = tRes.data?.restaurant_slot_duration_2 || dur1;
+  const dur1   = tRes.data?.restaurant_slot_duration || 90;
   const tables = (tablesRes.data || []).filter(t => t.is_active !== false);
   const hours  = hoursRes.data || [];
   const closes = closuresRes.data || [];
@@ -2585,7 +2584,7 @@ router.get('/restaurant/availability', requireAuth, async (req, res) => {
       : [
           { start: String(bh.open_time).slice(0, 5), end: String(bh.close_time).slice(0, 5), dur: dur1 },
           ...(bh.open_time_2 && bh.close_time_2
-            ? [{ start: String(bh.open_time_2).slice(0, 5), end: String(bh.close_time_2).slice(0, 5), dur: dur2 }]
+            ? [{ start: String(bh.open_time_2).slice(0, 5), end: String(bh.close_time_2).slice(0, 5), dur: dur1 }]
             : []),
         ];
     const bandsOut = windows.map(w => {
@@ -2599,7 +2598,7 @@ router.get('/restaurant/availability', requireAuth, async (req, res) => {
     });
     out.push({ date: ymd, dow: day.getDay(), closed: !!closed, bands: bandsOut });
   }
-  res.json({ total_tables: tables.length, slot_duration: dur1, slot_duration_2: dur2, days: out });
+  res.json({ total_tables: tables.length, slot_duration: dur1, days: out });
 });
 
 router.put('/restaurant/reservations/:id', requireAuth, async (req, res) => {
@@ -2646,11 +2645,10 @@ router.delete('/customers/:phone', requireAuth, async (req, res) => {
 // ─── Restaurant: settings (enable/disable + slot duration) ───────────────────
 
 router.put('/restaurant/settings', requireAuth, async (req, res) => {
-  const { restaurant_enabled, restaurant_slot_duration, restaurant_slot_duration_2 } = req.body;
+  const { restaurant_enabled, restaurant_slot_duration } = req.body;
   const updates = {};
   if (restaurant_enabled !== undefined) updates.restaurant_enabled = Boolean(restaurant_enabled);
   if (restaurant_slot_duration) updates.restaurant_slot_duration = parseInt(restaurant_slot_duration);
-  updates.restaurant_slot_duration_2 = restaurant_slot_duration_2 ? parseInt(restaurant_slot_duration_2) : null;
   const { error } = await supabase.from('tenants').update(updates).eq('id', req.tenant.tenantId);
   if (error) return res.status(500).json({ error: error.message });
   res.json({ ok: true });

@@ -709,16 +709,10 @@
           <svg id="restDurChevron" class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="transform:rotate(0deg);transition:transform .2s"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
         </button>
         <div id="restDurBody" class="hidden px-5 pb-5 space-y-3">
-          <p class="text-xs text-gray-400">Tempo medio che un tavolo rimane occupato per fascia. Le prenotazioni esistenti mantengono la durata originale.</p>
+          <p class="text-xs text-gray-400">Tempo medio che un tavolo rimane occupato. Le prenotazioni esistenti mantengono la durata originale.</p>
           <div class="flex items-center gap-3">
-            <label class="text-sm text-gray-600 w-52" id="restDurLabel1">Durata media tavolo — Slot 1 (min):</label>
+            <label class="text-sm text-gray-600" data-i18n="restaurant.slotDuration">Durata media tavolo (min):</label>
             <input type="number" id="restaurantSlotDuration" value="90" min="30" max="300" step="15"
-              class="w-24 border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-300"
-              onchange="saveRestaurantSettings()">
-          </div>
-          <div id="restDur2Row" class="flex items-center gap-3 hidden">
-            <label class="text-sm text-gray-600 w-52" id="restDurLabel2">Durata media tavolo — Slot 2 (min):</label>
-            <input type="number" id="restaurantSlotDuration2" value="" min="30" max="300" step="15"
               class="w-24 border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-300"
               onchange="saveRestaurantSettings()">
           </div>
@@ -3499,24 +3493,6 @@ async function loadRestaurant() {
   _rZones  = zones  || [];
   _rTables = tables || [];
   document.getElementById('restaurantSlotDuration').value = settings.restaurant_slot_duration || 90;
-  // prefer a weekday with daytime hours for the label (avoid Sun midnight edge case)
-  const openDay = (hours || []).find(h => !h.is_closed && h.open_time && h.day_of_week !== 0 && String(h.open_time).slice(0,2) >= '06')
-    || (hours || []).find(h => !h.is_closed && h.open_time);
-  const hasSplitHours = (hours || []).some(h => h.open_time_2 && !h.is_closed);
-  const dur2Row = document.getElementById('restDur2Row');
-  dur2Row.classList.toggle('hidden', !hasSplitHours);
-  if (openDay) {
-    const s1 = `${String(openDay.open_time).slice(0,5)}–${String(openDay.close_time).slice(0,5)}`;
-    document.getElementById('restDurLabel1').textContent = `Durata media tavolo — Slot 1 · ${s1} (min):`;
-  }
-  if (hasSplitHours) {
-    document.getElementById('restaurantSlotDuration2').value = settings.restaurant_slot_duration_2 || '';
-    const splitDay = (hours || []).find(h => h.open_time_2 && !h.is_closed);
-    if (splitDay) {
-      const s2 = `${String(splitDay.open_time_2).slice(0,5)}–${String(splitDay.close_time_2).slice(0,5)}`;
-      document.getElementById('restDurLabel2').textContent = `Durata media tavolo — Slot 2 · ${s2} (min):`;
-    }
-  }
   renderZones();
   renderTables();
   loadAvailGrid();
@@ -3536,11 +3512,9 @@ async function initReservationsView() {
 }
 
 async function saveRestaurantSettings() {
-  const dur1 = parseInt(document.getElementById('restaurantSlotDuration').value) || 90;
-  const dur2Visible = !document.getElementById('restDur2Row').classList.contains('hidden');
-  const dur2 = dur2Visible ? (parseInt(document.getElementById('restaurantSlotDuration2').value) || null) : null;
+  const dur = parseInt(document.getElementById('restaurantSlotDuration').value) || 90;
   if (!confirm(t('restaurant.durationChangeWarning') || 'Modificando la durata, le prenotazioni esistenti manterranno il loro orario ma potrebbero risultare più o meno vicine alle altre. Continuare?')) return;
-  await api('/admin/restaurant/settings', 'PUT', { restaurant_enabled: true, restaurant_slot_duration: dur1, restaurant_slot_duration_2: dur2 });
+  await api('/admin/restaurant/settings', 'PUT', { restaurant_enabled: true, restaurant_slot_duration: dur });
   loadAvailGrid();
 }
 

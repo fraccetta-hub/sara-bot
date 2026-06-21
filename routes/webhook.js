@@ -1653,12 +1653,7 @@ async function handleCustomerMessage(tenant, customerPhone, messageText, locatio
       let tableId = null, zoneId = null, full = false;
 
       if (!escalate && hasTables) {
-        const dur1     = tenant.restaurant_slot_duration  || 90;
-        const dur2     = tenant.restaurant_slot_duration_2 || dur1;
-        const bhRow    = (businessHours || []).find(h => h.day_of_week === resDow);
-        const inW2     = bhRow?.open_time_2 && bhRow?.close_time_2
-          && resHHMM >= String(bhRow.open_time_2).slice(0, 5) && resHHMM <= String(bhRow.close_time_2).slice(0, 5);
-        const dur      = inW2 ? dur2 : dur1;
+        const dur      = tenant.restaurant_slot_duration || 90;
         const CLEAN_MS = 10 * 60000;
         const reqStart = new Date(reservedAt).getTime();
         const reqEnd   = reqStart + dur * 60000;

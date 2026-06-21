@@ -364,8 +364,7 @@ function _freeTablesAt(tables, reservations, ymd, hhmm, dur) {
 // offers/confirms times that actually have a free table.
 function buildAvailabilityBlock(tenant, tables, reservations, businessHours, closures, days = 7) {
   if (!tables.length) return buildReservationsBlock(reservations, tenant.restaurant_slot_duration || 90);
-  const dur1   = tenant.restaurant_slot_duration  || 90;
-  const dur2   = tenant.restaurant_slot_duration_2 || dur1;
+  const dur1   = tenant.restaurant_slot_duration || 90;
   const closes = (closures || []).filter(c => c.start_date && c.end_date);
   const today  = new Date();
   const lines  = [];
@@ -380,7 +379,7 @@ function buildAvailabilityBlock(tenant, tables, reservations, businessHours, clo
     const windows = [
       { start: String(bh.open_time).slice(0, 5), end: String(bh.close_time).slice(0, 5), dur: dur1 },
       ...(bh.open_time_2 && bh.close_time_2
-        ? [{ start: String(bh.open_time_2).slice(0, 5), end: String(bh.close_time_2).slice(0, 5), dur: dur2 }]
+        ? [{ start: String(bh.open_time_2).slice(0, 5), end: String(bh.close_time_2).slice(0, 5), dur: dur1 }]
         : []),
     ];
 
@@ -396,7 +395,7 @@ function buildAvailabilityBlock(tenant, tables, reservations, businessHours, clo
   }
 
   if (!lines.length) return '\nDISPONIBILIDAD DE MESAS: sin días abiertos en los próximos 7 días.';
-  const durNote = dur2 !== dur1 ? `${dur1}min (fascia 1) / ${dur2}min (fascia 2)` : `${dur1}min`;
+  const durNote = `${dur1}min`;
   return `\nDISPONIBILIDAD REAL DE MESAS (próximos 7 días) — el número entre paréntesis = mesas libres a esa hora; ✗ = completo:\n${lines.join('\n')}\nMesas totales: ${tables.length}. Duración por mesa: ${durNote}.
 REGLA CRÍTICA: proponé y confirmá SOLO horarios con mesas libres (número ≥1). NUNCA ofrezcas ni confirmes un horario marcado ✗, ni un horario que no figure en esta lista. Si el cliente pide un horario completo o inexistente, ofrecé el horario disponible más cercano de esta lista.`;
 }
