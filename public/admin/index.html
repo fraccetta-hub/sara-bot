@@ -1622,8 +1622,9 @@
         </div>
         <div id="svDurationWrap">
           <label data-i18n="modal.service.duration" class="block text-sm font-medium text-gray-700 mb-1">Duración (minutos)</label>
-          <input id="svDuration" type="number" min="0" placeholder="60"
+          <input id="svDuration" type="number" min="15" step="15" placeholder="60"
             class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
+          <p class="text-xs text-gray-400 mt-1" data-i18n="modal.service.durationHint">Múltiplo de 15 min</p>
         </div>
       </div>
       <div>
@@ -1667,6 +1668,7 @@
         <div>
           <label data-i18n="appt.modal.date" class="block text-xs font-medium text-gray-500 mb-1">Fecha</label>
           <input type="date" id="apptDate" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" onchange="loadApptSlots()"/>
+
         </div>
         <div>
           <label data-i18n="appt.modal.service" class="block text-xs font-medium text-gray-500 mb-1">Servicio</label>
@@ -1681,15 +1683,22 @@
           <option value="" data-i18n="appt.modal.slotHint">Elegí fecha primero</option>
         </select>
       </div>
-      <div class="grid grid-cols-2 gap-3">
-        <div>
-          <label data-i18n="appt.modal.customer" class="block text-xs font-medium text-gray-500 mb-1">Cliente (nombre)</label>
-          <input type="text" id="apptName" placeholder="María García" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
+      <div>
+        <label data-i18n="appt.modal.customer" class="block text-xs font-medium text-gray-500 mb-1">Cliente (nombre)</label>
+        <div class="relative">
+          <input type="text" id="apptName" data-i18n-ph="appt.modal.customerPh" placeholder="Buscar en rubrica..." autocomplete="off"
+            oninput="searchApptCustomer()"
+            class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
+          <div id="apptCustomerSuggestions" class="hidden absolute z-10 left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg mt-1 max-h-40 overflow-y-auto text-sm"></div>
         </div>
-        <div>
-          <label data-i18n="appt.modal.phone" class="block text-xs font-medium text-gray-500 mb-1">Teléfono</label>
-          <input type="text" id="apptPhone" placeholder="595981..." class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
-        </div>
+      </div>
+      <div>
+        <label data-i18n="appt.modal.phone" class="block text-xs font-medium text-gray-500 mb-1">Teléfono</label>
+        <input type="text" id="apptPhone" placeholder="595981..." class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"/>
+      </div>
+      <div class="flex items-center gap-3">
+        <input type="checkbox" id="apptPaid" class="w-4 h-4 accent-green-500"/>
+        <label for="apptPaid" data-i18n="appt.paid" class="text-sm text-gray-700 cursor-pointer">Pagado</label>
       </div>
       <div>
         <label data-i18n="appt.modal.notes" class="block text-xs font-medium text-gray-500 mb-1">Notas</label>
@@ -1745,6 +1754,7 @@
     <div class="flex gap-2 mt-5 flex-wrap">
       <button onclick="confirmAppt()" id="apptDetailConfirm" data-i18n="appt.detail.confirm" class="flex-1 bg-green-50 text-green-700 hover:bg-green-100 py-2 rounded-lg text-xs font-semibold transition">✅ Confirmar</button>
       <button onclick="completeAppt()" id="apptDetailComplete" data-i18n="appt.detail.complete" class="flex-1 bg-blue-50 text-blue-700 hover:bg-blue-100 py-2 rounded-lg text-xs font-semibold transition">✔ Completar</button>
+      <button onclick="markApptPaid()" id="apptDetailPaid" data-i18n="appt.markPaid" class="flex-1 bg-yellow-50 text-yellow-700 hover:bg-yellow-100 py-2 rounded-lg text-xs font-semibold transition">💳 Marcar pagado</button>
       <button onclick="cancelAppt()" id="apptDetailCancel" data-i18n="appt.detail.cancel" class="flex-1 bg-red-50 text-red-700 hover:bg-red-100 py-2 rounded-lg text-xs font-semibold transition">✕ Cancelar</button>
       <button onclick="deleteAppt()" data-i18n="appt.detail.delete" class="flex-1 bg-gray-50 text-gray-500 hover:bg-gray-100 py-2 rounded-lg text-xs font-semibold transition">🗑 Eliminar</button>
     </div>
@@ -5009,7 +5019,9 @@ function closeServiceModal() {
 
 function toggleServiceDuration() {
   const isHourly = document.getElementById('svPriceType').value === 'hourly';
-  document.getElementById('svPriceLabel').textContent = isHourly ? t('modal.service.priceHourly') : t('modal.service.price');
+  const cur = CURRENCY_SYMBOL_MAP[TENANT_CURRENCY] || TENANT_CURRENCY || 'Gs';
+  const key = isHourly ? 'modal.service.priceHourly' : 'modal.service.price';
+  document.getElementById('svPriceLabel').textContent = t(key).replace('{cur}', cur);
 }
 
 async function uploadServiceImg(input) {
@@ -5049,8 +5061,14 @@ async function saveService() {
   errEl.classList.add('hidden');
   const name  = document.getElementById('svName').value.trim();
   const price = parsePriceInput(document.getElementById('svPrice').value);
+  const durRaw = parseInt(document.getElementById('svDuration').value) || null;
   if (!name || isNaN(price)) {
     errEl.textContent = t('modal.service.error');
+    errEl.classList.remove('hidden');
+    return;
+  }
+  if (durRaw != null && durRaw % 15 !== 0) {
+    errEl.textContent = t('err.duration_not_multiple_15');
     errEl.classList.remove('hidden');
     return;
   }
@@ -5060,7 +5078,7 @@ async function saveService() {
     description:  document.getElementById('svDescription').value.trim() || null,
     price_type:   document.getElementById('svPriceType').value,
     price_guarani: price,
-    duration_min: parseInt(document.getElementById('svDuration').value) || null,
+    duration_min: durRaw,
     is_available: document.getElementById('svAvailable').checked,
     image_url:    currentServiceImgUrl || null,
   };
@@ -5909,17 +5927,25 @@ function renderCalendar() {
 
 // ── Appointment modal ────────────────────────────────────────────────────────
 
-function openApptModal(isoStart) {
+let _apptCustomers = [];
+
+async function openApptModal(isoStart) {
   editingApptId = null;
   document.getElementById('apptModalTitle').textContent = 'Nuevo turno';
   document.getElementById('apptError').classList.add('hidden');
+
+  // Min date = today
+  document.getElementById('apptDate').min = localDateStr();
 
   // Prefill service selector
   const svc = document.getElementById('apptService');
   svc.innerHTML = '<option value="">— Sin servicio —</option>' +
     calServices.filter(s => s.is_available).map(s =>
-      `<option value="${s.id}">${escHtml(s.name)} (${s.duration_min||30} min)</option>`
+      `<option value="${s.id}">${escHtml(s.name)} (${s.duration_min||15} min)</option>`
     ).join('');
+
+  // Load customers for autocomplete (non-blocking)
+  api('/admin/customers').then(cs => { _apptCustomers = cs || []; }).catch(() => {});
 
   // Prefill date
   if (isoStart) {
@@ -5935,7 +5961,32 @@ function openApptModal(isoStart) {
   document.getElementById('apptName').value  = '';
   document.getElementById('apptPhone').value = '';
   document.getElementById('apptNotes').value = '';
+  document.getElementById('apptPaid').checked = false;
+  document.getElementById('apptCustomerSuggestions').classList.add('hidden');
   document.getElementById('apptModal').classList.remove('hidden');
+}
+
+function searchApptCustomer() {
+  const q = document.getElementById('apptName').value.trim().toLowerCase();
+  const box = document.getElementById('apptCustomerSuggestions');
+  if (q.length < 1) { box.classList.add('hidden'); return; }
+  const hits = _apptCustomers.filter(c =>
+    (c.customer_name || '').toLowerCase().includes(q) ||
+    (c.customer_phone || '').includes(q)
+  ).slice(0, 8);
+  if (!hits.length) { box.classList.add('hidden'); return; }
+  box.innerHTML = hits.map(c => {
+    const label = escHtml(c.customer_name || '') + (c.customer_phone ? ` <span class="text-gray-400">+${c.customer_phone}</span>` : '');
+    return `<div class="px-3 py-2 hover:bg-green-50 cursor-pointer border-b border-gray-100 last:border-0"
+      onclick="selectApptCustomer(${JSON.stringify(c.customer_name||'')}, ${JSON.stringify(c.customer_phone||'')})">${label}</div>`;
+  }).join('');
+  box.classList.remove('hidden');
+}
+
+function selectApptCustomer(name, phone) {
+  document.getElementById('apptName').value  = name;
+  document.getElementById('apptPhone').value = phone;
+  document.getElementById('apptCustomerSuggestions').classList.add('hidden');
 }
 
 function closeApptModal() { document.getElementById('apptModal').classList.add('hidden'); }
@@ -5986,6 +6037,7 @@ async function saveAppt() {
       start_at: slot, service_id: svcId || null,
       customer_name: name || null, customer_phone: phone || '',
       notes: notes || null,
+      paid: document.getElementById('apptPaid').checked,
     });
     closeApptModal();
     await loadCalendarData();
@@ -6018,12 +6070,15 @@ async function openApptDetail(id) {
       <p><span class="font-medium">🕐 Inicio:</span> ${fmt(start)}</p>
       <p><span class="font-medium">🕑 Fin:</span> ${fmt(end)}</p>
       ${a.notes ? `<p><span class="font-medium">📝 Notas:</span> ${escHtml(a.notes)}</p>` : ''}
+      ${a.price_guarani ? `<p><span class="font-medium">💰 Precio:</span> ${fmtPrice(a.price_guarani)}</p>` : ''}
       <p><span class="font-medium">Estado:</span> <span class="font-semibold ${
         a.status==='confirmed'?'text-blue-600':a.status==='completed'?'text-green-600':a.status==='cancelled'?'text-red-500':'text-yellow-600'
       }">${a.status}</span></p>
+      <p><span class="font-medium">💳 Pago:</span> <span class="${a.paid ? 'text-green-600 font-semibold' : 'text-gray-400'}">${a.paid ? t('appt.paid') : t('appt.notPaid')}</span></p>
     </div>`;
   document.getElementById('apptDetailConfirm').classList.toggle('hidden', a.status === 'confirmed' || a.status === 'completed');
   document.getElementById('apptDetailComplete').classList.toggle('hidden', a.status === 'completed');
+  document.getElementById('apptDetailPaid').classList.toggle('hidden', !!a.paid);
   document.getElementById('apptDetailCancel').classList.toggle('hidden', a.status === 'cancelled');
   document.getElementById('apptDetailModal').classList.remove('hidden');
 }
@@ -6038,6 +6093,11 @@ async function updateApptStatus(status) {
 const confirmAppt  = () => updateApptStatus('confirmed');
 const completeAppt = () => updateApptStatus('completed');
 const cancelAppt   = () => updateApptStatus('cancelled');
+async function markApptPaid() {
+  await api(`/admin/appointments/${apptDetailId}`, 'PUT', { paid: true });
+  closeApptDetail();
+  await loadCalendarData();
+}
 
 async function deleteAppt() {
   if (!confirm('¿Eliminar este turno?')) return;

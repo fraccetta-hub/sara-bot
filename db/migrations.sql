@@ -217,3 +217,8 @@ ALTER TABLE tenants
   ADD COLUMN IF NOT EXISTS pending_merchant_phone TEXT,
   ADD COLUMN IF NOT EXISTS phone_change_token     TEXT,
   ADD COLUMN IF NOT EXISTS phone_change_expires   TIMESTAMPTZ;
+
+-- Migration 15: Appointment paid status + price
+ALTER TABLE appointments
+  ADD COLUMN IF NOT EXISTS paid          BOOLEAN     NOT NULL DEFAULT false,
+  ADD COLUMN IF NOT EXISTS price_guarani INTEGER;

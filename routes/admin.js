@@ -696,10 +696,19 @@ router.get('/stats', requireAuth, async (req, res) => {
   const today = new Date().toISOString().slice(0, 10);
   const todayOrders = orders.filter(o => o.created_at.slice(0, 10) === today);
 
+  // Paid appointments today
+  const { data: apptData } = await supabase.from('appointments')
+    .select('price_guarani')
+    .eq('tenant_id', req.tenant.tenantId)
+    .eq('paid', true)
+    .gte('start_at', today + 'T00:00:00')
+    .lte('start_at', today + 'T23:59:59');
+  const apptRevenue = (apptData || []).reduce((s, a) => s + (a.price_guarani || 0), 0);
+
   res.json({
     totalOrders:     orders.length,
     todayOrders:     todayOrders.length,
-    todayRevenue:    todayOrders.filter(o => ['confirmed','preparing','delivering','delivered'].includes(o.status)).reduce((s, o) => s + o.total_guarani + (o.delivery_fee || 0), 0),
+    todayRevenue:    todayOrders.filter(o => ['confirmed','preparing','delivering','delivered'].includes(o.status)).reduce((s, o) => s + o.total_guarani + (o.delivery_fee || 0), 0) + apptRevenue,
     totalProducts:   products.length,
     activeProducts:  products.filter(p => p.is_available).length,
     pendingOrders:   orders.filter(o => o.status === 'pending').length,
@@ -723,6 +732,8 @@ router.post('/services', requireAuth, async (req, res) => {
   const { name, category, description, price_type, price_guarani, duration_min, image_url } = req.body;
   if (!name || price_guarani == null)
     return res.status(400).json({ error: 'Nombre y precio son obligatorios' });
+  if (duration_min != null && duration_min % 15 !== 0)
+    return res.status(400).json({ error: 'La duración debe ser múltiplo de 15 minutos', errorCode: 'duration_not_multiple_15' });
   const { data, error } = await supabase.from('services').insert({
     tenant_id: req.tenant.tenantId,
     name, category, description,
@@ -737,6 +748,8 @@ router.post('/services', requireAuth, async (req, res) => {
 // ─── PUT /admin/services/:id ──────────────────────────────────────────────────
 
 router.put('/services/:id', requireAuth, async (req, res) => {
+  if (req.body.duration_min != null && req.body.duration_min % 15 !== 0)
+    return res.status(400).json({ error: 'La duración debe ser múltiplo de 15 minutos', errorCode: 'duration_not_multiple_15' });
   const fields = ['name','category','description','price_type','price_guarani','duration_min','image_url','is_available'];
   const updates = {};
   for (const f of fields) if (req.body[f] !== undefined) updates[f] = req.body[f];
@@ -1477,15 +1490,22 @@ router.get('/appointments', requireAuth, async (req, res) => {
 
 // ─── POST /admin/appointments ────────────────────────────────────────────────
 router.post('/appointments', requireAuth, async (req, res) => {
-  const { customer_phone, customer_name, service_id, start_at, notes } = req.body;
+  const { customer_phone, customer_name, service_id, start_at, notes, paid } = req.body;
   if (!start_at) return res.status(400).json({ error: 'start_at es obligatorio' });
+  if (new Date(start_at) < new Date()) return res.status(400).json({ error: 'No se pueden crear turnos en el pasado', errorCode: 'appt_in_past' });
 
-  // Resolve service duration
-  let service_name = null, service_duration_min = 30;
+  // Resolve service duration and price
+  let service_name = null, service_duration_min = 15, price_guarani = null;
   if (service_id) {
     const { data: svc } = await supabase.from('services')
-      .select('name, duration_min').eq('id', service_id).eq('tenant_id', req.tenant.tenantId).single();
-    if (svc) { service_name = svc.name; service_duration_min = svc.duration_min || 30; }
+      .select('name, duration_min, price_guarani, price_type').eq('id', service_id).eq('tenant_id', req.tenant.tenantId).single();
+    if (svc) {
+      service_name = svc.name;
+      service_duration_min = svc.duration_min || 15;
+      price_guarani = svc.price_type === 'hourly'
+        ? Math.round((svc.price_guarani || 0) * (service_duration_min / 60))
+        : (svc.price_guarani || null);
+    }
   }
 
   const end_at = new Date(new Date(start_at).getTime() + service_duration_min * 60000).toISOString();
@@ -1499,6 +1519,8 @@ router.post('/appointments', requireAuth, async (req, res) => {
     start_at, end_at,
     status: 'confirmed',
     notes: notes || null,
+    paid: paid === true || paid === 'true',
+    price_guarani: price_guarani || null,
   }).select().single();
 
   if (error) return res.status(500).json({ error: error.message });
@@ -1507,7 +1529,7 @@ router.post('/appointments', requireAuth, async (req, res) => {
 
 // ─── PUT /admin/appointments/:id ─────────────────────────────────────────────
 router.put('/appointments/:id', requireAuth, async (req, res) => {
-  const allowed = ['customer_name','customer_phone','status','notes','start_at','end_at'];
+  const allowed = ['customer_name','customer_phone','status','notes','start_at','end_at','paid','price_guarani'];
   const updates = {};
   for (const f of allowed) if (req.body[f] !== undefined) updates[f] = req.body[f];
   const { data, error } = await supabase.from('appointments')
@@ -1572,13 +1594,14 @@ router.get('/available-slots', requireAuth, async (req, res) => {
 
   if (!bh || bh.is_closed) return res.json({ slots: [], closed: true });
 
-  // Durata servizio
-  let slotDuration = parseInt(duration_min) || 30;
+  // Durata servizio — granularità slot sempre 15 min
+  let slotDuration = parseInt(duration_min) || 15;
   if (service_id) {
     const { data: svc } = await supabase.from('services')
       .select('duration_min').eq('id', service_id).eq('tenant_id', req.tenant.tenantId).single();
     if (svc?.duration_min) slotDuration = svc.duration_min;
   }
+  const SLOT_STEP = 15; // slot ogni 15 min indipendentemente dalla durata
 
   // Costruisci tutti gli slot nella giornata
   const [openH, openM]   = bh.open_time.split(':').map(Number);
@@ -1586,12 +1609,23 @@ router.get('/available-slots', requireAuth, async (req, res) => {
   const openMin  = openH * 60 + openM;
   const closeMin = closeH * 60 + closeM;
 
+  // Also handle second window
+  const hasW2 = bh.open_time_2 && bh.close_time_2;
+  const [openH2, openM2]   = hasW2 ? bh.open_time_2.split(':').map(Number) : [0,0];
+  const [closeH2, closeM2] = hasW2 ? bh.close_time_2.split(':').map(Number) : [0,0];
+  const openMin2  = hasW2 ? openH2 * 60 + openM2 : 0;
+  const closeMin2 = hasW2 ? closeH2 * 60 + closeM2 : 0;
+
   const allSlots = [];
-  for (let m = openMin; m + slotDuration <= closeMin; m += slotDuration) {
-    const h = String(Math.floor(m / 60)).padStart(2, '0');
-    const min = String(m % 60).padStart(2, '0');
-    allSlots.push(`${date}T${h}:${min}:00`);
-  }
+  const addSlots = (start, end) => {
+    for (let m = start; m + slotDuration <= end; m += SLOT_STEP) {
+      const h = String(Math.floor(m / 60)).padStart(2, '0');
+      const min = String(m % 60).padStart(2, '0');
+      allSlots.push(`${date}T${h}:${min}:00`);
+    }
+  };
+  addSlots(openMin, closeMin);
+  if (hasW2) addSlots(openMin2, closeMin2);
 
   // Appuntamenti esistenti quel giorno
   const dayStart = `${date}T00:00:00`;
