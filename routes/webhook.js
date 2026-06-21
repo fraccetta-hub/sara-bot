@@ -1676,7 +1676,12 @@ async function handleCustomerMessage(tenant, customerPhone, messageText, locatio
           .sort((a, b) => a.capacity - b.capacity);
 
         if (fitting.length) { tableId = fitting[0].id; zoneId = fitting[0].zone_id; }
-        else full = true;
+        else {
+          // No single table big enough is free — check if smaller tables are free to combine
+          const anyFree = restaurantTables.some(t => !existingRes.some(r => overlaps(r) && occupied(r).includes(t.id)));
+          if (anyFree) escalate = true; // merchant can combine smaller tables
+          else full = true;
+        }
       }
 
       if (full) {
