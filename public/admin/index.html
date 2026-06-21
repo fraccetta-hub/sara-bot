@@ -3657,7 +3657,7 @@ async function loadAvailGrid() {
 function renderAvailGrid() {
   const el = document.getElementById('availGrid');
   if (!el || !_availData) return;
-  const WD = ['dom','lun','mar','mié','jue','vie','sáb'];
+  const WD = [t('day.sun'),t('day.mon'),t('day.tue'),t('day.wed'),t('day.thu'),t('day.fri'),t('day.sat')];
   const cell = (s, date) => {
     const tone = s.free === 0 ? 'bg-red-50 text-red-400'
       : s.free <= 1 ? 'bg-amber-50 text-amber-700'
