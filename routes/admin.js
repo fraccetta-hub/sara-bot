@@ -700,11 +700,14 @@ router.get('/stats', requireAuth, async (req, res) => {
   const today = new Date().toISOString().slice(0, 10);
   const todayOrders = orders.filter(o => o.created_at.slice(0, 10) === today);
 
-  // Paid appointments today
+  // Appointments today that count as revenue:
+  // any non-cancelled, non-refunded appointment today = happened = earned
+  // (paid upfront OR will be paid on the day — either way it's today's income)
   const { data: apptData } = await supabase.from('appointments')
     .select('price_guarani')
     .eq('tenant_id', req.tenant.tenantId)
-    .eq('paid', true)
+    .neq('status', 'cancelled')
+    .neq('refunded', true)
     .gte('start_at', today + 'T00:00:00')
     .lte('start_at', today + 'T23:59:59');
   const apptRevenue = (apptData || []).reduce((s, a) => s + (a.price_guarani || 0), 0);
@@ -1537,7 +1540,7 @@ router.post('/appointments', requireAuth, async (req, res) => {
 
 // ─── PUT /admin/appointments/:id ─────────────────────────────────────────────
 router.put('/appointments/:id', requireAuth, async (req, res) => {
-  const allowed = ['customer_name','customer_phone','status','notes','start_at','end_at','paid','price_guarani'];
+  const allowed = ['customer_name','customer_phone','status','notes','start_at','end_at','paid','price_guarani','refunded'];
   const updates = {};
   for (const f of allowed) if (req.body[f] !== undefined) updates[f] = req.body[f];
   const { data, error } = await supabase.from('appointments')

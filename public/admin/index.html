@@ -1755,6 +1755,7 @@
       <button onclick="confirmAppt()" id="apptDetailConfirm" data-i18n="appt.detail.confirm" class="flex-1 bg-green-50 text-green-700 hover:bg-green-100 py-2 rounded-lg text-xs font-semibold transition">✅ Confirmar</button>
       <button onclick="completeAppt()" id="apptDetailComplete" data-i18n="appt.detail.complete" class="flex-1 bg-blue-50 text-blue-700 hover:bg-blue-100 py-2 rounded-lg text-xs font-semibold transition">✔ Completar</button>
       <button onclick="markApptPaid()" id="apptDetailPaid" data-i18n="appt.markPaid" class="flex-1 bg-yellow-50 text-yellow-700 hover:bg-yellow-100 py-2 rounded-lg text-xs font-semibold transition">💳 Marcar pagado</button>
+      <button onclick="stornoAppt()" id="apptDetailStorno" data-i18n="appt.storno" class="flex-1 bg-orange-50 text-orange-700 hover:bg-orange-100 py-2 rounded-lg text-xs font-semibold transition">↩ Storno</button>
       <button onclick="cancelAppt()" id="apptDetailCancel" data-i18n="appt.detail.cancel" class="flex-1 bg-red-50 text-red-700 hover:bg-red-100 py-2 rounded-lg text-xs font-semibold transition">✕ Cancelar</button>
       <button onclick="deleteAppt()" data-i18n="appt.detail.delete" class="flex-1 bg-gray-50 text-gray-500 hover:bg-gray-100 py-2 rounded-lg text-xs font-semibold transition">🗑 Eliminar</button>
     </div>
@@ -6083,11 +6084,13 @@ async function openApptDetail(id) {
       <p><span class="font-medium">Estado:</span> <span class="font-semibold ${
         a.status==='confirmed'?'text-blue-600':a.status==='completed'?'text-green-600':a.status==='cancelled'?'text-red-500':'text-yellow-600'
       }">${a.status}</span></p>
-      <p><span class="font-medium">💳 Pago:</span> <span class="${a.paid ? 'text-green-600 font-semibold' : 'text-gray-400'}">${a.paid ? t('appt.paid') : t('appt.notPaid')}</span></p>
+      <p><span class="font-medium">💳 Pago:</span> <span class="${a.paid && !a.refunded ? 'text-green-600 font-semibold' : a.refunded ? 'text-orange-500 line-through' : 'text-gray-400'}">${a.refunded ? t('appt.refunded') : a.paid ? t('appt.paid') : t('appt.notPaid')}</span></p>
     </div>`;
   document.getElementById('apptDetailConfirm').classList.toggle('hidden', a.status === 'confirmed' || a.status === 'completed');
   document.getElementById('apptDetailComplete').classList.toggle('hidden', a.status === 'completed');
-  document.getElementById('apptDetailPaid').classList.toggle('hidden', !!a.paid);
+  document.getElementById('apptDetailPaid').classList.toggle('hidden', !!a.paid || a.status === 'cancelled');
+  // Storno: only when paid=true and cancelled (paid deposit kept, but merchant wants to reverse it)
+  document.getElementById('apptDetailStorno').classList.toggle('hidden', !(a.paid && !a.refunded && a.status === 'cancelled'));
   document.getElementById('apptDetailCancel').classList.toggle('hidden', a.status === 'cancelled');
   document.getElementById('apptDetailModal').classList.remove('hidden');
 }
@@ -6104,6 +6107,13 @@ const completeAppt = () => updateApptStatus('completed');
 const cancelAppt   = () => updateApptStatus('cancelled');
 async function markApptPaid() {
   await api(`/admin/appointments/${apptDetailId}`, 'PUT', { paid: true });
+  closeApptDetail();
+  await loadCalendarData();
+}
+
+async function stornoAppt() {
+  if (!confirm(t('appt.stornoConfirm'))) return;
+  await api(`/admin/appointments/${apptDetailId}`, 'PUT', { refunded: true });
   closeApptDetail();
   await loadCalendarData();
 }

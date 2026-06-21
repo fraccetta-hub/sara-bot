@@ -222,3 +222,7 @@ ALTER TABLE tenants
 ALTER TABLE appointments
   ADD COLUMN IF NOT EXISTS paid          BOOLEAN     NOT NULL DEFAULT false,
   ADD COLUMN IF NOT EXISTS price_guarani INTEGER;
+
+-- Migration 16: Appointment refund/storno flag
+ALTER TABLE appointments
+  ADD COLUMN IF NOT EXISTS refunded BOOLEAN NOT NULL DEFAULT false;
