@@ -259,11 +259,44 @@ UX redesign 10-punti completato e verificato in preview (static server `public/`
 - Fix: `applyTranslations` sostituisce `{cur}` con `CURRENCY_SYMBOL_MAP[TENANT_CURRENCY]` in tutti i `data-i18n` e `data-i18n-ph`.
 - Input delivery (`sDeliveryBaseFee/MinOrder/ZoneOuterFee/PerKm`): `step=1` per valute intere (PYG/CLP/COP), `step=0.01` per le altre — settato in `loadSettings()` dopo che `TENANT_CURRENCY` è noto.
 
+## ✅ FATTO (sessione 2026-06-21 — audit Sara bot cross-plan)
+
+### Audit completo Sara bot — bug trovati e fixati (commit 5fc0419, 610e25a, c983610)
+
+**Valuta hardcoded nel dynamic prompt (claude.js):**
+- `buildDynamicSystemPrompt`: delivery min order, fee calc, active order total usavano `toLocaleString('es-PY') Gs` — ora `formatPrice(v, currency)` per tutti i piani.
+- Appointment pricing in slots block usava `toLocaleString('es-PY')` — ora `formatPrice(s.price_guarani, currency)`.
+
+**Valuta hardcoded nel webhook (webhook.js):**
+- `price_updated` template merchant: `p.toLocaleString() Gs` → `formatPrice(p, currency)` (accetta terzo param `cur`).
+- Catalog list merchant: `p.price_guarani.toLocaleString() Gs` → `formatPrice`.
+- Orders total merchant: `total.toLocaleString() Gs` → `formatPrice`.
+- Services list merchant: `s.price_guarani.toLocaleString() Gs` → `formatPrice`.
+- System note delivery fee (iniettato in history Sara): `toLocaleString('es-PY') Gs` → `formatPrice`.
+- Messaggio cliente dopo location: era spagnolo con `Gs` hardcoded → semplificato a formato neutro `${km} km — 🚚 ${formatPrice(fee)}`.
+- `handleMerchantMessage` e `handleCustomerMessage`: aggiunto `const currency = tenant.plan_currency || 'PYG'` all'inizio.
+
+**Takeover:**
+- Rimosso messaggio spagnolo hardcoded al cliente (`"En este momento te atiendo yo directamente 👋"`). Il merchant si presenta direttamente nella lingua del cliente.
+
+**Dead code:**
+- `claude.js:171`: variabile `price` mai usata (ternario identico su entrambi i branch, `priceStr` riga 172 era già corretta) → rimossa.
+
+**Midnight slot gen (claude.js + admin.js):**
+- `_hhmmToMin(s, isEnd)`: se `isEnd=true` e valore=0 (00:00) → ritorna 1440. `_genSlots` passa `isEnd=true` per end time.
+- Stesso fix in `admin.js` `toMin(s, isEnd)` con `toMin(w.end, true)` nel loop slot.
+- Fix: `close_time='00:00'` ora genera slot fino a mezzanotte invece di finestra vuota.
+
+**Allergeni (claude.js):**
+- Regola 16 aggiunta: se il piatto ha `⚠️ allergeni` nel catalogo → risponde con quelli. Se assente → "non ho quest'info, chiedi al locale". Mai inventa, mai assume "nessun allergene".
+
+**Nessun bug logico per piano** trovato nel routing `hasProducts/hasServices/hasAppointments/hasRestaurant` — i guard webhook (`mightBeAboutAppointments && !restaurant_enabled`) sono corretti per tutti e 4 i piani (Shop/Bookings/Restaurant/Pro).
+
 ## STATO CORRENTE
 - Obiettivo generale: SaaS multi-tenant WhatsApp Business (Node/Express + Supabase + Anthropic Claude). Bot AI risponde a clienti, gestisce catalogo, delivery, turni/appuntamenti, ordini.
-- Fase attuale: slot ristorante semplificato (durata unica), i18n delivery risolto. Prossimo: Stripe live env vars su Render, invoicing merchant.
-- Ultimo commit stabile: `ed4d322`
-- **Migration pendente**: nessuna nuova. Pendenti storiche invariate (vedi sotto).
+- Fase attuale: audit Sara completato, valuta corretta cross-plan, midnight slot fix. Prossimo: Stripe live env vars su Render, invoicing merchant.
+- Ultimo commit stabile: `c983610`
+- **Migration pendente**: nessuna nuova.
 
 ## COSA È STATO FATTO (sessione 2026-06-20 — i18n hardcoded in Ajustes)
 
