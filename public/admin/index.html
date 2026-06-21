@@ -6366,6 +6366,8 @@ function updateOfferScopeTarget() {
   document.getElementById('offerTarget').classList.toggle('hidden', !needsTarget);
 }
 
+function _esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
 async function loadOffers() {
   const list = document.getElementById('offersList');
   if (!list) return;
@@ -6373,31 +6375,41 @@ async function loadOffers() {
     const data = await api('/admin/offers');
     if (!data.length) { list.innerHTML = `<p class="text-xs text-gray-400">${t('settings.offers.none')}</p>`; return; }
     list.innerHTML = data.map(o => {
-      const disc = o.discount_type === 'percent' ? `${o.discount_value}%` : o.discount_value;
-      const scope = o.scope_target ? ` — ${o.scope_target}` : '';
-      const dates = (o.valid_from || o.valid_to) ? ` <span class="text-gray-400 text-xs">${o.valid_from || ''}→${o.valid_to || ''}</span>` : '';
+      const disc = o.discount_type === 'percent' ? `${_esc(o.discount_value)}%` : _esc(o.discount_value);
+      const scope = o.scope_target ? ` — ${_esc(o.scope_target)}` : '';
+      const dates = (o.valid_from || o.valid_to) ? ` <span class="text-gray-400 text-xs">${_esc(o.valid_from || '')}→${_esc(o.valid_to || '')}</span>` : '';
       return `<div class="flex items-center justify-between gap-2 bg-amber-50 rounded-lg px-3 py-2 text-sm">
-        <span>🏷️ <b>${o.label}</b> <span class="text-amber-700">${disc} off</span>${scope}${dates}</span>
-        <button onclick="deleteOffer(${o.id})" class="text-red-400 hover:text-red-600 text-xs font-medium">✕</button>
+        <span>🏷️ <b>${_esc(o.label)}</b> <span class="text-amber-700">${disc} off</span>${scope}${dates}</span>
+        <button onclick="deleteOffer(${Number(o.id)})" class="text-red-400 hover:text-red-600 text-xs font-medium">✕</button>
       </div>`;
     }).join('');
   } catch(e) { list.innerHTML = ''; }
 }
 
+let _offerBusy = false;
 async function addOffer() {
-  const label = document.getElementById('offerLabel').value.trim();
+  if (_offerBusy) return;
+  const labelEl = document.getElementById('offerLabel');
+  const valueEl = document.getElementById('offerValue');
+  const label = labelEl.value.trim();
   const discount_type = document.getElementById('offerType').value;
-  const discount_value = parseFloat(document.getElementById('offerValue').value);
+  const discount_value = parseFloat(valueEl.value);
   const scope = document.getElementById('offerScope').value;
   const scope_target = document.getElementById('offerTarget').value.trim() || null;
   const valid_from = document.getElementById('offerFrom').value || null;
   const valid_to   = document.getElementById('offerTo').value   || null;
   const msg = document.getElementById('offerMsg');
-  if (!label || isNaN(discount_value)) {
-    msg.textContent = t('settings.offers.err_fields');
+  if (!label) {
+    msg.textContent = t('settings.offers.err_label');
     msg.className = 'rounded-lg px-4 py-2 text-sm mt-3 bg-red-50 text-red-700';
     msg.classList.remove('hidden'); return;
   }
+  if (isNaN(discount_value)) {
+    msg.textContent = t('settings.offers.err_value');
+    msg.className = 'rounded-lg px-4 py-2 text-sm mt-3 bg-red-50 text-red-700';
+    msg.classList.remove('hidden'); return;
+  }
+  _offerBusy = true;
   try {
     await api('/admin/offers', 'POST', { label, discount_type, discount_value, scope, scope_target, valid_from, valid_to });
     ['offerLabel','offerValue','offerTarget','offerFrom','offerTo'].forEach(id => document.getElementById(id).value = '');
@@ -6407,6 +6419,7 @@ async function addOffer() {
     setTimeout(() => msg.classList.add('hidden'), 3000);
     loadOffers();
   } catch(e) { msg.textContent = errMsg(e); msg.className = 'rounded-lg px-4 py-2 text-sm mt-3 bg-red-50 text-red-700'; msg.classList.remove('hidden'); }
+  finally { _offerBusy = false; }
 }
 
 async function deleteOffer(id) {
