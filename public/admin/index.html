@@ -709,15 +709,15 @@
           <svg id="restDurChevron" class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="transform:rotate(0deg);transition:transform .2s"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
         </button>
         <div id="restDurBody" class="hidden px-5 pb-5 space-y-3">
-          <p class="text-xs text-gray-400">Le prenotazioni esistenti mantengono la durata originale; la nuova vale solo per le future.</p>
+          <p class="text-xs text-gray-400">Tempo medio che un tavolo rimane occupato per fascia. Le prenotazioni esistenti mantengono la durata originale.</p>
           <div class="flex items-center gap-3">
-            <label class="text-sm text-gray-600 w-28" data-i18n="restaurant.slotDuration">Fascia 1 (min):</label>
+            <label class="text-sm text-gray-600 w-52" id="restDurLabel1">Durata media tavolo — Slot 1 (min):</label>
             <input type="number" id="restaurantSlotDuration" value="90" min="30" max="300" step="15"
               class="w-24 border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-300"
               onchange="saveRestaurantSettings()">
           </div>
           <div id="restDur2Row" class="flex items-center gap-3 hidden">
-            <label class="text-sm text-gray-600 w-28" data-i18n="restaurant.slotDuration2">Fascia 2 (min):</label>
+            <label class="text-sm text-gray-600 w-52" id="restDurLabel2">Durata media tavolo — Slot 2 (min):</label>
             <input type="number" id="restaurantSlotDuration2" value="" min="30" max="300" step="15"
               class="w-24 border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-300"
               onchange="saveRestaurantSettings()">
@@ -3499,11 +3499,21 @@ async function loadRestaurant() {
   _rZones  = zones  || [];
   _rTables = tables || [];
   document.getElementById('restaurantSlotDuration').value = settings.restaurant_slot_duration || 90;
+  const openDay = (hours || []).find(h => !h.is_closed && h.open_time);
   const hasSplitHours = (hours || []).some(h => h.open_time_2 && !h.is_closed);
   const dur2Row = document.getElementById('restDur2Row');
   dur2Row.classList.toggle('hidden', !hasSplitHours);
+  if (openDay) {
+    const s1 = `${String(openDay.open_time).slice(0,5)}–${String(openDay.close_time).slice(0,5)}`;
+    document.getElementById('restDurLabel1').textContent = `Durata media tavolo — Slot 1 · ${s1} (min):`;
+  }
   if (hasSplitHours) {
     document.getElementById('restaurantSlotDuration2').value = settings.restaurant_slot_duration_2 || '';
+    const splitDay = (hours || []).find(h => h.open_time_2 && !h.is_closed);
+    if (splitDay) {
+      const s2 = `${String(splitDay.open_time_2).slice(0,5)}–${String(splitDay.close_time_2).slice(0,5)}`;
+      document.getElementById('restDurLabel2').textContent = `Durata media tavolo — Slot 2 · ${s2} (min):`;
+    }
   }
   renderZones();
   renderTables();
@@ -6259,6 +6269,16 @@ async function saveBusinessHours() {
       open_time_2:  is_closed ? null : ot2,
       close_time_2: is_closed ? null : ct2,
     });
+  }
+  const DAYS = ['Dom','Lun','Mar','Mer','Gio','Ven','Sab'];
+  for (const r of rows) {
+    if (r.is_closed || !r.open_time_2) continue;
+    if (r.close_time >= r.open_time_2) {
+      bhMsg.textContent = `${DAYS[r.day_of_week]}: Slot 2 deve iniziare dopo la fine di Slot 1 (${r.close_time} → ${r.open_time_2})`;
+      bhMsg.className = 'rounded-lg px-4 py-2 text-sm mt-3 bg-red-50 text-red-700';
+      bhMsg.classList.remove('hidden');
+      return;
+    }
   }
   try {
     await api('/admin/business-hours', 'PUT', rows);
