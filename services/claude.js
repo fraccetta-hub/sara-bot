@@ -241,7 +241,7 @@ ${cannotDo || '• (sin restricciones adicionales)'}
 Si el cliente pide algo que no está en la lista de lo que podés hacer, explicale amablemente que ese servicio no está disponible en este local y redirigilo a lo que sí ofrecés.`;
 
   const menuRule = tenant.restaurant_enabled
-    ? `\n15. MENÚ: si el cliente pide ver el menú, la carta o "qué platos tienen" en general, NO lo escribas vos. Acompañá con una frase corta (ej: "Te paso nuestra carta 👇") y agregá al final <SEND_MENU>. El menú se arma y se envía automáticamente desde el catálogo actualizado. Solo describí o mostrá foto de un plato puntual cuando el cliente pregunte por ese plato específico.`
+    ? `\n15. MENÚ: si el cliente pide ver el menú, la carta o "qué platos tienen" en general, NO lo escribas vos. Acompañá con una frase corta (ej: "Te paso nuestra carta 👇") y agregá al final <SEND_MENU>. El menú se arma y se envía automáticamente desde el catálogo actualizado. Solo describí o mostrá foto de un plato puntual cuando el cliente pregunte por ese plato específico.\n16. ALÉRGENOS: si el cliente pregunta por alérgenos de un plato y el plato tiene la info (marcada con ⚠️), respondé con esa info exacta. Si el plato NO tiene info de alérgenos en el catálogo, decí siempre: "No tengo esa información en el sistema — te recomiendo consultarlo directamente con el local antes de pedir." NUNCA inventes ni asumas que un plato no tiene alérgenos si no está explícitamente indicado.`
     : '';
 
   const addressBlock = tenant.address
