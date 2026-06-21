@@ -329,12 +329,12 @@ function buildReservationsBlock(reservations, slotDuration) {
   return `\nRESERVAS PRÓXIMOS 7 DÍAS:\n${lines.join('\n')}\n(Duración estándar: ${slotDuration} min. Verificá solapamiento antes de confirmar una reserva nueva.)`;
 }
 
-const _hhmmToMin = s => { const [h, m] = String(s).slice(0, 5).split(':').map(Number); return h * 60 + (m || 0); };
+const _hhmmToMin = (s, isEnd) => { const [h, m] = String(s).slice(0, 5).split(':').map(Number); const v = h * 60 + (m || 0); return (isEnd && v === 0) ? 1440 : v; };
 const _minToHHMM = m => `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
 
 // Candidate seating start times inside a window, stepping by slot duration.
 function _genSlots(start, end, dur) {
-  const s = _hhmmToMin(start), e = _hhmmToMin(end), out = [];
+  const s = _hhmmToMin(start), e = _hhmmToMin(end, true), out = [];
   for (let t = s; t < e; t += dur) out.push(_minToHHMM(t));
   return out;
 }
@@ -401,6 +401,7 @@ REGLA CRÍTICA: proponé y confirmá SOLO horarios con mesas libres (número ≥
 }
 
 function buildDynamicSystemPrompt(tenant, convState = {}, appointmentSlots = null, customerContext = null, closures = [], businessHours = [], isFirstMessage = false, customerNotes = null, upcomingReservations = null, restaurantTables = []) {
+  const currency = tenant.plan_currency || 'PYG';
   // ── Delivery block ──────────────────────────────────────────────────────────
   let deliveryBlock = '';
   if (tenant.delivery_enabled) {
@@ -414,14 +415,14 @@ function buildDynamicSystemPrompt(tenant, convState = {}, appointmentSlots = nul
 ENTREGAS:
 - El local ${disabledToday ? '⚠️ HOY NO HACE ENVÍOS (día deshabilitado)' : 'hace envíos a domicilio'}.
 - Tarifa: ${info.tarifa}.
-${min > 0 ? `- Monto mínimo para envío: ${min.toLocaleString('es-PY')} Gs.` : ''}
-${feeCalc != null ? `- Costo de envío YA CALCULADO: ${feeCalc.toLocaleString('es-PY')} Gs. Incluilo en el total al confirmar.` : ''}
+${min > 0 ? `- Monto mínimo para envío: ${formatPrice(min, currency)}.` : ''}
+${feeCalc != null ? `- Costo de envío YA CALCULADO: ${formatPrice(feeCalc, currency)}. Incluilo en el total al confirmar.` : ''}
 ${choice === 'retiro' ? '- El cliente eligió RETIRO EN LOCAL. No cobrar envío.' : ''}
 ${choice === 'envio' && feeCalc == null ? '- El cliente eligió ENVÍO. Pedile la dirección o que comparta su ubicación por WhatsApp.' : ''}
 
 REGLAS DE ENTREGA (solo cuando el cliente quiera confirmar un pedido):
 D1. Si hoy no hay envíos: informá amablemente y ofrecé solo retiro en local.
-D2. Si el total del pedido es menor al mínimo (${min.toLocaleString('es-PY')} Gs): decile cuánto le falta y preguntá si quiere agregar algo. NO procedas con el pedido todavía.
+D2. Si el total del pedido es menor al mínimo (${formatPrice(min, currency)}): decile cuánto le falta y preguntá si quiere agregar algo. NO procedas con el pedido todavía.
 D3. Si no hay restricciones y el cliente no eligió aún: preguntá "¿Retirás en el local o querés envío a domicilio?" y marcá con <DELIVERY_CHOICE:retiro> o <DELIVERY_CHOICE:envio>.
 D4. Si eligió envío y no hay dirección aún: pedile la dirección exacta o que comparta su ubicación de WhatsApp. Cuando el cliente escriba una dirección usá: <DELIVERY_ADDRESS:dirección completa>.
 D5. Una vez calculado el envío (el sistema te lo informa), confirmá el total incluyendo el costo de envío antes de generar el <ORDER>.`;
@@ -436,7 +437,7 @@ D5. Una vez calculado el envío (el sistema te lo informa), confirmá el total i
     const bookableServices = servicesList.filter(s => s.duration_min);
     const svcNames = bookableServices.length
       ? bookableServices.map(s =>
-          `• ${s.name} (${s.duration_min} min — ${s.price_guarani?.toLocaleString('es-PY')} Gs)`
+          `• ${s.name} (${s.duration_min} min — ${formatPrice(s.price_guarani, currency)})`
         ).join('\n')
       : '(sin servicios configurados)';
 
@@ -500,7 +501,7 @@ A8. Después de emitir la reserva, informá al cliente que el local confirmará 
         delivering: 'en camino',
       }[o.status] || o.status;
       const items = (o.items_json || []).map(i => `${i.qty}x ${i.name}`).join(', ');
-      parts.push(`PEDIDO ACTIVO: estado "${statusLabel}", productos: ${items || '—'}, total: ${(o.total_guarani || 0).toLocaleString('es-PY')} Gs.`);
+      parts.push(`PEDIDO ACTIVO: estado "${statusLabel}", productos: ${items || '—'}, total: ${formatPrice(o.total_guarani || 0, currency)}.`);
     }
     if (customerContext.pastOrders?.length) {
       const summaries = customerContext.pastOrders

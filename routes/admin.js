@@ -2562,7 +2562,7 @@ router.get('/restaurant/availability', requireAuth, async (req, res) => {
   const resv   = resvRes.data || [];
 
   const occ = r => (Array.isArray(r.table_ids) && r.table_ids.length) ? r.table_ids : (r.table_id ? [r.table_id] : []);
-  const toMin = s => { const [h, m] = String(s).slice(0, 5).split(':').map(Number); return h * 60 + (m || 0); };
+  const toMin = (s, isEnd) => { const [h, m] = String(s).slice(0, 5).split(':').map(Number); const v = h * 60 + (m || 0); return (isEnd && v === 0) ? 1440 : v; };
   const toHHMM = m => `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
   const CLEAN_MS = 10 * 60000;
   const freeAt = (ymd, hhmm, slotDur) => {
@@ -2589,7 +2589,7 @@ router.get('/restaurant/availability', requireAuth, async (req, res) => {
         ];
     const bandsOut = windows.map(w => {
       const slots = [];
-      for (let m = toMin(w.start); m < toMin(w.end); m += w.dur) {
+      for (let m = toMin(w.start); m < toMin(w.end, true); m += w.dur) {
         const hhmm = toHHMM(m);
         const ft = freeAt(ymd, hhmm, w.dur);
         slots.push({ time: hhmm, free: ft.length, tables: ft.map(t => ({ id: t.id, label: t.label, capacity: t.capacity })) });
