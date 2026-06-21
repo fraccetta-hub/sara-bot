@@ -1,5 +1,12 @@
 # PROJECT HANDOFF — Sara Bot (whatsapp-bot) — 2026-06-21
 
+## ✅ FATTO (2026-06-21 — fix pagina bianca admin + hook pre-commit anti-white-page)
+
+- **Pagina bianca** (`https://sarabot.pro/admin/index.html` tutto bianco): doppia dichiarazione `const curSym` nella stessa funzione `applyTranslations()` (`public/admin/index.html`, dal lavoro currency concorrente) → `SyntaxError: Identifier 'curSym' has already been declared` → l'intero script inline non parsava → UI vuota. Rimosso il 2° blocco `{cur}` ridondante (il primo già sostituisce `{cur}` in data-i18n/-ph). Commit 5cf75a4.
+- **Prevenzione**: nuovo `scripts/check-syntax.js` valida via `new Function` i file UI serviti al browser (i18n.js admin/register + script inline di `public/{admin,register,superadmin}/index.html`) e fallisce al primo errore. Cablato come `.githooks/pre-commit` con `git config core.hooksPath .githooks`; salta se `node` assente. Anche `npm run check`. Commit cbdff33.
+- ⚠️ **Attivazione su clone nuovo**: il pre-commit gira solo se `core.hooksPath=.githooks` è settato in `.git/config` (locale, non versionato). Su una clone fresca eseguire una volta: `git config core.hooksPath .githooks`. (Sessioni concorrenti sulla stessa working dir condividono già il config → coperte.)
+- Pattern ricorrente da tenere d'occhio: sessioni concorrenti hanno introdotto 2 white-page in 2 giorni (apostrofo non escapato `un'email`, doppio `const curSym`). L'hook ora le blocca a monte.
+
 ## ✅ FATTO (sessione 2026-06-20 — dedup indirizzo/Maps nel delivery)
 
 Indirizzo locale + link Google Maps erano ripetuti: una volta nella card "🏪 Mi negocio" e di nuovo nella sezione "Consegna a domicilio". Rimossi dal delivery (richiesta utente: tenerli solo in alto). Commit f813067.
