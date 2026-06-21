@@ -7,6 +7,7 @@
     "start": "node index.js",
     "dev": "node --watch index.js",
     "gen-templates": "node scripts/gen-templates.js",
+    "check": "node scripts/check-syntax.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

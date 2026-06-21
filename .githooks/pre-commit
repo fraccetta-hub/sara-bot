@@ -1,0 +1,5 @@
+#!/bin/sh
+# Block commits that would ship a JS syntax error in the browser-served UI files.
+# If node isn't available, skip rather than block all commits.
+command -v node >/dev/null 2>&1 || { echo "pre-commit: node not found, skipping UI syntax check"; exit 0; }
+node "$(git rev-parse --show-toplevel)/scripts/check-syntax.js" || exit 1
