@@ -82,6 +82,44 @@ Comandi merchant:
 
 ---
 
+## Customer Bot — Sara (o nome personalizzato)
+
+Il bot si presenta al cliente con il nome configurato dal merchant nel pannello admin (`tenants.bot_name` o equivalente). Se non configurato, usa il nome di default "Sara". Parla nella lingua del cliente (rilevata automaticamente), risponde 24/7, e opera solo nei limiti del piano attivo del merchant.
+
+### Cosa può fare
+
+**Informazioni sull'attività**
+- Orari di apertura e giorni di chiusura
+- Indirizzo e indicazioni per raggiungerla
+- Contatti pubblici del locale (WhatsApp business, sito web, social — se configurati dal merchant)
+- Descrizione dell'attività, specialità, informazioni generali
+
+**Catalogo / Menu / Servizi**
+- Mostrare menu o catalogo completo
+- Informazioni su singoli prodotti, piatti o servizi (prezzo, descrizione, disponibilità, allergeni)
+- Foto di prodotti/piatti (se caricate dal merchant)
+- Offerte e sconti attivi
+- **Ricerca per foto** — il cliente invia una foto e chiede se c'è qualcosa di uguale o simile; Sara confronta visivamente con il catalogo e risponde
+
+**Transazioni** *(solo se abilitati dal merchant)*
+- Ordinare prodotti con consegna a domicilio *(shop o ristorante con delivery attivo)*
+- Prenotare un tavolo *(ristorante)*
+- Prenotare un appuntamento *(servizi)*
+- Inviare comprovante di pagamento
+
+**Stato acquisto**
+- Stato del proprio ordine o prenotazione
+- Riepilogo della propria prenotazione
+
+### Cosa NON può fare
+- Vedere dati di altri clienti (ordini, prenotazioni, identità)
+- Accedere a dati interni dell'attività
+- Modificare prezzi, stock o impostazioni
+- Conoscere email o numeri privati del merchant
+- Eseguire rimborsi o cancellare pagamenti
+
+---
+
 ## Merchant Bot — specchio del pannello admin
 
 **Principio fondamentale:** il bot WhatsApp del merchant è la copia in linguaggio naturale del pannello admin. Ogni azione disponibile nell'interfaccia grafica è eseguibile via chat. Se il pannello richiede un campo obbligatorio, il bot lo chiede. Se è facoltativo, il bot lo chiede solo se mancante e rilevante. Se non è previsto nel pannello, il bot lo ignora anche se viene detto.
