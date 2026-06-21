@@ -1,5 +1,15 @@
 # PROJECT HANDOFF — Sara Bot (whatsapp-bot) — 2026-06-21
 
+## ✅ FATTO (2026-06-21 — audit sicurezza full-stack + fix S1/S2/S4) [commit 28a52ad]
+
+Audit read-only di tutto il backend (routes/services/index). Fix approvati dall'utente: S1, S2, S4 (S3 in attesa di decisione — vedi sotto).
+- **S1 — firma webhook Meta**: `POST /webhook` ora verifica `X-Hub-Signature-256` (HMAC-SHA256 del raw body con `META_APP_SECRET`); scarta payload spoofati (401). `express.json` cattura `req.rawBody`. Salta solo se `META_APP_SECRET` non settato. ⚠️ **Deploy**: `META_APP_SECRET` deve essere l'app secret corretto (già usato per il token exchange → ok). Se fosse sbagliato, TUTTI i webhook verrebbero rifiutati (log `[webhook] rejected: invalid X-Hub-Signature-256`).
+- **S2 — secret Telegram**: `POST /telegram-webhook` verifica header `X-Telegram-Bot-Api-Secret-Token` vs `TELEGRAM_WEBHOOK_SECRET`. ⚠️ **Deploy (2 step)**: 1) settare `TELEGRAM_WEBHOOK_SECRET` su Render; 2) ri-registrare il webhook con `secret_token`:
+  `curl "https://api.telegram.org/bot<TOKEN>/setWebhook?url=https://sarabot.pro/telegram-webhook&secret_token=<SECRET>"`. Se setti l'env ma NON ri-registri, Telegram non manda l'header → updates rifiutati (superadmin non può rispondere via Telegram).
+- **S4 — rate-limit reset-password**: `POST /admin/reset-password` ora 10/h per IP (`resetPasswordLimiter`).
+- **S3 (PENDENTE)**: rate-limit su `POST /register` + `GET /register/check-email` (signup di massa + enumerazione email). Da decidere.
+- Note audit (non bug): billing cancel/reactivate/change-plan hanno auth inline (cookie+JWT); confirm-deletion/confirm-username-change validano token+scadenza; `getTenantConfig` usa `select('*')` ma è interno/server-side; nessun error-handler Express globale (bassa); header sicurezza base presenti; nessun leak segreti nei log; register e superadmin frontend puliti.
+
 ## ✅ FATTO (2026-06-21 — audit i18n: chiavi mancanti/duplicate/morte) [commit 561930e]
 
 Audit read-only su `public/admin/i18n.js`, poi fix approvati dall'utente:
