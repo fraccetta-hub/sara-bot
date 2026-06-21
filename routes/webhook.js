@@ -345,9 +345,13 @@ get_appointments, add_appointment, cancel_appointment, reschedule_appointment,
 block_time, unblock_time,
 create_closure, delete_closure,
 create_offer, delete_offer,
-get_services, update_service, add_service,
+get_services, update_service, add_service, delete_service,
 get_reservations, block_tables, book_table, cancel_reservation, confirm_reservation,
 get_stats,
+delete_product,
+broadcast,
+update_customer, delete_customer,
+set_hours,
 greeting, unknown.
 
 Use "greeting" for salutations (ciao, hola, hello, hi, buongiorno, bonjour, etc.) or small talk with no business intent.
@@ -382,6 +386,12 @@ book_table: {"customer_name":"...","customer_phone":null,"party_size":N,"date":"
 cancel_reservation: {"customer_query":"...","date":"YYYY-MM-DD or null"}
 confirm_reservation: {"customer_query":"...","date":"YYYY-MM-DD or null"} — confirm a pending_merchant reservation
 get_stats: {"period":"today|week|month|all","metric":"orders|revenue|customers|all"} — analytics. Use for: "quanti ordini", "fatturato settimana", "clienti nuovi", "report"
+delete_product: {} — delete product entirely (product_query identifies it). Use: "elimina prodotto X", "cancella X dal catalogo"
+delete_service: {} — delete service entirely (service_query identifies it). Use: "elimina servizio X"
+broadcast: {"message":"...","days_active":30} — send message to all active customers. message required, days_active optional (default 30 = customers active in last 30 days). Use: "manda messaggio a tutti", "broadcast", "invia a tutti i clienti"
+update_customer: {"customer_query":"...","email":null,"address":null,"name":null} — update customer info. customer_query required (name or phone). At least one of email/address/name required.
+delete_customer: {"customer_query":"..."} — delete customer record. customer_query required.
+set_hours: {"day":"monday|tuesday|wednesday|thursday|friday|saturday|sunday|all","open_time":"HH:MM or null","close_time":"HH:MM or null","is_closed":false,"open_time_2":null,"close_time_2":null} — update business hours for one or all days. Use: "lunedì apriamo alle 9", "domenica siamo chiusi", "orario di apertura", "cambia orari"
 
 Resolve relative dates using today's ISO above. "domani alle 15" → correct ISO. "questa settimana" → from=Monday ISO, to=Sunday ISO.`,
     messages: [{ role: 'user', content: `Products:\n${catalog}\n\nServices:\n${svcList}\n\nMessage: ${messageText}` }],
@@ -681,6 +691,16 @@ async function handleMerchantMessage(tenant, messageText, phoneNumberId, token) 
             await supabase.from('services').update(pending.params.updates).eq('id', chosen.id);
             invalidateServices(tenant.id);
             await sendMessage(tenant.merchant_phone, mt(pending.lang, 'svc_updated', chosen.name), phoneNumberId, token);
+          } else if (pending.action === 'delete_product') {
+            await supabase.from('products').delete().eq('id', chosen.id).eq('tenant_id', tenant.id);
+            invalidateStock(tenant.id);
+            const ok = { es:`🗑️ *${chosen.name}* eliminado.`, it:`🗑️ *${chosen.name}* eliminato.`, en:`🗑️ *${chosen.name}* deleted.`, fr:`🗑️ *${chosen.name}* supprimé.`, de:`🗑️ *${chosen.name}* gelöscht.`, pt:`🗑️ *${chosen.name}* eliminado.` };
+            await sendMessage(tenant.merchant_phone, ok[pending.lang] || ok.es, phoneNumberId, token);
+          } else if (pending.action === 'delete_service') {
+            await supabase.from('services').delete().eq('id', chosen.id).eq('tenant_id', tenant.id);
+            invalidateServices(tenant.id);
+            const ok = { es:`🗑️ *${chosen.name}* eliminado.`, it:`🗑️ *${chosen.name}* eliminato.`, en:`🗑️ *${chosen.name}* deleted.`, fr:`🗑️ *${chosen.name}* supprimé.`, de:`🗑️ *${chosen.name}* gelöscht.`, pt:`🗑️ *${chosen.name}* eliminado.` };
+            await sendMessage(tenant.merchant_phone, ok[pending.lang] || ok.es, phoneNumberId, token);
           } else if (pending.action === 'cancel_reservation') {
             await supabase.from('reservations').update({ status: 'cancelled' }).eq('id', chosen.id);
             const dt = new Date(chosen.reserved_at).toLocaleString('es', { weekday:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
@@ -1297,6 +1317,136 @@ async function handleMerchantMessage(tenant, messageText, phoneNumberId, token) 
     return;
   }
 
+  // ── Delete product ────────────────────────────────────────────────────────
+  if (intent.action === 'delete_product') {
+    if (!intent.product_query) { await sendMessage(tenant.merchant_phone, mt(lang, 'unknown'), phoneNumberId, token); return; }
+    const matches = findProductsFuzzy(allProducts, intent.product_query);
+    if (!matches.length) {
+      const none = { es:`⚠️ No encontré el producto "${intent.product_query}".`, it:`⚠️ Prodotto "${intent.product_query}" non trovato.`, en:`⚠️ Product "${intent.product_query}" not found.`, fr:`⚠️ Produit "${intent.product_query}" introuvable.`, de:`⚠️ Produkt "${intent.product_query}" nicht gefunden.`, pt:`⚠️ Produto "${intent.product_query}" não encontrado.` };
+      await sendMessage(tenant.merchant_phone, none[lang] || none.es, phoneNumberId, token); return;
+    }
+    if (matches.length === 1) {
+      await supabase.from('products').delete().eq('id', matches[0].id).eq('tenant_id', tenant.id);
+      invalidateStock(tenant.id);
+      const ok = { es:`🗑️ Producto *${matches[0].name}* eliminado.`, it:`🗑️ Prodotto *${matches[0].name}* eliminato.`, en:`🗑️ Product *${matches[0].name}* deleted.`, fr:`🗑️ Produit *${matches[0].name}* supprimé.`, de:`🗑️ Produkt *${matches[0].name}* gelöscht.`, pt:`🗑️ Produto *${matches[0].name}* eliminado.` };
+      await sendMessage(tenant.merchant_phone, ok[lang] || ok.es, phoneNumberId, token); return;
+    }
+    const list = matches.slice(0,5).map((p,i) => `${i+1}. *${p.name}*`).join('\n');
+    merchantPending.set(tenant.id, { action: 'delete_product', candidates: matches.slice(0,5), lang, expiresAt: Date.now() + 5*60*1000 });
+    const which = { es:`¿Cuál eliminar?\n${list}`, it:`Quale eliminare?\n${list}`, en:`Which to delete?\n${list}`, fr:`Lequel supprimer?\n${list}`, de:`Welches löschen?\n${list}`, pt:`Qual eliminar?\n${list}` };
+    await sendMessage(tenant.merchant_phone, which[lang] || which.es, phoneNumberId, token);
+    return;
+  }
+
+  // ── Delete service ────────────────────────────────────────────────────────
+  if (intent.action === 'delete_service') {
+    if (!intent.service_query) { await sendMessage(tenant.merchant_phone, mt(lang, 'unknown'), phoneNumberId, token); return; }
+    const sMatches = allServices.filter(s => s.name.toLowerCase().includes(intent.service_query.toLowerCase()));
+    if (!sMatches.length) {
+      const none = { es:`⚠️ No encontré el servicio "${intent.service_query}".`, it:`⚠️ Servizio "${intent.service_query}" non trovato.`, en:`⚠️ Service "${intent.service_query}" not found.`, fr:`⚠️ Service "${intent.service_query}" introuvable.`, de:`⚠️ Dienst "${intent.service_query}" nicht gefunden.`, pt:`⚠️ Serviço "${intent.service_query}" não encontrado.` };
+      await sendMessage(tenant.merchant_phone, none[lang] || none.es, phoneNumberId, token); return;
+    }
+    if (sMatches.length === 1) {
+      await supabase.from('services').delete().eq('id', sMatches[0].id).eq('tenant_id', tenant.id);
+      invalidateServices(tenant.id);
+      const ok = { es:`🗑️ Servicio *${sMatches[0].name}* eliminado.`, it:`🗑️ Servizio *${sMatches[0].name}* eliminato.`, en:`🗑️ Service *${sMatches[0].name}* deleted.`, fr:`🗑️ Service *${sMatches[0].name}* supprimé.`, de:`🗑️ Dienst *${sMatches[0].name}* gelöscht.`, pt:`🗑️ Serviço *${sMatches[0].name}* eliminado.` };
+      await sendMessage(tenant.merchant_phone, ok[lang] || ok.es, phoneNumberId, token); return;
+    }
+    const list = sMatches.slice(0,5).map((s,i) => `${i+1}. *${s.name}*`).join('\n');
+    merchantPending.set(tenant.id, { action: 'delete_service', candidates: sMatches.slice(0,5), lang, expiresAt: Date.now() + 5*60*1000 });
+    const which = { es:`¿Cuál eliminar?\n${list}`, it:`Quale eliminare?\n${list}`, en:`Which to delete?\n${list}`, fr:`Lequel supprimer?\n${list}`, de:`Welchen löschen?\n${list}`, pt:`Qual eliminar?\n${list}` };
+    await sendMessage(tenant.merchant_phone, which[lang] || which.es, phoneNumberId, token);
+    return;
+  }
+
+  // ── Broadcast ─────────────────────────────────────────────────────────────
+  if (intent.action === 'broadcast') {
+    const { message, days_active = 30 } = intent.params || {};
+    if (!message?.trim()) {
+      const ask = { es:'¿Qué mensaje querés enviar a todos tus clientes?', it:'Quale messaggio vuoi inviare a tutti i tuoi clienti?', en:'What message do you want to send to all your customers?', fr:'Quel message voulez-vous envoyer à tous vos clients?', de:'Welche Nachricht möchtest du an alle Kunden senden?', pt:'Qual mensagem deseja enviar a todos os clientes?' };
+      await sendMessage(tenant.merchant_phone, ask[lang] || ask.es, phoneNumberId, token); return;
+    }
+    const since = new Date(Date.now() - days_active * 86400000).toISOString();
+    const { data: convs } = await supabase.from('conversations').select('customer_phone').eq('tenant_id', tenant.id).gte('updated_at', since);
+    const phones = [...new Set((convs || []).map(c => c.customer_phone))];
+    if (!phones.length) {
+      const none = { es:'⚠️ No hay clientes activos para enviar.', it:'⚠️ Nessun cliente attivo a cui inviare.', en:'⚠️ No active customers to send to.', fr:'⚠️ Aucun client actif.', de:'⚠️ Keine aktiven Kunden.', pt:'⚠️ Nenhum cliente ativo.' };
+      await sendMessage(tenant.merchant_phone, none[lang] || none.es, phoneNumberId, token); return;
+    }
+    const sending = { es:`📣 Enviando a *${phones.length}* clientes...`, it:`📣 Invio a *${phones.length}* clienti...`, en:`📣 Sending to *${phones.length}* customers...`, fr:`📣 Envoi à *${phones.length}* clients...`, de:`📣 Sende an *${phones.length}* Kunden...`, pt:`📣 Enviando para *${phones.length}* clientes...` };
+    await sendMessage(tenant.merchant_phone, sending[lang] || sending.es, phoneNumberId, token);
+    const broadcastToken = tenant.whatsapp_token || process.env.WHATSAPP_TOKEN;
+    let sent = 0, failed = 0;
+    for (const phone of phones) {
+      try { await sendMessage(phone, message.trim(), phoneNumberId, broadcastToken); sent++; } catch { failed++; }
+    }
+    const done = { es:`✅ Enviado a *${sent}* clientes${failed ? ` (${failed} fallidos)` : ''}.`, it:`✅ Inviato a *${sent}* clienti${failed ? ` (${failed} falliti)` : ''}.`, en:`✅ Sent to *${sent}* customers${failed ? ` (${failed} failed)` : ''}.`, fr:`✅ Envoyé à *${sent}* clients${failed ? ` (${failed} échoués)` : ''}.`, de:`✅ An *${sent}* Kunden gesendet${failed ? ` (${failed} fehlgeschlagen)` : ''}.`, pt:`✅ Enviado a *${sent}* clientes${failed ? ` (${failed} falhas)` : ''}.` };
+    await sendMessage(tenant.merchant_phone, done[lang] || done.es, phoneNumberId, token);
+    return;
+  }
+
+  // ── Update / delete customer ──────────────────────────────────────────────
+  if (intent.action === 'update_customer') {
+    const { customer_query, email, address, name } = intent.params || {};
+    if (!customer_query) { await sendMessage(tenant.merchant_phone, mt(lang, 'unknown'), phoneNumberId, token); return; }
+    const updates = {};
+    if (name)    updates.customer_name    = name.trim();
+    if (email)   updates.customer_email   = email.trim();
+    if (address) updates.customer_address = address.trim();
+    if (!Object.keys(updates).length) { await sendMessage(tenant.merchant_phone, mt(lang, 'unknown'), phoneNumberId, token); return; }
+    const q = customer_query.toLowerCase();
+    const { data: convs } = await supabase.from('conversations').select('id, customer_phone, customer_name').eq('tenant_id', tenant.id);
+    const matches = (convs || []).filter(c => (c.customer_name || '').toLowerCase().includes(q) || (c.customer_phone || '').includes(q));
+    if (!matches.length) {
+      const none = { es:`⚠️ Cliente "${customer_query}" no encontrado.`, it:`⚠️ Cliente "${customer_query}" non trovato.`, en:`⚠️ Customer "${customer_query}" not found.`, fr:`⚠️ Client "${customer_query}" introuvable.`, de:`⚠️ Kunde "${customer_query}" nicht gefunden.`, pt:`⚠️ Cliente "${customer_query}" não encontrado.` };
+      await sendMessage(tenant.merchant_phone, none[lang] || none.es, phoneNumberId, token); return;
+    }
+    const target = matches[0];
+    await supabase.from('conversations').update(updates).eq('tenant_id', tenant.id).eq('customer_phone', target.customer_phone);
+    const ok = { es:`✅ Cliente *${target.customer_name || target.customer_phone}* actualizado.`, it:`✅ Cliente *${target.customer_name || target.customer_phone}* aggiornato.`, en:`✅ Customer *${target.customer_name || target.customer_phone}* updated.`, fr:`✅ Client *${target.customer_name || target.customer_phone}* mis à jour.`, de:`✅ Kunde *${target.customer_name || target.customer_phone}* aktualisiert.`, pt:`✅ Cliente *${target.customer_name || target.customer_phone}* atualizado.` };
+    await sendMessage(tenant.merchant_phone, ok[lang] || ok.es, phoneNumberId, token);
+    return;
+  }
+
+  if (intent.action === 'delete_customer') {
+    const { customer_query } = intent.params || {};
+    if (!customer_query) { await sendMessage(tenant.merchant_phone, mt(lang, 'unknown'), phoneNumberId, token); return; }
+    const q = customer_query.toLowerCase();
+    const { data: convs } = await supabase.from('conversations').select('id, customer_phone, customer_name').eq('tenant_id', tenant.id);
+    const matches = (convs || []).filter(c => (c.customer_name || '').toLowerCase().includes(q) || (c.customer_phone || '').includes(q));
+    if (!matches.length) {
+      const none = { es:`⚠️ Cliente "${customer_query}" no encontrado.`, it:`⚠️ Cliente "${customer_query}" non trovato.`, en:`⚠️ Customer "${customer_query}" not found.`, fr:`⚠️ Client "${customer_query}" introuvable.`, de:`⚠️ Kunde "${customer_query}" nicht gefunden.`, pt:`⚠️ Cliente "${customer_query}" não encontrado.` };
+      await sendMessage(tenant.merchant_phone, none[lang] || none.es, phoneNumberId, token); return;
+    }
+    const target = matches[0];
+    await supabase.from('conversations').delete().eq('tenant_id', tenant.id).eq('customer_phone', target.customer_phone);
+    const ok = { es:`🗑️ Cliente *${target.customer_name || target.customer_phone}* eliminado.`, it:`🗑️ Cliente *${target.customer_name || target.customer_phone}* eliminato.`, en:`🗑️ Customer *${target.customer_name || target.customer_phone}* deleted.`, fr:`🗑️ Client *${target.customer_name || target.customer_phone}* supprimé.`, de:`🗑️ Kunde *${target.customer_name || target.customer_phone}* gelöscht.`, pt:`🗑️ Cliente *${target.customer_name || target.customer_phone}* eliminado.` };
+    await sendMessage(tenant.merchant_phone, ok[lang] || ok.es, phoneNumberId, token);
+    return;
+  }
+
+  // ── Set business hours ────────────────────────────────────────────────────
+  if (intent.action === 'set_hours') {
+    const { day, open_time, close_time, is_closed, open_time_2, close_time_2 } = intent.params || {};
+    if (!day) { await sendMessage(tenant.merchant_phone, mt(lang, 'unknown'), phoneNumberId, token); return; }
+    const dayMap = { monday:1, tuesday:2, wednesday:3, thursday:4, friday:5, saturday:6, sunday:0, lunes:1, martes:2, miercoles:3, miércoles:3, jueves:4, viernes:5, sabado:6, sábado:6, domingo:0, lunedì:1, martedì:2, mercoledì:3, giovedì:4, venerdì:5, sabato:6, domenica:0, lundi:1, mardi:2, mercredi:3, jeudi:4, vendredi:5, samedi:6, dimanche:0, montag:1, dienstag:2, mittwoch:3, donnerstag:4, freitag:5, samstag:6, sonntag:0 };
+    const rows = [];
+    if (day === 'all') {
+      for (let d = 0; d <= 6; d++) rows.push({ tenant_id: tenant.id, day_of_week: d, open_time: is_closed ? null : (open_time || '09:00'), close_time: is_closed ? null : (close_time || '18:00'), open_time_2: is_closed ? null : (open_time_2 || null), close_time_2: is_closed ? null : (close_time_2 || null), is_closed: !!is_closed });
+    } else {
+      const dow = dayMap[day.toLowerCase()];
+      if (dow === undefined) { await sendMessage(tenant.merchant_phone, mt(lang, 'unknown'), phoneNumberId, token); return; }
+      rows.push({ tenant_id: tenant.id, day_of_week: dow, open_time: is_closed ? null : (open_time || '09:00'), close_time: is_closed ? null : (close_time || '18:00'), open_time_2: is_closed ? null : (open_time_2 || null), close_time_2: is_closed ? null : (close_time_2 || null), is_closed: !!is_closed });
+    }
+    await supabase.from('business_hours').upsert(rows, { onConflict: 'tenant_id,day_of_week' });
+    invalidateBusinessHours(tenant.id);
+    const label = is_closed
+      ? { es:`🔴 ${day === 'all' ? 'Todos los días' : day}: cerrado.`, it:`🔴 ${day === 'all' ? 'Tutti i giorni' : day}: chiuso.`, en:`🔴 ${day === 'all' ? 'Every day' : day}: closed.`, fr:`🔴 ${day === 'all' ? 'Tous les jours' : day}: fermé.`, de:`🔴 ${day === 'all' ? 'Alle Tage' : day}: geschlossen.`, pt:`🔴 ${day === 'all' ? 'Todos os dias' : day}: fechado.` }
+      : { es:`✅ ${day === 'all' ? 'Todos los días' : day}: ${open_time || '09:00'}–${close_time || '18:00'}${open_time_2 ? ` / ${open_time_2}–${close_time_2}` : ''}.`, it:`✅ ${day === 'all' ? 'Tutti i giorni' : day}: ${open_time || '09:00'}–${close_time || '18:00'}${open_time_2 ? ` / ${open_time_2}–${close_time_2}` : ''}.`, en:`✅ ${day === 'all' ? 'Every day' : day}: ${open_time || '09:00'}–${close_time || '18:00'}${open_time_2 ? ` / ${open_time_2}–${close_time_2}` : ''}.`, fr:`✅ ${day === 'all' ? 'Tous les jours' : day}: ${open_time || '09:00'}–${close_time || '18:00'}${open_time_2 ? ` / ${open_time_2}–${close_time_2}` : ''}.`, de:`✅ ${day === 'all' ? 'Alle Tage' : day}: ${open_time || '09:00'}–${close_time || '18:00'}${open_time_2 ? ` / ${open_time_2}–${close_time_2}` : ''}.`, pt:`✅ ${day === 'all' ? 'Todos os dias' : day}: ${open_time || '09:00'}–${close_time || '18:00'}${open_time_2 ? ` / ${open_time_2}–${close_time_2}` : ''}.` };
+    await sendMessage(tenant.merchant_phone, label[lang] || label.es, phoneNumberId, token);
+    return;
+  }
+
   // ── Greeting ──────────────────────────────────────────────────────────────
   if (intent.action === 'greeting') {
     const greet = { es:'👋 ¡Hola! ¿En qué te puedo ayudar?', it:'👋 Ciao! Come posso aiutarti?', en:'👋 Hi! How can I help you?', fr:'👋 Bonjour! Comment puis-je vous aider?', de:'👋 Hallo! Wie kann ich helfen?', pt:'👋 Olá! Como posso ajudar?' };
@@ -1317,6 +1467,9 @@ async function handleMerchantMessage(tenant, messageText, phoneNumberId, token) 
     if (tenant.services_enabled)     lines.push({ es:'• ver/agregar/actualizar servicios', it:'• vedere/aggiungere/aggiornare servizi', en:'• view/add/update services', fr:'• voir/ajouter/mettre à jour services', de:'• Dienstleistungen anzeigen/hinzufügen/aktualisieren', pt:'• ver/adicionar/atualizar serviços' });
     if (tenant.restaurant_enabled)   lines.push({ es:'• ver/crear/cancelar/confirmar reservas de mesa', it:'• vedere/creare/annullare/confermare prenotazioni tavolo', en:'• view/create/cancel/confirm table reservations', fr:'• voir/créer/annuler/confirmer réservations table', de:'• Tischreservierungen anzeigen/erstellen/stornieren/bestätigen', pt:'• ver/criar/cancelar/confirmar reservas de mesa' });
     lines.push({ es:'• cerrar local (vacaciones, festivos)', it:'• chiudere il locale (ferie, festività)', en:'• close business (holidays, days off)', fr:'• fermer le commerce (vacances, jours fériés)', de:'• Geschäft schließen (Urlaub, Feiertage)', pt:'• fechar o negócio (férias, feriados)' });
+    lines.push({ es:'• enviar mensaje a todos los clientes (broadcast)', it:'• inviare messaggio a tutti i clienti (broadcast)', en:'• send message to all customers (broadcast)', fr:'• envoyer message à tous les clients (broadcast)', de:'• Nachricht an alle Kunden senden (Broadcast)', pt:'• enviar mensagem a todos os clientes (broadcast)' });
+    lines.push({ es:'• actualizar/eliminar cliente', it:'• aggiornare/eliminare cliente', en:'• update/delete customer', fr:'• mettre à jour/supprimer client', de:'• Kunde aktualisieren/löschen', pt:'• atualizar/eliminar cliente' });
+    lines.push({ es:'• cambiar horarios de apertura', it:'• modificare orari di apertura', en:'• update business hours', fr:'• modifier les horaires d\'ouverture', de:'• Öffnungszeiten ändern', pt:'• alterar horários de funcionamento' });
 
     const hdr = { es:'No entendí. Puedo ayudarte con:\n', it:'Non ho capito. Posso aiutarti con:\n', en:'Didn\'t understand. I can help you with:\n', fr:'Pas compris. Je peux vous aider avec:\n', de:'Nicht verstanden. Ich kann helfen mit:\n', pt:'Não entendi. Posso ajudar com:\n' };
     const body = lines.map(l => l[lang] || l.es).join('\n');
