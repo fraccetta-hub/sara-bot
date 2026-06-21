@@ -96,4 +96,45 @@ function describeDelivery(tenant) {
   return { tarifa, min };
 }
 
-module.exports = { haversineKm, geocode, calcDeliveryFee, isDeliveryDisabledToday, describeDelivery };
+// ─── Service mobility (at-client) helpers ────────────────────────────────────
+
+function isServiceMobilityDisabledToday(tenant) {
+  const disabled = tenant.service_disabled_dates || [];
+  if (!disabled.length) return false;
+  const today    = new Date().toISOString().slice(0, 10);
+  const dayNames = ['domingo','lunes','martes','miercoles','jueves','viernes','sabado'];
+  const todayDay = dayNames[new Date().getDay()];
+  return disabled.some(d => d === today || d.toLowerCase() === todayDay);
+}
+
+function describeServiceMobility(tenant) {
+  const loc = tenant.service_location || 'own';
+  if (loc === 'own') return null; // no mobility, service only at own location
+
+  const base = tenant.service_base_fee || 0;
+  const fmt  = n => n.toLocaleString('es-PY') + ' Gs';
+
+  let tarifa;
+  switch (tenant.service_fee_type || 'fixed') {
+    case 'fixed':
+      tarifa = `tarifa fija de ${fmt(base)}`;
+      break;
+    case 'zone': {
+      const km    = tenant.service_zone_km || 5;
+      const outer = tenant.service_zone_outer_fee || 0;
+      tarifa = `${fmt(base)} dentro de ${km} km` +
+        (outer > 0 ? `, ${fmt(outer)} fuera de ${km} km` : `, sin servicio a más de ${km} km`);
+      break;
+    }
+    case 'per_km':
+      tarifa = `${fmt(base)} base + ${fmt(tenant.service_per_km || 0)} por km`;
+      break;
+    default:
+      tarifa = `tarifa fija de ${fmt(base)}`;
+  }
+
+  const min = tenant.service_min_value || 0;
+  return { loc, tarifa, min };
+}
+
+module.exports = { haversineKm, geocode, calcDeliveryFee, isDeliveryDisabledToday, describeDelivery, isServiceMobilityDisabledToday, describeServiceMobility };

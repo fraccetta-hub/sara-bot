@@ -226,3 +226,14 @@ ALTER TABLE appointments
 -- Migration 16: Appointment refund/storno flag
 ALTER TABLE appointments
   ADD COLUMN IF NOT EXISTS refunded BOOLEAN NOT NULL DEFAULT false;
+
+-- Migration 17: Service mobility (at-client service for bookings plan)
+ALTER TABLE tenants
+  ADD COLUMN IF NOT EXISTS service_location       TEXT    NOT NULL DEFAULT 'own',
+  ADD COLUMN IF NOT EXISTS service_fee_type       TEXT    NOT NULL DEFAULT 'fixed',
+  ADD COLUMN IF NOT EXISTS service_base_fee       INTEGER          DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS service_zone_km        NUMERIC          DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS service_zone_outer_fee INTEGER          DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS service_per_km         INTEGER          DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS service_min_value      INTEGER          DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS service_disabled_dates TEXT;

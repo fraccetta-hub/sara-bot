@@ -285,6 +285,9 @@ router.get('/settings', requireAuth, async (req, res) => {
              delivery_type, delivery_base_fee, delivery_zone_km,
              delivery_zone_outer_fee, delivery_per_km,
              delivery_min_order, delivery_disabled_dates,
+             service_location, service_fee_type, service_base_fee,
+             service_zone_km, service_zone_outer_fee, service_per_km,
+             service_min_value, service_disabled_dates,
              address, google_review_url,
              restaurant_enabled, restaurant_slot_duration, restaurant_slot_duration_2, appointment_capacity,
              sector, active, plan_expires, plan_currency, plan_price, phone_number_id, whatsapp_token_refresh_error,
@@ -306,6 +309,9 @@ router.put('/settings', requireAuth, async (req, res) => {
     'delivery_type','delivery_base_fee','delivery_zone_km',
     'delivery_zone_outer_fee','delivery_per_km',
     'delivery_min_order','delivery_disabled_dates',
+    'service_location','service_fee_type','service_base_fee',
+    'service_zone_km','service_zone_outer_fee','service_per_km',
+    'service_min_value','service_disabled_dates',
     'address','google_review_url','appointment_capacity'
   ];
   const updates = {};

@@ -1,5 +1,5 @@
 const Anthropic = require('@anthropic-ai/sdk');
-const { isDeliveryDisabledToday, describeDelivery } = require('./geo');
+const { isDeliveryDisabledToday, describeDelivery, isServiceMobilityDisabledToday, describeServiceMobility } = require('./geo');
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -431,6 +431,28 @@ D4. Si eligió envío y no hay dirección aún: pedile la dirección exacta o qu
 D5. Una vez calculado el envío (el sistema te lo informa), confirmá el total incluyendo el costo de envío antes de generar el <ORDER>.`;
   }
 
+  // ── Service mobility block (at-client service for bookings plans) ───────────
+  let serviceMobilityBlock = '';
+  if (tenant.services_enabled && (tenant.service_location || 'own') !== 'own') {
+    const mobInfo = describeServiceMobility(tenant);
+    if (mobInfo) {
+      const disabledToday = isServiceMobilityDisabledToday(tenant);
+      const loc = mobInfo.loc; // 'client' or 'both'
+      serviceMobilityBlock = `
+SERVICIO A DOMICILIO:
+- Modalidad: ${loc === 'both' ? 'el profesional puede trabajar en su sede O en el domicilio del cliente' : 'el profesional se desplaza al domicilio del cliente'}.
+- ${disabledToday ? '⚠️ HOY NO HAY SERVICIO A DOMICILIO (día deshabilitado). Solo en sede.' : 'Hoy sí hay servicio a domicilio.'}
+- Tarifa de desplazamiento: ${mobInfo.tarifa}.
+${mobInfo.min > 0 ? `- Valor mínimo de servicio para ir al domicilio: ${formatPrice(mobInfo.min, currency)}.` : ''}
+
+REGLAS SERVICIO A DOMICILIO (al confirmar turno):
+DM1. Si hoy no hay domicilio: informá y ofrecé turno en sede${loc === 'both' ? '' : ' (única opción)'}.
+DM2. ${loc === 'both' ? 'Preguntá al cliente: "¿Preferís venir a nuestra sede o que vayamos a tu domicilio?"' : 'Preguntá al cliente su dirección exacta para el desplazamiento.'}
+DM3. Si el cliente elige domicilio: pedí la dirección y anotala en las notas del turno con formato: <APPT_NOTE:domicilio: [dirección]>.
+DM4. Si el valor del servicio no llega al mínimo (${formatPrice(mobInfo.min, currency)}): avisá y ofrecé servicio en sede.`;
+    }
+  }
+
   // ── Appointments block ──────────────────────────────────────────────────────
   let appointmentsBlock = '';
   if (tenant.appointments_enabled && appointmentSlots) {
@@ -551,7 +573,7 @@ A8. Después de emitir la reserva, informá al cliente que el local confirmará 
     ? buildAvailabilityBlock(tenant, restaurantTables || [], upcomingReservations, businessHours, closures)
     : '';
 
-  return `${deliveryBlock}\n${appointmentsBlock}\n${reservationsBlock}\n${closuresBlock}\n${hoursBlock}\n${firstMsgBlock}\n${customerBlock}\n${dateBlock}`.trim();
+  return `${deliveryBlock}\n${serviceMobilityBlock}\n${appointmentsBlock}\n${reservationsBlock}\n${closuresBlock}\n${hoursBlock}\n${firstMsgBlock}\n${customerBlock}\n${dateBlock}`.trim();
 }
 
 async function chat({ tenant, stock, services, history, userMessage, convState, imageData, appointmentSlots, customerContext, closures, offers, businessHours, isFirstMessage, customerNotes, restaurantZones, restaurantTables, upcomingReservations }) {
