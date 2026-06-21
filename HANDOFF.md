@@ -351,10 +351,26 @@ UX redesign 10-punti completato e verificato in preview (static server `public/`
 
 **Nessun bug logico per piano** trovato nel routing `hasProducts/hasServices/hasAppointments/hasRestaurant` — i guard webhook (`mightBeAboutAppointments && !restaurant_enabled`) sono corretti per tutti e 4 i piani (Shop/Bookings/Restaurant/Pro).
 
+## ✅ FATTO (2026-06-21 — fix support bot + prodotti/menu/xlsx)
+
+### Support bot — contesto chat [commit af54787]
+- `SUPPORT_SYSTEM_PROMPT`: aggiunto blocco CONTEXT esplicito — il merchant parla DENTRO la tab Supporto, non deve essere indirizzato "alla chat di supporto" (era un loop confuso). Per tutto il non-risolvibile → `email support@sarabot.pro`.
+
+### Prodotti/Menu — fix banner scorte + descrizione + xlsx coerenti [commit 2e5d4fe]
+- **Banner "scorte basse ≤5" falso**: `toggleAvailable` mandava `stock_qty:1` quando abilitava un prodotto → scattava il banner. Fix: `toggleAvailable` invia solo `{ is_available: val }` — lo stock non viene toccato.
+- **Descrizione tab menu**: cella `description` nella `renderMenu` non aveva `truncate` → testo lungo sfondava la riga. Aggiunto `truncate` + `title`. Aggiunto `maxlength=500` al textarea descrizione nel modal.
+- **Nomi colonne xlsx**: header prima colonna era `name` per entrambi i template, mentre la UI mostra "Producto/Product/Prodotto" e "Plato/Dish/Piatto". Rinominato → `product` (catalog) / `dish` (menu). Aggiornati `gen-templates.js`, export CSV (`products/export`), import parser (alias ampliati: `product, dish, plato, piatto, plat, produkt, prodotto, produit`). Xlsx rigenerati.
+- **stock=0 → available=false**: già implementato server-side nel PUT `/products/:id` (riga 528) — nessuna modifica necessaria.
+
+### Webhook merchant — greeting + JSON parse [commit f25a4db]
+- Action `greeting` aggiunta al classifier merchant: saluti (ciao, hola, hi…) non cadono più su `unknown`.
+- JSON parse: strip ` ```json…``` ` prima del parse — alcuni modelli wrappano la risposta in un code block.
+- `add_product` senza nome: ora chiede il nome del prodotto invece di rispondere "non capisco".
+
 ## STATO CORRENTE
 - Obiettivo generale: SaaS multi-tenant WhatsApp Business (Node/Express + Supabase + Anthropic Claude). Bot AI risponde a clienti, gestisce catalogo, delivery, turni/appuntamenti, ordini.
-- Fase attuale: audit Sara completato, valuta corretta cross-plan, midnight slot fix. Prossimo: Stripe live env vars su Render, invoicing merchant.
-- Ultimo commit stabile: `c983610`
+- Fase attuale: fix UX pannello admin + supporto bot. Prossimo: Stripe live env vars su Render, invoicing merchant.
+- Ultimo commit stabile: `f25a4db`
 - **Migration pendente**: nessuna nuova.
 
 ## COSA È STATO FATTO (sessione 2026-06-20 — i18n hardcoded in Ajustes)
