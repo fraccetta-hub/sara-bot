@@ -582,9 +582,14 @@
 
     <!-- ── SERVICES TAB ── -->
     <div id="sectionServices" class="hidden">
-      <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
-        <h2 data-i18n="services.title" class="text-lg font-semibold text-gray-800">Servicios</h2>
-        <div class="flex gap-2">
+      <div class="flex items-center gap-4 mb-4">
+        <h2 data-i18n="services.title" class="text-lg font-semibold text-gray-800 flex-shrink-0">Servicios</h2>
+        <div class="flex-1 relative">
+          <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">🔍</span>
+          <input id="serviceSearch" type="text" data-i18n-ph="products.search" placeholder="Buscar..."
+            class="w-full pl-8 pr-3 py-2 border border-gray-200 rounded-lg text-sm" oninput="renderServices(_allServices)"/>
+        </div>
+        <div class="flex gap-2 flex-shrink-0 flex-wrap justify-end">
           <button onclick="openImportModal('services')"
             class="px-4 py-2 rounded-lg text-sm font-semibold bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 flex items-center gap-1" data-i18n="services.import">
             📥 Importar servicios
@@ -601,9 +606,14 @@
 
     <!-- ── ORDERS TAB ── -->
     <div id="sectionOrders" class="hidden">
-      <div class="flex items-center justify-between mb-3">
-        <h2 data-i18n="orders.title" class="text-lg font-semibold text-gray-800">Pedidos recientes</h2>
-        <div class="flex items-center gap-3">
+      <div class="flex items-center gap-4 mb-3">
+        <h2 data-i18n="orders.title" class="text-lg font-semibold text-gray-800 flex-shrink-0">Pedidos recientes</h2>
+        <div class="flex-1 relative">
+          <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">🔍</span>
+          <input id="orderSearch" type="text" data-i18n-ph="products.search" placeholder="Buscar..."
+            class="w-full pl-8 pr-3 py-2 border border-gray-200 rounded-lg text-sm" oninput="renderOrders()"/>
+        </div>
+        <div class="flex items-center gap-2 flex-shrink-0 flex-wrap justify-end">
           <button onclick="exportOrders()" data-i18n="orders.export"
             class="flex items-center gap-1.5 text-sm text-gray-600 border border-gray-200 bg-white hover:bg-gray-50 px-3 py-1.5 rounded-lg transition font-medium">
             ⬇ Exportar CSV
@@ -631,9 +641,14 @@
 
     <!-- ── CUSTOMERS TAB ── -->
     <div id="sectionCustomers" class="hidden">
-      <div class="flex items-center justify-between mb-4">
-        <h2 data-i18n="customers.title" class="text-lg font-semibold text-gray-800">Clientes</h2>
-        <div class="flex gap-2">
+      <div class="flex items-center gap-4 mb-4">
+        <h2 data-i18n="customers.title" class="text-lg font-semibold text-gray-800 flex-shrink-0">Clientes</h2>
+        <div class="flex-1 relative">
+          <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">🔍</span>
+          <input id="customerSearch" type="text" data-i18n-ph="products.search" placeholder="Buscar..."
+            class="w-full pl-8 pr-3 py-2 border border-gray-200 rounded-lg text-sm" oninput="renderCustomers()"/>
+        </div>
+        <div class="flex gap-2 flex-shrink-0">
           <button onclick="exportCustomers()" data-i18n="customers.export"
             class="flex items-center gap-1.5 text-sm text-gray-600 border border-gray-200 bg-white hover:bg-gray-50 px-3 py-1.5 rounded-lg transition font-medium">
             ⬇ Exportar CSV
@@ -3514,18 +3529,24 @@ async function confirmDelete() {
 
 // ── Orders ─────────────────────────────────────────────────────────────────────
 let _orderFilter = 'all';
+let _allOrders = [];
 
 function setOrderFilter(status) {
   _orderFilter = status;
   document.querySelectorAll('.order-filter-btn').forEach(b => b.classList.remove('active-filter'));
   const btn = document.getElementById(`of-${status}`);
   if (btn) btn.classList.add('active-filter');
-  loadOrders();
+  renderOrders();
 }
 
-async function loadOrders() {
-  const allOrders = await api('/admin/orders');
-  const orders = _orderFilter === 'all' ? allOrders : allOrders.filter(o => o.status === _orderFilter);
+function renderOrders() {
+  const q = (document.getElementById('orderSearch')?.value || '').toLowerCase();
+  let orders = _orderFilter === 'all' ? _allOrders : _allOrders.filter(o => o.status === _orderFilter);
+  if (q) orders = orders.filter(o =>
+    (o.customer_name || '').toLowerCase().includes(q) ||
+    (o.customer_phone || '').includes(q) ||
+    (o.items_json || []).some(i => i.name.toLowerCase().includes(q))
+  );
   const el = document.getElementById('ordersList');
   if (!orders.length) {
     el.innerHTML = `<div class="text-center py-8 text-gray-400">${t('orders.empty')}</div>`;
@@ -3573,6 +3594,11 @@ async function loadOrders() {
       </div>
     </div>`;
   }).join('');
+}
+
+async function loadOrders() {
+  _allOrders = await api('/admin/orders');
+  renderOrders();
 }
 
 // ── New / Edit order modal ────────────────────────────────────────────────────
@@ -4672,8 +4698,20 @@ async function updateOrderStatus(id, status) {
 }
 
 // ── Customers tab ────────────────────────────────────────────────────────────
+let _allCustomers = [];
+
 async function loadCustomers() {
-  const customers = await api('/admin/customers');
+  _allCustomers = await api('/admin/customers');
+  renderCustomers();
+}
+
+function renderCustomers() {
+  const q = (document.getElementById('customerSearch')?.value || '').toLowerCase();
+  const customers = q ? _allCustomers.filter(c =>
+    (c.customer_name  || '').toLowerCase().includes(q) ||
+    (c.customer_phone || '').includes(q) ||
+    (c.customer_email || '').toLowerCase().includes(q)
+  ) : _allCustomers;
   const el = document.getElementById('customersTable');
   if (!customers.length) {
     el.innerHTML = `<tr><td colspan="4" class="text-center py-8 text-gray-400">${t('customers.empty')}</td></tr>`;
@@ -5414,18 +5452,25 @@ function showAccountBanner(type) {
 let editingServiceId = null;
 let currentServiceImgUrl = null;
 
+let _allServices = [];
+
 async function loadServices() {
   const list = document.getElementById('serviceList');
   list.innerHTML = `<p class="text-gray-400 text-sm col-span-3">${t('services.loading')}</p>`;
   try {
-    const services = await api('/admin/services');
-    renderServices(services);
+    _allServices = await api('/admin/services');
+    renderServices(_allServices);
   } catch(e) {
     list.innerHTML = `<p class="text-red-400 text-sm">${t('services.error')}</p>`;
   }
 }
 
-function renderServices(services) {
+function renderServices(all) {
+  const q = (document.getElementById('serviceSearch')?.value || '').toLowerCase();
+  const services = q ? all.filter(s =>
+    (s.name     || '').toLowerCase().includes(q) ||
+    (s.category || '').toLowerCase().includes(q)
+  ) : all;
   const list = document.getElementById('serviceList');
   if (!services.length) {
     list.innerHTML = `
