@@ -4579,9 +4579,8 @@ function _openCustomerModal(phone, name, email, address) {
   document.getElementById('custModalSaveBtn').textContent   = isEdit ? t('customers.edit.save')     : t('customers.add.save');
   document.getElementById('addCustName').value    = name    || '';
   document.getElementById('addCustPhone').value   = phone   || '';
-  document.getElementById('addCustPhone').readOnly = isEdit;
-  document.getElementById('addCustPhone').classList.toggle('bg-gray-50', isEdit);
-  document.getElementById('addCustPhone').classList.toggle('text-gray-400', isEdit);
+  document.getElementById('addCustPhone').readOnly = false;
+  document.getElementById('addCustPhone').classList.remove('bg-gray-50','text-gray-400');
   document.getElementById('addCustEmail').value   = email   || '';
   document.getElementById('addCustAddress').value = address || '';
   const msg = document.getElementById('addCustomerMsg');
@@ -4608,7 +4607,7 @@ async function saveAddCustomer() {
   if (!phone) { showErr(t('err.missing_phone') || 'Teléfono requerido'); return; }
   try {
     if (_editCustPhone) {
-      await api(`/admin/customers/${_editCustPhone}`, 'PUT', { name, email, address });
+      await api(`/admin/customers/${_editCustPhone}`, 'PUT', { name, phone, email, address });
     } else {
       await api('/admin/customers', 'POST', { phone, name, email, address });
     }
