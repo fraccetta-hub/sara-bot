@@ -3726,7 +3726,7 @@ function addOrderRow() {
       class="w-24 border border-gray-200 rounded-lg px-2 py-1.5 text-sm text-right text-gray-900" oninput="calcOrderTotal()"/>
     <button onclick="removeOrderRow(${idx})" class="text-red-400 hover:text-red-600 text-base px-1 flex-shrink-0">✕</button>`;
   document.getElementById('noItemsBody').appendChild(row);
-  fillOrderRowFromSelect(idx); // default to custom-item mode on new row
+  _syncDisabledOptions();
 }
 
 function _syncDisabledOptions() {
