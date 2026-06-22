@@ -601,7 +601,7 @@ router.get('/orders', requireAuth, async (req, res) => {
   if (ordersRes.error) return res.status(500).json({ error: ordersRes.error.message });
 
   const nameMap = Object.fromEntries((convsRes.data || []).map(c => [c.customer_phone, c.customer_name]));
-  const orders = (ordersRes.data || []).map(o => ({ ...o, customer_name: nameMap[o.customer_phone] || null }));
+  const orders = (ordersRes.data || []).map(o => ({ ...o, customer_name: nameMap[o.customer_phone] || o.customer_name || null }));
   res.json(orders);
 });
 
