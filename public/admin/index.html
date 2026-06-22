@@ -2027,6 +2027,11 @@
           class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-300"/>
       </div>
     </div>
+    <div class="flex items-center gap-2 mb-4 -mt-2">
+      <button onclick="saveOrderCustomer()" id="noSaveContactBtn"
+        class="text-xs text-blue-600 hover:text-blue-800 border border-blue-200 bg-blue-50 hover:bg-blue-100 rounded-lg px-3 py-1.5 font-medium transition" data-i18n="orders.new.customer.save">📒 Guardar en agenda</button>
+      <span id="noContactMsg" class="text-xs hidden"></span>
+    </div>
 
     <label data-i18n="orders.new.items" class="block text-xs font-medium text-gray-500 mb-1">Productos</label>
     <div class="flex gap-1.5 text-xs text-gray-400 font-medium mb-1 pr-7">
@@ -3600,6 +3605,32 @@ async function openNewOrderModal() {
   addOrderRow();
   calcOrderTotal();
   document.getElementById('newOrderModal').classList.remove('hidden');
+}
+
+async function saveOrderCustomer() {
+  const name  = document.getElementById('noName').value.trim();
+  const phone = document.getElementById('noPhone').value.replace(/\D/g, '');
+  const msg   = document.getElementById('noContactMsg');
+  const show  = (text, isErr) => {
+    msg.textContent = text;
+    msg.className = `text-xs ${isErr ? 'text-red-500' : 'text-green-600'}`;
+    msg.classList.remove('hidden');
+    setTimeout(() => msg.classList.add('hidden'), 3000);
+  };
+  if (!name || !phone) { show(t('orders.new.customer.save_missing'), true); return; }
+  const exists = _noCustomers.find(c => c.customer_phone.replace(/\D/g,'') === phone);
+  if (exists) { show(t('orders.new.customer.save_exists'), false); return; }
+  try {
+    await api('/admin/customers', 'POST', { phone, name });
+    _noCustomers = await api('/admin/customers');
+    const picker = document.getElementById('noCustomerPicker');
+    picker.innerHTML = `<option value="">— ${t('orders.new.customer.new')} —</option>` +
+      _noCustomers.map((c, i) => {
+        const label = c.customer_name ? `${escHtml(c.customer_name)} (${c.customer_phone})` : c.customer_phone;
+        return `<option value="${i}">${label}</option>`;
+      }).join('');
+    show(t('orders.new.customer.save_ok'), false);
+  } catch(e) { show(errMsg(e), true); }
 }
 
 function fillOrderCustomer(sel) {
