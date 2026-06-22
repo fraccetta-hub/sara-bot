@@ -3659,6 +3659,7 @@ async function openEditOrderModal(order) {
       document.getElementById(`no-back-${idx}`).classList.remove('hidden');
     }
   });
+  _syncDisabledOptions();
   calcOrderTotal();
   document.getElementById('newOrderModal').classList.remove('hidden');
 }
@@ -3725,6 +3726,22 @@ function addOrderRow() {
       class="w-24 border border-gray-200 rounded-lg px-2 py-1.5 text-sm text-right text-gray-900" oninput="calcOrderTotal()"/>
     <button onclick="removeOrderRow(${idx})" class="text-red-400 hover:text-red-600 text-base px-1 flex-shrink-0">✕</button>`;
   document.getElementById('noItemsBody').appendChild(row);
+  fillOrderRowFromSelect(idx); // default to custom-item mode on new row
+}
+
+function _syncDisabledOptions() {
+  const usedValues = new Set(
+    [...document.querySelectorAll('[id^="no-sel-"]')]
+      .map(s => s.value).filter(v => v !== '')
+  );
+  document.querySelectorAll('[id^="no-sel-"]').forEach(sel => {
+    [...sel.options].forEach(opt => {
+      if (opt.value === '') return;
+      const takenByOther = usedValues.has(opt.value) && opt.value !== sel.value;
+      opt.disabled = takenByOther;
+      opt.style.color = takenByOther ? '#9ca3af' : '';
+    });
+  });
 }
 
 function fillOrderRowFromSelect(idx) {
@@ -3746,22 +3763,12 @@ function fillOrderRowFromSelect(idx) {
     name.classList.add('hidden');
     if (back) back.classList.add('hidden');
     const opt = sel.options[sel.selectedIndex];
-    // merge with existing row that already has same product
-    const existingRow = [...document.querySelectorAll('[id^="no-sel-"]')]
-      .find(s => s.id !== `no-sel-${idx}` && s.value === sel.value);
-    if (existingRow) {
-      const existIdx = existingRow.id.replace('no-sel-','');
-      const existQty = document.getElementById(`no-qty-${existIdx}`);
-      existQty.value = String(Number(existQty.value) + (Number(document.getElementById(`no-qty-${idx}`)?.value) || 1));
-      document.getElementById(`no-row-${idx}`)?.remove();
-      calcOrderTotal();
-      return;
-    }
     price.value    = opt.dataset.price || 0;
     price.readOnly = true;
     price.classList.add('bg-gray-50', 'text-gray-400');
     price.classList.remove('text-gray-900');
   }
+  _syncDisabledOptions();
   calcOrderTotal();
 }
 
@@ -3781,11 +3788,13 @@ function resetOrderRowToSelect(idx) {
     price.classList.add('bg-gray-50','text-gray-400');
     price.classList.remove('text-gray-900');
   }
+  _syncDisabledOptions();
   calcOrderTotal();
 }
 
 function removeOrderRow(idx) {
   document.getElementById(`no-row-${idx}`)?.remove();
+  _syncDisabledOptions();
   calcOrderTotal();
 }
 
