@@ -6,46 +6,51 @@
   <title>Sara Bot — Panel de administración</title>
   <link rel="icon" type="image/webp" href="/images/favicon.webp"/>
   <link rel="manifest" href="/manifest.json"/>
-  <meta name="theme-color" content="#22c55e"/>
+  <meta name="theme-color" content="#2f9e3a"/>
   <meta name="apple-mobile-web-app-capable" content="yes"/>
   <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
   <meta name="apple-mobile-web-app-title" content="Sara Bot"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={theme:{extend:{fontFamily:{sans:['Inter','ui-sans-serif','system-ui','sans-serif']},colors:{green:{50:'#eef7ea',100:'#d7edc9',200:'#b6dfa0',300:'#8bcd6f',400:'#57b347',500:'#2f9e3a',600:'#1b7a28',700:'#155f20',800:'#124d1c',900:'#0e3b16'}}}}}</script>
   <style>
-    :root { --green: #25D366; }
-    .btn-green { background:#25D366; color:#fff; }
-    .btn-green:hover { background:#1da851; }
+    :root { --green: #2f9e3a; }
+    body { background:#fbf6ec !important; font-family:'Inter',sans-serif; }
+    h1,h2,h3 { font-family:'Outfit',sans-serif; letter-spacing:-.01em; }
+    .btn-green { background:#e2622a; color:#fff; border-radius:12px; box-shadow:0 4px 0 #a3430f; font-family:'Outfit',sans-serif; font-weight:600; transition:transform .15s, box-shadow .15s; }
+    .btn-green:hover { background:#e2622a; transform:translateY(2px); box-shadow:0 2px 0 #a3430f; }
     .btn-purple { background:#7c3aed; color:#fff; }
     .btn-purple:hover { background:#6d28d9; }
     .lang-picker{position:relative}
-    .lang-picker-btn{border:1px solid #e5e7eb;border-radius:8px;padding:5px 10px;font-size:13px;font-weight:600;cursor:pointer;background:#fff;color:#374151;white-space:nowrap}
-    .lang-picker-btn:hover{background:#f9fafb}
-    .lang-picker-menu{display:none;position:absolute;right:0;top:calc(100% + 4px);background:#fff;border:1px solid #e5e7eb;border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.1);z-index:1000;min-width:0;overflow:hidden}
+    .lang-picker-btn{border:1px solid #e7ddcb;border-radius:8px;padding:5px 10px;font-size:13px;font-weight:600;cursor:pointer;background:#fffdf8;color:#16271c;white-space:nowrap}
+    .lang-picker-btn:hover{background:#fbf6ec}
+    .lang-picker-menu{display:none;position:absolute;right:0;top:calc(100% + 4px);background:#fffdf8;border:1px solid #e7ddcb;border-radius:10px;box-shadow:0 4px 16px rgba(22,39,28,.12);z-index:1000;min-width:0;overflow:hidden}
     .lang-picker-menu.open{display:block}
-    .lang-picker-menu button{display:block;width:100%;text-align:left;padding:8px 14px;border:none;background:none;cursor:pointer;font-size:13px;color:#374151}
-    .lang-picker-menu button:hover{background:#f0fdf4;color:#16a34a}
+    .lang-picker-menu button{display:block;width:100%;text-align:left;padding:8px 14px;border:none;background:none;cursor:pointer;font-size:13px;color:#16271c}
+    .lang-picker-menu button:hover{background:#eaf6e4;color:#1b7a28}
     .status-badge { font-size:.72rem; padding:2px 8px; border-radius:999px; font-weight:600; }
-    .order-filter-btn { background:#f9fafb; color:#6b7280; border-color:#e5e7eb; }
-    .order-filter-btn:hover { border-color:#22c55e; color:#16a34a; }
-    .order-filter-btn.active-filter { background:#dcfce7; color:#15803d; border-color:#86efac; }
+    .order-filter-btn { background:#fffdf8; color:#6b7280; border-color:#e7ddcb; }
+    .order-filter-btn:hover { border-color:#2f9e3a; color:#1b7a28; }
+    .order-filter-btn.active-filter { background:#eaf6e4; color:#155f20; border-color:#b6dfa0; }
     .status-pending    { background:#FEF3C7; color:#92400E; }
     .status-confirmed  { background:#D1FAE5; color:#065F46; }
     .status-preparing  { background:#DBEAFE; color:#1E40AF; }
     .status-delivering { background:#EDE9FE; color:#5B21B6; }
     .status-delivered  { background:#D1FAE5; color:#065F46; }
     .status-cancelled  { background:#FEE2E2; color:#991B1B; }
-    .tab-active { border-bottom:3px solid #25D366; color:#25D366; font-weight:600; }
-    input:focus,select:focus,textarea:focus { outline:2px solid #25D366; outline-offset:1px; }
+    .tab-active { border-bottom:3px solid #2f9e3a; color:#1b7a28; font-weight:600; }
+    input:focus,select:focus,textarea:focus { outline:2px solid #2f9e3a; outline-offset:1px; }
     .modal-bg { background:rgba(0,0,0,.45); }
   </style>
 </head>
 <body class="bg-gray-50 min-h-screen font-sans">
 
 <!-- ════ LOGIN ════ -->
-<div id="loginPage" class="min-h-screen flex flex-col hidden" style="background:linear-gradient(135deg,#f0fdf4 0%,#ecfdf5 60%,#f0f9ff 100%);">
+<div id="loginPage" class="min-h-screen flex flex-col hidden" style="background:linear-gradient(135deg,#eaf6e4 0%,#f3f7ee 60%,#fbf6ec 100%);">
 
   <!-- Header -->
-  <header style="padding:12px 16px;border-bottom:1px solid #e5e7eb;background:rgba(255,255,255,.96);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:space-between;">
+  <header style="padding:14px 5%;border-bottom:1px solid #e7ddcb;background:rgba(251,246,236,.82);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:space-between;">
     <a href="/" style="display:inline-block;">
       <img src="/images/logosarabot.webp" alt="Sara Bot" style="height:32px;">
     </a>
@@ -61,7 +66,7 @@
           <button onclick="setLang('pt')">PT</button>
         </div>
       </div>
-      <a href="/register/index.html" style="background:#22c55e;color:#fff;border-radius:10px;padding:8px 18px;font-size:.85rem;font-weight:700;text-decoration:none;transition:background .15s;" onmouseover="this.style.background='#16a34a'" onmouseout="this.style.background='#22c55e'" data-i18n="login.register">¿No tenés cuenta? Empezar gratis →</a>
+      <a href="/register/index.html" style="background:#e2622a;color:#fff;border-radius:10px;padding:10px 20px;font-size:.95rem;font-weight:600;font-family:'Outfit',sans-serif;text-decoration:none;box-shadow:0 3px 0 #a3430f;transition:transform .15s, box-shadow .15s;" onmouseover="this.style.transform='translateY(2px)';this.style.boxShadow='0 1px 0 #a3430f'" onmouseout="this.style.transform='';this.style.boxShadow='0 3px 0 #a3430f'" data-i18n="login.register">¿No tenés cuenta? Empezar gratis →</a>
     </div>
   </header>
 
@@ -87,8 +92,7 @@
             onkeydown="if(event.key==='Enter') login()"/>
         </div>
         <button onclick="login()" data-i18n="login.submit"
-          class="w-full py-2.5 rounded-xl text-sm font-bold text-white transition"
-          style="background:#25D366;" onmouseover="this.style.background='#1da851'" onmouseout="this.style.background='#25D366'">
+          class="btn-green w-full py-2.5 rounded-xl text-sm font-bold text-white">
           Ingresar →
         </button>
       </div>
@@ -128,8 +132,7 @@
         Cancelar
       </button>
       <button onclick="sendForgotPassword()" id="forgotBtn" data-i18n="forgot.send"
-        class="flex-1 py-2.5 rounded-xl text-sm font-bold text-white"
-        style="background:#25D366;">
+        class="btn-green flex-1 py-2.5 rounded-xl text-sm font-bold text-white">
         Enviar →
       </button>
     </div>
@@ -137,8 +140,8 @@
 </div>
 
 <!-- ════ RESET PASSWORD PAGE ════ -->
-<div id="resetPage" class="hidden min-h-screen flex flex-col" style="background:linear-gradient(135deg,#f0fdf4 0%,#ecfdf5 60%,#f0f9ff 100%);">
-  <header style="padding:12px 16px;border-bottom:1px solid #e5e7eb;background:rgba(255,255,255,.96);">
+<div id="resetPage" class="hidden min-h-screen flex flex-col" style="background:linear-gradient(135deg,#eaf6e4 0%,#f3f7ee 60%,#fbf6ec 100%);">
+  <header style="padding:14px 5%;border-bottom:1px solid #e7ddcb;background:rgba(251,246,236,.82);backdrop-filter:blur(10px);">
     <img src="/images/logosarabot.webp" alt="Sara Bot" style="height:32px;">
   </header>
   <div class="flex-1 flex items-center justify-center px-4 py-10">
@@ -155,8 +158,7 @@
           class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm"
           onkeydown="if(event.key==='Enter') submitReset()"/>
         <button onclick="submitReset()" id="resetBtn" data-i18n="reset.submit"
-          class="w-full py-2.5 rounded-xl text-sm font-bold text-white"
-          style="background:#25D366;">
+          class="btn-green w-full py-2.5 rounded-xl text-sm font-bold text-white">
           Guardar contraseña →
         </button>
       </div>
@@ -353,7 +355,7 @@
           <span class="text-xs text-gray-400 leading-tight" id="navTitle"></span>
         </div>
       </div>
-      <button onclick="logout()" data-i18n="nav.logout" class="text-sm text-gray-500 hover:text-red-500 transition">Salir</button>
+      <button onclick="logout()" data-i18n="nav.logout" class="btn-green text-sm px-4 py-1.5 rounded-lg font-semibold transition">Salir</button>
     </div>
     <!-- Tabs -->
     <div class="max-w-6xl mx-auto px-4 flex gap-1 sm:gap-4 text-sm text-gray-500 overflow-x-auto scrollbar-hide">
@@ -371,14 +373,14 @@
   </nav>
 
   <!-- WhatsApp not connected banner -->
-  <div id="waBanner" class="hidden bg-amber-50 border-b border-amber-200 px-4 py-3">
+  <div id="waBanner" class="hidden bg-red-50 border-b border-red-200 px-4 py-3">
     <div class="max-w-6xl mx-auto flex items-center justify-between gap-3 flex-wrap">
-      <div class="flex items-center gap-2 text-sm text-amber-800">
+      <div class="flex items-center gap-2 text-sm text-red-800">
         <span class="text-lg">⚠️</span>
         <span data-i18n="banner.wa.text">Conectá tu WhatsApp Business para activar todas las funciones.</span>
       </div>
       <button onclick="openWizard()" data-i18n="banner.wa.btn"
-        class="flex-shrink-0 bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold px-4 py-1.5 rounded-full transition">
+        class="flex-shrink-0 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-4 py-1.5 rounded-full transition">
         Conectar ahora →
       </button>
     </div>
@@ -450,10 +452,10 @@
                 <input id="nameEditorInput" type="text" placeholder="Nombre del contacto"
                   onkeydown="if(event.key==='Enter') saveName(); if(event.key==='Escape') cancelEditName();"
                   class="flex-1 bg-green-800 border border-green-500 text-white placeholder-green-400 rounded-lg px-3 py-1 text-sm focus:outline-none min-w-0"/>
-                <button onclick="saveName()" class="text-white bg-green-500 hover:bg-green-400 rounded-lg px-2 py-1 text-xs font-semibold flex-shrink-0">✓</button>
+                <button onclick="saveName()" class="text-white bg-[#e2622a] hover:bg-[#a3430f] rounded-lg px-2 py-1 text-xs font-semibold flex-shrink-0">✓</button>
                 <button onclick="cancelEditName()" class="text-green-300 hover:text-white text-xs flex-shrink-0">✕</button>
               </div>
-              <button id="resumeBtn" onclick="resumeBot()" data-i18n="chat.resume" class="hidden flex-shrink-0 bg-white text-green-700 text-xs font-semibold px-3 py-1.5 rounded-full hover:bg-green-50 transition">🤖 Reactivar Sara</button>
+              <button id="resumeBtn" onclick="resumeBot()" data-i18n="chat.resume" class="hidden flex-shrink-0 bg-white text-[#a3430f] text-xs font-semibold px-3 py-1.5 rounded-full hover:bg-[#fcefe6] transition">🤖 Reactivar Sara</button>
               <button onclick="eraseCustomerData()" data-i18n="chat.erase" title="GDPR erase" class="flex-shrink-0 text-red-300 hover:text-white text-xs px-2 py-1.5 rounded-full transition opacity-60 hover:opacity-100">🗑️</button>
             </div>
             <!-- Takeover banner -->
@@ -464,7 +466,7 @@
             <div id="orderBanner" class="hidden bg-amber-50 border-b border-amber-200 px-4 py-2.5 flex-shrink-0">
               <div id="orderBannerText" class="text-sm text-amber-900 mb-2 font-medium"></div>
               <div class="flex gap-2">
-                <button onclick="confirmOrderChat()" data-i18n="chat.confirm" class="bg-green-600 hover:bg-green-700 text-white text-xs px-4 py-1.5 rounded-full font-semibold transition">✅ Confirmar pedido</button>
+                <button onclick="confirmOrderChat()" data-i18n="chat.confirm" class="bg-[#e2622a] hover:bg-[#a3430f] text-white text-xs px-4 py-1.5 rounded-full font-semibold transition">✅ Confirmar pedido</button>
                 <button onclick="cancelOrderChat()" data-i18n="chat.cancel" class="bg-red-500 hover:bg-red-600 text-white text-xs px-4 py-1.5 rounded-full font-semibold transition">❌ Cancelar</button>
               </div>
             </div>
@@ -486,7 +488,7 @@
                 onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChatMsg();}"
                 class="flex-1 bg-white border border-gray-200 rounded-full px-4 py-2 text-sm focus:outline-none focus:border-green-400 min-w-0"/>
               <button onclick="sendChatMsg()"
-                class="bg-green-600 hover:bg-green-700 text-white rounded-full w-9 h-9 flex items-center justify-center flex-shrink-0 transition text-base leading-none">➤</button>
+                class="bg-[#e2622a] hover:bg-[#a3430f] text-white rounded-full w-9 h-9 flex items-center justify-center flex-shrink-0 transition text-base leading-none">➤</button>
             </div>
           </div>
         </div>
@@ -525,15 +527,15 @@
         <h2 data-i18n="products.title" class="text-lg font-semibold text-gray-800">Productos</h2>
         <div class="flex gap-2">
           <button onclick="openImportModal()"
-            class="px-4 py-2 rounded-lg text-sm font-semibold border border-gray-200 text-gray-600 hover:bg-gray-50 flex items-center gap-1" data-i18n="import.btn">
+            class="px-4 py-2 rounded-lg text-sm font-semibold bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 flex items-center gap-1" data-i18n="import.btn">
             📥 Importar productos
           </button>
           <button onclick="exportProducts()"
-            class="px-4 py-2 rounded-lg text-sm font-semibold border border-gray-200 text-gray-600 hover:bg-gray-50 flex items-center gap-1" data-i18n="products.export">
+            class="px-4 py-2 rounded-lg text-sm font-semibold bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 flex items-center gap-1" data-i18n="products.export">
             ⬇ Exportar CSV
           </button>
           <button onclick="openZipModal()"
-            class="px-4 py-2 rounded-lg text-sm font-semibold border border-gray-200 text-gray-600 hover:bg-gray-50 flex items-center gap-1" data-i18n="products.bulkImages">
+            class="px-4 py-2 rounded-lg text-sm font-semibold bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 flex items-center gap-1" data-i18n="products.bulkImages">
             📦 Imágenes ZIP
           </button>
           <button onclick="openProductModal(null)"
@@ -586,11 +588,11 @@
         <h2 data-i18n="services.title" class="text-lg font-semibold text-gray-800">Servicios</h2>
         <div class="flex gap-2">
           <button onclick="openImportModal('services')"
-            class="px-4 py-2 rounded-lg text-sm font-semibold border border-gray-200 text-gray-600 hover:bg-gray-50 flex items-center gap-1" data-i18n="services.import">
+            class="px-4 py-2 rounded-lg text-sm font-semibold bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 flex items-center gap-1" data-i18n="services.import">
             📥 Importar servicios
           </button>
           <button onclick="exportServices()"
-            class="px-4 py-2 rounded-lg text-sm font-semibold border border-gray-200 text-gray-600 hover:bg-gray-50 flex items-center gap-1" data-i18n="services.export">
+            class="px-4 py-2 rounded-lg text-sm font-semibold bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 flex items-center gap-1" data-i18n="services.export">
             ⬇ Exportar CSV
           </button>
           <button onclick="openServiceModal()" data-i18n="services.new" class="btn-green px-4 py-2 rounded-lg text-sm font-semibold">+ Nuevo servicio</button>
@@ -605,10 +607,10 @@
         <h2 data-i18n="orders.title" class="text-lg font-semibold text-gray-800">Pedidos recientes</h2>
         <div class="flex items-center gap-3">
           <button onclick="exportOrders()" data-i18n="orders.export"
-            class="flex items-center gap-1.5 text-sm text-green-600 border border-green-200 bg-green-50 hover:bg-green-100 px-3 py-1.5 rounded-lg transition font-medium">
+            class="flex items-center gap-1.5 text-sm text-gray-600 border border-gray-200 bg-white hover:bg-gray-50 px-3 py-1.5 rounded-lg transition font-medium">
             ⬇ Exportar CSV
           </button>
-          <button onclick="loadOrders()" data-i18n="orders.refresh" class="text-sm text-green-500 hover:underline">↻ Actualizar</button>
+          <button onclick="loadOrders()" data-i18n="orders.refresh" class="flex items-center gap-1.5 text-sm text-gray-600 border border-gray-200 bg-white hover:bg-gray-50 px-3 py-1.5 rounded-lg transition font-medium">↻ Actualizar</button>
         </div>
       </div>
       <!-- Status filters -->
@@ -630,13 +632,13 @@
       <div class="flex items-center justify-between mb-4">
         <h2 data-i18n="customers.title" class="text-lg font-semibold text-gray-800">Clientes</h2>
         <div class="flex gap-2">
-          <button onclick="openAddCustomerModal()" data-i18n="customers.add"
-            class="flex items-center gap-1.5 text-sm text-blue-600 border border-blue-200 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition font-medium">
-            + Agregar
-          </button>
           <button onclick="exportCustomers()" data-i18n="customers.export"
-            class="flex items-center gap-1.5 text-sm text-green-600 border border-green-200 bg-green-50 hover:bg-green-100 px-3 py-1.5 rounded-lg transition font-medium">
+            class="flex items-center gap-1.5 text-sm text-gray-600 border border-gray-200 bg-white hover:bg-gray-50 px-3 py-1.5 rounded-lg transition font-medium">
             ⬇ Exportar CSV
+          </button>
+          <button onclick="openAddCustomerModal()" data-i18n="customers.add"
+            class="btn-green flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg transition font-semibold">
+            + Agregar
           </button>
         </div>
       </div>
@@ -677,7 +679,7 @@
           class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300 resize-none mb-3"></textarea>
         <div class="flex items-center gap-3">
           <button onclick="sendBroadcast()"
-            class="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold transition">
+            class="px-4 py-2 rounded-lg bg-[#e2622a] hover:bg-[#a3430f] text-white text-sm font-semibold transition">
             <span data-i18n="broadcast.btn">📢 Enviar</span>
           </button>
           <span id="broadcastStatus" class="text-sm text-gray-500"></span>
@@ -871,13 +873,13 @@
       <!-- Toolbar -->
       <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
         <div class="flex items-center gap-2">
-          <button onclick="calPrev()" class="px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 text-sm">‹</button>
+          <button onclick="calPrev()" class="px-3 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 text-sm">‹</button>
           <span id="calWeekLabel" class="text-sm font-semibold text-gray-800 min-w-[160px] text-center"></span>
-          <button onclick="calNext()" class="px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 text-sm">›</button>
+          <button onclick="calNext()" class="px-3 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 text-sm">›</button>
           <button onclick="calGoToday()" data-i18n="appt.today" class="px-3 py-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 text-xs">Hoy</button>
         </div>
         <div class="flex gap-2">
-          <button onclick="openBlockModal()" data-i18n="appt.addBlock" class="px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 text-sm">🚫 Agregar bloqueo</button>
+          <button onclick="openBlockModal()" data-i18n="appt.addBlock" class="px-3 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 text-sm">🚫 Agregar bloqueo</button>
           <button onclick="openApptModal(null)" data-i18n="appt.newAppt" class="btn-green px-4 py-1.5 rounded-lg text-sm font-semibold">+ Turno</button>
         </div>
       </div>
@@ -912,7 +914,7 @@
                 class="border border-gray-200 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-green-300">
             </div>
             <div class="flex items-center gap-2">
-              <button onclick="openWalkinModal()" class="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-lg text-sm font-semibold whitespace-nowrap">🪑 Occupa tavolo</button>
+              <button onclick="openWalkinModal()" class="bg-[#e2622a] hover:bg-[#a3430f] text-white px-3 py-1.5 rounded-lg text-sm font-semibold whitespace-nowrap">🪑 Occupa tavolo</button>
               <button onclick="openResvModal(null)" class="btn-green px-3 py-1.5 rounded-lg text-sm font-semibold">+ <span data-i18n="restaurant.addResv">Nueva reserva</span></button>
             </div>
           </div>
@@ -946,7 +948,7 @@
         <div id="walkinMsg" class="hidden text-xs text-red-500 mt-3"></div>
         <div class="flex justify-end gap-2 mt-5">
           <button onclick="closeWalkinModal()" class="px-4 py-2 rounded-lg text-gray-600 border border-gray-200 text-sm">Annulla</button>
-          <button onclick="saveWalkin()" class="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg text-sm font-semibold">Occupa</button>
+          <button onclick="saveWalkin()" class="bg-[#e2622a] hover:bg-[#a3430f] text-white px-4 py-2 rounded-lg text-sm font-semibold">Occupa</button>
         </div>
       </div>
     </div>
@@ -959,7 +961,7 @@
         <h2 data-i18n="analytics.title" class="text-lg font-semibold text-gray-800">📊 Analytics</h2>
         <div class="flex gap-2">
           <button id="analyticsBtnWeek" onclick="loadAnalytics('week')"
-            class="px-3 py-1.5 rounded-lg text-sm font-medium bg-green-500 text-white transition" data-i18n="analytics.week">7 días</button>
+            class="px-3 py-1.5 rounded-lg text-sm font-medium bg-[#e2622a] text-white transition" data-i18n="analytics.week">7 días</button>
           <button id="analyticsBtnMonth" onclick="loadAnalytics('month')"
             class="px-3 py-1.5 rounded-lg text-sm font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition" data-i18n="analytics.month">30 días</button>
         </div>
@@ -1023,7 +1025,7 @@
       </div>
 
       <!-- Token error card — visible when token refresh failed (dismissible banner may be closed) -->
-      <div id="tokenErrorCard" class="hidden bg-orange-50 border border-orange-200 rounded-xl p-5">
+      <div id="tokenErrorCard" class="hidden bg-red-50 border border-red-200 rounded-xl p-5">
         <div class="flex items-start gap-3 mb-4">
           <span class="text-2xl">⚠️</span>
           <div>
@@ -1032,7 +1034,7 @@
           </div>
         </div>
         <button onclick="reconnectWhatsApp()"
-          class="w-full py-2.5 rounded-xl text-sm font-semibold bg-orange-500 hover:bg-orange-600 text-white transition"
+          class="w-full py-2.5 rounded-xl text-sm font-semibold bg-red-600 hover:bg-red-700 text-white transition"
           data-i18n="wiz.token_reconnect">
         </button>
       </div>
@@ -1049,7 +1051,7 @@
           </div>
         </div>
         <button onclick="openWizard()"
-          class="w-full py-2.5 rounded-xl text-sm font-semibold bg-green-500 hover:bg-green-600 text-white transition"
+          class="w-full py-2.5 rounded-xl text-sm font-semibold bg-[#e2622a] hover:bg-[#a3430f] text-white transition"
           data-i18n="wiz.resume.btn">
           🔗 Conectar WhatsApp Business
         </button>
@@ -1605,7 +1607,7 @@
             <div id="planBillingMsg" class="hidden rounded-lg px-4 py-2 text-sm mb-3"></div>
             <div id="planCancelScheduled" class="hidden bg-amber-50 border border-amber-200 text-amber-700 text-sm rounded-lg px-4 py-3 mb-3"></div>
             <button onclick="openStripePortal()"
-              class="w-full py-2 rounded-lg text-sm font-semibold bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition mb-2"
+              class="w-full py-2 rounded-lg text-sm font-semibold bg-[#fcefe6] text-[#a3430f] border border-[#f0c9b5] hover:bg-[#f7ddcd] transition mb-2"
               data-i18n="plan.manage.payment">
               💳 Gestionar método de pago
             </button>
@@ -1615,7 +1617,7 @@
               Cancelar suscripción
             </button>
             <button id="planReactivateBtn" onclick="reactivateSubscription()"
-              class="hidden w-full py-2 rounded-lg text-sm font-semibold bg-green-50 text-green-700 border border-green-200 hover:bg-green-100 transition"
+              class="hidden w-full py-2 rounded-lg text-sm font-semibold bg-[#fcefe6] text-[#a3430f] border border-[#f0c9b5] hover:bg-[#f7ddcd] transition"
               data-i18n="plan.reactivate.btn">
               Reactivar suscripción
             </button>
@@ -1636,7 +1638,7 @@
                 oninput="this.value=this.value.toUpperCase()"
                 onkeydown="if(event.key==='Enter') redeemPromo()"/>
               <button onclick="redeemPromo()" id="promoRedeemBtn"
-                class="btn-purple px-4 py-2 rounded-lg text-sm font-semibold whitespace-nowrap">
+                class="btn-green px-4 py-2 rounded-lg text-sm font-semibold whitespace-nowrap">
                 <span data-i18n="plan.promo.btn">Aplicar</span>
               </button>
             </div>
@@ -1825,10 +1827,10 @@
     </div>
     <div id="apptDetailBody" class="space-y-2 text-sm text-gray-700"></div>
     <div class="flex gap-2 mt-5 flex-wrap">
-      <button onclick="confirmAppt()" id="apptDetailConfirm" data-i18n="appt.detail.confirm" class="flex-1 bg-green-50 text-green-700 hover:bg-green-100 py-2 rounded-lg text-xs font-semibold transition">✅ Confirmar</button>
-      <button onclick="completeAppt()" id="apptDetailComplete" data-i18n="appt.detail.complete" class="flex-1 bg-blue-50 text-blue-700 hover:bg-blue-100 py-2 rounded-lg text-xs font-semibold transition">✔ Completar</button>
-      <button onclick="markApptPaid()" id="apptDetailPaid" data-i18n="appt.markPaid" class="flex-1 bg-yellow-50 text-yellow-700 hover:bg-yellow-100 py-2 rounded-lg text-xs font-semibold transition">💳 Marcar pagado</button>
-      <button onclick="stornoAppt()" id="apptDetailStorno" data-i18n="appt.storno" class="flex-1 bg-orange-50 text-orange-700 hover:bg-orange-100 py-2 rounded-lg text-xs font-semibold transition">↩ Storno</button>
+      <button onclick="confirmAppt()" id="apptDetailConfirm" data-i18n="appt.detail.confirm" class="flex-1 bg-[#fcefe6] text-[#a3430f] hover:bg-[#f7ddcd] py-2 rounded-lg text-xs font-semibold transition">✅ Confirmar</button>
+      <button onclick="completeAppt()" id="apptDetailComplete" data-i18n="appt.detail.complete" class="flex-1 bg-[#fcefe6] text-[#a3430f] hover:bg-[#f7ddcd] py-2 rounded-lg text-xs font-semibold transition">✔ Completar</button>
+      <button onclick="markApptPaid()" id="apptDetailPaid" data-i18n="appt.markPaid" class="flex-1 bg-[#fcefe6] text-[#a3430f] hover:bg-[#f7ddcd] py-2 rounded-lg text-xs font-semibold transition">💳 Marcar pagado</button>
+      <button onclick="stornoAppt()" id="apptDetailStorno" data-i18n="appt.storno" class="flex-1 bg-[#fcefe6] text-[#a3430f] hover:bg-[#f7ddcd] py-2 rounded-lg text-xs font-semibold transition">↩ Storno</button>
       <button onclick="cancelAppt()" id="apptDetailCancel" data-i18n="appt.detail.cancel" class="flex-1 bg-red-50 text-red-700 hover:bg-red-100 py-2 rounded-lg text-xs font-semibold transition">✕ Cancelar</button>
       <button onclick="deleteAppt()" data-i18n="appt.detail.delete" class="flex-1 bg-gray-50 text-gray-500 hover:bg-gray-100 py-2 rounded-lg text-xs font-semibold transition">🗑 Eliminar</button>
     </div>
@@ -1849,17 +1851,17 @@
       <!-- 3 source buttons -->
       <div class="grid grid-cols-3 gap-3 mb-5">
         <button onclick="selectImportSource('sheets')" id="importSrcSheets"
-          class="flex flex-col items-center gap-2 p-4 rounded-xl border-2 border-purple-400 bg-purple-50 text-purple-700 font-semibold text-sm transition">
+          class="flex flex-col items-center gap-2 p-4 rounded-xl border-2 border-[#e2622a] bg-[#fcefe6] text-[#a3430f] font-semibold text-sm transition">
           <span class="text-2xl">📋</span>
           <span data-i18n="import.tab.sheets">Google Sheets</span>
         </button>
         <button onclick="selectImportSource('csv')" id="importSrcCsv"
-          class="flex flex-col items-center gap-2 p-4 rounded-xl border-2 border-gray-200 text-gray-500 font-semibold text-sm hover:border-purple-300 hover:bg-purple-50 transition">
+          class="flex flex-col items-center gap-2 p-4 rounded-xl border-2 border-gray-200 text-gray-500 font-semibold text-sm hover:border-[#e8a07f] hover:bg-[#fcefe6] transition">
           <span class="text-2xl">📄</span>
           <span data-i18n="import.tab.csv">CSV / XLSX</span>
         </button>
         <button onclick="selectImportSource('photos')" id="importSrcPhotos"
-          class="flex flex-col items-center gap-2 p-4 rounded-xl border-2 border-gray-200 text-gray-500 font-semibold text-sm hover:border-purple-300 hover:bg-purple-50 transition">
+          class="flex flex-col items-center gap-2 p-4 rounded-xl border-2 border-gray-200 text-gray-500 font-semibold text-sm hover:border-[#e8a07f] hover:bg-[#fcefe6] transition">
           <span class="text-2xl">📸</span>
           <span data-i18n="import.tab.photos">Fotos IA</span>
         </button>
@@ -1896,7 +1898,7 @@
         <code id="importCsvColumnsHint" class="hidden"></code>
         <div id="importCsvError" class="hidden bg-red-50 text-red-700 text-sm rounded-lg px-4 py-2 mb-3"></div>
         <div id="importCsvDrop"
-          class="border-2 border-dashed border-gray-200 rounded-xl p-8 text-center cursor-pointer hover:border-purple-300 hover:bg-purple-50 transition mb-4"
+          class="border-2 border-dashed border-gray-200 rounded-xl p-8 text-center cursor-pointer hover:border-[#e8a07f] hover:bg-[#fcefe6] transition mb-4"
           onclick="document.getElementById('importCsvInput').click()"
           ondragover="event.preventDefault();this.classList.add('border-purple-400','bg-purple-50')"
           ondragleave="this.classList.remove('border-purple-400','bg-purple-50')"
@@ -1912,7 +1914,7 @@
       <div id="importPanelPhotos" class="hidden">
         <p class="text-xs text-gray-500 mb-3" id="importPhotosHint" data-i18n="import.photos.hint">Subí fotos de tus productos. Claude los extrae automáticamente.</p>
         <div id="importPhotosDrop"
-          class="border-2 border-dashed border-gray-200 rounded-xl p-6 text-center cursor-pointer hover:border-purple-300 hover:bg-purple-50 transition mb-3"
+          class="border-2 border-dashed border-gray-200 rounded-xl p-6 text-center cursor-pointer hover:border-[#e8a07f] hover:bg-[#fcefe6] transition mb-3"
           onclick="document.getElementById('importPhotosInput').click()"
           ondragover="event.preventDefault();this.classList.add('border-purple-400','bg-purple-50')"
           ondragleave="this.classList.remove('border-purple-400','bg-purple-50')"
@@ -2924,10 +2926,10 @@ function showTokenErrorBanner() {
   if (document.getElementById('tokenErrorBanner')) return;
   const banner = document.createElement('div');
   banner.id = 'tokenErrorBanner';
-  banner.className = 'fixed top-0 left-0 right-0 z-50 bg-orange-500 text-white px-4 py-3 flex items-center justify-between gap-3 shadow-lg';
+  banner.className = 'fixed top-0 left-0 right-0 z-50 bg-red-600 text-white px-4 py-3 flex items-center justify-between gap-3 shadow-lg';
   banner.innerHTML = `
     <span class="text-sm font-medium flex-1">${t('wiz.token_error')}</span>
-    <button onclick="reconnectWhatsApp()" class="shrink-0 bg-white text-orange-600 font-semibold text-xs px-3 py-1.5 rounded-lg hover:bg-orange-50 transition">
+    <button onclick="reconnectWhatsApp()" class="shrink-0 bg-white text-red-700 font-semibold text-xs px-3 py-1.5 rounded-lg hover:bg-red-50 transition">
       ${t('wiz.token_reconnect')}
     </button>
     <button onclick="this.parentElement.remove()" class="shrink-0 text-white/80 hover:text-white text-lg leading-none">✕</button>
@@ -3156,7 +3158,7 @@ function renderCategoryFilters() {
   const el = document.getElementById('categoryFilters');
   el.innerHTML = cats.map(c => `
     <button onclick="filterCategory('${c}')"
-      class="px-3 py-1 rounded-full text-xs font-medium border transition ${activeCategory === c ? 'bg-green-500 text-white border-green-500' : 'bg-white text-gray-600 border-gray-200 hover:border-green-400'}">
+      class="px-3 py-1 rounded-full text-xs font-medium border transition ${activeCategory === c ? 'bg-[#e2622a] text-white border-[#e2622a]' : 'bg-white text-gray-600 border-gray-200 hover:border-[#e2622a]'}">
       ${c === 'all' ? t('products.filter.all') : c}
     </button>`).join('');
 }
@@ -3719,7 +3721,7 @@ async function loadReservations() {
         </div>
       </div>
       <div class="flex items-center gap-2 flex-shrink-0">
-        ${r.status === 'seated' ? `<button onclick="updateResvStatus(${r.id},'done')" class="bg-green-500 hover:bg-green-600 text-white text-xs font-semibold px-2 py-1 rounded-lg whitespace-nowrap">✓ Libera</button>` : ''}
+        ${r.status === 'seated' ? `<button onclick="updateResvStatus(${r.id},'done')" class="bg-[#e2622a] hover:bg-[#a3430f] text-white text-xs font-semibold px-2 py-1 rounded-lg whitespace-nowrap">✓ Libera</button>` : ''}
         <select onchange="updateResvStatus(${r.id}, this.value)" class="text-xs border border-gray-200 rounded-lg px-2 py-1 focus:outline-none ${sc}">
           ${['confirmed','seated','done','cancelled','no_show','pending_merchant'].map(s =>
             `<option value="${s}" ${r.status===s?'selected':''}>${STATUS_LABEL(s)}</option>`).join('')}
@@ -4010,8 +4012,8 @@ async function loadAnalytics(period) {
   currentAnalyticsPeriod = period;
 
   // Toggle button styles
-  document.getElementById('analyticsBtnWeek').className  = `px-3 py-1.5 rounded-lg text-sm font-medium transition ${period==='week'  ? 'bg-green-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`;
-  document.getElementById('analyticsBtnMonth').className = `px-3 py-1.5 rounded-lg text-sm font-medium transition ${period==='month' ? 'bg-green-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`;
+  document.getElementById('analyticsBtnWeek').className  = `px-3 py-1.5 rounded-lg text-sm font-medium transition ${period==='week'  ? 'bg-[#e2622a] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`;
+  document.getElementById('analyticsBtnMonth').className = `px-3 py-1.5 rounded-lg text-sm font-medium transition ${period==='month' ? 'bg-[#e2622a] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`;
 
   try {
     const data = await api(`/admin/analytics?period=${period}`);
@@ -4067,11 +4069,11 @@ function renderAnalyticsChart(days) {
     const label = d.date.slice(5); // MM-DD
     const showLabel = n <= 7 || i % Math.ceil(n / 7) === 0;
     return `
-      <rect x="${x}" y="${y}" width="${barW}" height="${barH}" rx="2" fill="${d.orders>0?'#22c55e':'#e5e7eb'}">
+      <rect x="${x}" y="${y}" width="${barW}" height="${barH}" rx="2" fill="${d.orders>0?'#2f9e3a':'#e5e7eb'}">
         <title>${d.date}: ${d.orders} pedidos</title>
       </rect>
       ${showLabel ? `<text x="${x + barW/2}" y="${H - 4}" text-anchor="middle" font-size="9" fill="#9ca3af">${label}</text>` : ''}
-      ${d.orders > 0 ? `<text x="${x + barW/2}" y="${y - 3}" text-anchor="middle" font-size="9" fill="#16a34a">${d.orders}</text>` : ''}`;
+      ${d.orders > 0 ? `<text x="${x + barW/2}" y="${y - 3}" text-anchor="middle" font-size="9" fill="#1b7a28">${d.orders}</text>` : ''}`;
   }).join('');
 
   el.innerHTML = `<svg width="100%" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">${bars}</svg>`;
@@ -5409,7 +5411,7 @@ function renderMessages(msgs) {
     const bubbleColor = isCustomer
       ? 'bg-white text-gray-800'
       : isMerchant
-        ? 'bg-blue-500 text-white'
+        ? 'bg-[#e2622a] text-white'
         : 'bg-green-100 text-gray-800';
 
     const label = isCustomer ? '' : isMerchant
@@ -5735,7 +5737,7 @@ function selectImportSource(src) {
     const btn = document.getElementById('importSrc' + s.charAt(0).toUpperCase() + s.slice(1));
     const panel = document.getElementById('importPanel' + s.charAt(0).toUpperCase() + s.slice(1));
     const active = s === src;
-    btn.className = `flex flex-col items-center gap-2 p-4 rounded-xl border-2 font-semibold text-sm transition ${active ? 'border-purple-400 bg-purple-50 text-purple-700' : 'border-gray-200 text-gray-500 hover:border-purple-300 hover:bg-purple-50'}`;
+    btn.className = `flex flex-col items-center gap-2 p-4 rounded-xl border-2 font-semibold text-sm transition ${active ? 'border-[#e2622a] bg-[#fcefe6] text-[#a3430f]' : 'border-gray-200 text-gray-500 hover:border-[#e8a07f] hover:bg-[#fcefe6]'}`;
     panel.classList.toggle('hidden', !active);
   });
 }

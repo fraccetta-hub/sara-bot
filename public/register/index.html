@@ -5,31 +5,35 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Crear cuenta — Sara Bot</title>
 <link rel="icon" type="image/webp" href="/images/favicon.webp"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <script src="https://cdn.tailwindcss.com"></script>
+<script>tailwind.config={theme:{extend:{fontFamily:{sans:['Inter','ui-sans-serif','system-ui','sans-serif']},colors:{green:{50:'#eef7ea',100:'#d7edc9',200:'#b6dfa0',300:'#8bcd6f',400:'#57b347',500:'#2f9e3a',600:'#1b7a28',700:'#155f20',800:'#124d1c',900:'#0e3b16'}}}}}</script>
 <style>
-  body { background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 50%, #f0f9ff 100%); min-height: 100vh; }
+  body { background: linear-gradient(135deg, #eaf6e4 0%, #f3f7ee 50%, #fbf6ec 100%); min-height: 100vh; font-family:'Inter',sans-serif; }
+  h1,h2,h3 { font-family:'Outfit',sans-serif; letter-spacing:-.01em; }
   .step { display: none; }
   .step.active { display: block; }
-  .plan-card { transition: all .2s; cursor: pointer; border: 2px solid #e5e7eb; }
-  .plan-card.selected { border-color: #22c55e; background: #f0fdf4; }
-  .plan-card:hover { border-color: #86efac; }
+  .plan-card { transition: all .2s; cursor: pointer; border: 2px solid #e7ddcb; }
+  .plan-card.selected { border-color: #e2622a; background: #fcefe6; }
+  .plan-card:hover { border-color: #f0b59a; }
   .sector-btn { transition: all .15s; }
-  .sector-btn.selected { background: #22c55e; color: #fff; border-color: #22c55e; }
+  .sector-btn.selected { background: #fcefe6; color: #a3430f; border-color: #e2622a; }
   .progress-bar { transition: width .4s ease; }
   .fade-in { animation: fadeIn .3s ease; }
   @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
-  input:focus, textarea:focus, select:focus { outline: none; border-color: #22c55e; box-shadow: 0 0 0 3px rgba(34,197,94,.15); }
+  input:focus, textarea:focus, select:focus { outline: none; border-color: #2f9e3a; box-shadow: 0 0 0 3px rgba(47,158,58,.15); }
   .input-err { border-color: #ef4444 !important; }
   .faq-body { max-height: 0; overflow: hidden; transition: max-height .35s ease; }
   .faq-body.open { max-height: 400px; }
-  .check-icon { display: inline-block; width: 20px; height: 20px; border-radius: 50%; background: #22c55e; color: #fff; text-align: center; line-height: 20px; font-size: 12px; flex-shrink: 0; }
+  .check-icon { display: inline-block; width: 20px; height: 20px; border-radius: 50%; background: #2f9e3a; color: #fff; text-align: center; line-height: 20px; font-size: 12px; flex-shrink: 0; }
   .lang-picker{position:relative}
-  .lang-picker-btn{border:1px solid #e5e7eb;border-radius:8px;padding:5px 10px;font-size:13px;font-weight:600;cursor:pointer;background:#fff;color:#374151;white-space:nowrap}
-  .lang-picker-btn:hover{background:#f9fafb}
-  .lang-picker-menu{display:none;position:absolute;right:0;top:calc(100% + 4px);background:#fff;border:1px solid #e5e7eb;border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.1);z-index:1000;min-width:0;overflow:hidden}
+  .lang-picker-btn{border:1px solid #e7ddcb;border-radius:8px;padding:5px 10px;font-size:13px;font-weight:600;cursor:pointer;background:#fffdf8;color:#16271c;white-space:nowrap}
+  .lang-picker-btn:hover{background:#fbf6ec}
+  .lang-picker-menu{display:none;position:absolute;right:0;top:calc(100% + 4px);background:#fffdf8;border:1px solid #e7ddcb;border-radius:10px;box-shadow:0 4px 16px rgba(22,39,28,.12);z-index:1000;min-width:0;overflow:hidden}
   .lang-picker-menu.open{display:block}
-  .lang-picker-menu button{display:block;width:100%;text-align:left;padding:8px 14px;border:none;background:none;cursor:pointer;font-size:13px;color:#374151}
-  .lang-picker-menu button:hover{background:#f0fdf4;color:#16a34a}
+  .lang-picker-menu button{display:block;width:100%;text-align:left;padding:8px 14px;border:none;background:none;cursor:pointer;font-size:13px;color:#16271c}
+  .lang-picker-menu button:hover{background:#eaf6e4;color:#1b7a28}
   @media(max-width:640px){ .lang-switcher { display: none; } }
 </style>
 </head>
@@ -37,7 +41,7 @@
 
 
 <!-- ══ Header ══════════════════════════════════════════════════════════════ -->
-<header class="bg-white border-b border-gray-100 px-4 py-3 flex items-center justify-between sticky top-0 z-20 shadow-sm">
+<header class="flex items-center justify-between sticky top-0 z-20" style="padding:14px 5%;background:rgba(251,246,236,.82);backdrop-filter:blur(10px);border-bottom:1px solid #e7ddcb;">
   <a href="/" class="hover:opacity-80 transition">
     <img src="/images/logosarabot.webp" alt="Sara Bot" style="height:32px;">
   </a>
@@ -53,7 +57,7 @@
         <button onclick="setLang('pt')">PT</button>
       </div>
     </div>
-    <a href="/admin/index.html" style="background:#22c55e;color:#fff;border-radius:10px;padding:8px 18px;font-size:.85rem;font-weight:700;text-decoration:none;transition:background .15s;" onmouseover="this.style.background='#16a34a'" onmouseout="this.style.background='#22c55e'" data-i18n="nav.signin">Sign in →</a>
+    <a href="/admin/index.html" style="background:#e2622a;color:#fff;border-radius:10px;padding:10px 20px;font-size:.95rem;font-weight:600;font-family:'Outfit',sans-serif;text-decoration:none;box-shadow:0 3px 0 #a3430f;transition:transform .15s, box-shadow .15s;" onmouseover="this.style.transform='translateY(2px)';this.style.boxShadow='0 1px 0 #a3430f'" onmouseout="this.style.transform='';this.style.boxShadow='0 3px 0 #a3430f'" data-i18n="nav.signin">Sign in →</a>
   </div>
 </header>
 
@@ -130,7 +134,7 @@
       </div>
 
       <div id="step1Err" class="text-red-500 text-sm mb-3 hidden"></div>
-      <button onclick="goStep(2)" class="w-full py-3 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-xl transition text-sm" data-i18n="s1.btn">
+      <button onclick="goStep(2)" class="w-full py-3 bg-[#e2622a] hover:bg-[#a3430f] shadow-[0_4px_0_#a3430f] text-white font-semibold rounded-xl transition text-sm" data-i18n="s1.btn">
         Continuar →
       </button>
     </div>
@@ -152,7 +156,7 @@
       <div id="step2Err" class="text-red-500 text-sm mt-3 hidden"></div>
       <div class="flex gap-2 mt-6">
         <button onclick="goStep(1)" class="flex-1 py-3 border border-gray-200 text-gray-600 font-medium rounded-xl text-sm hover:bg-gray-50 transition" data-i18n="s2.back">← Atrás</button>
-        <button onclick="goStep(3)" class="flex-2 flex-1 py-3 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-xl transition text-sm" data-i18n="s2.btn">Continuar →</button>
+        <button onclick="goStep(3)" class="flex-2 flex-1 py-3 bg-[#e2622a] hover:bg-[#a3430f] shadow-[0_4px_0_#a3430f] text-white font-semibold rounded-xl transition text-sm" data-i18n="s2.btn">Continuar →</button>
       </div>
     </div>
 
@@ -233,7 +237,7 @@
       <div id="step3Err" class="text-red-500 text-sm mt-3 hidden"></div>
       <div class="flex gap-2 mt-6">
         <button onclick="goStep(2)" class="flex-1 py-3 border border-gray-200 text-gray-600 font-medium rounded-xl text-sm hover:bg-gray-50 transition" data-i18n="s3.back">← Atrás</button>
-        <button onclick="goStep(4)" class="flex-1 py-3 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-xl transition text-sm" data-i18n="s3.btn">Continuar →</button>
+        <button onclick="goStep(4)" class="flex-1 py-3 bg-[#e2622a] hover:bg-[#a3430f] shadow-[0_4px_0_#a3430f] text-white font-semibold rounded-xl transition text-sm" data-i18n="s3.btn">Continuar →</button>
       </div>
     </div>
 
@@ -276,7 +280,7 @@
 
         <!-- Restaurant -->
         <div class="plan-card rounded-xl p-4 relative" data-plan="restaurant" onclick="selectPlan(this)">
-          <div class="absolute -top-2 right-4 bg-green-500 text-white text-xs font-bold px-3 py-0.5 rounded-full" data-i18n="s4.popular">⭐ Más popular</div>
+          <div class="absolute -top-2 right-4 bg-[#e2622a] text-white text-xs font-bold px-3 py-0.5 rounded-full" data-i18n="s4.popular">⭐ Más popular</div>
           <div class="font-bold text-gray-800 flex items-center gap-2 mb-1">🍽️ Restaurant <span id="restaurantBadge" class="hidden text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full" data-i18n="s4.selected">Seleccionado</span></div>
           <div class="text-green-600 font-bold text-lg mb-2" id="restaurantPrice">$39.99<span class="text-sm font-normal text-gray-400">/mes</span></div>
           <ul class="space-y-1">
@@ -317,7 +321,7 @@
       <div class="flex gap-2">
         <button onclick="goStep(3)" class="flex-1 py-3 border border-gray-200 text-gray-600 font-medium rounded-xl text-sm hover:bg-gray-50 transition" data-i18n="s4.back">← Atrás</button>
         <button onclick="submitRegistration()" id="submitBtn"
-          class="flex-1 py-3 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-xl transition text-sm" data-i18n="s4.btn">
+          class="flex-1 py-3 bg-[#e2622a] hover:bg-[#a3430f] shadow-[0_4px_0_#a3430f] text-white font-semibold rounded-xl transition text-sm" data-i18n="s4.btn">
           💳 Continuar al pago →
         </button>
       </div>
@@ -383,7 +387,7 @@
       </div>
 
       <a id="goToPanelBtn" href="/admin/index.html"
-        class="block w-full py-3 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-xl text-center transition text-sm" data-i18n="s5.btn">
+        class="block w-full py-3 bg-[#e2622a] hover:bg-[#a3430f] shadow-[0_4px_0_#a3430f] text-white font-semibold rounded-xl text-center transition text-sm" data-i18n="s5.btn">
         Ir al panel de administración →
       </a>
       <p class="text-xs text-gray-400 text-center mt-3" data-i18n="s5.note">Podés cambiar tu contraseña desde Configuración → Seguridad.</p>

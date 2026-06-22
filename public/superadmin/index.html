@@ -5,18 +5,23 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Sara Bot — Superadmin</title>
   <link rel="icon" type="image/webp" href="/images/favicon.webp"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={theme:{extend:{fontFamily:{sans:['Inter','ui-sans-serif','system-ui','sans-serif']},colors:{green:{50:'#eef7ea',100:'#d7edc9',200:'#b6dfa0',300:'#8bcd6f',400:'#57b347',500:'#2f9e3a',600:'#1b7a28',700:'#155f20',800:'#124d1c',900:'#0e3b16'}}}}}</script>
   <style>
     .status-active   { background:#D1FAE5; color:#065F46; }
     .status-inactive { background:#FEE2E2; color:#991B1B; }
     .status-overdue  { background:#FEF3C7; color:#92400E; }
     .status-meta     { background:#DBEAFE; color:#1E40AF; }
     .badge { font-size:.72rem; padding:2px 8px; border-radius:999px; font-weight:600; }
+    body { background:#fbf6ec !important; font-family:'Inter',sans-serif; }
+    h1,h2,h3 { font-family:'Outfit',sans-serif; letter-spacing:-.01em; }
     .tab-active { border-bottom:3px solid #7C3AED; color:#7C3AED; font-weight:600; }
     input:focus,select:focus,textarea:focus { outline:2px solid #7C3AED; outline-offset:1px; }
     .modal-bg { background:rgba(0,0,0,.5); }
-    .btn-purple { background:#7C3AED; color:#fff; }
-    .btn-purple:hover { background:#6D28D9; }
+    .btn-purple { background:#e2622a; color:#fff; border-radius:12px; box-shadow:0 4px 0 #a3430f; font-family:'Outfit',sans-serif; font-weight:600; transition:transform .15s, box-shadow .15s; }
+    .btn-purple:hover { background:#e2622a; transform:translateY(2px); box-shadow:0 2px 0 #a3430f; }
   </style>
 </head>
 <body class="bg-gray-100 min-h-screen font-sans">

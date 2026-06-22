@@ -89,18 +89,18 @@ function buildHtml(t, businessName, panelUrl) {
   return `<!DOCTYPE html>
 <html>
 <head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/></head>
-<body style="margin:0;padding:0;background:#f0fdf4;font-family:sans-serif;">
+<body style="margin:0;padding:0;background:#fbf6ec;font-family:sans-serif;">
 <div style="max-width:520px;margin:32px auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.06);">
-  <div style="background:#fff;padding:28px 32px;text-align:center;border-bottom:3px solid #22c55e;">
+  <div style="background:#fff;padding:28px 32px;text-align:center;border-bottom:3px solid #2f9e3a;">
     <img src="https://sarabot.pro/images/mail.webp" alt="Sara Bot" style="height:44px;">
   </div>
   <div style="padding:32px;">
     <p style="font-size:18px;font-weight:700;color:#111;margin:0 0 16px;">${t.greeting(businessName)}</p>
     <p style="color:#444;line-height:1.6;margin:0 0 24px;">${t.body}</p>
     <div style="text-align:center;margin-bottom:24px;">
-      <a href="${panelUrl}" style="display:inline-block;background:#22c55e;color:#fff;font-weight:700;font-size:15px;padding:14px 32px;border-radius:12px;text-decoration:none;">${t.btn}</a>
+      <a href="${panelUrl}" style="display:inline-block;background:#e2622a;color:#fff;font-weight:700;font-size:15px;padding:14px 32px;border-radius:12px;text-decoration:none;">${t.btn}</a>
     </div>
-    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px 16px;color:#15803d;font-size:13px;">
+    <div style="background:#eaf6e4;border:1px solid #c2e3c6;border-radius:10px;padding:12px 16px;color:#1b7a28;font-size:13px;">
       🎁 ${t.trial}
     </div>
   </div>
@@ -195,16 +195,16 @@ function buildResetHtml(tr, businessName, resetUrl) {
   return `<!DOCTYPE html>
 <html>
 <head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/></head>
-<body style="margin:0;padding:0;background:#f0fdf4;font-family:sans-serif;">
+<body style="margin:0;padding:0;background:#fbf6ec;font-family:sans-serif;">
 <div style="max-width:520px;margin:32px auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.06);">
-  <div style="background:#fff;padding:28px 32px;text-align:center;border-bottom:3px solid #22c55e;">
+  <div style="background:#fff;padding:28px 32px;text-align:center;border-bottom:3px solid #2f9e3a;">
     <img src="https://sarabot.pro/images/mail.webp" alt="Sara Bot" style="height:44px;">
   </div>
   <div style="padding:32px;">
     <p style="font-size:18px;font-weight:700;color:#111;margin:0 0 16px;">${tr.greeting(businessName)}</p>
     <p style="color:#444;line-height:1.6;margin:0 0 24px;">${tr.body}</p>
     <div style="text-align:center;margin-bottom:24px;">
-      <a href="${resetUrl}" style="display:inline-block;background:#22c55e;color:#fff;font-weight:700;font-size:15px;padding:14px 32px;border-radius:12px;text-decoration:none;">${tr.btn}</a>
+      <a href="${resetUrl}" style="display:inline-block;background:#e2622a;color:#fff;font-weight:700;font-size:15px;padding:14px 32px;border-radius:12px;text-decoration:none;">${tr.btn}</a>
     </div>
     <p style="color:#9ca3af;font-size:13px;margin:0 0 8px;">⏱ ${tr.expiry}</p>
   </div>
@@ -298,9 +298,9 @@ function buildDeleteHtml(td, businessName, confirmUrl) {
   return `<!DOCTYPE html>
 <html>
 <head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/></head>
-<body style="margin:0;padding:0;background:#fef2f2;font-family:sans-serif;">
+<body style="margin:0;padding:0;background:#fdf0ec;font-family:sans-serif;">
 <div style="max-width:520px;margin:32px auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.06);">
-  <div style="background:#fff;padding:28px 32px;text-align:center;border-bottom:3px solid #22c55e;">
+  <div style="background:#fff;padding:28px 32px;text-align:center;border-bottom:3px solid #2f9e3a;">
     <img src="https://sarabot.pro/images/mail.webp" alt="Sara Bot" style="height:44px;">
   </div>
   <div style="padding:32px;">
@@ -351,16 +351,16 @@ const TU = {
 
 function buildUsernameChangeHtml(tr, businessName, confirmUrl, newUsername) {
   return `<!DOCTYPE html><html><head><meta charset="UTF-8"/></head>
-<body style="margin:0;padding:0;background:#f0fdf4;font-family:sans-serif;">
+<body style="margin:0;padding:0;background:#fbf6ec;font-family:sans-serif;">
 <div style="max-width:520px;margin:32px auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.06);">
-  <div style="background:#fff;padding:28px 32px;text-align:center;border-bottom:3px solid #22c55e;">
+  <div style="background:#fff;padding:28px 32px;text-align:center;border-bottom:3px solid #2f9e3a;">
     <img src="https://sarabot.pro/images/mail.webp" alt="Sara Bot" style="height:44px;">
   </div>
   <div style="padding:28px 32px;">
     <p style="font-size:16px;color:#111;">${tr.greeting(businessName)},</p>
     <p style="font-size:15px;color:#444;line-height:1.6;">${tr.body(newUsername)}</p>
     <div style="text-align:center;margin:28px 0;">
-      <a href="${confirmUrl}" style="background:#22c55e;color:#fff;text-decoration:none;padding:14px 32px;border-radius:10px;font-weight:600;font-size:15px;display:inline-block;">${tr.btn}</a>
+      <a href="${confirmUrl}" style="background:#e2622a;color:#fff;text-decoration:none;padding:14px 32px;border-radius:10px;font-weight:600;font-size:15px;display:inline-block;">${tr.btn}</a>
     </div>
     <p style="font-size:13px;color:#888;">${tr.expiry}</p>
     <p style="font-size:13px;color:#888;">${tr.ignore}</p>
@@ -401,16 +401,16 @@ async function sendPhoneChange({ email, businessName, confirmUrl, newPhone, lang
   }
   const tr = TP[lang] || TP.es;
   const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"/></head>
-<body style="margin:0;padding:0;background:#f0fdf4;font-family:sans-serif;">
+<body style="margin:0;padding:0;background:#fbf6ec;font-family:sans-serif;">
 <div style="max-width:520px;margin:32px auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.06);">
-  <div style="background:#fff;padding:28px 32px;text-align:center;border-bottom:3px solid #22c55e;">
+  <div style="background:#fff;padding:28px 32px;text-align:center;border-bottom:3px solid #2f9e3a;">
     <img src="https://sarabot.pro/images/mail.webp" alt="Sara Bot" style="height:44px;">
   </div>
   <div style="padding:28px 32px;">
     <p style="font-size:16px;color:#111;">${tr.greeting(businessName)},</p>
     <p style="font-size:15px;color:#444;line-height:1.6;">${tr.body(newPhone)}</p>
     <div style="text-align:center;margin:28px 0;">
-      <a href="${confirmUrl}" style="background:#22c55e;color:#fff;text-decoration:none;padding:14px 32px;border-radius:10px;font-weight:600;font-size:15px;display:inline-block;">${tr.btn}</a>
+      <a href="${confirmUrl}" style="background:#e2622a;color:#fff;text-decoration:none;padding:14px 32px;border-radius:10px;font-weight:600;font-size:15px;display:inline-block;">${tr.btn}</a>
     </div>
     <p style="font-size:13px;color:#888;">${tr.expiry}</p>
     <p style="font-size:13px;color:#888;">${tr.ignore}</p>
