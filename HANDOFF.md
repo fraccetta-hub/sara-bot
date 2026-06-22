@@ -3,7 +3,42 @@
 ## STATO CORRENTE
 SaaS multi-tenant WhatsApp Business. Feature appuntamenti complete (paid, storno, mobility, slot 15min, rubrica). Prossimo: Stripe live env vars su Render, invoicing merchant.
 
-**Ultimo commit stabile:** `89063cb` (modal nuovo ordine: picker rubrica, col headers, price readonly)
+**Ultimo commit stabile:** `d2dea90` (search bar su tutte le tab)
+
+---
+
+## SESSIONE 2026-06-22 (sera) — ordini, clienti, UX
+
+### Migration richiesta (eseguire su Supabase se non già fatto)
+```sql
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS notes TEXT;
+ALTER TABLE orders ALTER COLUMN customer_phone DROP NOT NULL;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS customer_name TEXT;
+ALTER TABLE tenants ADD COLUMN IF NOT EXISTS support_phone TEXT;
+```
+
+### Ordini — modal nuovo/modifica
+- **Modale unificato** nuovo + modifica ordine (`_editOrderId`). Bottone ✏️ inline con select stato.
+- **Picker clienti** esistenti; "Salva in rubrica" se nome+telefono presenti.
+- **Deduplica item**: voci con stesso nome si sommano al salvataggio (`itemMap`).
+- **Voce custom**: select placeholder disabilitato → seleziona "Voce personalizzata" (value=`__custom__`) → campo testo; ☰ torna al catalogo.
+- **Prezzo custom** esplicitamente `text-gray-900` (nero); catalogo readonly grigio.
+- **customer_name** ora salvato direttamente nella tabella `orders` (fix: prima andava solo su `conversations` e risultava null se telefono assente).
+- **renderCustomerLabel**: mostra nome+telefono; se manca telefono solo nome; entrambi assenti → `—`.
+
+### Clienti — modal unificato add/edit
+- Un solo bottone ✏️ per riga (rimosso 📋).
+- Modal unificato: nome primo, telefono secondo, entrambi obbligatori.
+- Edit mode: tutti i campi editabili incluso telefono (PUT `/admin/customers/:phone` aggiorna anche `customer_phone` se cambiato).
+- Colonna Email aggiunta alla tabella.
+- Telefono: `oninput` strip non-cifre su tutti i campi tel del pannello.
+
+### UX generale
+- **Barra di ricerca** spostata nella riga del titolo (flex-1 centrata) su Prodotti, Ordini, Clienti, Servizi. Placeholder vuoto.
+- Ordini/Clienti/Servizi: cache `_allOrders`/`_allCustomers`/`_allServices` + funzioni `render*()` separate dal fetch.
+- `setOrderFilter` usa cache (re-render istantaneo); auto-refresh 10s ricarica dal server.
+- Prodotti: cerca per nome/categoria/descrizione; Ordini: nome/telefono/item; Clienti: nome/telefono/email; Servizi: nome/categoria.
+- `renderCustomerLabel` semplificato: no più matitina inline.
 
 ---
 
