@@ -3571,8 +3571,8 @@ async function loadOrders() {
           </div>
           <div class="text-sm text-gray-500 mt-1">📦 ${items}</div>
           <div class="text-xs text-gray-400 mt-0.5">🕐 ${date}</div>
-          ${o.notes ? `<div class="text-xs text-gray-500 mt-0.5 truncate max-w-xs">📝 ${escHtml(o.notes)}</div>` : ''}
         </div>
+        ${o.notes ? `<div class="flex-1 min-w-0 hidden sm:flex items-center px-4"><span class="text-xs text-gray-500 italic line-clamp-2">📝 ${escHtml(o.notes)}</span></div>` : '<div class="flex-1 hidden sm:block"></div>'}
         <div class="text-right flex-shrink-0">
           <div class="font-bold text-green-600 text-lg">${fmtPrice(o.total_guarani + (o.delivery_fee||0))}</div>
           <div class="text-xs text-gray-400 mb-1">${t('orders.delivery')} ${fmtPrice(o.delivery_fee||0)}</div>
