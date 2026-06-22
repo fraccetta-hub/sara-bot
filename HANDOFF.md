@@ -3,7 +3,7 @@
 ## STATO CORRENTE
 SaaS multi-tenant WhatsApp Business. Feature appuntamenti complete (paid, storno, mobility, slot 15min, rubrica). Prossimo: Stripe live env vars su Render, invoicing merchant.
 
-**Ultimo commit stabile:** `0b0a4f4` (restyle UI site-wide — tema v5)
+**Ultimo commit stabile:** `89063cb` (modal nuovo ordine: picker rubrica, col headers, price readonly)
 
 ---
 
@@ -69,6 +69,13 @@ ALTER TABLE tenants
 ---
 
 ## SESSIONE 2026-06-22
+
+### Modal nuovo ordine — miglioramenti (commit `89063cb`)
+- **Picker rubrica**: dropdown clienti esistenti sopra nome/tel → autofilla entrambi i campi.
+- **Nome obbligatorio, telefono opzionale** (front + back). Backend non richiede più `customer_phone`.
+- **Header colonne** "Qtà / Prezzo" sopra righe item.
+- **Prezzo readonly** (bg grigio) se prodotto da catalogo; editabile per voci custom.
+- Nuove chiavi i18n (`orders.new.col.*`, `orders.new.customer.pick/new`, `err.missing_name`) in 6 lingue.
 
 ### Fix UX / bug (commit `0b8dfa0`)
 - **Date disabilitate**: label `settings.delivery.disabled` + `settings.smob.disabled` ora include "(oltre ai giorni di chiusura)" in 6 lingue.
