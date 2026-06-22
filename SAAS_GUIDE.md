@@ -324,7 +324,19 @@ I flag booleani nel DB (`products_enabled`, `services_enabled`, `appointments_en
 
 ---
 
-## 8. Billing Stripe
+## 8. Bot di supporto merchant
+
+`SUPPORT_SYSTEM_PROMPT` in `routes/admin.js` — risponde in automatico ai merchant nella tab ❓ Aiuto e Supporto del pannello.
+
+- Modello: `claude-haiku-4-5-20251001`, max 512 token.
+- Conosce: tutto il pannello web (ogni tab, ogni bottone, incluse search bar, modal clienti, edit ordini), comportamento Sara lato cliente (cosa vede/non vede un cliente), tutti i comandi bot WhatsApp merchant con esempi multi-lingua.
+- Escalation: se non può risolvere, inserisce `[ESCALATE]` nel reply → il sistema notifica il superadmin via email.
+- Rate limit: limitato per tenant (vedi `checkSupportRateLimit`).
+- Non rivela mai credenziali, token, dati di altri tenant.
+
+---
+
+## 9. Billing Stripe
 
 `routes/billing.js`: Checkout (`mode:'subscription'`, trial 7gg) → webhook attiva/sospende tenant + scrive flag piano nel DB → cancel/reactivate → change-plan (upgrade/downgrade immediato con proration).
 
@@ -334,7 +346,8 @@ I flag booleani nel DB (`products_enabled`, `services_enabled`, `appointments_en
 
 ---
 
-## 9. i18n
+## 10. i18n
+
 
 6 lingue: ES / EN / IT / DE / FR / PT. Chiave localStorage `sara_lang` condivisa tra tutte le pagine.
 
@@ -345,7 +358,7 @@ I flag booleani nel DB (`products_enabled`, `services_enabled`, `appointments_en
 
 ---
 
-## 10. Sicurezza
+## 11. Sicurezza
 
 - Firma webhook Meta (HMAC-SHA256). JWT in HttpOnly cookie (`sara_token`). Trust proxy 1 (IP reale dietro Render). Rate limit su tutti gli endpoint pubblici. Injection block silenzioso. XSS: `textContent` non `innerHTML` per dati utente. No secret hardcoded (fail-fast all'avvio).
 - Rate limit: cliente 50/h, merchant 120/h + 400/giorno.
@@ -354,7 +367,7 @@ I flag booleani nel DB (`products_enabled`, `services_enabled`, `appointments_en
 
 ---
 
-## 11. Import / Export catalogo
+## 12. Import / Export catalogo
 
 - Template Excel: `catalog_template.xlsx` (shop) + `menu_template.xlsx` (ristorante), generati da `scripts/gen-templates.js`.
 - Export CSV: `sep=;` + riga metadati `# sarabot.pro` + BOM. Colonne = template → round-trip pulito.
@@ -364,7 +377,7 @@ I flag booleani nel DB (`products_enabled`, `services_enabled`, `appointments_en
 
 ---
 
-## 12. Appuntamenti
+## 13. Appuntamenti
 
 - Slot 15 min step; durata servizio multiplo di 15; capacità parallela (`appointment_capacity`).
 - `appointment_blocks` bloccano sempre indipendentemente dalla capacità.
@@ -374,7 +387,7 @@ I flag booleani nel DB (`products_enabled`, `services_enabled`, `appointments_en
 
 ---
 
-## 13. Ristorante
+## 14. Ristorante
 
 - Piatti in tabella `products` (con `allergens TEXT`). Stock = null (sempre disponibile).
 - Prenotazioni: `table_ids BIGINT[]` = tavoli occupati. Pending senza tavolo = non blocca. Sara propone solo slot con tavoli liberi (griglia 7gg in dynamic prompt).
@@ -384,7 +397,7 @@ I flag booleani nel DB (`products_enabled`, `services_enabled`, `appointments_en
 
 ---
 
-## 14. Design / Tema UI
+## 15. Design / Tema UI
 
 Tema **"v5" editorial caldo** su tutte le superfici (landing, admin, register, superadmin, legali, email). Crema `#fbf6ec` + verde `#2f9e3a` (logo `#41b72d`) + CTA ambra `#e2622a`. Font **Outfit** (titoli) + **Inter** (corpo). Admin/superadmin/register ritematizzati via `tailwind.config` (remap ramp `green`) + `<style>` override.
 
@@ -394,7 +407,7 @@ Bottoni admin: PIENO (`.btn-green` ambra+ombra) / SOFT (`#fcefe6`) / OUTLINE (bo
 
 ---
 
-## 15. Tenant di test
+## 16. Tenant di test
 
 | Slug | Piano | Password |
 |------|-------|----------|

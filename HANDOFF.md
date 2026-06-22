@@ -3,7 +3,21 @@
 ## STATO CORRENTE
 SaaS multi-tenant WhatsApp Business. Feature appuntamenti complete (paid, storno, mobility, slot 15min, rubrica). Prossimo: Stripe live env vars su Render, invoicing merchant.
 
-**Ultimo commit stabile:** `d2dea90` (search bar su tutte le tab)
+**Ultimo commit stabile:** `ff1794b` (support bot prompt rewrite)
+
+---
+
+## SESSIONE 2026-06-22 (notte) — documentazione e bot supporto
+
+### Docs aggiornate
+- **SAAS_GUIDE.md** riscritta da zero: 15 sezioni, indice, coprendo merchant admin, Sara cliente, bot merchant WhatsApp, stack, piani, DB, billing, i18n, sicurezza, import, appuntamenti, ristorante.
+- **`❓ Guida all'uso`** (tab Supporto pannello admin) riscritta: due sezioni (Pannello web + Bot WhatsApp), plan-conditional, 6 lingue. Nuovi i18n keys: `help.web.*`, `help.stats.*`.
+
+### Bot supporto (`routes/admin.js` — `SUPPORT_SYSTEM_PROMPT`)
+Rewrite completo. Ora copre:
+- Sara lato cliente: cosa vede/può fare/non può fare (catalogo, ordini, appuntamenti, ristorante, allergens, waitlist, storico ordini, foto auto, cross-sell, delivery, supporto umano, sicurezza injection)
+- Pannello web: ogni tab con ogni bottone (incluse novità: search bar tutte le tab, modal clienti unificato con phone editable, ✏️ ordini inline, deduplica item, ordini manuali)
+- Bot merchant WhatsApp: tutti i comandi con esempi multi-lingua, per tutti i piani (prodotti, ordini, clienti, appuntamenti, ristorante, offerte, broadcast, statistiche, orari)
 
 ---
 
