@@ -3,7 +3,13 @@
 ## STATO CORRENTE
 SaaS multi-tenant WhatsApp Business. Feature appuntamenti complete (paid, storno, mobility, slot 15min, rubrica). Prossimo: Stripe live env vars su Render, invoicing merchant.
 
-**Ultimo commit stabile:** `ff1794b` (support bot prompt rewrite)
+**Ultimo commit stabile:** `238ab86` (audio fallback multilingua)
+
+### Vocali WhatsApp — setup completato
+- Trascrizione via **Groq Whisper** (`services/transcribe.js`) — modello `whisper-large-v3-turbo`.
+- Key: `GROQ_API_KEY` = `gsk_...` (da console.groq.com — NON xAI/Grok di X).
+- Già settata su Render e funzionante.
+- Fallback se trascrizione fallisce: messaggio multilingua IT+ES+EN.
 
 ---
 
