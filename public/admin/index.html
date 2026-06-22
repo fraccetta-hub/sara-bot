@@ -3746,6 +3746,17 @@ function fillOrderRowFromSelect(idx) {
     name.classList.add('hidden');
     if (back) back.classList.add('hidden');
     const opt = sel.options[sel.selectedIndex];
+    // merge with existing row that already has same product
+    const existingRow = [...document.querySelectorAll('[id^="no-sel-"]')]
+      .find(s => s.id !== `no-sel-${idx}` && s.value === sel.value);
+    if (existingRow) {
+      const existIdx = existingRow.id.replace('no-sel-','');
+      const existQty = document.getElementById(`no-qty-${existIdx}`);
+      existQty.value = String(Number(existQty.value) + (Number(document.getElementById(`no-qty-${idx}`)?.value) || 1));
+      document.getElementById(`no-row-${idx}`)?.remove();
+      calcOrderTotal();
+      return;
+    }
     price.value    = opt.dataset.price || 0;
     price.readOnly = true;
     price.classList.add('bg-gray-50', 'text-gray-400');
@@ -3799,16 +3810,23 @@ function _showNoMsg(msg, isErr) {
 }
 
 async function saveNewOrder() {
-  const items = [];
+  const itemMap = new Map();
   document.querySelectorAll('[id^="no-qty-"]').forEach(qEl => {
     const idx      = qEl.id.replace('no-qty-', '');
     const sel      = document.getElementById(`no-sel-${idx}`);
     const nameI    = document.getElementById(`no-name-${idx}`);
-    const itemName = sel?.value || nameI?.value.trim();
+    const itemName = (sel?.value || nameI?.value || '').trim();
     const qty      = Math.max(1, parseInt(qEl.value) || 1);
     const price    = Number(document.getElementById(`no-price-${idx}`)?.value) || 0;
-    if (itemName) items.push({ name: itemName, qty, price });
+    if (!itemName) return;
+    const key = itemName.toLowerCase();
+    if (itemMap.has(key)) {
+      itemMap.get(key).qty += qty;
+    } else {
+      itemMap.set(key, { name: itemName, qty, price });
+    }
   });
+  const items = [...itemMap.values()];
   if (!items.length) { _showNoMsg(t('err.missing_items'), true); return; }
 
   const payload = {
