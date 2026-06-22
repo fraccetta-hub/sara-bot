@@ -671,6 +671,24 @@ router.put('/customers/:phone/info', requireAuth, async (req, res) => {
   res.json({ ok: true });
 });
 
+// ─── PUT /admin/customers/:phone — update name + email + address ──────────────
+
+router.put('/customers/:phone', requireAuth, async (req, res) => {
+  const { name, email, address } = req.body;
+  if (!name?.trim()) return res.status(400).json({ error: 'Nombre requerido', errorCode: 'missing_name' });
+  const { error } = await supabase
+    .from('conversations')
+    .update({
+      customer_name:    name.trim(),
+      customer_email:   email?.trim()   || null,
+      customer_address: address?.trim() || null,
+    })
+    .eq('tenant_id', req.tenant.tenantId)
+    .eq('customer_phone', req.params.phone);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ ok: true });
+});
+
 // ─── PUT /admin/orders/:id/status ─────────────────────────────────────────────
 
 router.put('/orders/:id/status', requireAuth, async (req, res) => {

@@ -652,7 +652,8 @@
             <tr>
               <th data-i18n="customers.col.name" class="px-4 py-3 text-left">Nombre</th>
               <th data-i18n="customers.col.phone" class="px-4 py-3 text-left">Teléfono</th>
-              <th data-i18n="customers.col.lastContact" class="px-4 py-3 text-left">Último contacto</th>
+              <th data-i18n="customers.add.email" class="px-4 py-3 text-left hidden sm:table-cell">Email</th>
+              <th data-i18n="customers.col.lastContact" class="px-4 py-3 text-left hidden md:table-cell">Último contacto</th>
               <th data-i18n="customers.col.actions" class="px-4 py-3 text-center">Acciones</th>
             </tr>
           </thead>
@@ -1984,13 +1985,13 @@
 <!-- ════ ZIP IMAGES MODAL ════ -->
 <div id="addCustomerModal" class="hidden fixed inset-0 modal-bg flex items-center justify-center z-50 px-4">
   <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
-    <h3 data-i18n="customers.add.title" class="font-semibold text-gray-800 mb-4">➕ Agregar cliente</h3>
+    <h3 id="custModalTitle" class="font-semibold text-gray-800 mb-4">➕ Agregar cliente</h3>
     <div id="addCustomerMsg" class="hidden rounded-lg px-4 py-2 text-sm mb-3"></div>
-    <label data-i18n="customers.add.phone" class="block text-xs font-medium text-gray-500 mb-1">Teléfono (sin + ni espacios)</label>
-    <input id="addCustPhone" type="tel" placeholder="595981123456"
-      class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-3 focus:outline-none focus:ring-2 focus:ring-green-300"/>
-    <label data-i18n="customers.add.name" class="block text-xs font-medium text-gray-500 mb-1">Nombre (opcional)</label>
+    <label data-i18n="customers.add.name" class="block text-xs font-medium text-gray-500 mb-1">Nombre *</label>
     <input id="addCustName" type="text" placeholder="María García"
+      class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-3 focus:outline-none focus:ring-2 focus:ring-green-300"/>
+    <label data-i18n="customers.add.phone" class="block text-xs font-medium text-gray-500 mb-1">Teléfono *</label>
+    <input id="addCustPhone" type="tel" placeholder="595981123456"
       class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-3 focus:outline-none focus:ring-2 focus:ring-green-300"/>
     <label data-i18n="customers.add.email" class="block text-xs font-medium text-gray-500 mb-1">Email (opcional)</label>
     <input id="addCustEmail" type="email" placeholder="maria@ejemplo.com"
@@ -1999,7 +2000,7 @@
     <input id="addCustAddress" type="text" placeholder="Av. España 1234"
       class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-green-300"/>
     <div class="flex gap-2">
-      <button onclick="saveAddCustomer()" data-i18n="customers.add.save"
+      <button id="custModalSaveBtn" onclick="saveAddCustomer()"
         class="flex-1 btn-green py-2 rounded-lg text-sm font-semibold">Guardar</button>
       <button onclick="document.getElementById('addCustomerModal').classList.add('hidden')"
         class="flex-1 bg-gray-100 text-gray-600 hover:bg-gray-200 py-2 rounded-lg text-sm font-semibold transition">
@@ -2088,27 +2089,6 @@
   </div>
 </div>
 
-<div id="editCustomerInfoModal" class="hidden fixed inset-0 modal-bg flex items-center justify-center z-50 px-4">
-  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
-    <h3 data-i18n="customers.editInfo.title" class="font-semibold text-gray-800 mb-4">📋 Email y dirección</h3>
-    <div id="editInfoMsg" class="hidden rounded-lg px-4 py-2 text-sm mb-3"></div>
-    <input id="editInfoPhone" type="hidden"/>
-    <label data-i18n="customers.add.email" class="block text-xs font-medium text-gray-500 mb-1">Email (opcional)</label>
-    <input id="editInfoEmail" type="email" placeholder="maria@ejemplo.com"
-      class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-3 focus:outline-none focus:ring-2 focus:ring-green-300"/>
-    <label data-i18n="customers.add.address" class="block text-xs font-medium text-gray-500 mb-1">Dirección (opcional)</label>
-    <input id="editInfoAddress" type="text" placeholder="Av. España 1234"
-      class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-green-300"/>
-    <div class="flex gap-2">
-      <button onclick="saveCustomerInfo()" data-i18n="customers.add.save"
-        class="flex-1 btn-green py-2 rounded-lg text-sm font-semibold">Guardar</button>
-      <button onclick="document.getElementById('editCustomerInfoModal').classList.add('hidden')"
-        class="flex-1 bg-gray-100 text-gray-600 hover:bg-gray-200 py-2 rounded-lg text-sm font-semibold transition">
-        <span data-i18n="cancel">Cancelar</span>
-      </button>
-    </div>
-  </div>
-</div>
 
 <div id="zipModal" class="hidden fixed inset-0 modal-bg flex items-center justify-center z-50 px-4">
   <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 max-h-screen overflow-y-auto">
@@ -4590,64 +4570,52 @@ async function saveCustomerNameShared(cellId, phone, refreshFnName) {
   await window[refreshFnName]();
 }
 
-function openAddCustomerModal() {
-  ['addCustPhone','addCustName','addCustEmail','addCustAddress'].forEach(id => {
-    document.getElementById(id).value = '';
-  });
+let _editCustPhone = null;
+
+function _openCustomerModal(phone, name, email, address) {
+  _editCustPhone = phone || null;
+  const isEdit = !!_editCustPhone;
+  document.getElementById('custModalTitle').textContent     = isEdit ? t('customers.edit.title')    : t('customers.add.title');
+  document.getElementById('custModalSaveBtn').textContent   = isEdit ? t('customers.edit.save')     : t('customers.add.save');
+  document.getElementById('addCustName').value    = name    || '';
+  document.getElementById('addCustPhone').value   = phone   || '';
+  document.getElementById('addCustPhone').readOnly = isEdit;
+  document.getElementById('addCustPhone').classList.toggle('bg-gray-50', isEdit);
+  document.getElementById('addCustPhone').classList.toggle('text-gray-400', isEdit);
+  document.getElementById('addCustEmail').value   = email   || '';
+  document.getElementById('addCustAddress').value = address || '';
   const msg = document.getElementById('addCustomerMsg');
   msg.className = 'hidden rounded-lg px-4 py-2 text-sm mb-3';
   document.getElementById('addCustomerModal').classList.remove('hidden');
-  setTimeout(() => document.getElementById('addCustPhone').focus(), 50);
+  setTimeout(() => document.getElementById('addCustName').focus(), 50);
 }
 
+function openAddCustomerModal() { _openCustomerModal(null, '', '', ''); }
+
+function openEditCustomerModal(c) { _openCustomerModal(c.phone, c.name, c.email, c.address); }
+
 async function saveAddCustomer() {
-  const phone   = document.getElementById('addCustPhone').value.trim();
   const name    = document.getElementById('addCustName').value.trim();
+  const phone   = document.getElementById('addCustPhone').value.replace(/\D/g, '');
   const email   = document.getElementById('addCustEmail').value.trim();
   const address = document.getElementById('addCustAddress').value.trim();
   const msg     = document.getElementById('addCustomerMsg');
-  if (!phone) {
-    msg.textContent = t('err.missing_phone') || 'Teléfono requerido';
+  const showErr = txt => {
+    msg.textContent = txt;
     msg.className = 'rounded-lg px-4 py-2 text-sm mb-3 bg-red-50 text-red-700';
-    return;
-  }
-  if (!name) {
-    msg.textContent = t('err.missing_name') || 'Nombre requerido';
-    msg.className = 'rounded-lg px-4 py-2 text-sm mb-3 bg-red-50 text-red-700';
-    return;
-  }
+  };
+  if (!name)  { showErr(t('err.missing_name')  || 'Nombre requerido');   return; }
+  if (!phone) { showErr(t('err.missing_phone') || 'Teléfono requerido'); return; }
   try {
-    await api('/admin/customers', 'POST', { phone, name, email, address });
+    if (_editCustPhone) {
+      await api(`/admin/customers/${_editCustPhone}`, 'PUT', { name, email, address });
+    } else {
+      await api('/admin/customers', 'POST', { phone, name, email, address });
+    }
     document.getElementById('addCustomerModal').classList.add('hidden');
     await loadCustomers();
   } catch(e) {
-    msg.textContent = errMsg(e);
-    msg.className = 'rounded-lg px-4 py-2 text-sm mb-3 bg-red-50 text-red-700';
-  }
-}
-
-function openEditCustomerInfoModal(phone, email, address) {
-  document.getElementById('editInfoPhone').value   = phone;
-  document.getElementById('editInfoEmail').value   = email || '';
-  document.getElementById('editInfoAddress').value = address || '';
-  const msg = document.getElementById('editInfoMsg');
-  msg.className = 'hidden rounded-lg px-4 py-2 text-sm mb-3';
-  document.getElementById('editCustomerInfoModal').classList.remove('hidden');
-  setTimeout(() => document.getElementById('editInfoEmail').focus(), 50);
-}
-
-async function saveCustomerInfo() {
-  const phone   = document.getElementById('editInfoPhone').value;
-  const email   = document.getElementById('editInfoEmail').value.trim();
-  const address = document.getElementById('editInfoAddress').value.trim();
-  const msg     = document.getElementById('editInfoMsg');
-  try {
-    await api(`/admin/customers/${phone}/info`, 'PUT', { email, address });
-    document.getElementById('editCustomerInfoModal').classList.add('hidden');
-    await loadCustomers();
-  } catch(e) {
-    msg.textContent = errMsg(e);
-    msg.className = 'rounded-lg px-4 py-2 text-sm mb-3 bg-red-50 text-red-700';
+    showErr(errMsg(e));
   }
 }
 
@@ -4678,25 +4646,25 @@ async function loadCustomers() {
   }
   el.innerHTML = customers.map(c => {
     const date = c.updated_at ? new Date(c.updated_at).toLocaleString('es-PY', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '—';
-    const emailHtml   = c.customer_email   ? `<span class="text-xs text-gray-400 block truncate">✉️ ${escHtml(c.customer_email)}</span>` : '';
-    const addressHtml = c.customer_address ? `<span class="text-xs text-gray-400 block truncate">📍 ${escHtml(c.customer_address)}</span>` : '';
+    const custData = JSON.stringify({
+      phone:   c.customer_phone,
+      name:    c.customer_name    || '',
+      email:   c.customer_email   || '',
+      address: c.customer_address || '',
+    }).replace(/"/g,'&quot;');
     return `
     <tr>
       <td class="px-4 py-3">
-        <div id="cust-name-${c.customer_phone}">
-          <span class="${c.customer_name ? 'font-medium text-gray-800' : 'text-gray-400'}">${c.customer_name || t('customers.noName')}</span>
-        </div>
-        ${emailHtml}${addressHtml}
+        <span class="${c.customer_name ? 'font-medium text-gray-800' : 'text-gray-400'}">${escHtml(c.customer_name || t('customers.noName'))}</span>
+        ${c.customer_address ? `<span class="text-xs text-gray-400 block truncate">📍 ${escHtml(c.customer_address)}</span>` : ''}
       </td>
       <td class="px-4 py-3 text-gray-600 text-sm">+${c.customer_phone}</td>
-      <td class="px-4 py-3 text-gray-500 text-xs">${date}</td>
-      <td class="px-4 py-3 text-center whitespace-nowrap">
-        <button onclick="startEditCustomerName('cust-name-${c.customer_phone}', '${c.customer_phone}', ${JSON.stringify(c.customer_name || '').replace(/"/g,'&quot;')}, 'loadCustomers')"
+      <td class="px-4 py-3 text-gray-500 text-sm hidden sm:table-cell">${escHtml(c.customer_email || '—')}</td>
+      <td class="px-4 py-3 text-gray-500 text-xs hidden md:table-cell">${date}</td>
+      <td class="px-4 py-3 text-center">
+        <button onclick="openEditCustomerModal(${custData})"
           title="${t('customers.editName')}"
-          class="text-gray-400 hover:text-green-500 transition text-sm mr-1">✏️</button>
-        <button onclick="openEditCustomerInfoModal('${c.customer_phone}', ${JSON.stringify(c.customer_email||'').replace(/"/g,'&quot;')}, ${JSON.stringify(c.customer_address||'').replace(/"/g,'&quot;')})"
-          title="${t('customers.editInfo')}"
-          class="text-gray-400 hover:text-blue-500 transition text-sm">📋</button>
+          class="text-gray-400 hover:text-green-500 transition text-sm">✏️</button>
       </td>
     </tr>`;
   }).join('');
