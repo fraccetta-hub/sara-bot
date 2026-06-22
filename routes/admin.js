@@ -1825,68 +1825,67 @@ router.post('/whatsapp-profile', requireAuth, upload.single('photo'), async (req
     }
   }
 
-  // 2. Upload profile photo if provided
+  // 2. Upload profile photo if provided.
+  // profile_picture_handle requires a handle from the Resumable Upload API
+  // (/{app-id}/uploads), NOT a /media id — Meta rejects the latter with
+  // "Parameter value is not valid".
   if (req.file) {
-    try {
-      // Step 2a: Create an upload session
-      const sessionRes = await fetch(
-        `https://graph.facebook.com/v19.0/${phoneNumberId}/whatsapp_business_profile`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            messaging_product: 'whatsapp',
-            profile_picture_url: null, // will be replaced by handle upload below
-          }),
-        }
-      );
-
-      // Use the Media Upload API instead
-      // Step 2a: Upload media to get a handle
-      const formData = new FormData();
-      const blob = new Blob([req.file.buffer], { type: req.file.mimetype });
-      formData.append('file', blob, req.file.originalname || 'profile.jpg');
-      formData.append('type', req.file.mimetype);
-      formData.append('messaging_product', 'whatsapp');
-
-      const mediaRes = await fetch(
-        `https://graph.facebook.com/v19.0/${phoneNumberId}/media`,
-        {
-          method: 'POST',
-          headers: { 'Authorization': `Bearer ${token}` },
-          body: formData,
-        }
-      );
-      const mediaData = await mediaRes.json();
-
-      if (!mediaRes.ok || !mediaData.id) {
-        errors.push(`Foto (subida): ${mediaData.error?.message || 'No se pudo subir la imagen'}`);
-      } else {
-        // Step 2b: Set the profile picture using the media handle
-        const picRes = await fetch(
-          `https://graph.facebook.com/v19.0/${phoneNumberId}/whatsapp_business_profile`,
-          {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              messaging_product: 'whatsapp',
-              profile_picture_handle: mediaData.id,
-            }),
-          }
+    const appId = process.env.META_APP_ID;
+    if (!appId) {
+      errors.push('Foto: META_APP_ID no configurado en el servidor');
+    } else {
+      try {
+        // Step 1: start an upload session
+        const startRes = await fetch(
+          `https://graph.facebook.com/v19.0/${appId}/uploads` +
+            `?file_name=${encodeURIComponent(req.file.originalname || 'profile.jpg')}` +
+            `&file_length=${req.file.buffer.length}` +
+            `&file_type=${encodeURIComponent(req.file.mimetype)}`,
+          { method: 'POST', headers: { 'Authorization': `OAuth ${token}` } }
         );
-        const picData = await picRes.json();
-        if (!picRes.ok) {
-          errors.push(`Foto (perfil): ${picData.error?.message || picRes.statusText}`);
+        const startData = await startRes.json();
+
+        if (!startRes.ok || !startData.id) {
+          errors.push(`Foto (sesión): ${startData.error?.message || 'No se pudo iniciar la subida'}`);
+        } else {
+          // Step 2: upload the binary, get the file handle
+          const uploadRes = await fetch(
+            `https://graph.facebook.com/v19.0/${startData.id}`,
+            {
+              method: 'POST',
+              headers: { 'Authorization': `OAuth ${token}`, 'file_offset': '0' },
+              body: req.file.buffer,
+            }
+          );
+          const uploadData = await uploadRes.json();
+
+          if (!uploadRes.ok || !uploadData.h) {
+            errors.push(`Foto (subida): ${uploadData.error?.message || 'No se pudo subir la imagen'}`);
+          } else {
+            // Step 3: set the profile picture using the handle
+            const picRes = await fetch(
+              `https://graph.facebook.com/v19.0/${phoneNumberId}/whatsapp_business_profile`,
+              {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${token}`,
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  messaging_product: 'whatsapp',
+                  profile_picture_handle: uploadData.h,
+                }),
+              }
+            );
+            const picData = await picRes.json();
+            if (!picRes.ok) {
+              errors.push(`Foto (perfil): ${picData.error?.message || picRes.statusText}`);
+            }
+          }
         }
+      } catch (e) {
+        errors.push('Foto: ' + e.message);
       }
-    } catch (e) {
-      errors.push('Foto: ' + e.message);
     }
   }
 
