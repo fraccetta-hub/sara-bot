@@ -611,6 +611,10 @@
             ⬇ Exportar CSV
           </button>
           <button onclick="loadOrders()" data-i18n="orders.refresh" class="flex items-center gap-1.5 text-sm text-gray-600 border border-gray-200 bg-white hover:bg-gray-50 px-3 py-1.5 rounded-lg transition font-medium">↻ Actualizar</button>
+          <button onclick="openNewOrderModal()" data-i18n="orders.new"
+            class="btn-green flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg transition font-semibold">
+            + Nuevo pedido
+          </button>
         </div>
       </div>
       <!-- Status filters -->
@@ -1992,6 +1996,67 @@
       <button onclick="saveAddCustomer()" data-i18n="customers.add.save"
         class="flex-1 btn-green py-2 rounded-lg text-sm font-semibold">Guardar</button>
       <button onclick="document.getElementById('addCustomerModal').classList.add('hidden')"
+        class="flex-1 bg-gray-100 text-gray-600 hover:bg-gray-200 py-2 rounded-lg text-sm font-semibold transition">
+        <span data-i18n="cancel">Cancelar</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ── NEW ORDER MODAL ── -->
+<div id="newOrderModal" class="hidden fixed inset-0 modal-bg flex items-center justify-center z-50 px-4">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
+    <h3 data-i18n="orders.new.title" class="font-semibold text-gray-800 mb-4">➕ Nuevo pedido</h3>
+    <div id="noMsg" class="hidden rounded-lg px-4 py-2 text-sm mb-3"></div>
+
+    <div class="grid grid-cols-2 gap-3 mb-4">
+      <div>
+        <label data-i18n="orders.new.customer.phone" class="block text-xs font-medium text-gray-500 mb-1">Teléfono cliente</label>
+        <input id="noPhone" type="tel" placeholder="595981123456"
+          class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-300"/>
+      </div>
+      <div>
+        <label data-i18n="orders.new.customer.name" class="block text-xs font-medium text-gray-500 mb-1">Nombre (opcional)</label>
+        <input id="noName" type="text" placeholder="María García"
+          class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-300"/>
+      </div>
+    </div>
+
+    <label data-i18n="orders.new.items" class="block text-xs font-medium text-gray-500 mb-2">Productos</label>
+    <div id="noItemsBody" class="space-y-2 mb-2"></div>
+    <button onclick="addOrderRow()" data-i18n="orders.new.add_item"
+      class="text-sm text-green-600 hover:text-green-800 font-medium mb-4">+ Agregar ítem</button>
+
+    <div class="grid grid-cols-2 gap-3 mb-4">
+      <div>
+        <label data-i18n="orders.new.delivery" class="block text-xs font-medium text-gray-500 mb-1">Costo de envío</label>
+        <input id="noDelivery" type="number" value="0" min="0" onchange="calcOrderTotal()"
+          class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-300"/>
+      </div>
+      <div>
+        <label data-i18n="orders.new.status" class="block text-xs font-medium text-gray-500 mb-1">Estado inicial</label>
+        <select id="noStatus" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-300">
+          <option value="confirmed" data-i18n="orders.status.confirmed">Confirmado</option>
+          <option value="pending"   data-i18n="orders.status.pending">Pendiente</option>
+          <option value="preparing" data-i18n="orders.status.preparing">Preparando</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="mb-4">
+      <label data-i18n="orders.new.notes" class="block text-xs font-medium text-gray-500 mb-1">Notas (opcional)</label>
+      <textarea id="noNotes" rows="2" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-green-300"></textarea>
+    </div>
+
+    <div class="flex items-center justify-between mb-4 bg-gray-50 rounded-lg px-4 py-2">
+      <span data-i18n="orders.new.total" class="text-sm font-semibold text-gray-600">Total</span>
+      <span id="noTotal" class="text-lg font-bold text-green-600">—</span>
+    </div>
+
+    <div class="flex gap-2">
+      <button onclick="saveNewOrder()" data-i18n="orders.new.save"
+        class="flex-1 btn-green py-2 rounded-lg text-sm font-semibold">Crear pedido</button>
+      <button onclick="closeNewOrderModal()"
         class="flex-1 bg-gray-100 text-gray-600 hover:bg-gray-200 py-2 rounded-lg text-sm font-semibold transition">
         <span data-i18n="cancel">Cancelar</span>
       </button>
@@ -3498,6 +3563,123 @@ async function loadOrders() {
       </div>
     </div>`;
   }).join('');
+}
+
+// ── New order modal ───────────────────────────────────────────────────────────
+let _noRowIdx = 0;
+
+async function openNewOrderModal() {
+  _noRowIdx = 0;
+  document.getElementById('noPhone').value    = '';
+  document.getElementById('noName').value     = '';
+  document.getElementById('noDelivery').value = '0';
+  document.getElementById('noNotes').value    = '';
+  document.getElementById('noStatus').value   = 'confirmed';
+  document.getElementById('noItemsBody').innerHTML = '';
+  document.getElementById('noMsg').classList.add('hidden');
+  if (!products.length) { try { products = await api('/admin/products'); } catch(_) {} }
+  addOrderRow();
+  calcOrderTotal();
+  document.getElementById('newOrderModal').classList.remove('hidden');
+}
+
+function closeNewOrderModal() {
+  document.getElementById('newOrderModal').classList.add('hidden');
+}
+
+function addOrderRow() {
+  const idx  = _noRowIdx++;
+  const opts = (products || []).map(p =>
+    `<option value="${escHtml(p.name)}" data-price="${p.price_guarani}">${escHtml(p.name)}</option>`
+  ).join('');
+  const row = document.createElement('div');
+  row.id = `no-row-${idx}`;
+  row.className = 'flex gap-1.5 items-center';
+  row.innerHTML = `
+    <select id="no-sel-${idx}" onchange="fillOrderRowFromSelect(${idx})"
+      class="flex-1 border border-gray-200 rounded-lg px-2 py-1.5 text-sm min-w-0 truncate">
+      <option value="">${t('orders.new.custom_item')}</option>
+      ${opts}
+    </select>
+    <input id="no-name-${idx}" type="text" placeholder="${t('orders.new.item.product')}"
+      class="flex-1 border border-gray-200 rounded-lg px-2 py-1.5 text-sm min-w-0 hidden"/>
+    <input id="no-qty-${idx}" type="number" value="1" min="1"
+      class="w-12 border border-gray-200 rounded-lg px-1 py-1.5 text-sm text-center" oninput="calcOrderTotal()"/>
+    <input id="no-price-${idx}" type="number" value="0" min="0"
+      class="w-24 border border-gray-200 rounded-lg px-2 py-1.5 text-sm text-right" oninput="calcOrderTotal()"/>
+    <button onclick="removeOrderRow(${idx})" class="text-red-400 hover:text-red-600 text-base px-1 flex-shrink-0">✕</button>`;
+  document.getElementById('noItemsBody').appendChild(row);
+}
+
+function fillOrderRowFromSelect(idx) {
+  const sel  = document.getElementById(`no-sel-${idx}`);
+  const name = document.getElementById(`no-name-${idx}`);
+  const price = document.getElementById(`no-price-${idx}`);
+  if (sel.value === '') {
+    name.classList.remove('hidden');
+    price.value = 0;
+  } else {
+    name.classList.add('hidden');
+    const opt = sel.options[sel.selectedIndex];
+    price.value = opt.dataset.price || 0;
+  }
+  calcOrderTotal();
+}
+
+function removeOrderRow(idx) {
+  document.getElementById(`no-row-${idx}`)?.remove();
+  calcOrderTotal();
+}
+
+function calcOrderTotal() {
+  let total = 0;
+  document.querySelectorAll('[id^="no-qty-"]').forEach(qEl => {
+    const idx   = qEl.id.replace('no-qty-', '');
+    const qty   = Number(qEl.value) || 0;
+    const price = Number(document.getElementById(`no-price-${idx}`)?.value) || 0;
+    total += qty * price;
+  });
+  total += Number(document.getElementById('noDelivery')?.value) || 0;
+  const el = document.getElementById('noTotal');
+  if (el) el.textContent = fmtPrice(total);
+}
+
+function _showNoMsg(msg, isErr) {
+  const el = document.getElementById('noMsg');
+  el.textContent = msg;
+  el.className = `rounded-lg px-4 py-2 text-sm mb-3 ${isErr ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`;
+  el.classList.remove('hidden');
+}
+
+async function saveNewOrder() {
+  const phone = document.getElementById('noPhone').value.replace(/\D/g,'');
+  if (!phone) { _showNoMsg(t('err.missing_phone'), true); return; }
+
+  const items = [];
+  document.querySelectorAll('[id^="no-qty-"]').forEach(qEl => {
+    const idx   = qEl.id.replace('no-qty-', '');
+    const sel   = document.getElementById(`no-sel-${idx}`);
+    const nameI = document.getElementById(`no-name-${idx}`);
+    const name  = sel?.value || nameI?.value.trim();
+    const qty   = Math.max(1, parseInt(qEl.value) || 1);
+    const price = Number(document.getElementById(`no-price-${idx}`)?.value) || 0;
+    if (name) items.push({ name, qty, price });
+  });
+
+  if (!items.length) { _showNoMsg(t('err.missing_items'), true); return; }
+
+  try {
+    await api('/admin/orders', 'POST', {
+      customer_phone: phone,
+      customer_name:  document.getElementById('noName').value.trim() || null,
+      items,
+      delivery_fee: Number(document.getElementById('noDelivery').value) || 0,
+      notes:        document.getElementById('noNotes').value.trim() || null,
+      status:       document.getElementById('noStatus').value,
+    });
+    closeNewOrderModal();
+    await loadOrders();
+  } catch (e) { _showNoMsg(errMsg(e), true); }
 }
 
 // ── Export orders as CSV ──────────────────────────────────────────────────────
