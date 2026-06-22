@@ -1991,7 +1991,8 @@
     <input id="addCustName" type="text" placeholder="María García"
       class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-3 focus:outline-none focus:ring-2 focus:ring-green-300"/>
     <label data-i18n="customers.add.phone" class="block text-xs font-medium text-gray-500 mb-1">Teléfono *</label>
-    <input id="addCustPhone" type="tel" placeholder="595981123456"
+    <input id="addCustPhone" type="tel" placeholder="595981123456" inputmode="numeric"
+      oninput="this.value=this.value.replace(/\D/g,'')"
       class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-3 focus:outline-none focus:ring-2 focus:ring-green-300"/>
     <label data-i18n="customers.add.email" class="block text-xs font-medium text-gray-500 mb-1">Email (opcional)</label>
     <input id="addCustEmail" type="email" placeholder="maria@ejemplo.com"
@@ -2031,7 +2032,8 @@
       </div>
       <div>
         <label data-i18n="orders.new.customer.phone" class="block text-xs font-medium text-gray-500 mb-1">Teléfono (opcional)</label>
-        <input id="noPhone" type="tel" placeholder="595981123456"
+        <input id="noPhone" type="tel" placeholder="595981123456" inputmode="numeric"
+          oninput="this.value=this.value.replace(/\D/g,'')"
           class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-300"/>
       </div>
     </div>
