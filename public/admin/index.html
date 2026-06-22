@@ -2029,7 +2029,7 @@
     </div>
     <div class="flex items-center gap-2 mb-4 -mt-2">
       <button onclick="saveOrderCustomer()" id="noSaveContactBtn"
-        class="text-xs text-blue-600 hover:text-blue-800 border border-blue-200 bg-blue-50 hover:bg-blue-100 rounded-lg px-3 py-1.5 font-medium transition" data-i18n="orders.new.customer.save">📒 Guardar en agenda</button>
+        class="text-xs text-gray-600 border border-gray-200 bg-white hover:bg-gray-50 rounded-lg px-3 py-1.5 font-medium transition" data-i18n="orders.new.customer.save">📒 Guardar en agenda</button>
       <span id="noContactMsg" class="text-xs hidden"></span>
     </div>
 
@@ -4341,18 +4341,24 @@ async function startOrderNotifications() {
   _notifTimer = setInterval(checkNewOrders, 15000);
 }
 
+async function refreshStats() {
+  try {
+    const stats = await api('/admin/stats');
+    if (!stats) return;
+    document.getElementById('statToday').textContent    = stats.todayOrders;
+    document.getElementById('statPending').textContent  = stats.pendingOrders;
+    document.getElementById('statRevenue').textContent  = fmtPrice(stats.todayRevenue);
+    document.getElementById('statProducts').textContent = stats.activeProducts + '/' + stats.totalProducts;
+  } catch(_) {}
+}
+
 async function checkNewOrders() {
   try {
     const data = await api(`/admin/orders/new?since=${encodeURIComponent(_notifLastCheck)}`);
     _notifLastCheck = new Date().toISOString();
+    refreshStats();
+    if (document.getElementById('tabOrders')?.classList.contains('tab-active')) loadOrders();
     if (!data.orders || !data.orders.length) return;
-
-    // Update pending badge in stats bar
-    const pendingEl = document.getElementById('statPending');
-    if (pendingEl) {
-      const cur = parseInt(pendingEl.textContent) || 0;
-      pendingEl.textContent = cur + data.orders.filter(o => true).length;
-    }
 
     for (const order of data.orders) {
       const items = Array.isArray(order.items_json)
@@ -4528,6 +4534,11 @@ async function saveAddCustomer() {
     msg.className = 'rounded-lg px-4 py-2 text-sm mb-3 bg-red-50 text-red-700';
     return;
   }
+  if (!name) {
+    msg.textContent = t('err.missing_name') || 'Nombre requerido';
+    msg.className = 'rounded-lg px-4 py-2 text-sm mb-3 bg-red-50 text-red-700';
+    return;
+  }
   try {
     await api('/admin/customers', 'POST', { phone, name, email, address });
     document.getElementById('addCustomerModal').classList.add('hidden');
@@ -4603,10 +4614,10 @@ async function loadCustomers() {
       <td class="px-4 py-3 text-gray-600 text-sm">+${c.customer_phone}</td>
       <td class="px-4 py-3 text-gray-500 text-xs">${date}</td>
       <td class="px-4 py-3 text-center whitespace-nowrap">
-        <button onclick="startEditCustomerName('cust-name-${c.customer_phone}', '${c.customer_phone}', ${JSON.stringify(c.customer_name || '')}, 'loadCustomers')"
+        <button onclick="startEditCustomerName('cust-name-${c.customer_phone}', '${c.customer_phone}', ${JSON.stringify(c.customer_name || '').replace(/"/g,'&quot;')}, 'loadCustomers')"
           title="${t('customers.editName')}"
           class="text-gray-400 hover:text-green-500 transition text-sm mr-1">✏️</button>
-        <button onclick="openEditCustomerInfoModal('${c.customer_phone}', ${JSON.stringify(c.customer_email||'')}, ${JSON.stringify(c.customer_address||'')})"
+        <button onclick="openEditCustomerInfoModal('${c.customer_phone}', ${JSON.stringify(c.customer_email||'').replace(/"/g,'&quot;')}, ${JSON.stringify(c.customer_address||'').replace(/"/g,'&quot;')})"
           title="${t('customers.editInfo')}"
           class="text-gray-400 hover:text-blue-500 transition text-sm">📋</button>
       </td>
