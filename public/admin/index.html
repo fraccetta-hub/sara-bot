@@ -1215,6 +1215,11 @@
               placeholder="https://g.page/r/..."
               class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-3"/>
             <p class="text-xs text-gray-400 mb-3" data-i18n="settings.bizinfo.review_hint">Sara pide una reseña automáticamente después de cada entrega.</p>
+            <label class="block text-xs font-medium text-gray-600 mb-1" data-i18n="settings.bizinfo.support_phone">Teléfono de atención humana</label>
+            <input id="sBizPhone" type="tel" data-i18n-ph="settings.bizinfo.support_phone_ph"
+              placeholder="595981123456"
+              class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-1"/>
+            <p class="text-xs text-gray-400 mb-3" data-i18n="settings.bizinfo.support_phone_hint">Sara lo comparte con el cliente solo cuando pide hablar con una persona.</p>
             <button onclick="saveBusinessInfo()" data-i18n="settings.bizinfo.save"
               class="btn-green w-full py-2 rounded-lg text-sm font-semibold">Guardar info</button>
           </div>
@@ -1487,7 +1492,8 @@
           <!-- Account (email / username) -->
           <div>
             <h3 data-i18n="settings.account.title" class="font-medium text-gray-700 mb-1 text-sm">Credenciales de acceso</h3>
-            <p data-i18n="settings.account.desc" class="text-xs text-gray-400 mb-3">Tu email de acceso y nombre de usuario.</p>
+            <p data-i18n="settings.account.desc" class="text-xs text-gray-400 mb-1">Tu email de acceso y nombre de usuario.</p>
+            <p class="text-xs text-gray-400 mb-3 flex items-center gap-1"><span>🔒</span><span data-i18n="settings.account.privacy">Esta información es privada y nunca se comparte con tus clientes ni con Sara.</span></p>
             <div id="accountMsg" class="hidden rounded-lg px-4 py-2 text-sm mb-3"></div>
             <label data-i18n="settings.account.email" class="block text-xs font-medium text-gray-500 mb-1">Email</label>
             <div id="aEmailDisplay" class="bg-gray-50 border border-gray-100 rounded-lg px-3 py-2 text-sm text-gray-500 mb-3 font-mono">—</div>
@@ -4969,6 +4975,7 @@ async function loadSettings() {
 
     // Business info fields
     document.getElementById('sAddress').value         = s.address || '';
+    document.getElementById('sBizPhone').value        = s.support_phone || '';
     document.getElementById('sGoogleReviewUrl').value = s.google_review_url || '';
     if (s.location_lat && s.location_lng)
       document.getElementById('sBizMapsUrl').value = `https://www.google.com/maps?q=${s.location_lat},${s.location_lng}`;
@@ -5220,6 +5227,7 @@ async function saveBusinessInfo() {
     const mapsPos = parseMapsUrl(document.getElementById('sBizMapsUrl').value);
     await api('/admin/settings', 'PUT', {
       address:           document.getElementById('sAddress').value.trim() || null,
+      support_phone:     document.getElementById('sBizPhone').value.replace(/\D/g,'') || null,
       google_review_url: document.getElementById('sGoogleReviewUrl').value.trim() || null,
       location_lat:      mapsPos?.lat || null,
       location_lng:      mapsPos?.lng || null,

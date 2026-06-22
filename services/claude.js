@@ -247,6 +247,10 @@ Si el cliente pide algo que no está en la lista de lo que podés hacer, explica
     ? `\nDIRECCIÓN DEL LOCAL: ${tenant.address}`
     : '';
 
+  const supportPhoneBlock = tenant.support_phone
+    ? `\nCONTACTO HUMANO: Si el cliente quiere hablar con una persona, decile que puede comunicarse al ${tenant.support_phone}. Ofrecé este contacto solo cuando el cliente lo pida explícitamente o cuando no puedas resolver su consulta.`
+    : '';
+
   const paymentBlock = tenant.payment_instructions
     ? `\nINFORMACIÓN DE PAGO:\n${tenant.payment_instructions}`
     : '';
@@ -283,6 +287,7 @@ ESTILO WHATSAPP — REGLAS DE ORO:
 ${catalogBlock}
 ${restaurantBlock}
 ${addressBlock}
+${supportPhoneBlock}
 ${paymentBlock}
 ${customBlock}
 

@@ -288,7 +288,7 @@ router.get('/settings', requireAuth, async (req, res) => {
              service_location, service_fee_type, service_base_fee,
              service_zone_km, service_zone_outer_fee, service_per_km,
              service_min_value, service_disabled_dates,
-             address, google_review_url,
+             address, google_review_url, support_phone,
              restaurant_enabled, restaurant_slot_duration, restaurant_slot_duration_2, appointment_capacity,
              sector, active, plan_expires, plan_currency, plan_price, phone_number_id, whatsapp_token_refresh_error,
              stripe_subscription_status, subscription_cancel_at_period_end,
@@ -312,7 +312,7 @@ router.put('/settings', requireAuth, async (req, res) => {
     'service_location','service_fee_type','service_base_fee',
     'service_zone_km','service_zone_outer_fee','service_per_km',
     'service_min_value','service_disabled_dates',
-    'address','google_review_url','appointment_capacity'
+    'address','google_review_url','support_phone','appointment_capacity'
   ];
   const updates = {};
   for (const key of allowed) {
