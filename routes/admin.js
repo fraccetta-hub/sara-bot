@@ -1810,15 +1810,17 @@ router.post('/whatsapp-profile', requireAuth, upload.single('photo'), async (req
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
+          // Cloud API business profile supports `description`, not `about`
+          // (the latter is silently ignored — On-Premises field only).
           body: JSON.stringify({
             messaging_product: 'whatsapp',
-            about,
+            description: about,
           }),
         }
       );
       const profileData = await profileRes.json();
       if (!profileRes.ok) {
-        errors.push(`About: ${profileData.error?.message || profileRes.statusText}`);
+        errors.push(`Descripción: ${profileData.error?.message || profileRes.statusText}`);
       }
     } catch (e) {
       errors.push('About: ' + e.message);
