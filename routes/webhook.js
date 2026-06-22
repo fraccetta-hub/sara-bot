@@ -200,7 +200,7 @@ async function processIncoming(body) {
       const transcription = await transcribeAudio(buffer, mimeType);
       if (!transcription) {
         await sendMessage(senderPhone,
-          'No entendí bien el audio 😕 ¿Podés escribirme lo que necesitás?',
+          'Non ho capito l\'audio 😕 / No entendí el audio 😕 / Didn\'t catch that 😕\n¿Podés escribir? / Can you write? / Puoi scrivere?',
           phoneNumberId, token);
         return;
       }
@@ -214,7 +214,7 @@ async function processIncoming(body) {
     } catch (e) {
       console.error('[webhook] Audio transcription error:', e.message);
       await sendMessage(senderPhone,
-        'No pude procesar el audio 😕 ¿Podés escribirme tu consulta?',
+        'Non riesco a elaborare l\'audio 😕 / No pude procesar el audio 😕 / Couldn\'t process the audio 😕\nPuoi scrivere? / ¿Podés escribir? / Can you write?',
         phoneNumberId, token);
     }
 
