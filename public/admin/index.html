@@ -3629,7 +3629,8 @@ async function openEditOrderModal(order) {
     row.innerHTML = `
       <select id="no-sel-${idx}" onchange="fillOrderRowFromSelect(${idx})"
         class="flex-1 border border-gray-200 rounded-lg px-2 py-1.5 text-sm min-w-0 truncate">
-        <option value="">${t('orders.new.custom_item')}</option>
+        <option value="" disabled selected>${t('orders.new.pick_item') || '— Seleziona —'}</option>
+        <option value="__custom__">${t('orders.new.custom_item')}</option>
         ${opts}
       </select>
       <input id="no-name-${idx}" type="text" value="${escHtml(item.name)}"
@@ -3643,8 +3644,9 @@ async function openEditOrderModal(order) {
       <button onclick="removeOrderRow(${idx})" class="text-red-400 hover:text-red-600 text-base px-1 flex-shrink-0">✕</button>`;
     document.getElementById('noItemsBody').appendChild(row);
     const sel = document.getElementById(`no-sel-${idx}`);
-    const matchedOpt = [...sel.options].find(op => op.value === item.name);
+    const matchedOpt = [...sel.options].find(op => op.value !== '' && op.value !== '__custom__' && op.value === item.name);
     if (matchedOpt) {
+      sel.value = item.name;
       document.getElementById(`no-name-${idx}`).classList.add('hidden');
       document.getElementById(`no-back-${idx}`).classList.add('hidden');
       const priceEl = document.getElementById(`no-price-${idx}`);
@@ -3653,7 +3655,7 @@ async function openEditOrderModal(order) {
       priceEl.classList.remove('text-gray-900');
     } else {
       sel.classList.add('hidden');
-      sel.value = '';
+      sel.value = '__custom__';
       document.getElementById(`no-name-${idx}`).classList.remove('hidden');
       document.getElementById(`no-name-${idx}`).value = item.name;
       document.getElementById(`no-back-${idx}`).classList.remove('hidden');
@@ -3712,7 +3714,8 @@ function addOrderRow() {
   row.innerHTML = `
     <select id="no-sel-${idx}" onchange="fillOrderRowFromSelect(${idx})"
       class="flex-1 border border-gray-200 rounded-lg px-2 py-1.5 text-sm min-w-0 truncate">
-      <option value="">${t('orders.new.custom_item')}</option>
+      <option value="" disabled selected>${t('orders.new.pick_item') || '— Seleziona —'}</option>
+      <option value="__custom__">${t('orders.new.custom_item')}</option>
       ${opts}
     </select>
     <input id="no-name-${idx}" type="text" placeholder="${t('orders.new.item.product') || 'Nome prodotto'}"
@@ -3732,7 +3735,7 @@ function fillOrderRowFromSelect(idx) {
   const name  = document.getElementById(`no-name-${idx}`);
   const back  = document.getElementById(`no-back-${idx}`);
   const price = document.getElementById(`no-price-${idx}`);
-  if (sel.value === '') {
+  if (sel.value === '__custom__') {
     sel.classList.add('hidden');
     name.classList.remove('hidden');
     if (back) back.classList.remove('hidden');
@@ -3759,17 +3762,14 @@ function resetOrderRowToSelect(idx) {
   const name = document.getElementById(`no-name-${idx}`);
   const back = document.getElementById(`no-back-${idx}`);
   const price = document.getElementById(`no-price-${idx}`);
-  sel.value = sel.options[1]?.value || '';
+  sel.value = '';
   sel.classList.remove('hidden');
   name.classList.add('hidden');
   if (back) back.classList.add('hidden');
-  if (sel.value) {
-    const opt = [...sel.options].find(o => o.value === sel.value);
-    price.value    = opt?.dataset.price || 0;
-    price.readOnly = true;
-    price.classList.add('bg-gray-50','text-gray-400');
-    price.classList.remove('text-gray-900');
-  }
+  price.value    = '';
+  price.readOnly = false;
+  price.classList.remove('bg-gray-50','text-gray-400');
+  price.classList.add('text-gray-900');
   calcOrderTotal();
 }
 
@@ -3804,7 +3804,8 @@ async function saveNewOrder() {
     const idx      = qEl.id.replace('no-qty-', '');
     const sel      = document.getElementById(`no-sel-${idx}`);
     const nameI    = document.getElementById(`no-name-${idx}`);
-    const itemName = (sel?.value || nameI?.value || '').trim();
+    const selVal   = sel?.value;
+    const itemName = (!selVal || selVal === '__custom__') ? (nameI?.value || '').trim() : selVal;
     const qty      = Math.max(1, parseInt(qEl.value) || 1);
     const price    = Number(document.getElementById(`no-price-${idx}`)?.value) || 0;
     if (!itemName) return;
