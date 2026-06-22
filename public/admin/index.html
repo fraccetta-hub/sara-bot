@@ -2388,97 +2388,96 @@ function toggleHelpPanel() {
 function renderHelp() {
   const el = document.getElementById('helpContent');
   if (!el) return;
-  const item = (html) => `<div class="p-2 rounded-lg bg-gray-50 text-sm text-gray-700">${html}</div>`;
-  el.innerHTML = `
+  const row  = (html) => `<div class="p-2.5 rounded-lg bg-gray-50 text-sm text-gray-700 leading-snug">${html}</div>`;
+  const card = (title, body) => `
+    <div class="bg-white rounded-xl border border-gray-100 p-4">
+      <h3 class="font-semibold text-gray-800 text-sm mb-3">${title}</h3>
+      <div class="space-y-2">${body}</div>
+    </div>`;
+
+  // ── Section header ────────────────────────────────────────────────────────
+  const sectionHdr = (label) =>
+    `<div class="flex items-center gap-2 pt-1">
+       <span class="text-xs font-semibold uppercase tracking-widest text-gray-400">${label}</span>
+       <div class="flex-1 h-px bg-gray-200"></div>
+     </div>`;
+
+  // ── Intro ─────────────────────────────────────────────────────────────────
+  let html = `
     <p class="text-sm text-gray-500">${t('help.desc')}</p>
     <div class="p-3 bg-blue-50 border border-blue-100 rounded-xl text-sm text-blue-800">${t('help.nl.info')}</div>
-    <div class="bg-white rounded-xl shadow-sm p-5">
-      <h3 class="font-semibold text-gray-800 mb-3">${t('help.catalog.title')}</h3>
-      <div class="space-y-2">
-        ${item(t('help.catalog.catalogo'))}
-        ${item(t('help.catalog.stock'))}
-        ${item(t('help.catalog.precio'))}
-        ${item(t('help.catalog.agotado'))}
-        ${item(t('help.catalog.disponible'))}
-        ${item(t('help.catalog.nuevo'))}
-      </div>
-    </div>
-    <div class="bg-white rounded-xl shadow-sm p-5">
-      <h3 class="font-semibold text-gray-800 mb-2">${t('help.photos.title')}</h3>
-      <p class="text-sm text-gray-600 mb-2">${t('help.photos.nombre')}</p>
-      <p class="text-xs text-gray-400">${t('help.photos.hint')}</p>
-    </div>
-    <div class="bg-white rounded-xl shadow-sm p-5">
-      <h3 class="font-semibold text-gray-800 mb-3">${t('help.orders.title')}</h3>
-      <div class="space-y-2">
-        ${item(t('help.orders.confirmar'))}
-        ${item(t('help.orders.cancelar'))}
-        ${item(t('help.orders.chat'))}
-        ${item(t('help.orders.fin'))}
-      </div>
-      <div class="mt-3 p-3 bg-purple-50 border border-purple-100 rounded-lg text-sm text-purple-800">${t('help.orders.takeover')}</div>
-    </div>
-    ${(planAppointmentsEnabled || planServicesEnabled) ? `
-    <div class="bg-white rounded-xl shadow-sm p-5">
-      <h3 class="font-semibold text-gray-800 mb-3">${t('help.appts.title')}</h3>
-      <div class="space-y-2">
-        ${planAppointmentsEnabled ? item(t('help.appts.view')) : ''}
-        ${planAppointmentsEnabled ? item(t('help.appts.book')) : ''}
-        ${planAppointmentsEnabled ? item(t('help.appts.manage')) : ''}
-        ${planAppointmentsEnabled ? item(t('help.appts.block')) : ''}
-        ${planServicesEnabled ? item(t('help.appts.services')) : ''}
-      </div>
-    </div>` : ''}
-    ${isRestaurantPlan ? `
-    <div class="bg-white rounded-xl shadow-sm p-5">
-      <h3 class="font-semibold text-gray-800 mb-3">${t('help.restaurant.title')}</h3>
-      <div class="space-y-2 text-sm text-gray-700">
-        <div class="p-2 rounded-lg bg-gray-50">${t('help.restaurant.auto')}</div>
-        <div class="p-2 rounded-lg bg-gray-50">${t('help.restaurant.big')}</div>
-        <div class="p-2 rounded-lg bg-gray-50">${t('help.restaurant.manage')}</div>
-      </div>
-    </div>` : ''}
-    <div class="bg-white rounded-xl shadow-sm p-5">
-      <h3 class="font-semibold text-gray-800 mb-3">${t('help.extra.title')}</h3>
-      <div class="space-y-2">
-        ${item(t('help.extra.closures'))}
-        ${item(t('help.extra.offers'))}
-        ${item(t('help.extra.broadcast'))}
-      </div>
-    </div>
-    <div class="bg-white rounded-xl shadow-sm p-5">
-      <h3 class="font-semibold text-gray-800 mb-3">${t('help.other.title')}</h3>
-      <p class="text-sm text-gray-600 mb-2">${t('help.other.ayuda')}</p>
-      <p class="text-xs text-gray-500">${t('help.other.hint')}</p>
-    </div>
-    <div class="bg-white rounded-xl shadow-sm p-5">
-      <h3 class="font-semibold text-gray-800 mb-1">${t('help.chatpanel.title')}</h3>
-      <p class="text-sm text-gray-500 mb-4">${t('help.chatpanel.desc')}</p>
-      <div class="space-y-3 text-sm">
-        <div class="p-3 rounded-lg bg-gray-50">
-          <p class="font-medium text-gray-700 mb-1">${t('help.chatpanel.view.title')}</p>
-          <p class="text-gray-500">${t('help.chatpanel.view.desc')}</p>
-        </div>
-        <div class="p-3 rounded-lg bg-gray-50">
-          <p class="font-medium text-gray-700 mb-1">${t('help.chatpanel.order.title')}</p>
-          <p class="text-gray-500">${t('help.chatpanel.order.desc')}</p>
-        </div>
-        <div class="p-3 rounded-lg bg-blue-50 border border-blue-100">
-          <p class="font-medium text-blue-800 mb-1">${t('help.chatpanel.takeover.title')}</p>
-          <p class="text-blue-700">${t('help.chatpanel.takeover.desc')}</p>
-          <p class="text-blue-700 mt-1">${t('help.chatpanel.takeover.colors')}</p>
-        </div>
-        <div class="p-3 rounded-lg bg-green-50 border border-green-100">
-          <p class="font-medium text-green-800 mb-1">${t('help.chatpanel.resume.title')}</p>
-          <p class="text-green-700">${t('help.chatpanel.resume.desc')}</p>
-        </div>
-        <div class="p-3 rounded-lg bg-gray-50">
-          <p class="font-medium text-gray-700 mb-1">${t('help.chatpanel.img.title')}</p>
-          <p class="text-gray-500">${t('help.chatpanel.img.desc')}</p>
-        </div>
-      </div>
-      <div class="mt-4 p-3 bg-yellow-50 rounded-lg text-xs text-yellow-800">${t('help.chatpanel.colors')}</div>
-    </div>`;
+
+    ${sectionHdr(t('help.web.title'))}
+
+    ${planProductsEnabled ? card('📦 ' + t('help.catalog.title'), row(t('help.web.products'))) : ''}
+
+    ${card('🛒 ' + t('help.orders.title'), row(t('help.web.orders')))}
+
+    ${card('👤 Clientes / Customers / Clienti', row(t('help.web.customers')))}
+
+    ${planServicesEnabled ? card('🛠 ' + t('help.appts.title'), row(t('help.web.services')) + (planAppointmentsEnabled ? row(t('help.web.appts')) : '')) : ''}
+
+    ${card('💬 ' + t('help.chatpanel.title'),
+      row(`${t('help.chatpanel.view.title')} — ${t('help.chatpanel.view.desc')}`) +
+      row(`${t('help.chatpanel.order.title')} — ${t('help.chatpanel.order.desc')}`) +
+      `<div class="p-2.5 rounded-lg bg-blue-50 text-sm text-blue-800 leading-snug">
+        <b>${t('help.chatpanel.takeover.title')}</b><br>${t('help.chatpanel.takeover.desc')}<br>${t('help.chatpanel.takeover.colors')}
+       </div>
+       <div class="p-2.5 rounded-lg bg-green-50 text-sm text-green-800 leading-snug">
+        <b>${t('help.chatpanel.resume.title')}</b> — ${t('help.chatpanel.resume.desc')}
+       </div>` +
+      row(`${t('help.chatpanel.img.title')} — ${t('help.chatpanel.img.desc')}`)
+    )}
+
+    ${sectionHdr('📱 Bot WhatsApp')}
+
+    ${planProductsEnabled ? card('📦 ' + t('help.catalog.title'),
+      row(t('help.catalog.catalogo')) +
+      row(t('help.catalog.stock')) +
+      row(t('help.catalog.precio')) +
+      row(t('help.catalog.agotado')) +
+      row(t('help.catalog.disponible')) +
+      row(t('help.catalog.nuevo'))
+    ) : ''}
+
+    ${planProductsEnabled ? card('📸 ' + t('help.photos.title'),
+      row(t('help.photos.nombre')) +
+      `<p class="text-xs text-gray-400 pt-1">${t('help.photos.hint')}</p>`
+    ) : ''}
+
+    ${card('🛒 ' + t('help.orders.title'),
+      row(t('help.orders.confirmar')) +
+      row(t('help.orders.cancelar')) +
+      row(t('help.orders.chat')) +
+      row(t('help.orders.fin')) +
+      `<div class="p-2.5 rounded-lg bg-purple-50 border border-purple-100 text-sm text-purple-800">${t('help.orders.takeover')}</div>`
+    )}
+
+    ${(planAppointmentsEnabled || planServicesEnabled) ? card('📅 ' + t('help.appts.title'),
+      (planAppointmentsEnabled ? row(t('help.appts.view')) + row(t('help.appts.book')) + row(t('help.appts.manage')) + row(t('help.appts.block')) : '') +
+      (planServicesEnabled ? row(t('help.appts.services')) : '')
+    ) : ''}
+
+    ${isRestaurantPlan ? card('🍽️ ' + t('help.restaurant.title'),
+      row(t('help.restaurant.auto')) +
+      row(t('help.restaurant.big')) +
+      row(t('help.restaurant.manage'))
+    ) : ''}
+
+    ${card('🏷️ ' + t('help.extra.title'),
+      row(t('help.extra.closures')) +
+      row(t('help.extra.offers')) +
+      row(t('help.extra.broadcast'))
+    )}
+
+    ${card('📊 ' + t('help.stats.title'), row(t('help.stats.items')))}
+
+    ${card('🤖 ' + t('help.other.title'),
+      row(t('help.other.ayuda')) +
+      `<p class="text-xs text-gray-400 pt-1">${t('help.other.hint')}</p>`
+    )}`;
+
+  el.innerHTML = html;
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
