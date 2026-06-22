@@ -4574,10 +4574,8 @@ async function confirmDeletion() {
 
 // ── Customer name label with inline edit ──────────────────────────────────────
 function renderCustomerLabel(phone, name) {
-  if (name && phone) return `<span class="font-semibold text-gray-800">${escHtml(name)}</span><span class="text-gray-400 text-xs ml-1">+${phone}</span>`;
-  if (name)  return `<span class="font-semibold text-gray-800">${escHtml(name)}</span>`;
-  if (phone) return `<span class="font-medium text-gray-600">+${phone}</span>`;
-  return `<span class="text-gray-400 text-sm">—</span>`;
+  const phoneHtml = phone ? `<span class="text-gray-400 text-xs ml-1">+${phone}</span>` : '';
+  return `<span class="font-semibold text-gray-800">${escHtml(name || '—')}</span>${phoneHtml}`;
 }
 
 // ── Shared customer rename (used by Orders tab + Customers tab) ───────────────
