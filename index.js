@@ -177,11 +177,23 @@ app.listen(PORT, () => {
             .eq('id', tenant.id);
           console.log(`[token-renewal] Renewed for ${tenant.name}`);
         } else {
-          const errMsg = data.error?.message || 'unknown';
-          await supabase.from('tenants')
-            .update({ whatsapp_token_refresh_error: errMsg })
-            .eq('id', tenant.id);
-          console.error(`[token-renewal] Failed for ${tenant.name}: ${errMsg}`);
+          // Permanent System User tokens can't be exchanged but are still valid.
+          // Verify real validity before flagging an error.
+          const dbgUrl = `https://graph.facebook.com/v19.0/debug_token` +
+            `?input_token=${tenant.whatsapp_token}&access_token=${APP_ID}|${APP_SECRET}`;
+          const dbg = await fetch(dbgUrl).then(r => r.json());
+          if (dbg.data?.is_valid) {
+            await supabase.from('tenants')
+              .update({ whatsapp_token_refresh_error: null })
+              .eq('id', tenant.id);
+            console.log(`[token-renewal] ${tenant.name}: token valid (permanent, not exchangeable)`);
+          } else {
+            const errMsg = dbg.data?.error?.message || data.error?.message || 'unknown';
+            await supabase.from('tenants')
+              .update({ whatsapp_token_refresh_error: errMsg })
+              .eq('id', tenant.id);
+            console.error(`[token-renewal] Failed for ${tenant.name}: ${errMsg}`);
+          }
         }
       } catch (e) {
         console.error(`[token-renewal] Error for ${tenant.name}: ${e.message}`);
