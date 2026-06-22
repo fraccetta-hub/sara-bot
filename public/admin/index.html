@@ -4338,7 +4338,7 @@ async function startOrderNotifications() {
     _notifPermission = p === 'granted';
   }
   _notifLastCheck = new Date().toISOString();
-  _notifTimer = setInterval(checkNewOrders, 15000);
+  _notifTimer = setInterval(checkNewOrders, 10000);
 }
 
 async function refreshStats() {
@@ -4964,7 +4964,7 @@ async function loadSettings() {
       if (el) { el.step = isIntCur ? '1' : '0.01'; el.type = 'text'; el.type = 'number'; }
     });
     isMenuMode = s.sector === 'delivery';
-    applyTabVisibility(s.products_enabled !== false, !!s.services_enabled, !!s.appointments_enabled, !!s.restaurant_enabled);
+    applyMenuLabels();
     applyTranslations();
 
     // Business info fields
