@@ -2013,7 +2013,7 @@ router.get('/orders/export', requireAuth, async (req, res) => {
     conversations: undefined,
   }));
 
-  const headers = ['id','created_at','status','customer_phone','customer_name','items','total_guarani','delivery_fee'];
+  const headers = ['id','created_at','status','customer_phone','customer_name','items','total_guarani','delivery_fee','notes'];
   const rows = orders.map(o => [
     o.id,
     o.created_at ? new Date(o.created_at).toISOString().slice(0,19).replace('T',' ') : '',
@@ -2025,6 +2025,7 @@ router.get('/orders/export', requireAuth, async (req, res) => {
       : '',
     o.total_guarani,
     o.delivery_fee || 0,
+    o.notes || '',
   ]);
 
   const date = new Date().toISOString().slice(0,10);
