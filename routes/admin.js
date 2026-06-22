@@ -690,6 +690,33 @@ router.put('/orders/:id/status', requireAuth, async (req, res) => {
   res.json(data);
 });
 
+// ─── PUT /admin/orders/:id — edit existing order ─────────────────────────────
+
+router.put('/orders/:id', requireAuth, async (req, res) => {
+  const { items, delivery_fee, notes, status } = req.body;
+  if (!Array.isArray(items) || !items.length)
+    return res.status(400).json({ error: 'at least one item required', errorCode: 'missing_items' });
+  const cleanItems = items.map(i => ({ name: String(i.name||'').trim(), qty: Math.max(1,parseInt(i.qty)||1), price: Math.max(0,Number(i.price)||0) })).filter(i => i.name);
+  const total = cleanItems.reduce((s, i) => s + i.qty * i.price, 0);
+  const fee = Math.max(0, Number(delivery_fee) || 0);
+  const validStatuses = ['pending','confirmed','preparing','delivering','delivered','cancelled'];
+  const updates = {
+    items_json:     cleanItems,
+    total_guarani:  Math.round(total),
+    delivery_fee:   fee,
+    notes:          notes?.trim() || null,
+  };
+  if (validStatuses.includes(status)) updates.status = status;
+  const { data, error } = await supabase
+    .from('orders')
+    .update(updates)
+    .eq('id', req.params.id)
+    .eq('tenant_id', req.tenant.tenantId)
+    .select().single();
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
 // ─── POST /admin/orders — create order manually from admin panel ──────────────
 
 router.post('/orders', requireAuth, async (req, res) => {

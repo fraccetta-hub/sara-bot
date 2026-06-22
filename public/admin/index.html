@@ -2012,9 +2012,10 @@
 <!-- ── NEW ORDER MODAL ── -->
 <div id="newOrderModal" class="hidden fixed inset-0 modal-bg flex items-center justify-center z-50 px-4">
   <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
-    <h3 data-i18n="orders.new.title" class="font-semibold text-gray-800 mb-4">➕ Nuevo pedido</h3>
+    <h3 id="noOrderModalTitle" data-i18n="orders.new.title" class="font-semibold text-gray-800 mb-4">➕ Nuevo pedido</h3>
     <div id="noMsg" class="hidden rounded-lg px-4 py-2 text-sm mb-3"></div>
 
+    <div id="noCustomerSection">
     <div class="mb-3">
       <label data-i18n="orders.new.customer.pick" class="block text-xs font-medium text-gray-500 mb-1">Buscar cliente existente</label>
       <select id="noCustomerPicker" onchange="fillOrderCustomer(this)"
@@ -2038,6 +2039,7 @@
         class="text-xs text-gray-600 border border-gray-200 bg-white hover:bg-gray-50 rounded-lg px-3 py-1.5 font-medium transition" data-i18n="orders.new.customer.save">📒 Guardar en agenda</button>
       <span id="noContactMsg" class="text-xs hidden"></span>
     </div>
+    </div><!-- /noCustomerSection -->
 
     <label data-i18n="orders.new.items" class="block text-xs font-medium text-gray-500 mb-1">Productos</label>
     <div class="flex gap-1.5 text-xs text-gray-400 font-medium mb-1 pr-7">
@@ -2076,7 +2078,7 @@
     </div>
 
     <div class="flex gap-2">
-      <button onclick="saveNewOrder()" data-i18n="orders.new.save"
+      <button id="noSaveBtn" onclick="saveNewOrder()" data-i18n="orders.new.save"
         class="flex-1 btn-green py-2 rounded-lg text-sm font-semibold">Crear pedido</button>
       <button onclick="closeNewOrderModal()"
         class="flex-1 bg-gray-100 text-gray-600 hover:bg-gray-200 py-2 rounded-lg text-sm font-semibold transition">
@@ -3582,18 +3584,28 @@ async function loadOrders() {
               `<option value="${s}" ${s===o.status?'selected':''}>${statusLabels[s]}</option>`
             ).join('')}
           </select>
+          <button onclick="openEditOrderModal(${JSON.stringify(o).replace(/"/g,'&quot;')})"
+            title="${t('orders.edit')}"
+            class="mt-1 text-xs text-gray-400 hover:text-green-600 border border-gray-200 rounded-lg px-2 py-1 w-full transition">✏️ ${t('orders.edit')}</button>
         </div>
       </div>
     </div>`;
   }).join('');
 }
 
-// ── New order modal ───────────────────────────────────────────────────────────
+// ── New / Edit order modal ────────────────────────────────────────────────────
 let _noRowIdx = 0;
 let _noCustomers = [];
+let _editOrderId = null;
 
 async function openNewOrderModal() {
+  _editOrderId = null;
   _noRowIdx = 0;
+  document.getElementById('noOrderModalTitle').setAttribute('data-i18n', 'orders.new.title');
+  document.getElementById('noOrderModalTitle').textContent = t('orders.new.title');
+  document.getElementById('noSaveBtn').setAttribute('data-i18n', 'orders.new.save');
+  document.getElementById('noSaveBtn').textContent = t('orders.new.save');
+  document.getElementById('noCustomerSection').classList.remove('hidden');
   document.getElementById('noPhone').value    = '';
   document.getElementById('noName').value     = '';
   document.getElementById('noDelivery').value = '0';
@@ -3610,6 +3622,56 @@ async function openNewOrderModal() {
       return `<option value="${i}">${label}</option>`;
     }).join('');
   addOrderRow();
+  calcOrderTotal();
+  document.getElementById('newOrderModal').classList.remove('hidden');
+}
+
+async function openEditOrderModal(order) {
+  _editOrderId = order.id;
+  _noRowIdx = 0;
+  document.getElementById('noOrderModalTitle').textContent = t('orders.edit.title');
+  document.getElementById('noSaveBtn').textContent = t('orders.edit.save');
+  document.getElementById('noCustomerSection').classList.add('hidden');
+  document.getElementById('noDelivery').value = order.delivery_fee || 0;
+  document.getElementById('noNotes').value    = order.notes || '';
+  document.getElementById('noStatus').value   = order.status || 'confirmed';
+  document.getElementById('noItemsBody').innerHTML = '';
+  document.getElementById('noMsg').classList.add('hidden');
+  if (!products.length) { try { products = await api('/admin/products'); } catch(_) {} }
+  (order.items_json || []).forEach(item => {
+    const idx = _noRowIdx++;
+    const row = document.createElement('div');
+    row.id = `no-row-${idx}`;
+    row.className = 'flex items-center gap-1.5';
+    const opts = products.map(p => `<option value="${escHtml(p.name)}" data-price="${p.price||0}" ${p.name===item.name?'selected':''}>${escHtml(p.name)}</option>`).join('');
+    row.innerHTML = `
+      <select id="no-sel-${idx}" onchange="fillOrderRowFromSelect(${idx})"
+        class="flex-1 border border-gray-200 rounded-lg px-2 py-1.5 text-sm min-w-0 truncate">
+        <option value="">${t('orders.new.custom_item')}</option>
+        ${opts}
+      </select>
+      <input id="no-name-${idx}" type="text" value="${escHtml(item.name)}"
+        class="flex-1 border border-gray-200 rounded-lg px-2 py-1.5 text-sm min-w-0 hidden"/>
+      <input id="no-qty-${idx}" type="number" value="${item.qty||1}" min="1"
+        class="w-12 border border-gray-200 rounded-lg px-1 py-1.5 text-sm text-center" oninput="calcOrderTotal()"/>
+      <input id="no-price-${idx}" type="number" value="${item.price||0}" min="0"
+        class="w-24 border border-gray-200 rounded-lg px-2 py-1.5 text-sm text-right" oninput="calcOrderTotal()"/>
+      <button onclick="removeOrderRow(${idx})" class="text-red-400 hover:text-red-600 text-base px-1 flex-shrink-0">✕</button>`;
+    document.getElementById('noItemsBody').appendChild(row);
+    // if name matches a catalog product, lock price
+    const sel = document.getElementById(`no-sel-${idx}`);
+    const matchedOpt = [...sel.options].find(op => op.value === item.name);
+    if (matchedOpt) {
+      document.getElementById(`no-name-${idx}`).classList.add('hidden');
+      const priceEl = document.getElementById(`no-price-${idx}`);
+      priceEl.readOnly = true;
+      priceEl.classList.add('bg-gray-50','text-gray-400');
+    } else {
+      sel.value = '';
+      document.getElementById(`no-name-${idx}`).classList.remove('hidden');
+      document.getElementById(`no-name-${idx}`).value = item.name;
+    }
+  });
   calcOrderTotal();
   document.getElementById('newOrderModal').classList.remove('hidden');
 }
@@ -3721,32 +3783,40 @@ function _showNoMsg(msg, isErr) {
 }
 
 async function saveNewOrder() {
-  const name  = document.getElementById('noName').value.trim();
-  if (!name) { _showNoMsg(t('err.missing_name'), true); return; }
-  const phone = document.getElementById('noPhone').value.replace(/\D/g,'') || null;
-
   const items = [];
   document.querySelectorAll('[id^="no-qty-"]').forEach(qEl => {
-    const idx   = qEl.id.replace('no-qty-', '');
-    const sel   = document.getElementById(`no-sel-${idx}`);
-    const nameI = document.getElementById(`no-name-${idx}`);
+    const idx      = qEl.id.replace('no-qty-', '');
+    const sel      = document.getElementById(`no-sel-${idx}`);
+    const nameI    = document.getElementById(`no-name-${idx}`);
     const itemName = sel?.value || nameI?.value.trim();
-    const qty   = Math.max(1, parseInt(qEl.value) || 1);
-    const price = Number(document.getElementById(`no-price-${idx}`)?.value) || 0;
+    const qty      = Math.max(1, parseInt(qEl.value) || 1);
+    const price    = Number(document.getElementById(`no-price-${idx}`)?.value) || 0;
     if (itemName) items.push({ name: itemName, qty, price });
   });
-
   if (!items.length) { _showNoMsg(t('err.missing_items'), true); return; }
 
+  const payload = {
+    items,
+    delivery_fee: Number(document.getElementById('noDelivery').value) || 0,
+    notes:        document.getElementById('noNotes').value.trim() || null,
+    status:       document.getElementById('noStatus').value,
+  };
+
+  if (_editOrderId) {
+    try {
+      await api(`/admin/orders/${_editOrderId}`, 'PUT', payload);
+      closeNewOrderModal();
+      await loadOrders();
+    } catch (e) { _showNoMsg(errMsg(e), true); }
+    return;
+  }
+
+  const name = document.getElementById('noName').value.trim();
+  if (!name) { _showNoMsg(t('err.missing_name'), true); return; }
+  payload.customer_phone = document.getElementById('noPhone').value.replace(/\D/g,'') || null;
+  payload.customer_name  = name;
   try {
-    await api('/admin/orders', 'POST', {
-      customer_phone: phone,
-      customer_name:  name,
-      items,
-      delivery_fee: Number(document.getElementById('noDelivery').value) || 0,
-      notes:        document.getElementById('noNotes').value.trim() || null,
-      status:       document.getElementById('noStatus').value,
-    });
+    await api('/admin/orders', 'POST', payload);
     closeNewOrderModal();
     await loadOrders();
   } catch (e) { _showNoMsg(errMsg(e), true); }
