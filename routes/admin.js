@@ -763,6 +763,7 @@ router.post('/orders', requireAuth, async (req, res) => {
   const { data, error } = await supabase.from('orders').insert({
     tenant_id:      req.tenant.tenantId,
     customer_phone: phone,
+    customer_name:  customer_name.trim(),
     items_json:     cleanItems,
     total_guarani:  Math.round(total),
     delivery_fee:   fee,
@@ -771,7 +772,7 @@ router.post('/orders', requireAuth, async (req, res) => {
   }).select().single();
   if (error) return res.status(500).json({ error: error.message });
 
-  if (customer_name?.trim()) {
+  if (phone && customer_name?.trim()) {
     await supabase.from('conversations').upsert({
       tenant_id:      req.tenant.tenantId,
       customer_phone: phone,
