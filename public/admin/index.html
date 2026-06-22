@@ -2009,20 +2009,31 @@
     <h3 data-i18n="orders.new.title" class="font-semibold text-gray-800 mb-4">➕ Nuevo pedido</h3>
     <div id="noMsg" class="hidden rounded-lg px-4 py-2 text-sm mb-3"></div>
 
+    <div class="mb-3">
+      <label data-i18n="orders.new.customer.pick" class="block text-xs font-medium text-gray-500 mb-1">Buscar cliente existente</label>
+      <select id="noCustomerPicker" onchange="fillOrderCustomer(this)"
+        class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-300">
+      </select>
+    </div>
     <div class="grid grid-cols-2 gap-3 mb-4">
       <div>
-        <label data-i18n="orders.new.customer.phone" class="block text-xs font-medium text-gray-500 mb-1">Teléfono cliente</label>
-        <input id="noPhone" type="tel" placeholder="595981123456"
+        <label data-i18n="orders.new.customer.name" class="block text-xs font-medium text-gray-500 mb-1">Nombre *</label>
+        <input id="noName" type="text" placeholder="María García"
           class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-300"/>
       </div>
       <div>
-        <label data-i18n="orders.new.customer.name" class="block text-xs font-medium text-gray-500 mb-1">Nombre (opcional)</label>
-        <input id="noName" type="text" placeholder="María García"
+        <label data-i18n="orders.new.customer.phone" class="block text-xs font-medium text-gray-500 mb-1">Teléfono (opcional)</label>
+        <input id="noPhone" type="tel" placeholder="595981123456"
           class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-300"/>
       </div>
     </div>
 
-    <label data-i18n="orders.new.items" class="block text-xs font-medium text-gray-500 mb-2">Productos</label>
+    <label data-i18n="orders.new.items" class="block text-xs font-medium text-gray-500 mb-1">Productos</label>
+    <div class="flex gap-1.5 text-xs text-gray-400 font-medium mb-1 pr-7">
+      <div class="flex-1"></div>
+      <div class="w-12 text-center" data-i18n="orders.new.col.qty">Cant.</div>
+      <div class="w-24 text-right pr-1" data-i18n="orders.new.col.price">Precio</div>
+    </div>
     <div id="noItemsBody" class="space-y-2 mb-2"></div>
     <button onclick="addOrderRow()" data-i18n="orders.new.add_item"
       class="text-sm text-green-600 hover:text-green-800 font-medium mb-4">+ Agregar ítem</button>
@@ -3567,6 +3578,7 @@ async function loadOrders() {
 
 // ── New order modal ───────────────────────────────────────────────────────────
 let _noRowIdx = 0;
+let _noCustomers = [];
 
 async function openNewOrderModal() {
   _noRowIdx = 0;
@@ -3578,9 +3590,24 @@ async function openNewOrderModal() {
   document.getElementById('noItemsBody').innerHTML = '';
   document.getElementById('noMsg').classList.add('hidden');
   if (!products.length) { try { products = await api('/admin/products'); } catch(_) {} }
+  try { _noCustomers = await api('/admin/customers'); } catch(_) { _noCustomers = []; }
+  const picker = document.getElementById('noCustomerPicker');
+  picker.innerHTML = `<option value="">— ${t('orders.new.customer.new')} —</option>` +
+    _noCustomers.map((c, i) => {
+      const label = c.customer_name ? `${escHtml(c.customer_name)} (${c.customer_phone})` : c.customer_phone;
+      return `<option value="${i}">${label}</option>`;
+    }).join('');
   addOrderRow();
   calcOrderTotal();
   document.getElementById('newOrderModal').classList.remove('hidden');
+}
+
+function fillOrderCustomer(sel) {
+  if (!sel.value) return;
+  const c = _noCustomers[parseInt(sel.value)];
+  if (!c) return;
+  document.getElementById('noName').value  = c.customer_name  || '';
+  document.getElementById('noPhone').value = c.customer_phone || '';
 }
 
 function closeNewOrderModal() {
@@ -3605,23 +3632,27 @@ function addOrderRow() {
       class="flex-1 border border-gray-200 rounded-lg px-2 py-1.5 text-sm min-w-0 hidden"/>
     <input id="no-qty-${idx}" type="number" value="1" min="1"
       class="w-12 border border-gray-200 rounded-lg px-1 py-1.5 text-sm text-center" oninput="calcOrderTotal()"/>
-    <input id="no-price-${idx}" type="number" value="0" min="0"
+    <input id="no-price-${idx}" type="number" value="" min="0" placeholder="0"
       class="w-24 border border-gray-200 rounded-lg px-2 py-1.5 text-sm text-right" oninput="calcOrderTotal()"/>
     <button onclick="removeOrderRow(${idx})" class="text-red-400 hover:text-red-600 text-base px-1 flex-shrink-0">✕</button>`;
   document.getElementById('noItemsBody').appendChild(row);
 }
 
 function fillOrderRowFromSelect(idx) {
-  const sel  = document.getElementById(`no-sel-${idx}`);
-  const name = document.getElementById(`no-name-${idx}`);
+  const sel   = document.getElementById(`no-sel-${idx}`);
+  const name  = document.getElementById(`no-name-${idx}`);
   const price = document.getElementById(`no-price-${idx}`);
   if (sel.value === '') {
     name.classList.remove('hidden');
-    price.value = 0;
+    price.value    = '';
+    price.readOnly = false;
+    price.classList.remove('bg-gray-50', 'text-gray-400');
   } else {
     name.classList.add('hidden');
     const opt = sel.options[sel.selectedIndex];
-    price.value = opt.dataset.price || 0;
+    price.value    = opt.dataset.price || 0;
+    price.readOnly = true;
+    price.classList.add('bg-gray-50', 'text-gray-400');
   }
   calcOrderTotal();
 }
@@ -3652,18 +3683,19 @@ function _showNoMsg(msg, isErr) {
 }
 
 async function saveNewOrder() {
-  const phone = document.getElementById('noPhone').value.replace(/\D/g,'');
-  if (!phone) { _showNoMsg(t('err.missing_phone'), true); return; }
+  const name  = document.getElementById('noName').value.trim();
+  if (!name) { _showNoMsg(t('err.missing_name'), true); return; }
+  const phone = document.getElementById('noPhone').value.replace(/\D/g,'') || null;
 
   const items = [];
   document.querySelectorAll('[id^="no-qty-"]').forEach(qEl => {
     const idx   = qEl.id.replace('no-qty-', '');
     const sel   = document.getElementById(`no-sel-${idx}`);
     const nameI = document.getElementById(`no-name-${idx}`);
-    const name  = sel?.value || nameI?.value.trim();
+    const itemName = sel?.value || nameI?.value.trim();
     const qty   = Math.max(1, parseInt(qEl.value) || 1);
     const price = Number(document.getElementById(`no-price-${idx}`)?.value) || 0;
-    if (name) items.push({ name, qty, price });
+    if (itemName) items.push({ name: itemName, qty, price });
   });
 
   if (!items.length) { _showNoMsg(t('err.missing_items'), true); return; }
@@ -3671,7 +3703,7 @@ async function saveNewOrder() {
   try {
     await api('/admin/orders', 'POST', {
       customer_phone: phone,
-      customer_name:  document.getElementById('noName').value.trim() || null,
+      customer_name:  name,
       items,
       delivery_fee: Number(document.getElementById('noDelivery').value) || 0,
       notes:        document.getElementById('noNotes').value.trim() || null,

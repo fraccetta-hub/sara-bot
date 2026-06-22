@@ -694,11 +694,10 @@ router.put('/orders/:id/status', requireAuth, async (req, res) => {
 
 router.post('/orders', requireAuth, async (req, res) => {
   const { customer_phone, customer_name, items, delivery_fee, notes, status } = req.body;
-  if (!customer_phone) return res.status(400).json({ error: 'phone required', errorCode: 'missing_phone' });
+  if (!customer_name?.trim()) return res.status(400).json({ error: 'name required', errorCode: 'missing_name' });
   if (!Array.isArray(items) || !items.length) return res.status(400).json({ error: 'at least one item required', errorCode: 'missing_items' });
 
-  const phone = String(customer_phone).replace(/\D/g, '');
-  if (!phone) return res.status(400).json({ error: 'invalid phone', errorCode: 'invalid_phone' });
+  const phone = customer_phone ? String(customer_phone).replace(/\D/g, '') || null : null;
 
   const validStatuses = ['pending','confirmed','preparing','delivering','delivered','cancelled'];
   const orderStatus = validStatuses.includes(status) ? status : 'confirmed';
