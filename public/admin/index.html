@@ -4574,16 +4574,10 @@ async function confirmDeletion() {
 
 // ── Customer name label with inline edit ──────────────────────────────────────
 function renderCustomerLabel(phone, name) {
-  const display = name
-    ? `<span class="font-semibold text-gray-800">${name}</span><span class="text-gray-400 text-xs ml-1">+${phone}</span>`
-    : `<span class="font-medium text-gray-600">+${phone}</span>`;
-  return `
-    <span class="flex items-center gap-1 group">
-      <span id="label-${phone}">${display}</span>
-      <button onclick="startEditCustomerName('label-${phone}', '${phone}', ${JSON.stringify(name||'')}, 'loadOrders')"
-        title="Editar nombre"
-        class="opacity-0 group-hover:opacity-100 text-gray-300 hover:text-green-500 transition text-xs ml-1">✏️</button>
-    </span>`;
+  if (name && phone) return `<span class="font-semibold text-gray-800">${escHtml(name)}</span><span class="text-gray-400 text-xs ml-1">+${phone}</span>`;
+  if (name)  return `<span class="font-semibold text-gray-800">${escHtml(name)}</span>`;
+  if (phone) return `<span class="font-medium text-gray-600">+${phone}</span>`;
+  return `<span class="text-gray-400 text-sm">—</span>`;
 }
 
 // ── Shared customer rename (used by Orders tab + Customers tab) ───────────────
