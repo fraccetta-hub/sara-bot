@@ -1272,7 +1272,6 @@ router.post('/import-confirm', requireAuth, async (req, res) => {
           description:   r.description  || null,
           price_guarani: r.price_guarani || 0,
           price_type:    r.price_type    || 'fixed',
-          duration_min:  r.duration_min  || null,
           stock_qty:     isMenu ? null : (r.stock_qty ?? 99),
           sku:           isMenu ? null : (r.sku || null),
           allergens:     r.allergens     || null,
