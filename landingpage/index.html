@@ -108,6 +108,10 @@ h1 em { color: var(--green); font-style: italic; font-weight: 600; }
   .hero-sub { margin-left: auto; margin-right: auto; }
   .hero-actions { justify-content: center; }
 }
+@media(max-width:480px){
+  .hero-actions { flex-direction: column; align-items: center; }
+  .btn-primary, .btn-ghost { width: 100%; max-width: 300px; text-align: center; box-sizing: border-box; }
+}
 
 /* ── DEMO MOCKUP ── */
 .hero-visual { min-width: 0; }

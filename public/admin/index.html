@@ -3570,7 +3570,8 @@ async function loadOrders() {
             <span id="order-badge-${o.id}" class="status-badge status-${o.status}">${statusLabels[o.status]}</span>
           </div>
           <div class="text-sm text-gray-500 mt-1">📦 ${items}</div>
-          <div class="text-xs text-gray-400 mt-0.5">🕐 ${date}${o.notes ? ` · 📝 ${escHtml(o.notes)}` : ''}</div>
+          <div class="text-xs text-gray-400 mt-0.5">🕐 ${date}</div>
+          ${o.notes ? `<div class="text-xs text-gray-500 mt-0.5 truncate max-w-xs">📝 ${escHtml(o.notes)}</div>` : ''}
         </div>
         <div class="text-right flex-shrink-0">
           <div class="font-bold text-green-600 text-lg">${fmtPrice(o.total_guarani + (o.delivery_fee||0))}</div>
