@@ -3558,15 +3558,17 @@ async function loadOrders() {
         <div class="text-right flex-shrink-0">
           <div class="font-bold text-green-600 text-lg">${fmtPrice(o.total_guarani + (o.delivery_fee||0))}</div>
           <div class="text-xs text-gray-400 mb-1">${t('orders.delivery')} ${fmtPrice(o.delivery_fee||0)}</div>
-          <select onchange="updateOrderStatus('${o.id}', this.value)"
-            class="text-xs border border-gray-200 rounded-lg px-2 py-1 text-gray-600 cursor-pointer hover:border-green-400">
-            ${['pending','confirmed','preparing','delivering','delivered','cancelled'].map(s =>
-              `<option value="${s}" ${s===o.status?'selected':''}>${statusLabels[s]}</option>`
-            ).join('')}
-          </select>
-          <button onclick="openEditOrderModal(${JSON.stringify(o).replace(/"/g,'&quot;')})"
-            title="${t('orders.edit')}"
-            class="mt-1 text-xs text-gray-400 hover:text-green-600 border border-gray-200 rounded-lg px-2 py-1 w-full transition">✏️ ${t('orders.edit')}</button>
+          <div class="flex items-center gap-1 mt-1">
+            <select onchange="updateOrderStatus('${o.id}', this.value)"
+              class="flex-1 text-xs border border-gray-200 rounded-lg px-2 py-1 text-gray-600 cursor-pointer hover:border-green-400">
+              ${['pending','confirmed','preparing','delivering','delivered','cancelled'].map(s =>
+                `<option value="${s}" ${s===o.status?'selected':''}>${statusLabels[s]}</option>`
+              ).join('')}
+            </select>
+            <button onclick="openEditOrderModal(${JSON.stringify(o).replace(/"/g,'&quot;')})"
+              title="${t('orders.edit')}"
+              class="text-gray-400 hover:text-green-600 border border-gray-200 rounded-lg px-2 py-1 transition flex-shrink-0">✏️</button>
+          </div>
         </div>
       </div>
     </div>`;
@@ -3631,25 +3633,30 @@ async function openEditOrderModal(order) {
         ${opts}
       </select>
       <input id="no-name-${idx}" type="text" value="${escHtml(item.name)}"
-        class="flex-1 border border-gray-200 rounded-lg px-2 py-1.5 text-sm min-w-0 hidden"/>
+        class="flex-1 border border-gray-200 rounded-lg px-2 py-1.5 text-sm min-w-0 hidden" oninput="calcOrderTotal()"/>
+      <button id="no-back-${idx}" onclick="resetOrderRowToSelect(${idx})" title="Catalogo"
+        class="hidden text-gray-400 hover:text-green-600 text-xs px-1 flex-shrink-0">☰</button>
       <input id="no-qty-${idx}" type="number" value="${item.qty||1}" min="1"
         class="w-12 border border-gray-200 rounded-lg px-1 py-1.5 text-sm text-center" oninput="calcOrderTotal()"/>
       <input id="no-price-${idx}" type="number" value="${item.price||0}" min="0"
-        class="w-24 border border-gray-200 rounded-lg px-2 py-1.5 text-sm text-right" oninput="calcOrderTotal()"/>
+        class="w-24 border border-gray-200 rounded-lg px-2 py-1.5 text-sm text-right text-gray-900" oninput="calcOrderTotal()"/>
       <button onclick="removeOrderRow(${idx})" class="text-red-400 hover:text-red-600 text-base px-1 flex-shrink-0">✕</button>`;
     document.getElementById('noItemsBody').appendChild(row);
-    // if name matches a catalog product, lock price
     const sel = document.getElementById(`no-sel-${idx}`);
     const matchedOpt = [...sel.options].find(op => op.value === item.name);
     if (matchedOpt) {
       document.getElementById(`no-name-${idx}`).classList.add('hidden');
+      document.getElementById(`no-back-${idx}`).classList.add('hidden');
       const priceEl = document.getElementById(`no-price-${idx}`);
       priceEl.readOnly = true;
       priceEl.classList.add('bg-gray-50','text-gray-400');
+      priceEl.classList.remove('text-gray-900');
     } else {
+      sel.classList.add('hidden');
       sel.value = '';
       document.getElementById(`no-name-${idx}`).classList.remove('hidden');
       document.getElementById(`no-name-${idx}`).value = item.name;
+      document.getElementById(`no-back-${idx}`).classList.remove('hidden');
     }
   });
   calcOrderTotal();
@@ -3708,12 +3715,14 @@ function addOrderRow() {
       <option value="">${t('orders.new.custom_item')}</option>
       ${opts}
     </select>
-    <input id="no-name-${idx}" type="text" placeholder="${t('orders.new.item.product')}"
-      class="flex-1 border border-gray-200 rounded-lg px-2 py-1.5 text-sm min-w-0 hidden"/>
+    <input id="no-name-${idx}" type="text" placeholder="${t('orders.new.item.product') || 'Nome prodotto'}"
+      class="flex-1 border border-gray-200 rounded-lg px-2 py-1.5 text-sm min-w-0 hidden" oninput="calcOrderTotal()"/>
+    <button id="no-back-${idx}" onclick="resetOrderRowToSelect(${idx})" title="Catalogo"
+      class="hidden text-gray-400 hover:text-green-600 text-xs px-1 flex-shrink-0">☰</button>
     <input id="no-qty-${idx}" type="number" value="1" min="1"
       class="w-12 border border-gray-200 rounded-lg px-1 py-1.5 text-sm text-center" oninput="calcOrderTotal()"/>
     <input id="no-price-${idx}" type="number" value="" min="0" placeholder="0"
-      class="w-24 border border-gray-200 rounded-lg px-2 py-1.5 text-sm text-right" oninput="calcOrderTotal()"/>
+      class="w-24 border border-gray-200 rounded-lg px-2 py-1.5 text-sm text-right text-gray-900" oninput="calcOrderTotal()"/>
     <button onclick="removeOrderRow(${idx})" class="text-red-400 hover:text-red-600 text-base px-1 flex-shrink-0">✕</button>`;
   document.getElementById('noItemsBody').appendChild(row);
 }
@@ -3721,18 +3730,45 @@ function addOrderRow() {
 function fillOrderRowFromSelect(idx) {
   const sel   = document.getElementById(`no-sel-${idx}`);
   const name  = document.getElementById(`no-name-${idx}`);
+  const back  = document.getElementById(`no-back-${idx}`);
   const price = document.getElementById(`no-price-${idx}`);
   if (sel.value === '') {
+    sel.classList.add('hidden');
     name.classList.remove('hidden');
+    if (back) back.classList.remove('hidden');
+    name.focus();
     price.value    = '';
     price.readOnly = false;
     price.classList.remove('bg-gray-50', 'text-gray-400');
+    price.classList.add('text-gray-900');
   } else {
+    sel.classList.remove('hidden');
     name.classList.add('hidden');
+    if (back) back.classList.add('hidden');
     const opt = sel.options[sel.selectedIndex];
     price.value    = opt.dataset.price || 0;
     price.readOnly = true;
     price.classList.add('bg-gray-50', 'text-gray-400');
+    price.classList.remove('text-gray-900');
+  }
+  calcOrderTotal();
+}
+
+function resetOrderRowToSelect(idx) {
+  const sel  = document.getElementById(`no-sel-${idx}`);
+  const name = document.getElementById(`no-name-${idx}`);
+  const back = document.getElementById(`no-back-${idx}`);
+  const price = document.getElementById(`no-price-${idx}`);
+  sel.value = sel.options[1]?.value || '';
+  sel.classList.remove('hidden');
+  name.classList.add('hidden');
+  if (back) back.classList.add('hidden');
+  if (sel.value) {
+    const opt = [...sel.options].find(o => o.value === sel.value);
+    price.value    = opt?.dataset.price || 0;
+    price.readOnly = true;
+    price.classList.add('bg-gray-50','text-gray-400');
+    price.classList.remove('text-gray-900');
   }
   calcOrderTotal();
 }
