@@ -3,7 +3,7 @@
 ## STATO CORRENTE
 SaaS multi-tenant WhatsApp Business. Feature appuntamenti complete (paid, storno, mobility, slot 15min, rubrica). Prossimo: Stripe live env vars su Render, invoicing merchant.
 
-**Ultimo commit stabile:** `0b8dfa0` (fix disabled-dates hint + offers HTML-escape)
+**Ultimo commit stabile:** `0b0a4f4` (restyle UI site-wide — tema v5)
 
 ---
 
@@ -75,6 +75,14 @@ ALTER TABLE tenants
 - **Offerte**: `loadOffers` HTML-escape su label/scope/date (preveniva DOM breakage da label con `</div>`). `_offerBusy` flag anti-double-submit. Errori distinti per campo mancante (`err_label` / `err_value`).
 - **Tab visibilità**: era problema di dati (flag null in DB). Risolto ricreando i tenant di test con flag espliciti via superadmin API.
 - **Tenant test ricreati** via `POST /superadmin/tenants` (slug: testshop/testbookings/testpro) + whatsapp_token fake via Supabase.
+
+### Restyle UI site-wide (commit `0b0a4f4`)
+- Tema **"v5" editorial caldo** applicato a TUTTO: landing (layout rifatto, hero asimmetrico), admin (login + pannello, tutte le tab), register, superadmin, legali (4), 5 email (`mailer.js`).
+- Palette: crema `#fbf6ec`, verde `#2f9e3a` (logo reale `#41b72d`), CTA **ambra `#e2622a`**. Font **Outfit** (titoli) + **Inter** (corpo). Angoli arrotondati, ombre offset.
+- Admin/superadmin/register: retheme via `tailwind.config` (remap ramp `green`) + override `<style>` — **zero** tocchi a classi/id/JS/polling.
+- Bottoni admin unificati: **PIENO** (ambra+ombra, classe `.btn-green`), **SOFT** (ambra chiaro `#fcefe6` + testo `#a3430f`), **OUTLINE** (bordo grigio + `bg-white`), **ROSSO** (destructive + notice errore: banner WhatsApp/token-error).
+- Solo estetica: testi, i18n (`data-i18n`/`TR`), logica **invariati**. Emoji mantenute.
+- Spec completa + token: **`DESIGN_SYSTEM.md`** (root). Ritocchi minori futuri ok direttamente su `main`.
 
 ---
 

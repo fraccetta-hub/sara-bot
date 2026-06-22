@@ -139,6 +139,9 @@ I flag booleani nel DB (`products_enabled`, `services_enabled`, `appointments_en
 | `/register` | Nuovo merchant | Wizard 4 step con piano |
 | `landingpage/` | Pubblico | Landing marketing |
 
+### Design / Tema UI (dal 2026-06-22)
+Tema **"v5" editorial caldo** su tutte le superfici (landing, admin, register, superadmin, legali, email). Crema `#fbf6ec` + verde `#2f9e3a` (logo `#41b72d`) + CTA ambra `#e2622a`. Font **Outfit** (titoli) + **Inter** (corpo). Admin/superadmin/register ritematizzati via `tailwind.config` (remap ramp `green`) + `<style>` override. Bottoni admin: PIENO (`.btn-green` ambra+ombra) / SOFT (`#fcefe6`) / OUTLINE (bordo grigio+`bg-white`) / ROSSO (destructive + notice errore). **Token e spec completa: `DESIGN_SYSTEM.md` (root)** — leggere prima di toccare l'estetica.
+
 ---
 
 ## i18n
