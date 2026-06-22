@@ -330,9 +330,12 @@ Respondé ÚNICAMENTE con un JSON válido, sin texto adicional, en este formato:
   try {
     const response = await anthropic.messages.create({
       model: 'claude-haiku-4-5-20251001',
-      max_tokens: 2048,
+      max_tokens: 8192,
       messages: [{ role: 'user', content }]
     });
+
+    if (response.stop_reason === 'max_tokens')
+      throw new Error('Demasiados productos en las imágenes. Subí menos imágenes a la vez.');
 
     const text = response.content[0].text.trim();
 
