@@ -241,3 +241,7 @@ ALTER TABLE tenants
 -- Migration 18: paid_at timestamp for appointment payment tracking
 ALTER TABLE appointments
   ADD COLUMN IF NOT EXISTS paid_at TIMESTAMPTZ;
+
+-- Migration 19: optional merchant product code (used by single create + CSV/image import)
+ALTER TABLE products
+  ADD COLUMN IF NOT EXISTS sku TEXT;

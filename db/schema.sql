@@ -31,6 +31,8 @@ CREATE TABLE products (
   price_guarani INTEGER   NOT NULL,
   stock_qty     INTEGER   NOT NULL DEFAULT 0,
   description   TEXT,
+  sku           TEXT,                                            -- merchant product code, optional
+  allergens     TEXT,                                            -- free text, e.g. "gluten, lácteos, frutos secos"
   image_url     TEXT,                                            -- public URL (Supabase Storage or CDN)
   is_available  BOOLEAN   NOT NULL DEFAULT true,
   created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
