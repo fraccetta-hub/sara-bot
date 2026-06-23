@@ -13,6 +13,37 @@ SaaS multi-tenant WhatsApp Business. Feature appuntamenti complete (paid, storno
 
 ---
 
+## COME RIPRENDERE (prossima sessione)
+
+1. **Leggi questa sezione** + le ultime 3 sessioni sotto.
+2. **Migration 21 da eseguire su Supabase** (se non ancora fatto):
+   ```sql
+   ALTER TABLE tenants
+     ADD COLUMN IF NOT EXISTS email_verification_token TEXT,
+     ADD COLUMN IF NOT EXISTS email_verified_at TIMESTAMPTZ;
+   ```
+3. **Meta App Review** — pendente (vedi sotto). Non blocca nulla ora.
+4. Ultimo commit stabile: `ccac3bc`.
+
+### Stato Meta App Review
+L'app è "Pubblicata" ma le permission sono "Pronta per il test" (funzionano solo per account admin).
+Per farle funzionare con i merchant clienti serve App Review approvata.
+
+**Da fare su developers.facebook.com/apps/27756118003980694:**
+- Vai su Casi d'uso → Personalizza → Autorizzazioni e funzioni
+- Clicca **Azioni → Aggiungi all'analisi dell'app** su:
+  - `whatsapp_business_management`
+  - `whatsapp_business_messaging`
+  - `business_management`
+- Poi vai su Analisi → Verifica → invia per revisione (richiede video screencast del wizard)
+
+### Decisioni prese questa sessione
+- **Broadcast**: nessun template Meta wizard per ora. Utenti inattivi >24h = skipped, è il comportamento corretto.
+- **Facebook Login**: non implementare. Email/password è giusto per merchant locali.
+- **login_slug**: design corretto — parte uguale all'email, cambiabile dalle impostazioni. Staff usa username personalizzato senza conoscere email proprietario.
+
+---
+
 ## SESSIONE 2026-06-23 (parte 3) — broadcast fix, 9A/9D/9E
 
 ### Commit: `c4e2368`
