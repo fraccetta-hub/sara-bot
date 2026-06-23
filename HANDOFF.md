@@ -13,6 +13,35 @@ SaaS multi-tenant WhatsApp Business. Feature appuntamenti complete (paid, storno
 
 ---
 
+## SESSIONE 2026-06-23 (parte 2) — catalogo WhatsApp nativo, Fase 1
+
+### Decisioni catalogo (non riaprire)
+- **`waba_id`**: catturato all'Embedded Signup e salvato su tutti i tenant (anche solo-servizi). Sempre, non opt-in.
+- **Multi-image**: Supabase Storage + compressione (Meta ha bisogno di URL live).
+- **Auto-on**: `catalog_sync_enabled` parte `false`; il wizard offre "Attiva" 1-tap; toggle in Impostazioni WhatsApp.
+- **Valuta**: nessun default — deve essere impostata alla registrazione dal paese; nessun fallback per catalogo.
+- **Plan completo**: `PLAN_CATALOG.md`.
+
+### Fase 1 — Schema DB (Migration 20) ✅
+Nuove colonne aggiunte (idempotenti):
+- `tenants`: `waba_id TEXT`, `wa_catalog_id TEXT`, `catalog_sync_enabled BOOLEAN DEFAULT false`, `catalog_synced_at TIMESTAMPTZ`
+- `products`: `wa_retailer_id TEXT`, `wa_sync_error TEXT`, `additional_images TEXT[]`
+Schema in `db/schema.sql` allineato. Migration in `db/migrations.sql`.
+**⚠️ DA ESEGUIRE SU SUPABASE** (SQL Editor → incolla Migration 20 da `db/migrations.sql`).
+
+### Fase 1 — Capture waba_id (Embedded Signup) ✅
+`waba_id` arriva in `data.data.waba_id` nel messaggio `WA_EMBEDDED_SIGNUP / FINISH` da Meta.
+- `public/admin/index.html`: catturato in `wizConnectedWabaId`, inviato al backend.
+- `routes/admin.js` `/whatsapp-connect`: se `waba_id` presente, salvato su `tenants.waba_id`.
+
+### Prossimi step catalogo
+- **Fase 2**: creare `services/catalog.js` (`ensureCatalog`, `pushProduct`, `pushAllProducts`, `removeProduct`, `validateForCatalog`)
+- **Fase 3**: step wizard "Attiva catalogo WhatsApp" (solo se `products_enabled || restaurant_enabled`)
+- **Fase 4**: auto-sync hook in `routes/admin.js` (POST/PUT/DELETE prodotti)
+- **Fase 5**: UI toggle + badge stato + upload multi-foto
+
+---
+
 ## SESSIONE 2026-06-23 — fix import + onboarding token + profilo WhatsApp
 
 ### Import catalogo (Foto IA) — 3 fix
@@ -146,6 +175,18 @@ ALTER TABLE tenants
 -- Migration 19: codice prodotto opzionale (era nel DB live, mancava nei file)
 ALTER TABLE products
   ADD COLUMN IF NOT EXISTS sku TEXT;
+
+-- Migration 20: WhatsApp native catalog support
+ALTER TABLE tenants
+  ADD COLUMN IF NOT EXISTS waba_id              TEXT,
+  ADD COLUMN IF NOT EXISTS wa_catalog_id        TEXT,
+  ADD COLUMN IF NOT EXISTS catalog_sync_enabled BOOLEAN NOT NULL DEFAULT false,
+  ADD COLUMN IF NOT EXISTS catalog_synced_at    TIMESTAMPTZ;
+
+ALTER TABLE products
+  ADD COLUMN IF NOT EXISTS additional_images TEXT[],
+  ADD COLUMN IF NOT EXISTS wa_retailer_id    TEXT,
+  ADD COLUMN IF NOT EXISTS wa_sync_error     TEXT;
 ```
 
 ---

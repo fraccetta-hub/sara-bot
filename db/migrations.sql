@@ -245,3 +245,15 @@ ALTER TABLE appointments
 -- Migration 19: optional merchant product code (used by single create + CSV/image import)
 ALTER TABLE products
   ADD COLUMN IF NOT EXISTS sku TEXT;
+
+-- Migration 20: WhatsApp native catalog support
+ALTER TABLE tenants
+  ADD COLUMN IF NOT EXISTS waba_id              TEXT,
+  ADD COLUMN IF NOT EXISTS wa_catalog_id        TEXT,
+  ADD COLUMN IF NOT EXISTS catalog_sync_enabled BOOLEAN NOT NULL DEFAULT false,
+  ADD COLUMN IF NOT EXISTS catalog_synced_at    TIMESTAMPTZ;
+
+ALTER TABLE products
+  ADD COLUMN IF NOT EXISTS additional_images TEXT[],
+  ADD COLUMN IF NOT EXISTS wa_retailer_id    TEXT,
+  ADD COLUMN IF NOT EXISTS wa_sync_error     TEXT;

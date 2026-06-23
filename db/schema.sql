@@ -11,6 +11,10 @@ CREATE TABLE tenants (
   plan_expires          TIMESTAMPTZ,
   phone_number_id       TEXT          NOT NULL UNIQUE,
   whatsapp_token        TEXT,
+  waba_id               TEXT,                                    -- WhatsApp Business Account ID (captured at Embedded Signup)
+  wa_catalog_id         TEXT,                                    -- Meta commerce catalog ID for this tenant
+  catalog_sync_enabled  BOOLEAN       NOT NULL DEFAULT false,    -- opt-in: sync products → WhatsApp native catalog
+  catalog_synced_at     TIMESTAMPTZ,                             -- last successful full sync
   bot_name              TEXT          NOT NULL DEFAULT 'Sara',
   bot_personality       TEXT          NOT NULL DEFAULT 'cálida, profesional y entusiasta',
   location_lat          NUMERIC(10,7),
@@ -24,18 +28,21 @@ CREATE TABLE tenants (
 
 -- Products catalog — one row per SKU per tenant
 CREATE TABLE products (
-  id            UUID      PRIMARY KEY DEFAULT gen_random_uuid(),
-  tenant_id     UUID      NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
-  name          TEXT      NOT NULL,
-  category      TEXT,
-  price_guarani INTEGER   NOT NULL,
-  stock_qty     INTEGER   NOT NULL DEFAULT 0,
-  description   TEXT,
-  sku           TEXT,                                            -- merchant product code, optional
-  allergens     TEXT,                                            -- free text, e.g. "gluten, lácteos, frutos secos"
-  image_url     TEXT,                                            -- public URL (Supabase Storage or CDN)
-  is_available  BOOLEAN   NOT NULL DEFAULT true,
-  created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+  id                UUID      PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id         UUID      NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  name              TEXT      NOT NULL,
+  category          TEXT,
+  price_guarani     INTEGER   NOT NULL,
+  stock_qty         INTEGER   NOT NULL DEFAULT 0,
+  description       TEXT,
+  sku               TEXT,                                            -- merchant product code, optional
+  allergens         TEXT,                                            -- free text, e.g. "gluten, lácteos, frutos secos"
+  image_url         TEXT,                                            -- public URL (Supabase Storage or CDN)
+  additional_images TEXT[],                                          -- extra photos for WhatsApp native catalog (max ~9)
+  wa_retailer_id    TEXT,                                            -- stable Meta catalog item ID (= product UUID on first push)
+  wa_sync_error     TEXT,                                            -- last sync error, null = ok
+  is_available      BOOLEAN   NOT NULL DEFAULT true,
+  created_at        TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 -- Orders placed by customers via the bot

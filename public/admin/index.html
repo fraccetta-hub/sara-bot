@@ -2521,6 +2521,7 @@ const META_APP_ID    = '%%META_APP_ID%%';   // injected at deploy or set via env
 const META_CONFIG_ID = '%%META_CONFIG_ID%%'; // Embedded Signup config ID
 
 let wizConnectedPhoneId = null;
+let wizConnectedWabaId  = null;
 
 let waConnected = false; // set after settings load
 
@@ -2589,6 +2590,7 @@ function handleMetaMessage(event) {
     if (data.type === 'WA_EMBEDDED_SIGNUP') {
       if (data.event === 'FINISH') {
         wizConnectedPhoneId = data.data?.phone_number_id || null;
+        wizConnectedWabaId  = data.data?.waba_id         || null;
       }
     }
   } catch (_) {}
@@ -2647,7 +2649,7 @@ async function exchangeMetaCode(code) {
     const res = await api('/admin/whatsapp-connect', 'POST', {
       code,
       phone_number_id: wizConnectedPhoneId || null,
-      waba_id: null,
+      waba_id: wizConnectedWabaId || null,
     });
     wizConnectedPhoneId = res.phone_number_id;
     onWhatsAppConnected(res.phone_number_id);

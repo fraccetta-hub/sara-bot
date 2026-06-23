@@ -1105,8 +1105,10 @@ router.post('/whatsapp-connect', requireAuth, async (req, res) => {
 
     // 6. Save to tenant
     const tokenExpiresAt = new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString();
+    const tenantUpdate = { phone_number_id: phoneNumberId, whatsapp_token: accessToken, whatsapp_token_expires_at: tokenExpiresAt, bot_phone_number: botPhoneNumber };
+    if (waba_id) tenantUpdate.waba_id = waba_id;
     const { error: dbErr } = await supabase.from('tenants')
-      .update({ phone_number_id: phoneNumberId, whatsapp_token: accessToken, whatsapp_token_expires_at: tokenExpiresAt, bot_phone_number: botPhoneNumber })
+      .update(tenantUpdate)
       .eq('id', req.tenant.tenantId);
     if (dbErr) return res.status(500).json({ error: dbErr.message });
 
