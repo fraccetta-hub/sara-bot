@@ -600,16 +600,18 @@ router.put('/products/:id', requireAuth, async (req, res) => {
 
 router.post('/products/:id/image', requireAuth, upload.single('image'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'Ningún archivo recibido' });
+  if (!detectImageMime(req.file.buffer)) return res.status(400).json({ error: 'Archivo no es una imagen válida' });
 
   try {
     const { data: cur } = await supabase.from('products').select('image_url')
       .eq('id', req.params.id).eq('tenant_id', req.tenant.tenantId).single();
     if (cur?.image_url) deleteImageByUrl(cur.image_url).catch(() => {});
 
+    const realMime = detectImageMime(req.file.buffer);
     const publicUrl = await uploadImageBuffer(
       req.file.buffer,
       req.file.originalname,
-      req.file.mimetype,
+      realMime,
       req.tenant.tenantId
     );
 
@@ -633,8 +635,10 @@ router.post('/products/:id/image', requireAuth, upload.single('image'), async (r
 
 router.post('/products/:id/additional-images/upload', requireAuth, upload.single('image'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'Ningún archivo recibido' });
+  const realMime = detectImageMime(req.file.buffer);
+  if (!realMime) return res.status(400).json({ error: 'Archivo no es una imagen válida' });
   try {
-    const url = await uploadImageBuffer(req.file.buffer, req.file.originalname, req.file.mimetype, req.tenant.tenantId);
+    const url = await uploadImageBuffer(req.file.buffer, req.file.originalname, realMime, req.tenant.tenantId);
     res.json({ url });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -657,6 +661,9 @@ router.put('/products/:id/additional-images', requireAuth, async (req, res) => {
 // ─── DELETE /admin/products/:id ───────────────────────────────────────────────
 
 router.delete('/products/:id', requireAuth, async (req, res) => {
+  const { data: prod } = await supabase.from('products')
+    .select('image_url, additional_images')
+    .eq('id', req.params.id).eq('tenant_id', req.tenant.tenantId).single();
   const { error } = await supabase
     .from('products')
     .delete()
@@ -664,6 +671,8 @@ router.delete('/products/:id', requireAuth, async (req, res) => {
     .eq('tenant_id', req.tenant.tenantId);
   if (error) return res.status(500).json({ error: error.message });
   res.json({ ok: true });
+  if (prod?.image_url) deleteImageByUrl(prod.image_url).catch(() => {});
+  for (const url of prod?.additional_images || []) deleteImageByUrl(url).catch(() => {});
   bgSyncRemove(req.tenant.tenantId, req.params.id).catch(() => {});
 });
 
@@ -953,12 +962,14 @@ router.put('/services/:id', requireAuth, async (req, res) => {
 
 router.post('/services/:id/image', requireAuth, upload.single('image'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'Ningún archivo recibido' });
+  const realMime = detectImageMime(req.file.buffer);
+  if (!realMime) return res.status(400).json({ error: 'Archivo no es una imagen válida' });
   try {
     const { data: cur } = await supabase.from('services').select('image_url')
       .eq('id', req.params.id).eq('tenant_id', req.tenant.tenantId).single();
     if (cur?.image_url) deleteImageByUrl(cur.image_url).catch(() => {});
 
-    const publicUrl = await uploadImageBuffer(req.file.buffer, req.file.originalname, req.file.mimetype, req.tenant.tenantId);
+    const publicUrl = await uploadImageBuffer(req.file.buffer, req.file.originalname, realMime, req.tenant.tenantId);
     const { data, error } = await supabase.from('services')
       .update({ image_url: publicUrl }).eq('id', req.params.id).eq('tenant_id', req.tenant.tenantId)
       .select('id, name, image_url').single();
@@ -1095,8 +1106,10 @@ router.post('/chats/:phone/send-image', requireAuth, upload.single('image'), asy
 
   let imageUrl = req.body.url || null;
   if (req.file) {
+    const realMime = detectImageMime(req.file.buffer);
+    if (!realMime) return res.status(400).json({ error: 'Archivo no es una imagen válida' });
     imageUrl = await uploadImageBuffer(
-      req.file.buffer, req.file.originalname, req.file.mimetype, req.tenant.tenantId
+      req.file.buffer, req.file.originalname, realMime, req.tenant.tenantId
     );
   }
   if (!imageUrl) return res.status(400).json({ error: 'Se requiere imagen' });
@@ -1568,6 +1581,8 @@ router.post('/products/bulk-images', requireAuth, zipRateLimit, handleZipUpload,
   });
 
   const matched = [], unmatched = [];
+  // productId → [{num, url}] for extra photos — applied after main photos
+  const extrasAccum = new Map();
 
   for (const entry of entries) {
     const filename = entry.entryName.replace(/.*[\\/]/, '');
@@ -1575,14 +1590,17 @@ router.post('/products/bulk-images', requireAuth, zipRateLimit, handleZipUpload,
       unmatched.push(filename + ' (exceeds 8 MB uncompressed)');
       continue;
     }
-    const mime = filename.match(/\.png$/i) ? 'image/png'
-               : filename.match(/\.webp$/i) ? 'image/webp'
-               : filename.match(/\.gif$/i)  ? 'image/gif'
-               : 'image/jpeg';
 
+    // Detect trailing digit suffix: "pizza margherita1.jpg" → base="pizza margherita", extraNum=1
+    const nameNoExt = filename.replace(/\.[^.]+$/, '');
+    const suffixMatch = nameNoExt.match(/^(.*?)(\d+)$/);
+    const baseName  = suffixMatch ? suffixMatch[1].trim() : nameNoExt;
+    const extraNum  = suffixMatch ? parseInt(suffixMatch[2]) : null; // null = main photo
+
+    const nameForScore = baseName || nameNoExt;
     let best = null, bestScore = 0;
     for (const p of products) {
-      const s = matchScore(filename, p.name);
+      const s = matchScore(nameForScore, p.name);
       if (s > bestScore) { bestScore = s; best = p; }
     }
 
@@ -1593,11 +1611,28 @@ router.post('/products/bulk-images', requireAuth, zipRateLimit, handleZipUpload,
       const realMime = detectImageMime(buffer);
       if (!realMime) { unmatched.push(filename + ' (not a valid image)'); continue; }
       const imageUrl = await uploadImageBuffer(buffer, filename, realMime, req.tenant.tenantId);
-      await supabase.from('products').update({ image_url: imageUrl }).eq('id', best.id);
-      matched.push({ filename, productId: best.id, productName: best.name, score: Math.round(bestScore * 100) });
+
+      if (extraNum === null) {
+        // Main photo
+        await supabase.from('products').update({ image_url: imageUrl }).eq('id', best.id);
+        matched.push({ filename, productId: best.id, productName: best.name, score: Math.round(bestScore * 100), type: 'main' });
+      } else {
+        // Extra photo — accumulate and apply in order after loop
+        if (!extrasAccum.has(best.id)) extrasAccum.set(best.id, { product: best, items: [] });
+        extrasAccum.get(best.id).items.push({ num: extraNum, url: imageUrl });
+        matched.push({ filename, productId: best.id, productName: best.name, score: Math.round(bestScore * 100), type: `extra_${extraNum}` });
+      }
     } catch (e) {
       unmatched.push(filename + ' (upload error: ' + e.message + ')');
     }
+  }
+
+  // Apply extra photos in numeric order, appending to existing additional_images (cap 9)
+  for (const [productId, { items }] of extrasAccum) {
+    const sorted = items.sort((a, b) => a.num - b.num).map(i => i.url);
+    const { data: curr } = await supabase.from('products').select('additional_images').eq('id', productId).single();
+    const merged = [...(curr?.additional_images || []), ...sorted].slice(0, 9);
+    await supabase.from('products').update({ additional_images: merged }).eq('id', productId);
   }
 
   res.json({ matched, unmatched });

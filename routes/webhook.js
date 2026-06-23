@@ -5,7 +5,7 @@ const { createClient } = require('@supabase/supabase-js');
 const { getTenantConfig, getStock, decrementStock, getServices, getOffers, getBusinessClosures, getBusinessHours, getRestaurantZones, getRestaurantTables, getUpcomingReservations, invalidateStock, invalidateServices, invalidateClosures, invalidateOffers, invalidateBusinessHours } = require('../services/stock');
 const { sendMessage, sendImage, notifyMerchant } = require('../services/whatsapp');
 const { chat, formatPrice } = require('../services/claude');
-const { downloadAndStore, uploadImageBuffer } = require('../services/storage');
+const { downloadAndStore, uploadImageBuffer, deleteImageByUrl } = require('../services/storage');
 const { haversineKm, geocode, calcDeliveryFee } = require('../services/geo');
 const { check: rateCheck, blockMessage } = require('../services/ratelimit');
 const { fetchMedia } = require('../services/media');
@@ -721,10 +721,8 @@ async function handleMerchantMessage(tenant, messageText, phoneNumberId, token) 
             await askPhotoMode(tenant, chosen, pending.lang, phoneNumberId, token);
             return;
           } else if (pending.action === 'delete_product') {
-            await supabase.from('products').delete().eq('id', chosen.id).eq('tenant_id', tenant.id);
-            invalidateStock(tenant.id);
-            const ok = { es:`🗑️ *${chosen.name}* eliminado.`, it:`🗑️ *${chosen.name}* eliminato.`, en:`🗑️ *${chosen.name}* deleted.`, fr:`🗑️ *${chosen.name}* supprimé.`, de:`🗑️ *${chosen.name}* gelöscht.`, pt:`🗑️ *${chosen.name}* eliminado.` };
-            await sendMessage(tenant.merchant_phone, ok[pending.lang] || ok.es, phoneNumberId, token);
+            await executeDeleteProduct(tenant, chosen, pending.lang, phoneNumberId, token);
+            return;
           } else if (pending.action === 'delete_service') {
             await supabase.from('services').delete().eq('id', chosen.id).eq('tenant_id', tenant.id);
             invalidateServices(tenant.id);
@@ -825,14 +823,13 @@ async function handleMerchantMessage(tenant, messageText, phoneNumberId, token) 
           const target = pending.candidates[0];
           merchantPending.delete(tenant.id);
           if (pending.action === 'delete_product') {
-            await supabase.from('products').delete().eq('id', target.id).eq('tenant_id', tenant.id);
-            invalidateStock(tenant.id);
+            await executeDeleteProduct(tenant, target, pending.lang, phoneNumberId, token);
           } else {
             await supabase.from('services').delete().eq('id', target.id).eq('tenant_id', tenant.id);
             invalidateServices(tenant.id);
+            const ok = { es:`🗑️ *${target.name}* eliminado.`, it:`🗑️ *${target.name}* eliminato.`, en:`🗑️ *${target.name}* deleted.`, fr:`🗑️ *${target.name}* supprimé.`, de:`🗑️ *${target.name}* gelöscht.`, pt:`🗑️ *${target.name}* eliminado.` };
+            await sendMessage(tenant.merchant_phone, ok[pending.lang] || ok.es, phoneNumberId, token);
           }
-          const ok = { es:`🗑️ *${target.name}* eliminado.`, it:`🗑️ *${target.name}* eliminato.`, en:`🗑️ *${target.name}* deleted.`, fr:`🗑️ *${target.name}* supprimé.`, de:`🗑️ *${target.name}* gelöscht.`, pt:`🗑️ *${target.name}* eliminado.` };
-          await sendMessage(tenant.merchant_phone, ok[pending.lang] || ok.es, phoneNumberId, token);
           return;
         }
         if (no) {
@@ -879,6 +876,41 @@ async function handleMerchantMessage(tenant, messageText, phoneNumberId, token) 
         }
         // Unrecognised reply — resend the options
         await askPhotoModeFromPending(tenant, pending, phoneNumberId, token);
+        return;
+      }
+
+      // Broadcast confirmation
+      if (pending.action === 'broadcast_confirm') {
+        const lower = txt.toLowerCase().trim();
+        const yes = /^(conferma|confirm|confirmar|confirmer|bestätigen|sim|si|sì|oui|ja|yes|ok|y|s|1|👍)/.test(lower);
+        const no  = /^(annulla|cancel|cancelar|annuler|abbrechen|no|nope|nein|non|n|2|❌)/.test(lower);
+        if (yes) {
+          if (broadcastInProgress.has(tenant.id)) {
+            const busy = { es:'⏳ Ya hay un broadcast en curso.', it:'⏳ Broadcast già in corso.', en:'⏳ Broadcast already in progress.', fr:'⏳ Broadcast déjà en cours.', de:'⏳ Broadcast läuft bereits.', pt:'⏳ Broadcast já em andamento.' };
+            merchantPending.delete(tenant.id);
+            await sendMessage(tenant.merchant_phone, busy[pending.lang] || busy.es, phoneNumberId, token); return;
+          }
+          merchantPending.delete(tenant.id);
+          const { phones, message: bMsg, lang: bLang } = pending;
+          const sending = { es:`📣 Enviando a *${phones.length}* clientes...`, it:`📣 Invio a *${phones.length}* clienti...`, en:`📣 Sending to *${phones.length}* customers...`, fr:`📣 Envoi à *${phones.length}* clients...`, de:`📣 Sende an *${phones.length}* Kunden...`, pt:`📣 Enviando para *${phones.length}* clientes...` };
+          await sendMessage(tenant.merchant_phone, sending[bLang] || sending.es, phoneNumberId, token);
+          broadcastInProgress.add(tenant.id);
+          const broadcastToken = tenant.whatsapp_token || process.env.WHATSAPP_TOKEN;
+          let sent = 0, failed = 0;
+          try {
+            for (const phone of phones) {
+              try { await sendMessage(phone, bMsg, phoneNumberId, broadcastToken); sent++; } catch { failed++; }
+            }
+          } finally { broadcastInProgress.delete(tenant.id); }
+          const done = { es:`✅ Enviado a *${sent}* clientes${failed ? ` (${failed} fallidos)` : ''}.`, it:`✅ Inviato a *${sent}* clienti${failed ? ` (${failed} falliti)` : ''}.`, en:`✅ Sent to *${sent}* customers${failed ? ` (${failed} failed)` : ''}.`, fr:`✅ Envoyé à *${sent}* clients${failed ? ` (${failed} échoués)` : ''}.`, de:`✅ An *${sent}* Kunden gesendet${failed ? ` (${failed} fehlgeschlagen)` : ''}.`, pt:`✅ Enviado a *${sent}* clientes${failed ? ` (${failed} falhas)` : ''}.` };
+          await sendMessage(tenant.merchant_phone, done[bLang] || done.es, phoneNumberId, token);
+        } else if (no) {
+          merchantPending.delete(tenant.id);
+          await sendMessage(tenant.merchant_phone, mt(pending.lang, 'canceled'), phoneNumberId, token);
+        } else {
+          const reprompt = { es:'⚠️ Respondé *confirmar* para enviar o *cancelar* para abortar.', it:'⚠️ Rispondi *conferma* per inviare o *annulla* per annullare.', en:'⚠️ Reply *confirm* to send or *cancel* to abort.', fr:'⚠️ Répondez *confirmer* ou *annuler*.', de:'⚠️ Antworte *bestätigen* oder *abbrechen*.', pt:'⚠️ Responda *confirmar* ou *cancelar*.' };
+          await sendMessage(tenant.merchant_phone, reprompt[pending.lang] || reprompt.es, phoneNumberId, token);
+        }
         return;
       }
 
@@ -1520,20 +1552,18 @@ async function handleMerchantMessage(tenant, messageText, phoneNumberId, token) 
       const none = { es:'⚠️ No hay clientes activos para enviar.', it:'⚠️ Nessun cliente attivo a cui inviare.', en:'⚠️ No active customers to send to.', fr:'⚠️ Aucun client actif.', de:'⚠️ Keine aktiven Kunden.', pt:'⚠️ Nenhum cliente ativo.' };
       await sendMessage(tenant.merchant_phone, none[lang] || none.es, phoneNumberId, token); return;
     }
-    const sending = { es:`📣 Enviando a *${phones.length}* clientes...`, it:`📣 Invio a *${phones.length}* clienti...`, en:`📣 Sending to *${phones.length}* customers...`, fr:`📣 Envoi à *${phones.length}* clients...`, de:`📣 Sende an *${phones.length}* Kunden...`, pt:`📣 Enviando para *${phones.length}* clientes...` };
-    await sendMessage(tenant.merchant_phone, sending[lang] || sending.es, phoneNumberId, token);
-    broadcastInProgress.add(tenant.id);
-    const broadcastToken = tenant.whatsapp_token || process.env.WHATSAPP_TOKEN;
-    let sent = 0, failed = 0;
-    try {
-      for (const phone of phones) {
-        try { await sendMessage(phone, message.trim(), phoneNumberId, broadcastToken); sent++; } catch { failed++; }
-      }
-    } finally {
-      broadcastInProgress.delete(tenant.id);
-    }
-    const done = { es:`✅ Enviado a *${sent}* clientes${failed ? ` (${failed} fallidos)` : ''}.`, it:`✅ Inviato a *${sent}* clienti${failed ? ` (${failed} falliti)` : ''}.`, en:`✅ Sent to *${sent}* customers${failed ? ` (${failed} failed)` : ''}.`, fr:`✅ Envoyé à *${sent}* clients${failed ? ` (${failed} échoués)` : ''}.`, de:`✅ An *${sent}* Kunden gesendet${failed ? ` (${failed} fehlgeschlagen)` : ''}.`, pt:`✅ Enviado a *${sent}* clientes${failed ? ` (${failed} falhas)` : ''}.` };
-    await sendMessage(tenant.merchant_phone, done[lang] || done.es, phoneNumberId, token);
+    // Require confirmation before sending
+    const preview = message.trim().length > 80 ? message.trim().slice(0, 80) + '…' : message.trim();
+    const confirm = {
+      es: `📣 Estás por enviar a *${phones.length}* clientes:\n\n"${preview}"\n\nRespondé *confirmar* para enviar o *cancelar* para abortar.`,
+      it: `📣 Stai per inviare a *${phones.length}* clienti:\n\n"${preview}"\n\nRispondi *conferma* per inviare o *annulla* per annullare.`,
+      en: `📣 You're about to send to *${phones.length}* customers:\n\n"${preview}"\n\nReply *confirm* to send or *cancel* to abort.`,
+      fr: `📣 Vous allez envoyer à *${phones.length}* clients:\n\n"${preview}"\n\nRépondez *confirmer* pour envoyer ou *annuler* pour annuler.`,
+      de: `📣 Du sendest an *${phones.length}* Kunden:\n\n"${preview}"\n\nAntworte *bestätigen* zum Senden oder *abbrechen* zum Abbrechen.`,
+      pt: `📣 Você está prestes a enviar para *${phones.length}* clientes:\n\n"${preview}"\n\nResponda *confirmar* para enviar ou *cancelar* para abortar.`,
+    };
+    merchantPending.set(tenant.id, { action: 'broadcast_confirm', phones, message: message.trim(), lang, expiresAt: Date.now() + 5 * 60 * 1000 });
+    await sendMessage(tenant.merchant_phone, confirm[lang] || confirm.es, phoneNumberId, token);
     return;
   }
 
@@ -1742,6 +1772,35 @@ async function handlePaymentProof(tenant, customerPhone, buffer, mimeType, phone
   console.log(`[payment-proof] Processed for tenant ${tenant.id}, customer ${customerPhone}, url: ${publicUrl}`);
 }
 
+// ─── Delete product with cleanup ─────────────────────────────────────────────
+
+async function executeDeleteProduct(tenant, product, lang, phoneNumberId, token) {
+  // Warn if active orders reference this product
+  const { data: activeOrders } = await supabase.from('orders')
+    .select('id, items_json').eq('tenant_id', tenant.id)
+    .in('status', ['pending', 'confirmed', 'preparing', 'delivering']);
+  const activeCount = (activeOrders || []).filter(o =>
+    (o.items_json || []).some(item => item.name?.toLowerCase() === product.name.toLowerCase())
+  ).length;
+
+  // Fetch image URLs before deleting (for storage cleanup)
+  const { data: full } = await supabase.from('products')
+    .select('image_url, additional_images').eq('id', product.id).eq('tenant_id', tenant.id).single();
+
+  await supabase.from('products').delete().eq('id', product.id).eq('tenant_id', tenant.id);
+  invalidateStock(tenant.id);
+
+  // Cleanup storage async
+  if (full?.image_url) deleteImageByUrl(full.image_url).catch(() => {});
+  for (const url of full?.additional_images || []) deleteImageByUrl(url).catch(() => {});
+
+  const warning = activeCount > 0
+    ? { es:` ⚠️ Tenía ${activeCount} pedido(s) activo(s) que siguen intactos.`, it:` ⚠️ Aveva ${activeCount} ordine/i attivo/i che rimangono intatti.`, en:` ⚠️ Had ${activeCount} active order(s) which remain intact.`, fr:` ⚠️ Avait ${activeCount} commande(s) active(s) qui restent intactes.`, de:` ⚠️ Hatte ${activeCount} aktive Bestellung(en), die unverändert bleiben.`, pt:` ⚠️ Tinha ${activeCount} pedido(s) ativo(s) que permanecem intactos.` }
+    : { es:'', it:'', en:'', fr:'', de:'', pt:'' };
+  const ok = { es:`🗑️ *${product.name}* eliminado.${warning.es}`, it:`🗑️ *${product.name}* eliminato.${warning.it}`, en:`🗑️ *${product.name}* deleted.${warning.en}`, fr:`🗑️ *${product.name}* supprimé.${warning.fr}`, de:`🗑️ *${product.name}* gelöscht.${warning.de}`, pt:`🗑️ *${product.name}* eliminado.${warning.pt}` };
+  await sendMessage(tenant.merchant_phone, ok[lang] || ok.es, phoneNumberId, token);
+}
+
 // ─── Merchant photo flow helpers ─────────────────────────────────────────────
 
 async function askPhotoMode(tenant, product, lang, phoneNumberId, token) {
@@ -1903,6 +1962,11 @@ async function handleMerchantImage(tenant, message, phoneNumberId, token) {
       await supabase.from('products').update({ image_url: publicUrl }).eq('id', product.id);
       const ok = { es:`✅ ¡Foto guardada para *${product.name}*! Sara la enviará automáticamente a los clientes.`, it:`✅ Foto salvata per *${product.name}*! Sara la invierà automaticamente ai clienti.`, en:`✅ Photo saved for *${product.name}*! Sara will send it automatically to customers.`, fr:`✅ Photo enregistrée pour *${product.name}*! Sara l'enverra automatiquement aux clients.`, de:`✅ Foto gespeichert für *${product.name}*! Sara sendet sie automatisch an Kunden.`, pt:`✅ Foto salva para *${product.name}*! Sara a enviará automaticamente aos clientes.` };
       await sendMessage(tenant.merchant_phone, ok[lang] || ok.es, phoneNumberId, token);
+      if (tenant.catalog_sync_enabled) {
+        supabase.from('products').select('*').eq('id', product.id).single()
+          .then(({ data }) => { if (data) catalog.pushProduct(tenant, data); })
+          .catch(() => {});
+      }
     }
     console.log(`[storage] Image uploaded for product "${product.name}" (extra=${isExtraPhoto}): ${publicUrl}`);
 

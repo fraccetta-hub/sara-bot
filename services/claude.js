@@ -171,7 +171,7 @@ function buildStaticSystemPrompt(tenant, stock, services = [], offers = [], rest
         const priceStr = formatPrice(offer ? applyOffer(p.price_guarani, offer) : p.price_guarani, currency);
         const offerNote = offer ? ` 🏷️ ${offer.label} (precio original: ${formatPrice(p.price_guarani, currency)})` : '';
         return `• ${p.name}${p.sku ? ` [SKU:${p.sku}]` : ''} [${p.category}] — ${priceStr}` +
-          (p.stock_qty === null ? '' : p.stock_qty > 0 ? ` (${p.stock_qty} disponibles)` : ' (AGOTADO)') +
+          (p.stock_qty === null ? '' : p.stock_qty === 0 || p.is_available === false ? ' (AGOTADO)' : p.stock_qty <= 5 ? ' (últimas unidades)' : ' (disponible)') +
           (p.description ? ` — ${p.description}` : '') +
           (p.allergens ? ` ⚠️ ${p.allergens}` : '') +
           (p.image_url ? ' [tiene foto]' : '') +
