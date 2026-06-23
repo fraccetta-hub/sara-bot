@@ -10,6 +10,7 @@ const { haversineKm, geocode, calcDeliveryFee } = require('../services/geo');
 const { check: rateCheck, blockMessage } = require('../services/ratelimit');
 const { fetchMedia } = require('../services/media');
 const { transcribeAudio } = require('../services/transcribe');
+const catalog = require('../services/catalog');
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
 
@@ -1676,29 +1677,51 @@ async function handleMerchantImage(tenant, message, phoneNumberId, token) {
 
   if (!mediaId) return;
 
-  // If no caption → ask which product
-  if (!caption) {
+  // Detect "foto extra" prefix (multilingual) — appends to additional_images instead of overwriting image_url
+  const EXTRA_PREFIXES = ['foto extra ', 'extra foto ', 'extra photo ', 'additional photo ',
+    'zusätzliches foto ', 'foto adicional ', 'photo supplémentaire ', 'foto adicional pt '];
+  let isExtraPhoto = false;
+  let cleanCaption = caption || '';
+  if (cleanCaption) {
+    for (const prefix of EXTRA_PREFIXES) {
+      if (cleanCaption.toLowerCase().startsWith(prefix)) {
+        isExtraPhoto = true;
+        cleanCaption = cleanCaption.slice(prefix.length).trim();
+        break;
+      }
+    }
+  }
+
+  // If no caption → ask which product (with extra-photo hint)
+  if (!cleanCaption) {
     const msg = {
-      es: '📸 ¡Foto recibida! Reenviala con el *nombre del producto* como caption (texto de la foto).\n\nEjemplo: enviá la foto con el texto "Pizza Margherita"',
-      it: '📸 Foto ricevuta! Rimandamela con il *nome del prodotto* come didascalia (testo della foto).\n\nEsempio: invia la foto con il testo "Pizza Margherita"',
-      en: '📸 Photo received! Resend it with the *product name* as caption.\n\nExample: send the photo with the text "Margherita Pizza"',
-      fr: '📸 Photo reçue! Renvoyez-la avec le *nom du produit* comme légende.\n\nExemple: envoyez la photo avec le texte "Pizza Margherita"',
-      de: '📸 Foto erhalten! Schick es erneut mit dem *Produktnamen* als Beschriftung.\n\nBeispiel: Foto mit dem Text "Pizza Margherita" senden',
-      pt: '📸 Foto recebida! Reenvie com o *nome do produto* como legenda.\n\nExemplo: envie a foto com o texto "Pizza Margherita"',
+      es: '📸 ¡Foto recibida! Reenviala con el *nombre del producto* como caption.\n\nEjemplo: "Pizza Margherita"\n\n_Para agregar foto extra (además de la principal): "foto extra Pizza Margherita"_',
+      it: '📸 Foto ricevuta! Rimandamela con il *nome del prodotto* come didascalia.\n\nEsempio: "Pizza Margherita"\n\n_Per aggiungere foto extra: "foto extra Pizza Margherita"_',
+      en: '📸 Photo received! Resend it with the *product name* as caption.\n\nExample: "Margherita Pizza"\n\n_To add an extra photo: "extra photo Margherita Pizza"_',
+      fr: '📸 Photo reçue! Renvoyez-la avec le *nom du produit* comme légende.\n\nExemple: "Pizza Margherita"\n\n_Pour ajouter une photo supplémentaire: "photo supplémentaire Pizza Margherita"_',
+      de: '📸 Foto erhalten! Schick es erneut mit dem *Produktnamen* als Beschriftung.\n\nBeispiel: "Pizza Margherita"\n\n_Für ein zusätzliches Foto: "zusätzliches foto Pizza Margherita"_',
+      pt: '📸 Foto recebida! Reenvie com o *nome do produto* como legenda.\n\nExemplo: "Pizza Margherita"\n\n_Para adicionar foto extra: "foto extra Pizza Margherita"_',
     };
     await sendMessage(tenant.merchant_phone, msg[lang] || msg.es, phoneNumberId, token);
     return;
   }
 
-  const uploading = { es:`⏳ Subiendo foto para "${caption}"...`, it:`⏳ Caricamento foto per "${caption}"...`, en:`⏳ Uploading photo for "${caption}"...`, fr:`⏳ Téléchargement de la photo pour "${caption}"...`, de:`⏳ Foto wird hochgeladen für "${caption}"...`, pt:`⏳ Enviando foto para "${caption}"...` };
+  const uploading = {
+    es: `⏳ Subiendo ${isExtraPhoto ? 'foto extra' : 'foto'} para "${cleanCaption}"...`,
+    it: `⏳ Caricamento ${isExtraPhoto ? 'foto extra' : 'foto'} per "${cleanCaption}"...`,
+    en: `⏳ Uploading ${isExtraPhoto ? 'extra photo' : 'photo'} for "${cleanCaption}"...`,
+    fr: `⏳ Téléchargement de la ${isExtraPhoto ? 'photo supplémentaire' : 'photo'} pour "${cleanCaption}"...`,
+    de: `⏳ ${isExtraPhoto ? 'Zusätzliches Foto' : 'Foto'} wird hochgeladen für "${cleanCaption}"...`,
+    pt: `⏳ Enviando ${isExtraPhoto ? 'foto extra' : 'foto'} para "${cleanCaption}"...`,
+  };
   await sendMessage(tenant.merchant_phone, uploading[lang] || uploading.es, phoneNumberId, token);
 
   try {
     const allP = await getProductsForTenant(tenant.id);
-    const matches = findProductsFuzzy(allP, caption);
+    const matches = findProductsFuzzy(allP, cleanCaption);
     const product = matches[0] || null;
     if (!product) {
-      const notFound = { es:`⚠️ No encontré el producto: "${caption}". Verificá el nombre en el catálogo.`, it:`⚠️ Prodotto non trovato: "${caption}". Verifica il nome nel catalogo.`, en:`⚠️ Product not found: "${caption}". Check the name in the catalog.`, fr:`⚠️ Produit introuvable: "${caption}". Vérifiez le nom dans le catalogue.`, de:`⚠️ Produkt nicht gefunden: "${caption}". Überprüfe den Namen im Katalog.`, pt:`⚠️ Produto não encontrado: "${caption}". Verifique o nome no catálogo.` };
+      const notFound = { es:`⚠️ No encontré el producto: "${cleanCaption}". Verificá el nombre en el catálogo.`, it:`⚠️ Prodotto non trovato: "${cleanCaption}". Verifica il nome nel catalogo.`, en:`⚠️ Product not found: "${cleanCaption}". Check the name in the catalog.`, fr:`⚠️ Produit introuvable: "${cleanCaption}". Vérifiez le nom dans le catalogue.`, de:`⚠️ Produkt nicht gefunden: "${cleanCaption}". Überprüfe den Namen im Katalog.`, pt:`⚠️ Produto não encontrado: "${cleanCaption}". Verifique o nome no catálogo.` };
       await sendMessage(tenant.merchant_phone, notFound[lang] || notFound.es, phoneNumberId, token);
       return;
     }
@@ -1707,12 +1730,29 @@ async function handleMerchantImage(tenant, message, phoneNumberId, token) {
     const whatsappToken = tenant.whatsapp_token || process.env.WHATSAPP_TOKEN;
     const publicUrl = await downloadAndStore(mediaId, whatsappToken, product.name, tenant.id);
 
-    // Save URL to product
-    await supabase.from('products').update({ image_url: publicUrl }).eq('id', product.id);
-
-    const ok = { es:`✅ ¡Foto guardada para *${product.name}*! Sara la enviará automáticamente a los clientes.`, it:`✅ Foto salvata per *${product.name}*! Sara la invierà automaticamente ai clienti.`, en:`✅ Photo saved for *${product.name}*! Sara will send it automatically to customers.`, fr:`✅ Photo enregistrée pour *${product.name}*! Sara l'enverra automatiquement aux clients.`, de:`✅ Foto gespeichert für *${product.name}*! Sara sendet sie automatisch an Kunden.`, pt:`✅ Foto salva para *${product.name}*! Sara a enviará automaticamente aos clientes.` };
-    await sendMessage(tenant.merchant_phone, ok[lang] || ok.es, phoneNumberId, token);
-    console.log(`[storage] Image uploaded for product "${product.name}": ${publicUrl}`);
+    if (isExtraPhoto) {
+      // Append to additional_images (max 9)
+      const { data: full } = await supabase.from('products')
+        .select('additional_images, name, description, price_guarani, image_url, is_available')
+        .eq('id', product.id).single();
+      const existing = full?.additional_images || [];
+      if (existing.length >= 9) {
+        const limitMsg = { es:`⚠️ *${product.name}* ya tiene 9 fotos adicionales (límite). Eliminá alguna desde el panel para agregar más.`, it:`⚠️ *${product.name}* ha già 9 foto aggiuntive (limite). Rimuovine una dal pannello per aggiungerne altre.`, en:`⚠️ *${product.name}* already has 9 extra photos (limit). Remove one from the panel to add more.`, fr:`⚠️ *${product.name}* a déjà 9 photos supplémentaires (limite). Supprimez-en une depuis le panneau.`, de:`⚠️ *${product.name}* hat bereits 9 Zusatzfotos (Limit). Entferne eines im Panel, um weitere hinzuzufügen.`, pt:`⚠️ *${product.name}* já tem 9 fotos extras (limite). Remova uma no painel para adicionar mais.` };
+        await sendMessage(tenant.merchant_phone, limitMsg[lang] || limitMsg.es, phoneNumberId, token);
+        return;
+      }
+      const updated = [...existing, publicUrl];
+      await supabase.from('products').update({ additional_images: updated }).eq('id', product.id);
+      catalog.pushProduct(tenant, { ...full, id: product.id, additional_images: updated }).catch(() => {});
+      const ok = { es:`✅ Foto extra ${updated.length}/9 guardada para *${product.name}*!`, it:`✅ Foto extra ${updated.length}/9 salvata per *${product.name}*!`, en:`✅ Extra photo ${updated.length}/9 saved for *${product.name}*!`, fr:`✅ Photo supplémentaire ${updated.length}/9 enregistrée pour *${product.name}*!`, de:`✅ Zusätzliches Foto ${updated.length}/9 gespeichert für *${product.name}*!`, pt:`✅ Foto extra ${updated.length}/9 salva para *${product.name}*!` };
+      await sendMessage(tenant.merchant_phone, ok[lang] || ok.es, phoneNumberId, token);
+    } else {
+      // Overwrite main image_url (existing behavior)
+      await supabase.from('products').update({ image_url: publicUrl }).eq('id', product.id);
+      const ok = { es:`✅ ¡Foto guardada para *${product.name}*! Sara la enviará automáticamente a los clientes.`, it:`✅ Foto salvata per *${product.name}*! Sara la invierà automaticamente ai clienti.`, en:`✅ Photo saved for *${product.name}*! Sara will send it automatically to customers.`, fr:`✅ Photo enregistrée pour *${product.name}*! Sara l'enverra automatiquement aux clients.`, de:`✅ Foto gespeichert für *${product.name}*! Sara sendet sie automatisch an Kunden.`, pt:`✅ Foto salva para *${product.name}*! Sara a enviará automaticamente aos clientes.` };
+      await sendMessage(tenant.merchant_phone, ok[lang] || ok.es, phoneNumberId, token);
+    }
+    console.log(`[storage] Image uploaded for product "${product.name}" (extra=${isExtraPhoto}): ${publicUrl}`);
 
   } catch (err) {
     console.error('[storage] Image upload error:', err.message);
@@ -2015,7 +2055,7 @@ async function handleCustomerMessage(tenant, customerPhone, messageText, locatio
 
   // ── Normal text message → Claude ───────────────────────────────────────────
   const isFirstMessage = history.length === 0;
-  const { reply, order, imageProductName, customerName,
+  const { reply, order, imageProductName, extraImagesProductName, customerName,
           deliveryChoice, deliveryAddress, offTopic, updatedHistory,
           appointmentRequest, waitlistProduct, reservationRequest, sendMenu } = await chat({
     tenant, stock, services, history,
@@ -2318,6 +2358,17 @@ async function handleCustomerMessage(tenant, customerPhone, messageText, locatio
     );
     if (product?.image_url) {
       await sendImage(customerPhone, product.image_url, product.name, phoneNumberId, token);
+    }
+  }
+
+  // ── Send extra product images ───────────────────────────────────────────────
+  if (extraImagesProductName) {
+    const ep = stock.find(p => p.name.toLowerCase() === extraImagesProductName.toLowerCase());
+    if (ep?.additional_images?.length) {
+      const toSend = ep.additional_images.slice(0, 3);
+      for (let i = 0; i < toSend.length; i++) {
+        await sendImage(customerPhone, toSend[i], `${ep.name} (${i + 1}/${ep.additional_images.length})`, phoneNumberId, token);
+      }
     }
   }
 

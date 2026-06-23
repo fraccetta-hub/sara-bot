@@ -2235,7 +2235,8 @@ PRODUCTS & STOCK:
 - "cambia il prezzo delle rose a 90000" → update price
 - "nuovo prodotto Girasoli, categoria Mazzi, prezzo 80000, stock 10" → add product
 - "elimina il prodotto X" → delete product entirely
-- Send a photo with the product name as caption → Sara saves it and shows it automatically to customers asking about that product
+- Send a photo with the product name as caption → Sara saves it as the main product photo and shows it to customers automatically
+- Send a photo with caption "foto extra [product name]" (or "extra photo [name]" in English, "foto extra [name]" in Italian/Spanish/Portuguese, "zusätzliches foto [name]" in German, "photo supplémentaire [name]" in French) → appends as an additional photo (up to 9 extra). These appear in the WhatsApp native catalog. Sara will also send them in chat when a customer explicitly asks to see more photos of that product.
 
 ORDERS:
 - "ordini in corso" / "active orders" → list active orders
