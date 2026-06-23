@@ -629,6 +629,31 @@ router.post('/products/:id/image', requireAuth, upload.single('image'), async (r
   }
 });
 
+// ─── POST /admin/products/:id/additional-images/upload ───────────────────────
+
+router.post('/products/:id/additional-images/upload', requireAuth, upload.single('image'), async (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'Ningún archivo recibido' });
+  try {
+    const url = await uploadImageBuffer(req.file.buffer, req.file.originalname, req.file.mimetype, req.tenant.tenantId);
+    res.json({ url });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ─── PUT /admin/products/:id/additional-images ────────────────────────────────
+
+router.put('/products/:id/additional-images', requireAuth, async (req, res) => {
+  const { urls } = req.body;
+  if (!Array.isArray(urls)) return res.status(400).json({ error: 'urls must be array' });
+  const { error } = await supabase.from('products')
+    .update({ additional_images: urls.slice(0, 9) })
+    .eq('id', req.params.id).eq('tenant_id', req.tenant.tenantId);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ ok: true });
+  bgSyncProduct(req.tenant.tenantId, req.params.id).catch(() => {});
+});
+
 // ─── DELETE /admin/products/:id ───────────────────────────────────────────────
 
 router.delete('/products/:id', requireAuth, async (req, res) => {
@@ -1194,13 +1219,15 @@ router.post('/whatsapp-connect-manual', requireAuth, async (req, res) => {
 // ─── GET /admin/catalog-status ────────────────────────────────────────────────
 router.get('/catalog-status', requireAuth, async (req, res) => {
   const { data } = await supabase.from('tenants')
-    .select('products_enabled, restaurant_enabled, catalog_sync_enabled, wa_catalog_id')
+    .select('products_enabled, restaurant_enabled, catalog_sync_enabled, wa_catalog_id, waba_id, catalog_synced_at')
     .eq('id', req.tenant.tenantId).single();
   if (!data) return res.status(404).json({ error: 'Tenant not found' });
   res.json({
-    eligible: data.products_enabled !== false || data.restaurant_enabled === true,
-    enabled:  !!data.catalog_sync_enabled,
+    eligible:  data.products_enabled !== false || data.restaurant_enabled === true,
+    hasWaba:   !!data.waba_id,
+    enabled:   !!data.catalog_sync_enabled,
     catalogId: data.wa_catalog_id || null,
+    syncedAt:  data.catalog_synced_at || null,
   });
 });
 

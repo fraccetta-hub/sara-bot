@@ -1249,6 +1249,24 @@
             <button onclick="saveWpProfile()" data-i18n="settings.wp.save" class="btn-green w-full py-2 rounded-lg text-sm font-semibold">
               Actualizar perfil en WhatsApp
             </button>
+
+            <!-- Catálogo WhatsApp -->
+            <div id="catalogSection" class="hidden border-t border-gray-100 mt-4 pt-4">
+              <div class="flex items-center justify-between mb-1">
+                <div>
+                  <h3 data-i18n="settings.catalog.title" class="font-medium text-gray-700 text-sm">Catálogo WhatsApp</h3>
+                  <p id="catalogSubtitle" class="text-xs text-gray-400 mt-0.5"></p>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" id="catalogToggle" class="sr-only peer" onchange="toggleCatalog(this.checked)"/>
+                  <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-green-500 transition-colors after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-5"></div>
+                </label>
+              </div>
+              <p id="catalogSyncedAt" class="hidden text-xs text-gray-400 mb-1"></p>
+              <div id="catalogMsg" class="hidden rounded-lg px-4 py-2 text-sm mt-2"></div>
+              <button id="catalogResyncBtn" onclick="resyncCatalog()" data-i18n="settings.catalog.resync"
+                class="hidden mt-2 text-xs text-blue-600 hover:underline font-medium">Resincronizar todo</button>
+            </div>
           </div>
 
         </div>
@@ -2271,6 +2289,21 @@
           <input id="pImageFile" type="file" accept="image/*" class="hidden" onchange="previewImage(this)"/>
         </label>
       </div>
+      <!-- Fotos adicionales -->
+      <div>
+        <div class="flex items-center justify-between mb-1">
+          <label data-i18n="modal.product.extraPhotos" class="block text-sm font-medium text-gray-700">Fotos adicionales</label>
+          <span id="additionalPhotosCount" class="text-xs text-gray-400">0/9</span>
+        </div>
+        <div id="additionalPhotosList" class="flex flex-wrap gap-2 mb-2"></div>
+        <label id="additionalPhotoAdd"
+          class="inline-flex items-center gap-1.5 text-xs text-gray-500 border border-dashed border-gray-300 rounded-lg px-3 py-2 cursor-pointer hover:border-green-400 hover:text-green-600 transition">
+          <span>+</span>
+          <span data-i18n="modal.product.addPhoto">Añadir foto</span>
+          <input type="file" id="pExtraImageFile" accept="image/jpeg,image/png,image/webp" class="hidden" onchange="addAdditionalPhoto(this)"/>
+        </label>
+        <p id="additionalPhotosHint" class="hidden text-xs text-gray-400 mt-1" data-i18n="modal.product.photoLimit">Máximo 9 fotos adicionales</p>
+      </div>
     </div>
     <div class="flex gap-3 mt-6">
       <button onclick="closeProductModal()" data-i18n="modal.product.cancel"
@@ -2313,6 +2346,9 @@ let isRestaurantPlan = false;
 let isMenuMode = false;
 let planProductsEnabled = true, planServicesEnabled = false, planAppointmentsEnabled = false;
 let TENANT_CURRENCY = 'PYG';
+let _catalogSyncEnabled = false;
+let _catalogStatusCache = null;
+let _additionalImages = []; // [{url, file?, blobUrl?}]
 const CURRENCY_SYMBOL_MAP = { PYG:'Gs', USD:'$', EUR:'€', ARS:'$', BRL:'R$', MXN:'$', CLP:'$', COP:'$', UYU:'$U', PEN:'S/' };
 const CURRENCY_LOCALE_MAP = { PYG:'es-PY', USD:'en-US', EUR:'de-DE', ARS:'es-AR', BRL:'pt-BR', MXN:'es-MX', CLP:'es-CL', COP:'es-CO', UYU:'es-UY', PEN:'es-PE' };
 function fmtPrice(n) {
@@ -3323,6 +3359,13 @@ async function loadProducts() {
   products = await api('/admin/products');
   renderCategoryFilters();
   renderProducts();
+  if (!_catalogStatusCache) {
+    api('/admin/catalog-status').then(s => {
+      _catalogStatusCache = s;
+      _catalogSyncEnabled = !!s.enabled;
+      renderProducts();
+    }).catch(() => {});
+  }
   // Low stock banner
   const lowStock = products.filter(p => p.is_available && p.stock_qty !== null && p.stock_qty <= 5);
   const banner = document.getElementById('lowStockBanner');
@@ -3401,6 +3444,7 @@ function renderProducts() {
       </td>
       <td class="px-4 py-3 text-center">
         <div class="flex items-center justify-center gap-2">
+          ${_catalogSyncEnabled ? (p.wa_sync_error ? `<span class="text-amber-500 cursor-help" title="${escHtml(p.wa_sync_error)}">⚠️</span>` : p.wa_retailer_id ? '<span class="text-green-500" title="Sincronizado con catálogo WhatsApp">✅</span>' : '') : ''}
           <button onclick="openProductModal('${p.id}')" class="text-blue-500 hover:text-blue-700 text-sm">✏️</button>
           <button onclick="openDeleteModal('${p.id}', '${p.name.replace(/'/g,"\\'")}')" class="text-red-400 hover:text-red-600 text-sm">🗑️</button>
         </div>
@@ -3442,6 +3486,7 @@ function renderMenu(filtered) {
         </td>
         <td class="px-4 py-3 text-center">
           <div class="flex items-center justify-center gap-2">
+            ${_catalogSyncEnabled ? (p.wa_sync_error ? `<span class="text-amber-500 cursor-help" title="${escHtml(p.wa_sync_error)}">⚠️</span>` : p.wa_retailer_id ? '<span class="text-green-500" title="Sincronizado con catálogo WhatsApp">✅</span>' : '') : ''}
             <button onclick="openProductModal('${p.id}')" class="text-blue-500 hover:text-blue-700 text-sm">✏️</button>
             <button onclick="openDeleteModal('${p.id}', '${p.name.replace(/'/g,"\\'")}')" class="text-red-400 hover:text-red-600 text-sm">🗑️</button>
           </div>
@@ -3512,6 +3557,8 @@ function openProductModal(id) {
   } else {
     clearImage();
   }
+  _additionalImages = (p?.additional_images || []).map(url => ({ url, file: null }));
+  renderAdditionalPhotos();
   document.getElementById('productModal').classList.remove('hidden');
 }
 
@@ -3546,6 +3593,8 @@ function clearImage() {
 function closeProductModal() {
   document.getElementById('productModal').classList.add('hidden');
   editingProductId = null;
+  _additionalImages.forEach(img => { if (img.blobUrl) URL.revokeObjectURL(img.blobUrl); });
+  _additionalImages = [];
 }
 
 function toggleUnlimitedStock(checked) {
@@ -3600,6 +3649,29 @@ async function saveProduct() {
       }
     }
 
+    // Sync additional images
+    const pid = saved?.id || editingProductId;
+    if (pid) {
+      const finalUrls = [];
+      for (const img of _additionalImages) {
+        if (!img.file) {
+          finalUrls.push(img.url);
+        } else {
+          try {
+            const compressed = await compressImage(img.file);
+            const fd = new FormData();
+            fd.append('image', compressed);
+            const r = await fetch(`/admin/products/${pid}/additional-images/upload`, {
+              method: 'POST', credentials: 'same-origin', body: fd
+            });
+            if (r.ok) { const d = await r.json(); finalUrls.push(d.url); }
+            if (img.blobUrl) URL.revokeObjectURL(img.blobUrl);
+          } catch (_) {}
+        }
+      }
+      await api(`/admin/products/${pid}/additional-images`, 'PUT', { urls: finalUrls });
+    }
+
     closeProductModal();
     await loadProducts();
   } catch (e) {
@@ -3624,6 +3696,159 @@ async function confirmDelete() {
   await api(`/admin/products/${deletingProductId}`, 'DELETE');
   closeDeleteModal();
   await loadProducts();
+}
+
+// ── Catalog settings ───────────────────────────────────────────────────────────
+async function loadCatalogStatus() {
+  try {
+    const s = await api('/admin/catalog-status');
+    _catalogStatusCache = s;
+    _catalogSyncEnabled = !!s.enabled;
+    renderCatalogSettings(s);
+  } catch (_) {}
+}
+
+function renderCatalogSettings(s) {
+  const section = document.getElementById('catalogSection');
+  if (!section) return;
+  if (!s.eligible) { section.classList.add('hidden'); return; }
+  section.classList.remove('hidden');
+  const toggle    = document.getElementById('catalogToggle');
+  const resyncBtn = document.getElementById('catalogResyncBtn');
+  const syncedAt  = document.getElementById('catalogSyncedAt');
+  const subtitle  = document.getElementById('catalogSubtitle');
+  if (!s.hasWaba) {
+    if (toggle)   { toggle.checked = false; toggle.disabled = true; }
+    if (subtitle) subtitle.textContent = t('settings.catalog.noWaba');
+    if (resyncBtn) resyncBtn.classList.add('hidden');
+    if (syncedAt)  syncedAt.classList.add('hidden');
+    return;
+  }
+  if (toggle)   { toggle.checked = s.enabled; toggle.disabled = false; }
+  if (subtitle) subtitle.textContent = t('settings.catalog.desc');
+  if (resyncBtn) resyncBtn.classList.toggle('hidden', !s.enabled);
+  if (syncedAt) {
+    if (s.enabled && s.syncedAt) {
+      syncedAt.textContent = t('settings.catalog.syncedAt').replace('{d}', new Date(s.syncedAt).toLocaleDateString());
+      syncedAt.classList.remove('hidden');
+    } else {
+      syncedAt.classList.add('hidden');
+    }
+  }
+}
+
+async function toggleCatalog(enable) {
+  const msgEl  = document.getElementById('catalogMsg');
+  const toggle = document.getElementById('catalogToggle');
+  if (msgEl) msgEl.classList.add('hidden');
+  try {
+    await api(enable ? '/admin/catalog-activate' : '/admin/catalog-deactivate', 'POST');
+    _catalogSyncEnabled  = enable;
+    _catalogStatusCache  = null;
+    const s = await api('/admin/catalog-status');
+    _catalogStatusCache  = s;
+    renderCatalogSettings(s);
+    renderProducts();
+    if (msgEl) {
+      msgEl.className = 'rounded-lg px-4 py-2 text-sm mt-2 bg-green-50 text-green-700';
+      msgEl.textContent = enable ? t('settings.catalog.activated') : t('settings.catalog.deactivated');
+      msgEl.classList.remove('hidden');
+      setTimeout(() => msgEl.classList.add('hidden'), 3000);
+    }
+  } catch (e) {
+    if (toggle) toggle.checked = !enable;
+    if (msgEl) {
+      msgEl.className = 'rounded-lg px-4 py-2 text-sm mt-2 bg-red-50 text-red-700';
+      msgEl.textContent = errMsg(e);
+      msgEl.classList.remove('hidden');
+    }
+  }
+}
+
+async function resyncCatalog() {
+  const btn   = document.getElementById('catalogResyncBtn');
+  const msgEl = document.getElementById('catalogMsg');
+  if (btn)   { btn.disabled = true; btn.textContent = t('settings.catalog.resyncing'); }
+  if (msgEl) msgEl.classList.add('hidden');
+  try {
+    await api('/admin/catalog-activate', 'POST');
+    _catalogStatusCache = null;
+    const s = await api('/admin/catalog-status');
+    _catalogStatusCache = s;
+    renderCatalogSettings(s);
+    if (msgEl) {
+      msgEl.className = 'rounded-lg px-4 py-2 text-sm mt-2 bg-green-50 text-green-700';
+      msgEl.textContent = t('settings.catalog.resynced');
+      msgEl.classList.remove('hidden');
+      setTimeout(() => msgEl.classList.add('hidden'), 4000);
+    }
+  } catch (e) {
+    if (msgEl) {
+      msgEl.className = 'rounded-lg px-4 py-2 text-sm mt-2 bg-red-50 text-red-700';
+      msgEl.textContent = errMsg(e);
+      msgEl.classList.remove('hidden');
+    }
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = t('settings.catalog.resync'); }
+  }
+}
+
+// ── Additional product photos ───────────────────────────────────────────────────
+async function compressImage(file, maxPx = 1280, quality = 0.85) {
+  return new Promise(resolve => {
+    const img    = new Image();
+    const tmpUrl = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(tmpUrl);
+      const scale  = Math.min(1, maxPx / Math.max(img.width, img.height));
+      const w      = Math.round(img.width  * scale);
+      const h      = Math.round(img.height * scale);
+      const canvas = document.createElement('canvas');
+      canvas.width  = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      canvas.toBlob(
+        blob => resolve(new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' })),
+        'image/jpeg', quality
+      );
+    };
+    img.onerror = () => { URL.revokeObjectURL(tmpUrl); resolve(file); };
+    img.src = tmpUrl;
+  });
+}
+
+function renderAdditionalPhotos() {
+  const list  = document.getElementById('additionalPhotosList');
+  const count = document.getElementById('additionalPhotosCount');
+  const add   = document.getElementById('additionalPhotoAdd');
+  const hint  = document.getElementById('additionalPhotosHint');
+  if (!list) return;
+  const n = _additionalImages.length;
+  if (count) count.textContent = `${n}/9`;
+  if (add)   add.classList.toggle('hidden', n >= 9);
+  if (hint)  hint.classList.toggle('hidden', n < 9);
+  list.innerHTML = _additionalImages.map((img, i) => `
+    <div class="relative w-16 h-16 group flex-shrink-0">
+      <img src="${escHtml(img.url)}" class="w-16 h-16 rounded-lg object-cover border border-gray-200"/>
+      <button type="button" onclick="removeAdditionalPhoto(${i})"
+        class="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full w-5 h-5 text-xs leading-none flex items-center justify-center opacity-0 group-hover:opacity-100 transition shadow">✕</button>
+    </div>`).join('');
+}
+
+function removeAdditionalPhoto(i) {
+  const img = _additionalImages[i];
+  if (img?.blobUrl) URL.revokeObjectURL(img.blobUrl);
+  _additionalImages.splice(i, 1);
+  renderAdditionalPhotos();
+}
+
+function addAdditionalPhoto(input) {
+  if (!input.files?.[0]) return;
+  if (_additionalImages.length >= 9) return;
+  const file    = input.files[0];
+  const blobUrl = URL.createObjectURL(file);
+  _additionalImages.push({ url: blobUrl, blobUrl, file });
+  input.value = '';
+  renderAdditionalPhotos();
 }
 
 // ── Orders ─────────────────────────────────────────────────────────────────────
@@ -5207,6 +5432,7 @@ async function loadSettings() {
     // Load offers and closures
     loadOffers();
     loadClosures();
+    loadCatalogStatus();
   } catch (e) { /* ignore */ }
 }
 
