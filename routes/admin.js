@@ -2133,7 +2133,7 @@ Use a PERMANENT System User token — temporary tokens expire.
 ── 📦 PRODUCTOS / 🍽️ MENÚ ──
 - Search bar (top row, center): filters by name, category, or description in real time.
 - Category pills (below search): filter by category. "AA" or first pill = all categories.
-- Add: green "+ Nuevo producto" (top right) → Name*, Category, Price*, Description, Allergens (restaurant), optional photo → "Guardar".
+- Add: green "+ Nuevo producto" (top right) → Name*, Category, Price*, Description, Allergens (restaurant), optional main photo → "Guardar".
 - Edit: ✏️ icon on the row. Delete: 🗑️ icon.
 - Stock: click the number to edit directly. Check "Sin límite" for unlimited stock. Stock auto-decrements on confirmed orders.
 - Mark sold-out / available: click the status badge.
@@ -2141,6 +2141,8 @@ Use a PERMANENT System User token — temporary tokens expire.
 - Bulk photo upload: "📦 Imágenes ZIP" — photos are matched to products by filename (fuzzy match).
 - Export: "⬇ Exportar CSV" — file is importable back (round-trip).
 - For restaurant plans: tab is labeled 🍽️ Menú. Add allergens per dish. When customer asks for the menu/carta, Sara sends it automatically from this catalog (never a static image). Sara shows allergen info if the customer asks, and warns she doesn't have it if no allergen data is set.
+- Additional photos (up to 9): inside the product edit modal (✏️), below the main photo section there is an "Additional photos" area. Click "+ Add photo" to upload extra images (compressed automatically in the browser). Click × on a thumbnail to remove it. These extra photos are used in the WhatsApp native catalog (customers see them when browsing products in the WhatsApp catalog). They are NOT sent in chat by Sara — only the main photo is.
+- WhatsApp catalog sync badge: if the WhatsApp catalog is active, each product row shows ✅ (synced to Meta catalog) or ⚠️ (sync error — hover the ⚠️ to see the error reason). No badge = catalog not enabled.
 
 ── 🛠 SERVICIOS (Bookings / Pro) ──
 - Add: "+ Nuevo servicio" → name, category, price, duration in minutes (required for booking), description, optional photo.
@@ -2204,6 +2206,7 @@ Use a PERMANENT System User token — temporary tokens expire.
 - Human support phone: Sara gives this number only when a customer explicitly asks to speak to a person.
 - Delivery: enable/disable, fee per zone, days without delivery.
 - "🏖️ Cierres y Vacaciones": date ranges when the business is closed (Sara blocks orders/bookings and warns customers).
+- WhatsApp Catalog (Shop / Pro / Restaurant plans only): toggle in the WhatsApp Profile accordion. Syncs all products to the native WhatsApp catalog so customers can browse and add to cart directly in WhatsApp. Requirements: WhatsApp must be connected via Embedded Signup (needs waba_id); catalog_management + business_management Meta permissions must be approved. Toggle ON → activates and triggers full sync in background. Toggle OFF → disables sync (products remain in Meta catalog until manually removed from Meta). "Re-sync all" button forces a full re-push of all products. Last sync date shown. If WhatsApp was connected manually (not via Embedded Signup), the toggle shows a message to reconnect. Bookings/services-only plan: catalog toggle not shown. If the whatsapp_token expires, sync fails and products show ⚠️ badge — reconnect WhatsApp to fix.
 - Account section: change email / username.
 - Change password.
 - Delete account: confirm → email link sent → opening it cancels Stripe subscription and deletes all data (link expires 1h).

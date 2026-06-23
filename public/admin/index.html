@@ -2349,6 +2349,7 @@ let TENANT_CURRENCY = 'PYG';
 let _catalogSyncEnabled = false;
 let _catalogStatusCache = null;
 let _additionalImages = []; // [{url, file?, blobUrl?}]
+let _additionalImagesInitial = []; // snapshot of URLs on modal open — for change detection
 const CURRENCY_SYMBOL_MAP = { PYG:'Gs', USD:'$', EUR:'€', ARS:'$', BRL:'R$', MXN:'$', CLP:'$', COP:'$', UYU:'$U', PEN:'S/' };
 const CURRENCY_LOCALE_MAP = { PYG:'es-PY', USD:'en-US', EUR:'de-DE', ARS:'es-AR', BRL:'pt-BR', MXN:'es-MX', CLP:'es-CL', COP:'es-CO', UYU:'es-UY', PEN:'es-PE' };
 function fmtPrice(n) {
@@ -3557,7 +3558,8 @@ function openProductModal(id) {
   } else {
     clearImage();
   }
-  _additionalImages = (p?.additional_images || []).map(url => ({ url, file: null }));
+  _additionalImages        = (p?.additional_images || []).map(url => ({ url, file: null }));
+  _additionalImagesInitial = (p?.additional_images || []).slice();
   renderAdditionalPhotos();
   document.getElementById('productModal').classList.remove('hidden');
 }
@@ -3595,6 +3597,7 @@ function closeProductModal() {
   editingProductId = null;
   _additionalImages.forEach(img => { if (img.blobUrl) URL.revokeObjectURL(img.blobUrl); });
   _additionalImages = [];
+  _additionalImagesInitial = [];
 }
 
 function toggleUnlimitedStock(checked) {
@@ -3649,25 +3652,24 @@ async function saveProduct() {
       }
     }
 
-    // Sync additional images
-    const pid = saved?.id || editingProductId;
-    if (pid) {
-      const finalUrls = [];
-      for (const img of _additionalImages) {
-        if (!img.file) {
-          finalUrls.push(img.url);
-        } else {
-          try {
-            const compressed = await compressImage(img.file);
-            const fd = new FormData();
-            fd.append('image', compressed);
-            const r = await fetch(`/admin/products/${pid}/additional-images/upload`, {
-              method: 'POST', credentials: 'same-origin', body: fd
-            });
-            if (r.ok) { const d = await r.json(); finalUrls.push(d.url); }
-            if (img.blobUrl) URL.revokeObjectURL(img.blobUrl);
-          } catch (_) {}
-        }
+    // Sync additional images only if changed
+    const pid         = saved?.id || editingProductId;
+    const hasNewFiles = _additionalImages.some(i => !!i.file);
+    const keptUrls    = _additionalImages.filter(i => !i.file).map(i => i.url);
+    const hadRemovals = _additionalImagesInitial.some(u => !keptUrls.includes(u));
+    if (pid && (hasNewFiles || hadRemovals)) {
+      const finalUrls = [...keptUrls];
+      for (const img of _additionalImages.filter(i => !!i.file)) {
+        try {
+          const compressed = await compressImage(img.file);
+          const fd = new FormData();
+          fd.append('image', compressed);
+          const r = await fetch(`/admin/products/${pid}/additional-images/upload`, {
+            method: 'POST', credentials: 'same-origin', body: fd
+          });
+          if (r.ok) { const d = await r.json(); finalUrls.push(d.url); }
+          if (img.blobUrl) URL.revokeObjectURL(img.blobUrl);
+        } catch (_) {}
       }
       await api(`/admin/products/${pid}/additional-images`, 'PUT', { urls: finalUrls });
     }
@@ -3807,7 +3809,9 @@ async function compressImage(file, maxPx = 1280, quality = 0.85) {
       canvas.width  = w; canvas.height = h;
       canvas.getContext('2d').drawImage(img, 0, 0, w, h);
       canvas.toBlob(
-        blob => resolve(new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' })),
+        blob => resolve(blob
+          ? new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' })
+          : file),
         'image/jpeg', quality
       );
     };
