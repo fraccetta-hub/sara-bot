@@ -12,6 +12,7 @@ const crypto = require('crypto');
 const AdmZip = require('adm-zip');
 const { sendPasswordReset, sendAccountDeletion, sendUsernameChange } = require('../services/mailer');
 const { invalidateClosures, invalidateOffers, invalidateRestaurant } = require('../services/stock');
+const catalog = require('../services/catalog');
 const { rateLimit } = require('express-rate-limit');
 
 const forgotPasswordLimiter = rateLimit({
@@ -72,6 +73,43 @@ async function requireAuth(req, res, next) {
     return res.status(403).json({ error: 'Plan vencido. Renovalo para continuar.', expired: true, errorCode: 'plan_expired' });
 
   next();
+}
+
+// ─── Catalog sync helpers (fire-and-forget, never block response) ─────────────
+
+async function bgSyncProduct(tenantId, productId) {
+  try {
+    const [{ data: tenant }, { data: product }] = await Promise.all([
+      supabase.from('tenants')
+        .select('id, catalog_sync_enabled, waba_id, wa_catalog_id, whatsapp_token, phone_number_id, country, name')
+        .eq('id', tenantId).single(),
+      supabase.from('products')
+        .select('id, name, description, price_guarani, image_url, additional_images, is_available')
+        .eq('id', productId).eq('tenant_id', tenantId).single(),
+    ]);
+    if (!tenant?.catalog_sync_enabled || !product) return;
+    await catalog.pushProduct(tenant, product);
+  } catch (_) {}
+}
+
+async function bgSyncRemove(tenantId, retailerId) {
+  try {
+    const { data: tenant } = await supabase.from('tenants')
+      .select('id, catalog_sync_enabled, wa_catalog_id, whatsapp_token')
+      .eq('id', tenantId).single();
+    if (!tenant?.catalog_sync_enabled) return;
+    await catalog.removeProduct(tenant, retailerId);
+  } catch (_) {}
+}
+
+async function bgSyncAll(tenantId) {
+  try {
+    const { data: tenant } = await supabase.from('tenants')
+      .select('id, catalog_sync_enabled, waba_id, wa_catalog_id, whatsapp_token, phone_number_id, country, name')
+      .eq('id', tenantId).single();
+    if (!tenant?.catalog_sync_enabled) return;
+    await catalog.pushAllProducts(tenant);
+  } catch (_) {}
 }
 
 // ─── Smart rate limiting (progressive delays, no hard lockout) ────────────────
@@ -523,6 +561,7 @@ router.post('/products', requireAuth, async (req, res) => {
     .single();
   if (error) return res.status(500).json({ error: error.message });
   res.status(201).json(data);
+  bgSyncProduct(req.tenant.tenantId, data.id).catch(() => {});
 });
 
 // ─── PUT /admin/products/:id ──────────────────────────────────────────────────
@@ -554,6 +593,7 @@ router.put('/products/:id', requireAuth, async (req, res) => {
     .single();
   if (error) return res.status(500).json({ error: error.message });
   res.json(data);
+  bgSyncProduct(req.tenant.tenantId, data.id).catch(() => {});
 });
 
 // ─── POST /admin/products/:id/image — upload foto prodotto ───────────────────
@@ -583,6 +623,7 @@ router.post('/products/:id/image', requireAuth, upload.single('image'), async (r
 
     if (error) return res.status(500).json({ error: error.message });
     res.json(data);
+    bgSyncProduct(req.tenant.tenantId, data.id).catch(() => {});
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -598,6 +639,7 @@ router.delete('/products/:id', requireAuth, async (req, res) => {
     .eq('tenant_id', req.tenant.tenantId);
   if (error) return res.status(500).json({ error: error.message });
   res.json({ ok: true });
+  bgSyncRemove(req.tenant.tenantId, req.params.id).catch(() => {});
 });
 
 // ─── GET /admin/orders ────────────────────────────────────────────────────────
@@ -1297,6 +1339,8 @@ router.post('/import-confirm', requireAuth, async (req, res) => {
     }
 
     res.json({ ok: true, imported: toInsert.length, skipped });
+    if (target === 'products' && toInsert.length > 0)
+      bgSyncAll(req.tenant.tenantId).catch(() => {});
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
@@ -1488,6 +1532,8 @@ router.post('/products/bulk-images', requireAuth, zipRateLimit, handleZipUpload,
   }
 
   res.json({ matched, unmatched });
+  if (matched.length > 0)
+    bgSyncAll(req.tenant.tenantId).catch(() => {});
 });
 
 // Helper: parse a single CSV line respecting quoted fields
