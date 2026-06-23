@@ -34,8 +34,15 @@ Schema in `db/schema.sql` allineato. Migration in `db/migrations.sql`.
 - `public/admin/index.html`: catturato in `wizConnectedWabaId`, inviato al backend.
 - `routes/admin.js` `/whatsapp-connect`: se `waba_id` presente, salvato su `tenants.waba_id`.
 
+### Fase 2 — `services/catalog.js` ✅
+Engine di sync catalogo. Funzioni: `ensureCatalog`, `pushProduct`, `pushAllProducts`, `removeProduct`, `validateForCatalog`.
+- Currency: mappa locale `CATALOG_CURRENCY` — **nessun fallback**, `null` se paese sconosciuto → skip sync (non USD sbagliato).
+- `ensureCatalog`: legge `business_id` dal WABA (`GET /{waba_id}?fields=business`), crea catalogo, abilita commerce sul numero, salva `wa_catalog_id`. Idempotente.
+- Prodotti invalidi: scrive `wa_sync_error` sul prodotto, mai blocca il pannello. Best-effort su tutto.
+- `pushAllProducts`: batch 100 prodotti per chunk (limite Meta).
+- `removeProduct`: fire-and-forget.
+
 ### Prossimi step catalogo
-- **Fase 2**: creare `services/catalog.js` (`ensureCatalog`, `pushProduct`, `pushAllProducts`, `removeProduct`, `validateForCatalog`)
 - **Fase 3**: step wizard "Attiva catalogo WhatsApp" (solo se `products_enabled || restaurant_enabled`)
 - **Fase 4**: auto-sync hook in `routes/admin.js` (POST/PUT/DELETE prodotti)
 - **Fase 5**: UI toggle + badge stato + upload multi-foto
