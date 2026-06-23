@@ -47,9 +47,31 @@ Aggiunti 3 helper fire-and-forget: `bgSyncProduct`, `bgSyncRemove`, `bgSyncAll`.
 Hooks su: POST/PUT/DELETE prodotti, upload foto, import-confirm (solo products), bulk-images ZIP.
 Tutti: gate `catalog_sync_enabled` come prima cosa (no-op veloce per tenant senza catalogo), mai bloccano la risposta.
 
-### Prossimi step catalogo
-- **Fase 3**: step wizard "Attiva catalogo WhatsApp" (solo se `products_enabled || restaurant_enabled`) — aggiunge step al wizard onboarding
-- **Fase 5**: UI toggle + badge stato per prodotto + upload multi-foto nel form prodotto
+### Fase 3 — Wizard step "Attiva catalogo" ✅ (commit a08e1b8)
+Dopo `saveWizardMerchantPhone()` → `showWizCatalogOrDone()` chiama `GET /catalog-status`.
+Se eligible → mostra sezione catalogo (`wizCatalogSection`) con "Attiva" / "Più tardi".
+Se non eligible → salta direttamente a `wizDoneSection`.
+Bug fixes inclusi: `applyI18n()` non esiste → rimosso; eligibility check null-as-true corretto.
+
+### Fase 5 — UI toggle + badge sync + multi-foto ✅ (commit cc6d6d0)
+- **Toggle catalogo** in accordion "Perfil WhatsApp" impostazioni. Visibile solo se tenant eligible.
+  - Se no `waba_id`: toggle disabilitato + messaggio "riconnetti Embedded Signup".
+  - Se `waba_id` presente: toggle ON/OFF chiama `/catalog-activate` o `/catalog-deactivate`.
+  - Resync: chiama di nuovo `/catalog-activate` (idempotente, lancia `bgSyncAll`).
+  - Mostra data ultimo sync (`catalog_synced_at`).
+- **Badge stato** (✅/⚠️) nelle colonne azioni dei prodotti (tabella e vista menu ristorante).
+  - Visibili solo se `_catalogSyncEnabled = true`. ⚠️ ha tooltip con testo errore `wa_sync_error`.
+  - `_catalogStatusCache`: caricato fire-and-forget al load prodotti; aggiornato al cambio toggle.
+- **Foto aggiuntive** nel modal prodotto (fino a 9).
+  - Compressione canvas lato client: max 1280px, JPEG 85%.
+  - Anteprima con blobURL + × per rimuovere.
+  - Al salvataggio: upload singolo per ogni file nuovo → `POST /products/:id/additional-images/upload`; poi `PUT /products/:id/additional-images` con array URL finale (include rimozioni).
+- **Nuovi endpoint**: `GET /catalog-status` + `hasWaba`/`syncedAt`, `POST /products/:id/additional-images/upload`, `PUT /products/:id/additional-images`.
+- **i18n**: `settings.catalog.*` + `modal.product.extraPhotos/addPhoto/photoLimit` in ES/EN/IT/DE/FR/PT.
+
+### Prerequisiti Meta (task utente — ancora pendente)
+- Aggiungere `catalog_management` + `business_management` a Login Config nella Meta App Dashboard.
+- Sottomettere App Review per queste permission.
 
 ---
 
