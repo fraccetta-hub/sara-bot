@@ -1,4 +1,4 @@
-# PROJECT HANDOFF — Sara Bot — 2026-06-22
+# PROJECT HANDOFF — Sara Bot — 2026-06-23
 
 ## STATO CORRENTE
 SaaS multi-tenant WhatsApp Business. Feature appuntamenti complete (paid, storno, mobility, slot 15min, rubrica). Prossimo: Stripe live env vars su Render, invoicing merchant.
@@ -10,6 +10,40 @@ SaaS multi-tenant WhatsApp Business. Feature appuntamenti complete (paid, storno
 - Key: `GROQ_API_KEY` = `gsk_...` (da console.groq.com — NON xAI/Grok di X).
 - Già settata su Render e funzionante.
 - Fallback se trascrizione fallisce: messaggio multilingua IT+ES+EN.
+
+---
+
+## SESSIONE 2026-06-23 (parte 3) — broadcast fix, 9A/9D/9E
+
+### Commit: `c4e2368`
+
+### Broadcast — fix comportamento fuori finestra ✅
+- `services/cron.js`: rimosso il fake fallback testo+link per errore 131047 (anche `sendMessage` fallisce fuori dalla finestra 24h). `sendOneBroadcast` ora restituisce `'skipped'` per 131047 su entrambi i path (foto e testo). Counters: `photo_sent / text_sent / skipped / failed`. Messaggio report merchant aggiornato.
+- `public/admin/index.html` + `i18n.js`: box info broadcast corretto. Rimossa `broadcast.info.link` (falsa). Aggiunte `broadcast.info.text` + `broadcast.info.inactive` in 6 lingue. Ora dice esplicitamente: clienti inattivi >24h NON ricevono nulla.
+
+### 9A — Anonymization ordini PII ✅
+- `index.js`: cron giornaliero (avvio dopo 25s, poi 24h) → `customer_phone = '[deleted]'` su ordini con `created_at < 5 anni fa`. Dati finanziari preservati per obblighi fiscali. Idempotente (skip se già anonimizzato).
+- **Nessuna migration necessaria** (colonna esiste già).
+
+### 9D — WhatsApp tier monitoring ✅
+- `routes/admin.js`: `GET /admin/whatsapp-quality` → chiama `GET https://graph.facebook.com/v19.0/{phone_number_id}?fields=quality_rating,messaging_limit_tier` + conta convs ultime 24h dal DB.
+- `public/admin/index.html`: card "WhatsApp" nella tab Analytics. Badge verde/giallo/rosso per qualità, tier/limite, convs oggi. Alert se `quality=RED` o `convs >= 80% del limite`. Nascosta se API non disponibile.
+- i18n: `analytics.wa.*` (title, quality, tier, convs, alert.red, alert.limit) in 6 lingue.
+
+### 9E — Email verification ✅
+- **⚠️ DA ESEGUIRE SU SUPABASE:**
+  ```sql
+  ALTER TABLE tenants
+    ADD COLUMN IF NOT EXISTS email_verification_token TEXT,
+    ADD COLUMN IF NOT EXISTS email_verified_at TIMESTAMPTZ;
+  ```
+- `services/mailer.js`: `sendEmailVerification({ email, businessName, verifyUrl, lang })` — template HTML in 6 lingue, stesso stile delle altre email.
+- `routes/register.js`: al `POST /` genera token 32-byte hex, salva su tenant, invia email verifica (fire-and-forget). Aggiunto `GET /register/verify-email?token=xxx` (imposta `email_verified_at`, cancella token, redirect a `?verified=ok`). Aggiunto `POST /register/resend-verification` (rate-limited 5/h, silent succ se account non esiste o già verificato).
+- `routes/admin.js` login: legge `email_verification_token + email_verified_at`; blocca con 403 `{errorCode:'email_not_verified'}` se token presente e non verificato. **Grandfathering: account esistenti (token=null) non bloccati.**
+- `public/admin/index.html`: 
+  - Login error handler: se `e.code === 'email_not_verified'` mostra messaggio + link "Reinvia email" (`resendVerification()`).
+  - `?verified=ok/invalid` URL param (da redirect email): toast banner fisso 5s in cima alla pagina.
+- i18n: `login.emailNotVerified/resendVerification/verificationSent/emailVerified/emailVerifiedInvalid` in 6 lingue.
 
 ---
 
@@ -160,6 +194,15 @@ Flag espliciti nel DB (non null) → tab visibilità corretta.
 ---
 
 ## MIGRATIONS DA ESEGUIRE (verificare se già applicate su Supabase)
+
+```sql
+-- Migration 21: email verification (9E)
+ALTER TABLE tenants
+  ADD COLUMN IF NOT EXISTS email_verification_token TEXT,
+  ADD COLUMN IF NOT EXISTS email_verified_at TIMESTAMPTZ;
+```
+
+---
 
 ```sql
 -- Migration 13: multi-tavolo ristorante (BIGINT[], non JSONB)
