@@ -1198,7 +1198,7 @@ router.get('/catalog-status', requireAuth, async (req, res) => {
     .eq('id', req.tenant.tenantId).single();
   if (!data) return res.status(404).json({ error: 'Tenant not found' });
   res.json({
-    eligible: !!(data.products_enabled || data.restaurant_enabled),
+    eligible: data.products_enabled !== false || data.restaurant_enabled === true,
     enabled:  !!data.catalog_sync_enabled,
     catalogId: data.wa_catalog_id || null,
   });
