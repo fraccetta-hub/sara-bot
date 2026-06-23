@@ -426,4 +426,56 @@ async function sendPhoneChange({ email, businessName, confirmUrl, newPhone, lang
   }
 }
 
-module.exports = { sendWelcome, sendPasswordReset, sendAccountDeletion, sendUsernameChange, sendPhoneChange };
+// ── Email verification ────────────────────────────────────────────────────────
+const TV = {
+  es: { subject: 'Verificá tu email — Sara Bot', greeting: n => `Hola, ${n}`, body: 'Hacé clic en el botón para verificar tu dirección de email y activar tu cuenta.', btn: 'Verificar email →', expiry: 'El enlace expira en 24 horas.', ignore: 'Si no creaste esta cuenta, ignorá este correo.', noreply: 'Este mensaje es automático. Por favor, no respondas a este correo.' },
+  en: { subject: 'Verify your email — Sara Bot', greeting: n => `Hi, ${n}`, body: 'Click the button to verify your email address and activate your account.', btn: 'Verify email →', expiry: 'The link expires in 24 hours.', ignore: "If you didn't create this account, ignore this email.", noreply: 'This is an automated message. Please do not reply to this email.' },
+  it: { subject: 'Verifica la tua email — Sara Bot', greeting: n => `Ciao, ${n}`, body: 'Clicca il pulsante per verificare il tuo indirizzo email e attivare il tuo account.', btn: 'Verifica email →', expiry: 'Il link scade tra 24 ore.', ignore: 'Se non hai creato questo account, ignora questa email.', noreply: 'Questo messaggio è generato automaticamente. Non rispondere a questa email.' },
+  de: { subject: 'Bestätige deine E-Mail — Sara Bot', greeting: n => `Hallo, ${n}`, body: 'Klicke auf den Button, um deine E-Mail-Adresse zu bestätigen und dein Konto zu aktivieren.', btn: 'E-Mail bestätigen →', expiry: 'Der Link läuft in 24 Stunden ab.', ignore: 'Wenn du dieses Konto nicht erstellt hast, ignoriere diese E-Mail.', noreply: 'Diese Nachricht wurde automatisch generiert. Bitte antworte nicht auf diese E-Mail.' },
+  fr: { subject: 'Vérifiez votre email — Sara Bot', greeting: n => `Bonjour, ${n}`, body: 'Cliquez sur le bouton pour vérifier votre adresse e-mail et activer votre compte.', btn: 'Vérifier l\'email →', expiry: 'Le lien expire dans 24 heures.', ignore: "Si vous n'avez pas créé ce compte, ignorez cet e-mail.", noreply: "Ce message est généré automatiquement. Merci de ne pas répondre à cet e-mail." },
+  pt: { subject: 'Verifique seu email — Sara Bot', greeting: n => `Olá, ${n}`, body: 'Clique no botão para verificar seu endereço de email e ativar sua conta.', btn: 'Verificar email →', expiry: 'O link expira em 24 horas.', ignore: 'Se você não criou esta conta, ignore este e-mail.', noreply: 'Esta mensagem é gerada automaticamente. Por favor, não responda a este e-mail.' },
+};
+
+async function sendEmailVerification({ email, businessName, verifyUrl, lang = 'es' }) {
+  if (!process.env.BREVO_API_KEY) {
+    console.warn('[mailer] BREVO_API_KEY not configured — skipping verification email');
+    return;
+  }
+  const tv = TV[lang] || TV.es;
+  const html = `<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/></head>
+<body style="margin:0;padding:0;background:#fbf6ec;font-family:sans-serif;">
+<div style="max-width:520px;margin:32px auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.06);">
+  <div style="background:#fff;padding:28px 32px;text-align:center;border-bottom:3px solid #2f9e3a;">
+    <img src="https://sarabot.pro/images/mail.webp" alt="Sara Bot" style="height:44px;">
+  </div>
+  <div style="padding:32px;">
+    <p style="font-size:18px;font-weight:700;color:#111;margin:0 0 16px;">${tv.greeting(businessName)}</p>
+    <p style="color:#444;line-height:1.6;margin:0 0 24px;">${tv.body}</p>
+    <div style="text-align:center;margin-bottom:24px;">
+      <a href="${verifyUrl}" style="display:inline-block;background:#2f9e3a;color:#fff;font-weight:700;font-size:15px;padding:14px 32px;border-radius:12px;text-decoration:none;">${tv.btn}</a>
+    </div>
+    <p style="color:#9ca3af;font-size:13px;margin:0 0 8px;">⏱ ${tv.expiry}</p>
+  </div>
+  <div style="padding:16px 32px;border-top:1px solid #f0f0f0;text-align:center;">
+    <p style="color:#9ca3af;font-size:11px;margin:0 0 4px;">${tv.ignore}</p>
+    <p style="color:#d1d5db;font-size:10px;margin:0 0 8px;">${tv.noreply}</p>
+    <p style="color:#d1d5db;font-size:10px;margin:0;">
+      <a href="https://sarabot.pro/legal/terms" style="color:#d1d5db;">Terms</a> ·
+      <a href="https://sarabot.pro/legal/privacy" style="color:#d1d5db;">Privacy</a> ·
+      © 2026 Sara Bot
+    </p>
+  </div>
+</div>
+</body>
+</html>`;
+  try {
+    await sendMail({ to: email, subject: tv.subject, html });
+    console.log(`[mailer] Verification email sent to ${email}`);
+  } catch (err) {
+    console.error('[mailer] Failed to send verification email:', err.response?.data || err.message);
+  }
+}
+
+module.exports = { sendWelcome, sendPasswordReset, sendAccountDeletion, sendUsernameChange, sendPhoneChange, sendEmailVerification };

@@ -182,7 +182,7 @@ router.post('/login', async (req, res) => {
   // Accept login by slug OR by phone_number_id (backward compat)
   const { data: tenant } = await supabase
     .from('tenants')
-    .select('id, name, phone_number_id, admin_password_hash, bot_name, login_slug, active')
+    .select('id, name, phone_number_id, admin_password_hash, bot_name, login_slug, active, email_verification_token, email_verified_at')
     .or(`login_slug.eq.${username},phone_number_id.eq.${username}`)
     .maybeSingle();
 
@@ -196,6 +196,15 @@ router.post('/login', async (req, res) => {
   }
 
   if (!tenant.active) return res.status(403).json({ error: 'Cuenta suspendida. Contactá a soporte.', errorCode: 'suspended' });
+
+  // Block login if verification email was sent but link not clicked yet
+  // (Only applies to new accounts — legacy accounts have token=null → skip)
+  if (tenant.email_verification_token && !tenant.email_verified_at) {
+    return res.status(403).json({
+      error: 'Verificá tu email antes de entrar. Revisá tu bandeja de entrada.',
+      errorCode: 'email_not_verified',
+    });
+  }
 
   // Verify password
   let ok = false;
@@ -1952,6 +1961,36 @@ async function setWhatsappProfileFields(phoneNumberId, token, fields) {
   const data = await res.json().catch(() => ({}));
   return { ok: res.ok, error: data.error?.message || (res.ok ? null : res.statusText) };
 }
+
+// GET /admin/whatsapp-quality — phone number quality rating + tier from Meta API
+router.get('/whatsapp-quality', requireAuth, async (req, res) => {
+  const { data: tenant } = await supabase
+    .from('tenants').select('phone_number_id, whatsapp_token').eq('id', req.tenant.tenantId).single();
+  const phoneNumberId = tenant?.phone_number_id;
+  const token = tenant?.whatsapp_token || process.env.WHATSAPP_TOKEN;
+  if (!phoneNumberId || !token) return res.json({ available: false });
+
+  try {
+    const { data: meta } = await axios.get(
+      `https://graph.facebook.com/v19.0/${phoneNumberId}`,
+      { params: { fields: 'quality_rating,messaging_limit_tier' }, headers: { Authorization: `Bearer ${token}` } }
+    );
+    const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const { count: convs_today } = await supabase
+      .from('conversations')
+      .select('*', { count: 'exact', head: true })
+      .eq('tenant_id', req.tenant.tenantId)
+      .gte('updated_at', since24h);
+    res.json({
+      available: true,
+      quality_rating:       meta.quality_rating,
+      messaging_limit_tier: meta.messaging_limit_tier,
+      convs_today:          convs_today || 0,
+    });
+  } catch (e) {
+    res.json({ available: false });
+  }
+});
 
 // GET /admin/whatsapp-profile — read current profile to prefill the form
 router.get('/whatsapp-profile', requireAuth, async (req, res) => {

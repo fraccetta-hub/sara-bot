@@ -130,15 +130,18 @@ async function sendOneBroadcast(phone, message, imageUrl, phoneNumberId, token) 
       return 'photo';
     } catch (err) {
       const code = err.response?.data?.error?.code;
-      if (code === 131047) {
-        await sendMessage(phone, message + '\n📸 ' + imageUrl, phoneNumberId, token);
-        return 'text';
-      }
+      if (code === 131047) return 'skipped'; // outside 24h window — text also fails
       throw err;
     }
   }
-  await sendMessage(phone, message, phoneNumberId, token);
-  return 'text';
+  try {
+    await sendMessage(phone, message, phoneNumberId, token);
+    return 'text';
+  } catch (err) {
+    const code = err.response?.data?.error?.code;
+    if (code === 131047) return 'skipped';
+    throw err;
+  }
 }
 
 async function runScheduledBroadcasts() {
@@ -181,16 +184,18 @@ async function runScheduledBroadcasts() {
         .gte('updated_at', since);
       const phones = [...new Set((convs || []).map(c => c.customer_phone))];
 
-      let photoSent = 0, textSent = 0, failed = 0;
+      let photoSent = 0, textSent = 0, skipped = 0, failed = 0;
       for (const phone of phones) {
         try {
           const result = await sendOneBroadcast(phone, bc.message, bc.image_url, phoneNumberId, broadcastToken);
-          if (result === 'photo') photoSent++; else textSent++;
+          if (result === 'photo') photoSent++;
+          else if (result === 'text') textSent++;
+          else skipped++;
         } catch { failed++; }
-        await new Promise(r => setTimeout(r, 200));
+        await new Promise(r => setTimeout(r, 300));
       }
 
-      const report = { total: phones.length, photo_sent: photoSent, text_sent: textSent, failed };
+      const report = { total: phones.length, photo_sent: photoSent, text_sent: textSent, skipped, failed };
       await supabase.from('scheduled_broadcasts').update({
         status: 'done', sent_at: new Date().toISOString(), report,
       }).eq('id', bc.id);
@@ -198,12 +203,12 @@ async function runScheduledBroadcasts() {
       if (tenant.merchant_phone) {
         const lang = tenant.lang || 'es';
         const DONE = {
-          es: `✅ Broadcast enviado: ${photoSent} foto + ${textSent} solo texto${failed ? ` + ${failed} fallidos` : ''} (total ${phones.length}).`,
-          it: `✅ Broadcast inviato: ${photoSent} foto + ${textSent} solo testo${failed ? ` + ${failed} falliti` : ''} (totale ${phones.length}).`,
-          en: `✅ Broadcast sent: ${photoSent} photo + ${textSent} text-only${failed ? ` + ${failed} failed` : ''} (total ${phones.length}).`,
-          fr: `✅ Broadcast envoyé : ${photoSent} photo + ${textSent} texte seul${failed ? ` + ${failed} échoués` : ''} (total ${phones.length}).`,
-          de: `✅ Broadcast gesendet: ${photoSent} Foto + ${textSent} nur Text${failed ? ` + ${failed} fehlgeschlagen` : ''} (gesamt ${phones.length}).`,
-          pt: `✅ Broadcast enviado: ${photoSent} foto + ${textSent} só texto${failed ? ` + ${failed} falhas` : ''} (total ${phones.length}).`,
+          es: `✅ Broadcast completado:\n📸 ${photoSent} foto · 💬 ${textSent} texto · ⏰ ${skipped} inactivos · ❌ ${failed} error\nTotal: ${phones.length}`,
+          it: `✅ Broadcast completato:\n📸 ${photoSent} foto · 💬 ${textSent} testo · ⏰ ${skipped} inattivi · ❌ ${failed} errore\nTotale: ${phones.length}`,
+          en: `✅ Broadcast done:\n📸 ${photoSent} photo · 💬 ${textSent} text · ⏰ ${skipped} inactive · ❌ ${failed} error\nTotal: ${phones.length}`,
+          fr: `✅ Broadcast terminé :\n📸 ${photoSent} photo · 💬 ${textSent} texte · ⏰ ${skipped} inactifs · ❌ ${failed} erreur\nTotal : ${phones.length}`,
+          de: `✅ Broadcast abgeschlossen:\n📸 ${photoSent} Foto · 💬 ${textSent} Text · ⏰ ${skipped} inaktiv · ❌ ${failed} Fehler\nGesamt: ${phones.length}`,
+          pt: `✅ Broadcast concluído:\n📸 ${photoSent} foto · 💬 ${textSent} texto · ⏰ ${skipped} inativos · ❌ ${failed} erro\nTotal: ${phones.length}`,
         };
         sendMessage(tenant.merchant_phone, DONE[lang] || DONE.es, phoneNumberId, broadcastToken).catch(() => {});
       }

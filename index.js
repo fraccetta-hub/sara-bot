@@ -205,6 +205,23 @@ app.listen(PORT, () => {
   setInterval(renewTokens, 24 * 60 * 60 * 1000);
 })();
 
+// ─── Cron: anonymize order PII older than 5 years (legal retention) ─────────
+// Keeps financial data (amounts, items); removes customer_phone only.
+(function scheduleOrderAnonymization() {
+  const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
+  async function anonymizeOldOrders() {
+    const cutoff = new Date(Date.now() - 5 * 365 * 24 * 60 * 60 * 1000).toISOString();
+    const { error } = await supabase
+      .from('orders')
+      .update({ customer_phone: '[deleted]' })
+      .lt('created_at', cutoff)
+      .neq('customer_phone', '[deleted]');
+    if (error) console.error('[cleanup] order anonymization error:', error.message);
+  }
+  setTimeout(anonymizeOldOrders, 25000);
+  setInterval(anonymizeOldOrders, 24 * 60 * 60 * 1000);
+})();
+
 // ─── Cron: appointment reminders + abandoned cart nudge ──────────────────────
 setupCronJobs();
 

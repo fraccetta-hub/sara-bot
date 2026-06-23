@@ -1047,6 +1047,26 @@
         </div>
       </div>
 
+      <!-- WhatsApp quality -->
+      <div id="waQualityCard" class="bg-white rounded-xl shadow-sm p-5 hidden">
+        <p class="text-sm font-semibold text-gray-700 mb-3">📱 <span data-i18n="analytics.wa.title">WhatsApp</span></p>
+        <div class="grid grid-cols-3 gap-3">
+          <div>
+            <p class="text-xs text-gray-400 mb-1" data-i18n="analytics.wa.quality">Calidad</p>
+            <span id="waQualityBadge" class="text-base font-bold">—</span>
+          </div>
+          <div>
+            <p class="text-xs text-gray-400 mb-1" data-i18n="analytics.wa.tier">Tier / límite</p>
+            <span id="waTierBadge" class="text-base font-bold text-gray-700">—</span>
+          </div>
+          <div>
+            <p class="text-xs text-gray-400 mb-1" data-i18n="analytics.wa.convs">Convs hoy</p>
+            <span id="waConvsToday" class="text-base font-bold text-blue-600">—</span>
+          </div>
+        </div>
+        <div id="waQualityAlert" class="hidden mt-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-xl px-4 py-2.5"></div>
+      </div>
+
     </div>
 
     <!-- ── BROADCAST TAB ── -->
@@ -1063,9 +1083,10 @@
       <!-- Info box -->
       <div class="bg-blue-50 rounded-xl p-4 text-xs text-blue-800 space-y-1">
         <p class="font-semibold" data-i18n="broadcast.info.title">ℹ️ Cómo funciona</p>
-        <p data-i18n="broadcast.info.photo">📸 Si agregás imagen: clientes con conversación activa (últimas 24h) la reciben como foto.</p>
-        <p data-i18n="broadcast.info.link">🔗 Clientes fuera de ventana activa: reciben el texto + link a la imagen (WhatsApp muestra preview).</p>
-        <p data-i18n="broadcast.info.report">📊 Al terminar recibís un reporte por WhatsApp con el detalle de entrega.</p>
+        <p data-i18n="broadcast.info.photo">📸 Con imagen: clientes con conversación activa (últimas 24h) la reciben como foto en WhatsApp.</p>
+        <p data-i18n="broadcast.info.text">💬 Sin imagen: clientes activos reciben el texto del mensaje.</p>
+        <p data-i18n="broadcast.info.inactive">⏰ Clientes inactivos hace más de 24h: NO reciben el mensaje (WhatsApp exige template aprobado de Meta).</p>
+        <p data-i18n="broadcast.info.report">📊 Al terminar recibirás un reporte por WhatsApp con el detalle de entrega.</p>
       </div>
 
       <!-- List -->
@@ -3003,6 +3024,23 @@ window.onload = async () => {
     } catch(e) { /* fall through to normal boot */ }
   }
 
+  // Email verification result
+  const verifiedParam = params.get('verified');
+  if (verifiedParam) {
+    window.history.replaceState({}, '', '/admin/index.html');
+    applyTranslations();
+    const banner = document.createElement('div');
+    if (verifiedParam === 'ok') {
+      banner.className = 'fixed top-4 left-1/2 -translate-x-1/2 z-[9999] bg-green-600 text-white text-sm font-semibold px-6 py-3 rounded-2xl shadow-xl';
+      banner.textContent = '✅ ' + t('login.emailVerified');
+    } else {
+      banner.className = 'fixed top-4 left-1/2 -translate-x-1/2 z-[9999] bg-red-500 text-white text-sm font-semibold px-6 py-3 rounded-2xl shadow-xl';
+      banner.textContent = '❌ ' + t('login.emailVerifiedInvalid');
+    }
+    document.body.appendChild(banner);
+    setTimeout(() => banner.remove(), 5000);
+  }
+
   // Support impersonation: superadmin passes ?name=yyy (token now set via cookie server-side)
   const urlName = params.get('name');
 
@@ -3096,12 +3134,31 @@ async function login() {
         else if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = t('login.submit'); }
       };
       tick();
+    } else if (e.code === 'email_not_verified') {
+      errEl.innerHTML = `${t('login.emailNotVerified')} <button onclick="resendVerification()" class="underline font-semibold ml-1">${t('login.resendVerification')}</button>`;
+      errEl.classList.remove('hidden');
+      if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = t('login.submit'); }
     } else {
       errEl.textContent = errMsg(e);
       errEl.classList.remove('hidden');
       if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = t('login.submit'); }
     }
   }
+}
+
+async function resendVerification() {
+  const email = document.getElementById('loginPhoneId').value.trim();
+  if (!email) return;
+  try {
+    await fetch('/register/resend-verification', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, lang: currentLang || 'es' }),
+    });
+    const errEl = document.getElementById('loginError');
+    errEl.textContent = t('login.verificationSent');
+    errEl.className = errEl.className.replace('bg-red-50 text-red-700', 'bg-green-50 text-green-700');
+  } catch(e) {}
 }
 
 async function logout() {
@@ -3346,6 +3403,39 @@ function switchTab(tab) {
   if (tab === 'chats')        { loadChatList(); startChatListPoll(); }
   else                        stopChatListPoll();
 }
+// ── WA Quality ────────────────────────────────────────────────────────────────
+const TIER_LIMIT = { TIER_50:50, TIER_250:250, TIER_1K:1000, TIER_10K:10000, TIER_100K:100000 };
+const TIER_LABEL = { TIER_50:'50/día', TIER_250:'250/día', TIER_1K:'1.000/día', TIER_10K:'10.000/día', TIER_100K:'100.000/día', TIER_UNLIMITED:'∞' };
+
+async function loadWaQuality() {
+  const card = document.getElementById('waQualityCard');
+  try {
+    const d = await api('/admin/whatsapp-quality', 'GET');
+    if (!d.available) { card.classList.add('hidden'); return; }
+    card.classList.remove('hidden');
+
+    const badge = document.getElementById('waQualityBadge');
+    const COLOR  = { GREEN:'text-green-600', YELLOW:'text-yellow-500', RED:'text-red-600', UNKNOWN:'text-gray-400' };
+    badge.textContent  = d.quality_rating || '—';
+    badge.className    = 'text-base font-bold ' + (COLOR[d.quality_rating] || 'text-gray-400');
+
+    document.getElementById('waTierBadge').textContent  = TIER_LABEL[d.messaging_limit_tier] || d.messaging_limit_tier || '—';
+    document.getElementById('waConvsToday').textContent = d.convs_today ?? '—';
+
+    const alert = document.getElementById('waQualityAlert');
+    const limit = TIER_LIMIT[d.messaging_limit_tier];
+    if (d.quality_rating === 'RED') {
+      alert.textContent = t('analytics.wa.alert.red');
+      alert.classList.remove('hidden');
+    } else if (limit && d.convs_today >= limit * 0.8) {
+      alert.textContent = t('analytics.wa.alert.limit').replace('{pct}', Math.round(d.convs_today / limit * 100));
+      alert.classList.remove('hidden');
+    } else {
+      alert.classList.add('hidden');
+    }
+  } catch(e) { card.classList.add('hidden'); }
+}
+
 // ── Broadcast ─────────────────────────────────────────────────────────────────
 let bcImageUrl = null;
 let bcSendNow  = true;
@@ -4994,6 +5084,7 @@ async function loadAnalytics(period) {
         </div>`).join('');
     }
   } catch(e) { console.error('[analytics]', e.message); }
+  loadWaQuality();
 }
 
 function renderAnalyticsChart(days) {
