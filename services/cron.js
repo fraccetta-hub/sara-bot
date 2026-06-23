@@ -1,5 +1,5 @@
 const { createClient } = require('@supabase/supabase-js');
-const { sendMessage } = require('./whatsapp');
+const { sendMessage, sendImage } = require('./whatsapp');
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
 
@@ -123,15 +123,112 @@ async function runAbandonedCartNudge() {
   }
 }
 
+async function sendOneBroadcast(phone, message, imageUrl, phoneNumberId, token) {
+  if (imageUrl) {
+    try {
+      await sendImage(phone, imageUrl, message, phoneNumberId, token);
+      return 'photo';
+    } catch (err) {
+      const code = err.response?.data?.error?.code;
+      if (code === 131047) {
+        await sendMessage(phone, message + '\n📸 ' + imageUrl, phoneNumberId, token);
+        return 'text';
+      }
+      throw err;
+    }
+  }
+  await sendMessage(phone, message, phoneNumberId, token);
+  return 'text';
+}
+
+async function runScheduledBroadcasts() {
+  const now = new Date().toISOString();
+  const { data: due } = await supabase
+    .from('scheduled_broadcasts')
+    .select('*')
+    .eq('status', 'pending')
+    .lte('scheduled_at', now)
+    .limit(10);
+
+  for (const bc of due || []) {
+    // Optimistic lock: only one worker picks this up
+    const { data: locked } = await supabase
+      .from('scheduled_broadcasts')
+      .update({ status: 'running' })
+      .eq('id', bc.id)
+      .eq('status', 'pending')
+      .select('id')
+      .maybeSingle();
+    if (!locked) continue;
+
+    try {
+      const { data: tenant } = await supabase
+        .from('tenants')
+        .select('phone_number_id, whatsapp_token, merchant_phone, lang')
+        .eq('id', bc.tenant_id)
+        .eq('is_active', true)
+        .maybeSingle();
+      if (!tenant?.phone_number_id) throw new Error('tenant not found or inactive');
+
+      const broadcastToken = tenant.whatsapp_token || process.env.WHATSAPP_TOKEN;
+      const { phone_number_id: phoneNumberId } = tenant;
+
+      const since = new Date(Date.now() - bc.days_active * 86400000).toISOString();
+      const { data: convs } = await supabase
+        .from('conversations')
+        .select('customer_phone')
+        .eq('tenant_id', bc.tenant_id)
+        .gte('updated_at', since);
+      const phones = [...new Set((convs || []).map(c => c.customer_phone))];
+
+      let photoSent = 0, textSent = 0, failed = 0;
+      for (const phone of phones) {
+        try {
+          const result = await sendOneBroadcast(phone, bc.message, bc.image_url, phoneNumberId, broadcastToken);
+          if (result === 'photo') photoSent++; else textSent++;
+        } catch { failed++; }
+        await new Promise(r => setTimeout(r, 200));
+      }
+
+      const report = { total: phones.length, photo_sent: photoSent, text_sent: textSent, failed };
+      await supabase.from('scheduled_broadcasts').update({
+        status: 'done', sent_at: new Date().toISOString(), report,
+      }).eq('id', bc.id);
+
+      if (tenant.merchant_phone) {
+        const lang = tenant.lang || 'es';
+        const DONE = {
+          es: `✅ Broadcast enviado: ${photoSent} foto + ${textSent} solo texto${failed ? ` + ${failed} fallidos` : ''} (total ${phones.length}).`,
+          it: `✅ Broadcast inviato: ${photoSent} foto + ${textSent} solo testo${failed ? ` + ${failed} falliti` : ''} (totale ${phones.length}).`,
+          en: `✅ Broadcast sent: ${photoSent} photo + ${textSent} text-only${failed ? ` + ${failed} failed` : ''} (total ${phones.length}).`,
+          fr: `✅ Broadcast envoyé : ${photoSent} photo + ${textSent} texte seul${failed ? ` + ${failed} échoués` : ''} (total ${phones.length}).`,
+          de: `✅ Broadcast gesendet: ${photoSent} Foto + ${textSent} nur Text${failed ? ` + ${failed} fehlgeschlagen` : ''} (gesamt ${phones.length}).`,
+          pt: `✅ Broadcast enviado: ${photoSent} foto + ${textSent} só texto${failed ? ` + ${failed} falhas` : ''} (total ${phones.length}).`,
+        };
+        sendMessage(tenant.merchant_phone, DONE[lang] || DONE.es, phoneNumberId, broadcastToken).catch(() => {});
+      }
+      console.log(`[broadcast] done ${bc.id}: photo=${photoSent} text=${textSent} failed=${failed}`);
+    } catch (err) {
+      await supabase.from('scheduled_broadcasts').update({
+        status: 'failed', error: err.message, sent_at: new Date().toISOString(),
+      }).eq('id', bc.id);
+      console.error(`[broadcast] failed ${bc.id}:`, err.message);
+    }
+  }
+}
+
 function setupCronJobs() {
   const HOUR = 60 * 60 * 1000;
+  const MIN  = 60 * 1000;
   // 30s delay so DB connection settles before first run
   setTimeout(() => {
     runAppointmentReminders();
     runAbandonedCartNudge();
+    runScheduledBroadcasts().catch(() => {});
   }, 30000);
   setInterval(runAppointmentReminders, HOUR);
   setInterval(runAbandonedCartNudge, HOUR);
+  setInterval(() => runScheduledBroadcasts().catch(() => {}), MIN);
 }
 
 module.exports = { setupCronJobs };

@@ -3164,6 +3164,70 @@ router.delete('/customers/:phone', requireAuth, async (req, res) => {
   res.json({ ok: true });
 });
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// BROADCASTS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const broadcastUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 8 * 1024 * 1024 } });
+
+router.post('/broadcasts/upload-image', requireAuth, broadcastUpload.single('image'), async (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'No image' });
+  const realMime = detectImageMime(req.file.buffer);
+  if (!realMime) return res.status(400).json({ error: 'Invalid image format' });
+  const ext = realMime.split('/')[1] === 'jpeg' ? 'jpg' : realMime.split('/')[1];
+  const path = `${req.tenant.tenantId}/broadcast/${Date.now()}.${ext}`;
+  try {
+    const url = await uploadImageBuffer(req.file.buffer, path, realMime);
+    res.json({ url });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+router.get('/broadcasts', requireAuth, async (req, res) => {
+  const { data, error } = await supabase
+    .from('scheduled_broadcasts')
+    .select('id, message, image_url, days_active, scheduled_at, status, created_at, sent_at, report, error')
+    .eq('tenant_id', req.tenant.tenantId)
+    .order('created_at', { ascending: false })
+    .limit(30);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
+router.post('/broadcasts', requireAuth, async (req, res) => {
+  const { message, image_url, days_active = 30, scheduled_at } = req.body;
+  if (!message?.trim()) return res.status(400).json({ error: 'message required' });
+  if (message.trim().length > 1000) return res.status(400).json({ error: 'message too long (max 1000)' });
+  if (!scheduled_at) return res.status(400).json({ error: 'scheduled_at required' });
+  const scheduledDate = new Date(scheduled_at);
+  if (isNaN(scheduledDate.getTime())) return res.status(400).json({ error: 'invalid scheduled_at' });
+  const { data, error } = await supabase.from('scheduled_broadcasts').insert({
+    tenant_id:    req.tenant.tenantId,
+    message:      message.trim(),
+    image_url:    image_url || null,
+    days_active:  Math.max(1, Math.min(365, parseInt(days_active) || 30)),
+    scheduled_at: scheduledDate.toISOString(),
+    status:       'pending',
+  }).select().single();
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
+router.delete('/broadcasts/:id', requireAuth, async (req, res) => {
+  const { data, error } = await supabase
+    .from('scheduled_broadcasts')
+    .update({ status: 'cancelled' })
+    .eq('id', req.params.id)
+    .eq('tenant_id', req.tenant.tenantId)
+    .eq('status', 'pending')
+    .select('id')
+    .maybeSingle();
+  if (error) return res.status(500).json({ error: error.message });
+  if (!data) return res.status(404).json({ error: 'Broadcast not found or already sent' });
+  res.json({ ok: true });
+});
+
 // ─── Restaurant: settings (enable/disable + slot duration) ───────────────────
 
 router.put('/restaurant/settings', requireAuth, async (req, res) => {

@@ -387,6 +387,7 @@
       <button class="py-2.5 px-1 sm:px-0 whitespace-nowrap flex-shrink-0 hidden" id="tabRestaurant" onclick="switchTab('restaurant')">🪑 <span data-i18n="tab.restaurant">Tavoli</span></button>
       <button class="py-2.5 px-1 sm:px-0 whitespace-nowrap flex-shrink-0" id="tabSettings" onclick="switchTab('settings')">⚙️ Ajustes</button>
       <button class="py-2.5 px-1 sm:px-0 whitespace-nowrap flex-shrink-0" id="tabAnalytics" data-i18n="tab.analytics" onclick="switchTab('analytics')">📊 Analytics</button>
+      <button class="py-2.5 px-1 sm:px-0 whitespace-nowrap flex-shrink-0" id="tabBroadcast" data-i18n="tab.broadcast" onclick="switchTab('broadcast')">📣 Broadcast</button>
       <button class="py-2.5 px-1 sm:px-0 whitespace-nowrap flex-shrink-0 relative" id="tabSupport" onclick="switchTab('support')"><span data-i18n="tab.support">💬 Ayuda y Soporte</span><span id="supportUnreadBadge" class="hidden absolute -top-0.5 -right-1 w-4 h-4 bg-red-500 rounded-full text-white text-[9px] font-bold flex items-center justify-center">!</span></button>
     </div>
   </nav>
@@ -1044,6 +1045,32 @@
         <div id="analyticsTopProducts" class="space-y-2">
           <p class="text-sm text-gray-400">—</p>
         </div>
+      </div>
+
+    </div>
+
+    <!-- ── BROADCAST TAB ── -->
+    <div id="sectionBroadcast" class="hidden max-w-3xl space-y-4">
+
+      <div class="bg-white rounded-xl shadow-sm p-4 flex items-center justify-between">
+        <div>
+          <h2 class="text-lg font-semibold text-gray-800">📣 <span data-i18n="broadcast.title">Broadcasts</span></h2>
+          <p class="text-xs text-gray-400 mt-0.5" data-i18n="broadcast.subtitle">Mensajes masivos a tus clientes activos</p>
+        </div>
+        <button onclick="openBroadcastModal()" class="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-green-700 transition" data-i18n="broadcast.new">+ Nuevo</button>
+      </div>
+
+      <!-- Info box -->
+      <div class="bg-blue-50 rounded-xl p-4 text-xs text-blue-800 space-y-1">
+        <p class="font-semibold" data-i18n="broadcast.info.title">ℹ️ Cómo funciona</p>
+        <p data-i18n="broadcast.info.photo">📸 Si agregás imagen: clientes con conversación activa (últimas 24h) la reciben como foto.</p>
+        <p data-i18n="broadcast.info.link">🔗 Clientes fuera de ventana activa: reciben el texto + link a la imagen (WhatsApp muestra preview).</p>
+        <p data-i18n="broadcast.info.report">📊 Al terminar recibís un reporte por WhatsApp con el detalle de entrega.</p>
+      </div>
+
+      <!-- List -->
+      <div id="broadcastList" class="space-y-3">
+        <p class="text-sm text-gray-400 text-center py-6" id="broadcastEmpty" data-i18n="broadcast.empty">No hay broadcasts aún.</p>
       </div>
 
     </div>
@@ -2230,6 +2257,70 @@
   </div>
 </div>
 
+<!-- ════ BROADCAST MODAL ════ -->
+<div id="broadcastModal" class="hidden fixed inset-0 modal-bg flex items-center justify-center z-50 px-4">
+  <div class="bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto p-6">
+    <h3 class="font-semibold text-gray-800 text-base mb-4" data-i18n="broadcast.modal.title">📣 Nuevo broadcast</h3>
+
+    <!-- Message -->
+    <label class="block text-xs text-gray-500 mb-1" data-i18n="broadcast.modal.message">Mensaje *</label>
+    <textarea id="bcMessage" rows="4" maxlength="1000"
+      class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-300 resize-none mb-1"
+      oninput="document.getElementById('bcCharCount').textContent=this.value.length"></textarea>
+    <p class="text-xs text-gray-400 mb-4 text-right"><span id="bcCharCount">0</span>/1000</p>
+
+    <!-- Image -->
+    <label class="block text-xs text-gray-500 mb-1" data-i18n="broadcast.modal.image">Imagen (opcional)</label>
+    <div id="bcImageDrop" onclick="document.getElementById('bcImageInput').click()"
+      class="border-2 border-dashed border-gray-200 rounded-xl p-4 text-center cursor-pointer hover:border-green-300 transition mb-4">
+      <div id="bcImagePlaceholder" class="text-gray-400 text-sm pointer-events-none">
+        <p class="text-2xl mb-1">📸</p>
+        <p data-i18n="broadcast.modal.imageDrop">Tocá para subir imagen</p>
+        <p class="text-xs mt-0.5 text-gray-300">JPG / PNG / WEBP · max 8MB</p>
+      </div>
+      <div id="bcImagePreviewWrap" class="hidden">
+        <img id="bcImagePreview" class="w-full max-h-40 object-contain rounded-lg mx-auto mb-2" />
+        <button id="bcImageRemove" onclick="removeBroadcastImage(event)"
+          class="text-xs text-red-500 hover:underline" data-i18n="broadcast.modal.imageRemove">Quitar imagen</button>
+      </div>
+    </div>
+    <input type="file" id="bcImageInput" accept="image/jpeg,image/png,image/webp" class="hidden" onchange="uploadBroadcastImage(event)" />
+
+    <!-- When -->
+    <label class="block text-xs text-gray-500 mb-1" data-i18n="broadcast.modal.when">Cuándo enviar</label>
+    <div class="flex gap-2 mb-3">
+      <button id="bcBtnNow" onclick="setBroadcastTime('now')"
+        class="flex-1 py-2 rounded-lg border border-green-500 text-green-700 text-sm font-medium transition" data-i18n="broadcast.modal.now">Ahora</button>
+      <button id="bcBtnLater" onclick="setBroadcastTime('later')"
+        class="flex-1 py-2 rounded-lg border border-gray-200 text-gray-500 text-sm transition" data-i18n="broadcast.modal.later">Programar</button>
+    </div>
+    <div id="bcDateRow" class="hidden mb-4">
+      <input type="datetime-local" id="bcScheduledAt"
+        class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-300" />
+    </div>
+
+    <!-- Audience -->
+    <label class="block text-xs text-gray-500 mb-1" data-i18n="broadcast.modal.audience">Audiencia</label>
+    <select id="bcDaysActive"
+      class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-300 mb-5">
+      <option value="7" data-i18n="broadcast.days.7">Activos últimos 7 días</option>
+      <option value="30" selected data-i18n="broadcast.days.30">Activos últimos 30 días</option>
+      <option value="60" data-i18n="broadcast.days.60">Activos últimos 60 días</option>
+      <option value="90" data-i18n="broadcast.days.90">Activos últimos 90 días</option>
+      <option value="180" data-i18n="broadcast.days.180">Activos últimos 6 meses</option>
+      <option value="365" data-i18n="broadcast.days.365">Activos último año</option>
+    </select>
+
+    <!-- Buttons -->
+    <div class="flex gap-3">
+      <button onclick="closeBroadcastModal()"
+        class="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-600 text-sm hover:bg-gray-50 transition" data-i18n="broadcast.modal.cancel">Cancelar</button>
+      <button id="bcSaveBtn" onclick="saveBroadcast()"
+        class="flex-1 py-2.5 rounded-xl bg-green-600 text-white text-sm font-semibold hover:bg-green-700 transition" data-i18n="broadcast.modal.save">Programar</button>
+    </div>
+  </div>
+</div>
+
 <!-- ════ PRODUCT MODAL ════ -->
 <div id="productModal" class="hidden fixed inset-0 modal-bg flex items-center justify-center z-50 px-4">
   <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 max-h-screen overflow-y-auto">
@@ -3223,7 +3314,7 @@ function switchTab(tab) {
     setTimeout(() => { banner.style.opacity = '1'; }, 150);
     return;
   }
-  ['chats','products','services','orders','customers','restaurant','appointments','settings','analytics','support'].forEach(t => {
+  ['chats','products','services','orders','customers','restaurant','appointments','settings','analytics','broadcast','support'].forEach(t => {
     const sec = document.getElementById('section' + cap(t));
     const btn = document.getElementById('tab'     + cap(t));
     if (sec) sec.classList.toggle('hidden', t !== tab);
@@ -3249,11 +3340,154 @@ function switchTab(tab) {
   if (tab === 'services')     loadServices();
   if (tab === 'restaurant')   loadRestaurant();
   if (tab === 'appointments') { if (isRestaurantPlan) initReservationsView(); else initCalendar(); }
+  if (tab === 'broadcast')    loadBroadcasts();
   if (tab === 'support')      { loadSupportMessages(); startSupportPoll(); }
   else                        stopSupportPoll();
   if (tab === 'chats')        { loadChatList(); startChatListPoll(); }
   else                        stopChatListPoll();
 }
+// ── Broadcast ─────────────────────────────────────────────────────────────────
+let bcImageUrl = null;
+let bcSendNow  = true;
+
+async function loadBroadcasts() {
+  const list  = document.getElementById('broadcastList');
+  const empty = document.getElementById('broadcastEmpty');
+  try {
+    const data = await api('/admin/broadcasts', 'GET');
+    if (!data.length) { if (empty) empty.classList.remove('hidden'); return; }
+    if (empty) empty.classList.add('hidden');
+    list.innerHTML = data.map(renderBroadcastRow).join('');
+  } catch(e) { console.error('loadBroadcasts', e); }
+}
+
+function renderBroadcastRow(bc) {
+  const STATUS = {
+    pending:   `<span class="bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full text-xs font-medium">${t('broadcast.status.pending')}</span>`,
+    running:   `<span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full text-xs font-medium">${t('broadcast.status.running')}</span>`,
+    done:      `<span class="bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-xs font-medium">${t('broadcast.status.done')}</span>`,
+    failed:    `<span class="bg-red-100 text-red-700 px-2 py-0.5 rounded-full text-xs font-medium">${t('broadcast.status.failed')}</span>`,
+    cancelled: `<span class="bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full text-xs font-medium">${t('broadcast.status.cancelled')}</span>`,
+  };
+  const dt      = new Date(bc.scheduled_at).toLocaleString();
+  const preview = bc.message.length > 80 ? bc.message.slice(0, 80) + '…' : bc.message;
+  const imgEl   = bc.image_url
+    ? `<img src="${bc.image_url}" class="w-14 h-14 object-cover rounded-xl flex-shrink-0">`
+    : `<div class="w-14 h-14 rounded-xl bg-gray-100 flex items-center justify-center flex-shrink-0 text-2xl">📝</div>`;
+  let reportEl = '';
+  if (bc.report) {
+    reportEl = `<p class="text-xs text-gray-400 mt-1">📸 ${bc.report.photo_sent} · 🔗 ${bc.report.text_sent} · ❌ ${bc.report.failed} / ${bc.report.total}</p>`;
+  }
+  const cancelBtn = bc.status === 'pending'
+    ? `<button onclick="cancelBroadcast('${bc.id}')" class="text-xs text-red-500 hover:underline mt-1" data-i18n="broadcast.cancel">${t('broadcast.cancel')}</button>`
+    : '';
+  return `<div class="bg-white rounded-xl shadow-sm p-4 flex gap-3 items-start">
+    ${imgEl}
+    <div class="flex-1 min-w-0">
+      <div class="flex flex-wrap items-center gap-2 mb-1">${STATUS[bc.status] || ''}<span class="text-xs text-gray-400">${dt}</span></div>
+      <p class="text-sm text-gray-700 line-clamp-2">${preview}</p>
+      ${reportEl}
+      ${cancelBtn}
+    </div>
+  </div>`;
+}
+
+function openBroadcastModal() {
+  bcImageUrl = null;
+  bcSendNow  = true;
+  document.getElementById('bcMessage').value         = '';
+  document.getElementById('bcCharCount').textContent = '0';
+  document.getElementById('bcImageInput').value      = '';
+  document.getElementById('bcImagePlaceholder').classList.remove('hidden');
+  document.getElementById('bcImagePreviewWrap').classList.add('hidden');
+  document.getElementById('bcDateRow').classList.add('hidden');
+  document.getElementById('bcBtnNow').className   = 'flex-1 py-2 rounded-lg border border-green-500 text-green-700 text-sm font-medium transition';
+  document.getElementById('bcBtnLater').className = 'flex-1 py-2 rounded-lg border border-gray-200 text-gray-500 text-sm transition';
+  // default: 5 min from now
+  const d = new Date(Date.now() + 5 * 60000);
+  d.setSeconds(0, 0);
+  document.getElementById('bcScheduledAt').value = d.toISOString().slice(0, 16);
+  document.getElementById('broadcastModal').classList.remove('hidden');
+}
+
+function closeBroadcastModal() {
+  document.getElementById('broadcastModal').classList.add('hidden');
+}
+
+function setBroadcastTime(mode) {
+  bcSendNow = mode === 'now';
+  document.getElementById('bcDateRow').classList.toggle('hidden', bcSendNow);
+  document.getElementById('bcBtnNow').className   = bcSendNow
+    ? 'flex-1 py-2 rounded-lg border border-green-500 text-green-700 text-sm font-medium transition'
+    : 'flex-1 py-2 rounded-lg border border-gray-200 text-gray-500 text-sm transition';
+  document.getElementById('bcBtnLater').className = !bcSendNow
+    ? 'flex-1 py-2 rounded-lg border border-green-500 text-green-700 text-sm font-medium transition'
+    : 'flex-1 py-2 rounded-lg border border-gray-200 text-gray-500 text-sm transition';
+}
+
+async function uploadBroadcastImage(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const btn = document.getElementById('bcSaveBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳';
+  try {
+    const fd = new FormData();
+    fd.append('image', file);
+    const res  = await fetch('/admin/broadcasts/upload-image', { method: 'POST', credentials: 'same-origin', body: fd });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Upload failed');
+    bcImageUrl = data.url;
+    document.getElementById('bcImagePreview').src = bcImageUrl;
+    document.getElementById('bcImagePreviewWrap').classList.remove('hidden');
+    document.getElementById('bcImagePlaceholder').classList.add('hidden');
+  } catch(e) { alert(e.message); }
+  btn.disabled = false;
+  btn.textContent = t('broadcast.modal.save');
+}
+
+function removeBroadcastImage(event) {
+  event.stopPropagation();
+  bcImageUrl = null;
+  document.getElementById('bcImageInput').value = '';
+  document.getElementById('bcImagePreview').src = '';
+  document.getElementById('bcImagePreviewWrap').classList.add('hidden');
+  document.getElementById('bcImagePlaceholder').classList.remove('hidden');
+}
+
+async function saveBroadcast() {
+  const message = document.getElementById('bcMessage').value.trim();
+  if (!message) { alert(t('broadcast.modal.msgRequired')); return; }
+  let scheduled_at;
+  if (bcSendNow) {
+    scheduled_at = new Date().toISOString();
+  } else {
+    const dtVal = document.getElementById('bcScheduledAt').value;
+    if (!dtVal) { alert(t('broadcast.modal.dateRequired')); return; }
+    scheduled_at = new Date(dtVal).toISOString();
+    if (new Date(scheduled_at) <= new Date()) { alert(t('broadcast.modal.dateFuture')); return; }
+  }
+  const days_active = parseInt(document.getElementById('bcDaysActive').value);
+  const btn = document.getElementById('bcSaveBtn');
+  btn.disabled    = true;
+  btn.textContent = '⏳';
+  try {
+    await api('/admin/broadcasts', 'POST', { message, image_url: bcImageUrl, days_active, scheduled_at });
+    closeBroadcastModal();
+    loadBroadcasts();
+  } catch(e) { alert(e.message); }
+  btn.disabled    = false;
+  btn.textContent = t('broadcast.modal.save');
+}
+
+async function cancelBroadcast(id) {
+  if (!confirm(t('broadcast.cancelConfirm'))) return;
+  try {
+    await api('/admin/broadcasts/' + id, 'DELETE');
+    loadBroadcasts();
+  } catch(e) { alert(e.message); }
+}
+
 // ── Support chat ───────────────────────────────────────────────────────────────
 let supportPollTimer = null;
 let lastSupportCount = 0;
