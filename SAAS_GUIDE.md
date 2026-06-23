@@ -96,6 +96,8 @@ Accesso: `sarabot.pro/admin` → inserire slug tenant + password.
 ### Impostazioni
 
 - **Bot**: nome bot, personalità, lingua, istruzioni personalizzate.
+- **Profilo WhatsApp**: foto, descrizione, email, sito web, categoria (vertical) del business. Scritti direttamente sul profilo WhatsApp Business via Cloud API; il form precarica i valori attuali da Meta. Foto via Resumable Upload API (richiede `META_APP_ID`). Nota: lo status breve "Acerca de" sotto il nome non è settabile via Cloud API. L'**indirizzo** non sta qui: si imposta in "Il mio negozio" e viene sincronizzato automaticamente sul profilo WhatsApp al salvataggio.
+- **Il mio negozio**: indirizzo, telefono supporto, link recensioni Google, posizione mappa. L'indirizzo viene mirrorato sul profilo WhatsApp.
 - **Orari**: apertura/chiusura per giorno (doppio slot supportato).
 - **Delivery**: zone, tariffe, disponibilità per giorno.
 - **Pagamenti**: testo con istruzioni di pagamento (mostrato a ogni ordine).

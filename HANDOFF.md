@@ -3,13 +3,36 @@
 ## STATO CORRENTE
 SaaS multi-tenant WhatsApp Business. Feature appuntamenti complete (paid, storno, mobility, slot 15min, rubrica). Prossimo: Stripe live env vars su Render, invoicing merchant.
 
-**Ultimo commit stabile:** `238ab86` (audio fallback multilingua)
+**Ultimo commit stabile:** `0289d11` (profilo WhatsApp esteso: email/website/vertical + sync indirizzo)
 
 ### Vocali WhatsApp — setup completato
 - Trascrizione via **Groq Whisper** (`services/transcribe.js`) — modello `whisper-large-v3-turbo`.
 - Key: `GROQ_API_KEY` = `gsk_...` (da console.groq.com — NON xAI/Grok di X).
 - Già settata su Render e funzionante.
 - Fallback se trascrizione fallisce: messaggio multilingua IT+ES+EN.
+
+---
+
+## SESSIONE 2026-06-23 — fix import + onboarding token + profilo WhatsApp
+
+### Import catalogo (Foto IA) — 3 fix
+- **`782772e`** `max_tokens` 2048→8192 in `/admin/import-from-images` e `/superadmin/.../import-from-images` + guard `stop_reason==='max_tokens'`. Causa errore "Expected ',' or ']'": JSON troncato a metà array, regex prendeva fino all'ultima `}` completa → array non chiuso.
+- **`e21f81f`** drop `duration_min` dal bulk insert `products` (colonna solo di `services`).
+- **`b2b2313`** drop `price_type` dal bulk insert `products` (idem, service-only).
+- Colonne reali `products`: name, category, price_guarani, stock_qty, description, sku, allergens, image_url, is_available. NO price_type/duration_min.
+
+### Schema allineato
+- **`1fc3249`** `db/schema.sql` + `db/migrations.sql`: aggiunta colonna `sku` (esisteva nel DB live ma mancava nei file). Migration 19 idempotente.
+
+### Token WhatsApp — cron + onboarding
+- **`d86617b`** cron `renewTokens` (`index.js`): i token System User permanenti non sono scambiabili via `fb_exchange_token` → il cron scriveva `whatsapp_token_refresh_error` → X rossa nel superadmin anche con bot funzionante. Ora su fallimento exchange verifica con `debug_token`: se valido azzera l'errore.
+- **Gotcha onboarding:** TOKEN WA rosso = `whatsapp_token_refresh_error` truthy. Se nel Table Editor Supabase si scrive la **stringa** `"NULL"` invece di SQL `NULL`, resta truthy → X rossa. Tooltip sulla X mostra il valore. Fix: `UPDATE ... SET whatsapp_token_refresh_error = NULL`.
+
+### Profilo WhatsApp (admin) — fix + feature
+- **`825fdbb`** foto profilo: usa **Resumable Upload API** (`/{app-id}/uploads` → handle `h`) invece di `/media` id. Errore precedente "Parameter value is not valid". Richiede `META_APP_ID` su Render.
+- **`67ea5e4`** testo: la Cloud API business profile NON supporta `about` (On-Premises only, ignorato silenziosamente) → usa `description`.
+- **`0289d11`** feature: sezione Profilo WhatsApp ora setta anche **email, website, vertical** (dropdown enum Meta) in una sola chiamata. `GET /admin/whatsapp-profile` precarica i valori da Meta. Salvataggio "Il mio negozio" sincronizza l'**indirizzo** sul profilo WhatsApp (best-effort). i18n 6 lingue. Helper `setWhatsappProfileFields`.
+- **Limite Meta:** lo status breve "Acerca de" sotto il nome NON è settabile via Cloud API. Solo description/email/website/vertical/address/foto.
 
 ---
 
@@ -119,6 +142,10 @@ ALTER TABLE business_hours
 
 ALTER TABLE tenants
   ADD COLUMN IF NOT EXISTS appointment_capacity INTEGER NOT NULL DEFAULT 1;
+
+-- Migration 19: codice prodotto opzionale (era nel DB live, mancava nei file)
+ALTER TABLE products
+  ADD COLUMN IF NOT EXISTS sku TEXT;
 ```
 
 ---
@@ -204,3 +231,5 @@ ALTER TABLE tenants
 - Apostrofi nelle stringhe i18n: usare doppi apici oppure `\'`. Il pre-commit hook blocca syntax error.
 - Sessioni concorrenti sullo stesso repo → rischio doppio `const` / merge conflict. Controllare prima di push.
 - `whatsapp_token` non è nel PUT allowed di superadmin — va settato via Supabase direttamente se serve.
+- Settando colonne via Supabase Table Editor: usare il vero SQL `NULL` (opzione "Set to NULL"), non digitare la stringa `"NULL"` → resta truthy e rompe i check (es. TOKEN WA rosso).
+- Profilo WhatsApp: foto via Resumable Upload API richiede `META_APP_ID` su Render. `about` non esiste su Cloud API → usare `description`.
