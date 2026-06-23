@@ -324,6 +324,16 @@ router.put('/settings', requireAuth, async (req, res) => {
   const { error } = await supabase
     .from('tenants').update(updates).eq('id', req.tenant.tenantId);
   if (error) return res.status(500).json({ error: error.message });
+
+  // Mirror the business address onto the WhatsApp profile (best-effort).
+  if (updates.address) {
+    const { data: t } = await supabase
+      .from('tenants').select('phone_number_id, whatsapp_token').eq('id', req.tenant.tenantId).single();
+    const token = t?.whatsapp_token || process.env.WHATSAPP_TOKEN;
+    if (t?.phone_number_id && token)
+      setWhatsappProfileFields(t.phone_number_id, token, { address: updates.address }).catch(() => {});
+  }
+
   res.json({ ok: true });
 });
 
@@ -1776,8 +1786,49 @@ router.get('/available-slots', requireAuth, async (req, res) => {
   res.json({ slots: freeSlots, duration_min: slotDuration });
 });
 
+// ─── WhatsApp Business profile (Cloud API) ────────────────────────────────────
+
+async function setWhatsappProfileFields(phoneNumberId, token, fields) {
+  const res = await fetch(
+    `https://graph.facebook.com/v19.0/${phoneNumberId}/whatsapp_business_profile`,
+    {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messaging_product: 'whatsapp', ...fields }),
+    }
+  );
+  const data = await res.json().catch(() => ({}));
+  return { ok: res.ok, error: data.error?.message || (res.ok ? null : res.statusText) };
+}
+
+// GET /admin/whatsapp-profile — read current profile to prefill the form
+router.get('/whatsapp-profile', requireAuth, async (req, res) => {
+  const { data: tenant } = await supabase
+    .from('tenants').select('phone_number_id, whatsapp_token').eq('id', req.tenant.tenantId).single();
+  const phoneNumberId = tenant?.phone_number_id;
+  const token = tenant?.whatsapp_token || process.env.WHATSAPP_TOKEN;
+  if (!phoneNumberId || !token) return res.json({ connected: false });
+
+  const r = await fetch(
+    `https://graph.facebook.com/v19.0/${phoneNumberId}/whatsapp_business_profile` +
+      `?fields=description,email,websites,vertical,profile_picture_url`,
+    { headers: { 'Authorization': `Bearer ${token}` } }
+  );
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) return res.json({ connected: true, error: data.error?.message });
+  const p = data.data?.[0] || {};
+  res.json({
+    connected:   true,
+    description: p.description || '',
+    email:       p.email || '',
+    website:     (p.websites && p.websites[0]) || '',
+    vertical:    p.vertical || '',
+    photo_url:   p.profile_picture_url || '',
+  });
+});
+
 // ─── POST /admin/whatsapp-profile ─────────────────────────────────────────────
-// Updates WhatsApp Business profile: photo and/or about text
+// Updates WhatsApp Business profile: photo, description, email, website, vertical
 
 router.post('/whatsapp-profile', requireAuth, upload.single('photo'), async (req, res) => {
   // Get tenant credentials
@@ -1798,33 +1849,22 @@ router.post('/whatsapp-profile', requireAuth, upload.single('photo'), async (req
 
   const errors = [];
 
-  // 1. Update "about" text if provided
-  const about = req.body?.about?.trim();
-  if (about) {
-    try {
-      const profileRes = await fetch(
-        `https://graph.facebook.com/v19.0/${phoneNumberId}/whatsapp_business_profile`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-          // Cloud API business profile supports `description`, not `about`
-          // (the latter is silently ignored — On-Premises field only).
-          body: JSON.stringify({
-            messaging_product: 'whatsapp',
-            description: about,
-          }),
-        }
-      );
-      const profileData = await profileRes.json();
-      if (!profileRes.ok) {
-        errors.push(`Descripción: ${profileData.error?.message || profileRes.statusText}`);
-      }
-    } catch (e) {
-      errors.push('About: ' + e.message);
-    }
+  // 1. Update text fields (description, email, website, vertical) in one call.
+  // Cloud API business profile supports `description` (not `about`), `email`,
+  // `websites` (array), `vertical` (fixed enum) — `about` is On-Premises only.
+  const textFields = {};
+  const about    = req.body?.about?.trim();
+  const email    = req.body?.email?.trim();
+  const website  = req.body?.website?.trim();
+  const vertical = req.body?.vertical?.trim();
+  if (about)    textFields.description = about;
+  if (email)    textFields.email       = email;
+  if (website)  textFields.websites    = [website];
+  if (vertical) textFields.vertical    = vertical;
+
+  if (Object.keys(textFields).length) {
+    const r = await setWhatsappProfileFields(phoneNumberId, token, textFields);
+    if (!r.ok) errors.push(`Perfil: ${r.error}`);
   }
 
   // 2. Upload profile photo if provided.

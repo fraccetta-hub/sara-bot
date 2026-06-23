@@ -1194,6 +1194,39 @@
               class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm resize-none mb-1"
               oninput="document.getElementById('wpAboutCount').textContent=this.value.length"></textarea>
             <p class="text-xs text-gray-400 text-right mb-3"><span id="wpAboutCount">0</span>/139</p>
+
+            <label data-i18n="settings.wp.email" class="block text-xs font-medium text-gray-600 mb-1">Email</label>
+            <input id="sWpEmail" type="email" data-i18n-ph="settings.wp.emailPh"
+              placeholder="contacto@negocio.com"
+              class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-3"/>
+
+            <label data-i18n="settings.wp.website" class="block text-xs font-medium text-gray-600 mb-1">Sitio web</label>
+            <input id="sWpWebsite" type="url" data-i18n-ph="settings.wp.websitePh"
+              placeholder="https://negocio.com"
+              class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-3"/>
+
+            <label data-i18n="settings.wp.vertical" class="block text-xs font-medium text-gray-600 mb-1">Categoría</label>
+            <select id="sWpVertical" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-3 bg-white">
+              <option value="" data-i18n="settings.wp.vert.none">—</option>
+              <option value="RETAIL" data-i18n="settings.wp.vert.RETAIL">Tienda / Retail</option>
+              <option value="RESTAURANT" data-i18n="settings.wp.vert.RESTAURANT">Restaurante</option>
+              <option value="GROCERY" data-i18n="settings.wp.vert.GROCERY">Almacén / Supermercado</option>
+              <option value="BEAUTY" data-i18n="settings.wp.vert.BEAUTY">Belleza</option>
+              <option value="HEALTH" data-i18n="settings.wp.vert.HEALTH">Salud</option>
+              <option value="APPAREL" data-i18n="settings.wp.vert.APPAREL">Ropa</option>
+              <option value="EDU" data-i18n="settings.wp.vert.EDU">Educación</option>
+              <option value="HOTEL" data-i18n="settings.wp.vert.HOTEL">Hotel</option>
+              <option value="TRAVEL" data-i18n="settings.wp.vert.TRAVEL">Viajes</option>
+              <option value="PROF_SERVICES" data-i18n="settings.wp.vert.PROF_SERVICES">Servicios profesionales</option>
+              <option value="FINANCE" data-i18n="settings.wp.vert.FINANCE">Finanzas</option>
+              <option value="ENTERTAIN" data-i18n="settings.wp.vert.ENTERTAIN">Entretenimiento</option>
+              <option value="EVENT_PLAN" data-i18n="settings.wp.vert.EVENT_PLAN">Eventos</option>
+              <option value="AUTO" data-i18n="settings.wp.vert.AUTO">Automotriz</option>
+              <option value="GOVT" data-i18n="settings.wp.vert.GOVT">Gobierno</option>
+              <option value="NONPROFIT" data-i18n="settings.wp.vert.NONPROFIT">ONG / Sin fines de lucro</option>
+              <option value="OTHER" data-i18n="settings.wp.vert.OTHER">Otro</option>
+            </select>
+
             <button onclick="saveWpProfile()" data-i18n="settings.wp.save" class="btn-green w-full py-2 rounded-lg text-sm font-semibold">
               Actualizar perfil en WhatsApp
             </button>
@@ -5091,6 +5124,9 @@ async function loadSettings() {
     if (s.location_lat && s.location_lng)
       document.getElementById('sBizMapsUrl').value = `https://www.google.com/maps?q=${s.location_lat},${s.location_lng}`;
 
+    // WhatsApp profile — prefill from Meta
+    loadWpProfile();
+
     // Account fields
     document.getElementById('aEmailDisplay').textContent = s.email || s.login_slug || '—';
     document.getElementById('aUsername').value = s.login_slug || '';
@@ -5264,12 +5300,33 @@ function removeWpPhoto() {
   document.getElementById('wpPhotoInput').value = '';
 }
 
+async function loadWpProfile() {
+  try {
+    const p = await api('/admin/whatsapp-profile');
+    if (!p || !p.connected) return;
+    document.getElementById('sWpAbout').value    = p.description || '';
+    document.getElementById('wpAboutCount').textContent = (p.description || '').length;
+    document.getElementById('sWpEmail').value     = p.email || '';
+    document.getElementById('sWpWebsite').value   = p.website || '';
+    document.getElementById('sWpVertical').value  = p.vertical || '';
+    if (p.photo_url) {
+      const img = document.getElementById('wpAvatarImg');
+      img.src = p.photo_url;
+      img.classList.remove('hidden');
+      document.getElementById('wpAvatarIcon').classList.add('hidden');
+    }
+  } catch (e) { /* ignore */ }
+}
+
 async function saveWpProfile() {
   const msgEl = document.getElementById('wpProfileMsg');
   msgEl.classList.add('hidden');
-  const about = document.getElementById('sWpAbout').value.trim();
+  const about    = document.getElementById('sWpAbout').value.trim();
+  const email    = document.getElementById('sWpEmail').value.trim();
+  const website  = document.getElementById('sWpWebsite').value.trim();
+  const vertical = document.getElementById('sWpVertical').value;
 
-  if (!wpPhotoFile && !about) {
+  if (!wpPhotoFile && !about && !email && !website && !vertical) {
     msgEl.className = 'rounded-lg px-4 py-2 text-sm mb-4 bg-red-50 text-red-700';
     msgEl.textContent = t('profile.required');
     msgEl.classList.remove('hidden');
@@ -5279,6 +5336,9 @@ async function saveWpProfile() {
   const formData = new FormData();
   if (wpPhotoFile) formData.append('photo', wpPhotoFile);
   if (about)       formData.append('about', about);
+  if (email)       formData.append('email', email);
+  if (website)     formData.append('website', website);
+  if (vertical)    formData.append('vertical', vertical);
 
   try {
     const res = await fetch('/admin/whatsapp-profile', {
