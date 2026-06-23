@@ -1191,6 +1191,48 @@ router.post('/whatsapp-connect-manual', requireAuth, async (req, res) => {
   res.json({ ok: true });
 });
 
+// ─── GET /admin/catalog-status ────────────────────────────────────────────────
+router.get('/catalog-status', requireAuth, async (req, res) => {
+  const { data } = await supabase.from('tenants')
+    .select('products_enabled, restaurant_enabled, catalog_sync_enabled, wa_catalog_id')
+    .eq('id', req.tenant.tenantId).single();
+  if (!data) return res.status(404).json({ error: 'Tenant not found' });
+  res.json({
+    eligible: !!(data.products_enabled || data.restaurant_enabled),
+    enabled:  !!data.catalog_sync_enabled,
+    catalogId: data.wa_catalog_id || null,
+  });
+});
+
+// ─── POST /admin/catalog-activate ────────────────────────────────────────────
+router.post('/catalog-activate', requireAuth, async (req, res) => {
+  try {
+    const { data: tenant } = await supabase.from('tenants')
+      .select('id, catalog_sync_enabled, waba_id, wa_catalog_id, whatsapp_token, phone_number_id, country, name')
+      .eq('id', req.tenant.tenantId).single();
+    if (!tenant) return res.status(404).json({ error: 'Tenant not found' });
+    if (!tenant.waba_id)
+      return res.status(400).json({ error: 'waba_id not set — reconnect WhatsApp via Embedded Signup' });
+
+    await catalog.ensureCatalog(tenant);
+    await supabase.from('tenants')
+      .update({ catalog_sync_enabled: true }).eq('id', req.tenant.tenantId);
+    bgSyncAll(req.tenant.tenantId).catch(() => {});
+    res.json({ ok: true });
+  } catch (e) {
+    console.error('[catalog-activate]', e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ─── POST /admin/catalog-deactivate ──────────────────────────────────────────
+router.post('/catalog-deactivate', requireAuth, async (req, res) => {
+  const { error } = await supabase.from('tenants')
+    .update({ catalog_sync_enabled: false }).eq('id', req.tenant.tenantId);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ ok: true });
+});
+
 // ─── POST /admin/import-preview — fetch & parse Google Sheet ─────────────────
 router.post('/import-preview', requireAuth, async (req, res) => {
   const { url, csvText } = req.body;

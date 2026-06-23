@@ -323,20 +323,39 @@
     </div>
 
     <!-- Step 4: Done -->
-    <div id="wizStep4" class="hidden text-center">
-      <div class="text-6xl mb-4">🎉</div>
-      <h2 data-i18n="wiz.s4.title" class="text-xl font-bold text-gray-800 mb-2">¡Todo listo!</h2>
-      <p data-i18n="wiz.s4.subtitle" class="text-gray-500 text-sm mb-2">Tu WhatsApp Business está conectado. Sara ya puede atender a tus clientes.</p>
-      <p data-i18n="wiz.s4.hint" class="text-xs text-gray-400 mb-6">Ahora configurá tus productos o servicios para que Sara sepa qué ofrecer.</p>
-      <div class="bg-green-50 rounded-xl p-4 text-left mb-6 space-y-1">
-        <p class="text-sm text-green-800">✅ <span data-i18n="wiz.s4.connected">Número conectado:</span> <span id="wizDonePhone" class="font-mono font-semibold"></span></p>
-        <p data-i18n="wiz.s4.personal" class="text-sm text-green-700">✅ Tu número personal registrado</p>
-        <p data-i18n="wiz.s4.active" class="text-sm text-green-700">✅ Bot activo y listo para responder</p>
-        <p data-i18n="wiz.s4.webhook" class="text-sm text-green-700">✅ Webhook configurado automáticamente</p>
+    <div id="wizStep4" class="hidden">
+      <!-- Loading while catalog eligibility check runs -->
+      <div id="wizStep4Loading" class="text-center py-8">
+        <div class="text-2xl mb-2">⏳</div>
       </div>
-      <button onclick="finishOnboarding()" data-i18n="wiz.s4.btn" class="btn-green w-full py-3 rounded-xl text-sm font-semibold">
-        Ir al panel de control →
-      </button>
+      <!-- Catalog offer — shown only if products_enabled || restaurant_enabled -->
+      <div id="wizCatalogSection" class="hidden text-center">
+        <div class="text-5xl mb-3">📦</div>
+        <h2 data-i18n="wiz.cat.title" class="text-lg font-bold text-gray-800 mb-2">Mostrá tus productos en WhatsApp</h2>
+        <p data-i18n="wiz.cat.desc" class="text-sm text-gray-500 mb-5 leading-relaxed">Activá el catálogo nativo de WhatsApp: tus clientes pueden ver y agregar al carrito tus productos directamente desde el chat.</p>
+        <p id="wizCatalogMsg" class="hidden text-sm mb-4 rounded-lg px-3 py-2"></p>
+        <div class="flex gap-3">
+          <button onclick="skipWizCatalog()" data-i18n="wiz.cat.later" class="flex-1 border border-gray-200 text-gray-500 py-3 rounded-xl text-sm hover:bg-gray-50">Más tarde</button>
+          <button id="wizCatalogActivateBtn" onclick="activateWizCatalog()" data-i18n="wiz.cat.activate" class="flex-1 btn-green py-3 rounded-xl text-sm font-semibold">Activar catálogo</button>
+        </div>
+        <p data-i18n="wiz.cat.hint" class="text-xs text-gray-400 mt-3">Podés activarlo o desactivarlo desde Ajustes en cualquier momento.</p>
+      </div>
+      <!-- Done screen -->
+      <div id="wizDoneSection" class="hidden text-center">
+        <div class="text-6xl mb-4">🎉</div>
+        <h2 data-i18n="wiz.s4.title" class="text-xl font-bold text-gray-800 mb-2">¡Todo listo!</h2>
+        <p data-i18n="wiz.s4.subtitle" class="text-gray-500 text-sm mb-2">Tu WhatsApp Business está conectado. Sara ya puede atender a tus clientes.</p>
+        <p data-i18n="wiz.s4.hint" class="text-xs text-gray-400 mb-6">Ahora configurá tus productos o servicios para que Sara sepa qué ofrecer.</p>
+        <div class="bg-green-50 rounded-xl p-4 text-left mb-6 space-y-1">
+          <p class="text-sm text-green-800">✅ <span data-i18n="wiz.s4.connected">Número conectado:</span> <span id="wizDonePhone" class="font-mono font-semibold"></span></p>
+          <p data-i18n="wiz.s4.personal" class="text-sm text-green-700">✅ Tu número personal registrado</p>
+          <p data-i18n="wiz.s4.active" class="text-sm text-green-700">✅ Bot activo y listo para responder</p>
+          <p data-i18n="wiz.s4.webhook" class="text-sm text-green-700">✅ Webhook configurado automáticamente</p>
+        </div>
+        <button onclick="finishOnboarding()" data-i18n="wiz.s4.btn" class="btn-green w-full py-3 rounded-xl text-sm font-semibold">
+          Ir al panel de control →
+        </button>
+      </div>
     </div>
 
   </div>
@@ -2709,6 +2728,7 @@ async function saveWizardMerchantPhone() {
     await api('/admin/settings', 'PUT', { merchant_phone: phone });
     document.getElementById('wizDonePhone').textContent = wizConnectedPhoneId || '—';
     wizNext(3);
+    showWizCatalogOrDone(); // async, loading spinner handles the wait
   } catch(e) {
     errEl.textContent = errMsg(e) || t('error.save');
     errEl.classList.remove('hidden');
@@ -2724,6 +2744,52 @@ function finishOnboarding() {
   document.getElementById('waBanner').classList.add('hidden');
   applyTabGating();
   showDashboard();
+}
+
+async function showWizCatalogOrDone() {
+  const loading = document.getElementById('wizStep4Loading');
+  const catSec  = document.getElementById('wizCatalogSection');
+  const doneSec = document.getElementById('wizDoneSection');
+  loading.classList.remove('hidden');
+  catSec.classList.add('hidden');
+  doneSec.classList.add('hidden');
+  try {
+    const data = await api('/admin/catalog-status');
+    loading.classList.add('hidden');
+    if (data.eligible) {
+      catSec.classList.remove('hidden');
+      applyI18n();
+    } else {
+      doneSec.classList.remove('hidden');
+    }
+  } catch (_) {
+    loading.classList.add('hidden');
+    doneSec.classList.remove('hidden');
+  }
+}
+
+async function activateWizCatalog() {
+  const btn = document.getElementById('wizCatalogActivateBtn');
+  const msg = document.getElementById('wizCatalogMsg');
+  btn.disabled = true;
+  btn.textContent = '⏳ ' + t('wiz.cat.activating');
+  msg.classList.add('hidden');
+  try {
+    await api('/admin/catalog-activate', 'POST');
+    document.getElementById('wizCatalogSection').classList.add('hidden');
+    document.getElementById('wizDoneSection').classList.remove('hidden');
+  } catch (e) {
+    msg.textContent = '⚠️ ' + (errMsg(e) || t('wiz.cat.error'));
+    msg.className = 'text-sm mb-4 rounded-lg px-3 py-2 bg-amber-50 text-amber-700';
+    msg.classList.remove('hidden');
+    btn.disabled = false;
+    btn.textContent = t('wiz.cat.activate');
+  }
+}
+
+function skipWizCatalog() {
+  document.getElementById('wizCatalogSection').classList.add('hidden');
+  document.getElementById('wizDoneSection').classList.remove('hidden');
 }
 
 // ── Tab gating — locked when WhatsApp not connected ───────────────────────────

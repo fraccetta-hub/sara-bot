@@ -42,10 +42,14 @@ Engine di sync catalogo. Funzioni: `ensureCatalog`, `pushProduct`, `pushAllProdu
 - `pushAllProducts`: batch 100 prodotti per chunk (limite Meta).
 - `removeProduct`: fire-and-forget.
 
+### Fase 4 — Auto-sync hooks in admin.js ✅
+Aggiunti 3 helper fire-and-forget: `bgSyncProduct`, `bgSyncRemove`, `bgSyncAll`.
+Hooks su: POST/PUT/DELETE prodotti, upload foto, import-confirm (solo products), bulk-images ZIP.
+Tutti: gate `catalog_sync_enabled` come prima cosa (no-op veloce per tenant senza catalogo), mai bloccano la risposta.
+
 ### Prossimi step catalogo
-- **Fase 3**: step wizard "Attiva catalogo WhatsApp" (solo se `products_enabled || restaurant_enabled`)
-- **Fase 4**: auto-sync hook in `routes/admin.js` (POST/PUT/DELETE prodotti)
-- **Fase 5**: UI toggle + badge stato + upload multi-foto
+- **Fase 3**: step wizard "Attiva catalogo WhatsApp" (solo se `products_enabled || restaurant_enabled`) — aggiunge step al wizard onboarding
+- **Fase 5**: UI toggle + badge stato per prodotto + upload multi-foto nel form prodotto
 
 ---
 
