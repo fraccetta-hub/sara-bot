@@ -55,6 +55,7 @@
 `products`:
 - `wa_retailer_id TEXT` — id stabile lato Meta (= `id` UUID del prodotto)
 - `wa_sync_error TEXT` — errore per-prodotto (null = ok)
+- `additional_images TEXT[]` — foto extra per la vetrina nativa (max ~9)
 
 Migration idempotente in `db/migrations.sql` + aggiornare `db/schema.sql`.
 
@@ -71,15 +72,23 @@ Migration idempotente in `db/migrations.sql` + aggiornare `db/schema.sql`.
 - `disableCatalog(tenant)` → set flag false (opzionale: svuota catalogo).
 
 Mappatura item:
-| Catalogo Meta | Fonte |
-|---|---|
-| `retailer_id` | `product.id` |
-| `name` | `product.name` |
-| `price` | `product.price_guarani` (formato minore richiesto da Meta) |
-| `currency` | `'PYG'` |
-| `image_url` | `product.image_url` |
-| `availability` | `is_available ? 'in stock' : 'out of stock'` |
-| `description` | `product.description` |
+| Catalogo Meta | Fonte | Obbligatorio Meta |
+|---|---|---|
+| `retailer_id` | `product.id` | ✅ |
+| `name` | `product.name` | ✅ |
+| `description` | `product.description` | ✅ (non vuota) |
+| `price` | `product.price_guarani` (formato minore richiesto da Meta) | ✅ |
+| `currency` | `'PYG'` | ✅ |
+| `image_link` | `product.image_url` | ✅ (≥500×500) |
+| `additional_image_link` | `product.additional_images` | opzionale (max ~9) |
+| `availability` | `is_available ? 'in stock' : 'out of stock'` | ✅ |
+| `condition` | `'new'` (default) | ✅ |
+| `url`/`link` | opzionale per catalogo solo-WhatsApp (placeholder se l'API lo pretende) | — |
+
+**Validazione campi minimi** (`validateForCatalog(product)`): prima del push verifica
+name + description non vuota + image_url + price. Se manca qualcosa → NON pushare,
+scrivi `wa_sync_error` (es. "manca foto" / "manca descrizione"). Mai bloccare il
+salvataggio nel pannello.
 
 Best-effort: ogni errore → `products.wa_sync_error`, mai throw verso il chiamante.
 
@@ -123,7 +132,10 @@ Tutto best-effort, non blocca la risposta del pannello.
   - Accendere da OFF = punto di **riattivazione**: riusa lo step wizard
     (disclaimer → `ensureCatalog` → `pushAllProducts`)
 - Bottone "Re-sincronizza tutto" (fallback → `pushAllProducts`)
-- Badge stato per prodotto: sincronizzato ✅ / errore ⚠️ (tooltip = `wa_sync_error`)
+- Badge stato per prodotto: sincronizzato ✅ / errore ⚠️ (tooltip = `wa_sync_error`,
+  es. "manca foto/descrizione per WhatsApp")
+- **Upload multi-foto** nel form prodotto: 1 principale (`image_url`) + extra
+  (`additional_images`, max ~9). Drag&drop, riordino, rimozione singola.
 - i18n 6 lingue.
 
 ---
@@ -143,6 +155,25 @@ Tutto best-effort, non blocca la risposta del pannello.
   `product_retailer_id`, `quantity`, `item_price`).
 - Mappa `product_retailer_id` → prodotto → crea record `orders` (riusa flusso esistente).
 - Sara conferma e invia `payment_instructions` (pagamento fuori da WhatsApp in PY).
+
+Modello universale, funziona ovunque (anche dove non c'è pagamento nativo).
+**La piattaforma non processa mai denaro.**
+
+---
+
+## FASE 7b — Pagamento nativo WhatsApp (opzionale, region-gated)
+
+Solo nei paesi dove Meta offre il checkout/pagamento in chat (India, Brasile, ecc.).
+Il pagamento è **tra merchant e Meta/provider** — la piattaforma resta fuori dai soldi.
+
+- Campo opzionale per-tenant: `payment_configuration` (nome config che il merchant
+  ha creato con Meta/provider). Mai chiavi/credenziali di pagamento lato nostro.
+- Se presente: Sara/checkout invia `order_details` con il riferimento alla config;
+  Meta gestisce il pagamento nativamente.
+- Se assente o paese non supportato: fallback alla Fase 7 (ordine + pagamento offline).
+- **Non implementare alcun processing di pagamento.** Solo passthrough del riferimento.
+
+> Da fare solo se/quando ci sono merchant in paesi con WhatsApp Pay. Per PY: salta.
 
 ---
 
