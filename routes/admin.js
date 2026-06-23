@@ -2235,8 +2235,11 @@ PRODUCTS & STOCK:
 - "cambia il prezzo delle rose a 90000" → update price
 - "nuovo prodotto Girasoli, categoria Mazzi, prezzo 80000, stock 10" → add product
 - "elimina il prodotto X" → delete product entirely
-- Send a photo with the product name as caption → Sara saves it as the main product photo and shows it to customers automatically
-- Send a photo with caption "foto extra [product name]" (or "extra photo [name]" in English, "foto extra [name]" in Italian/Spanish/Portuguese, "zusätzliches foto [name]" in German, "photo supplémentaire [name]" in French) → appends as an additional photo (up to 9 extra). These appear in the WhatsApp native catalog. Sara will also send them in chat when a customer explicitly asks to see more photos of that product.
+PHOTO MANAGEMENT — two ways:
+Option A — Conversational (recommended): Text "foto per [product name]" → Sara finds the product, shows its current photo status, and asks what to do: 1=replace main photo, 2=add extra photo. Then merchant sends the photo. Works for all languages.
+Option B — Direct: Send a photo with caption = product name → replaces main photo. Or caption "foto extra [product name]" → appends as extra photo (up to 9).
+When Sara finds multiple products matching the query, she lists them and asks which one.
+Extra photos appear in the WhatsApp native catalog. Sara also sends up to 2 extra photos in chat when a customer explicitly asks for more photos of a product.
 
 ORDERS:
 - "ordini in corso" / "active orders" → list active orders

@@ -106,7 +106,12 @@ async function processIncoming(body) {
       return;
     }
     if (messageType === 'image') {
-      await handleMerchantImage(tenant, message, phoneNumberId, token);
+      const imgPending = await merchantPending.get(tenant.id);
+      if (imgPending?.action === 'photo_await_image') {
+        await executePendingPhoto(tenant, message, imgPending, phoneNumberId, token);
+      } else {
+        await handleMerchantImage(tenant, message, phoneNumberId, token);
+      }
     } else if (messageType === 'text') {
       await handleMerchantMessage(tenant, messageText, phoneNumberId, token);
     }
@@ -359,6 +364,7 @@ This merchant's active modules: ${caps.join(', ')}.
 
 Actions:
 update_stock, set_stock, set_price, mark_unavailable, mark_available, add_product, get_catalog,
+photo_update,
 get_orders, confirm_order, cancel_order, update_order_status, chat_takeover, name_customer,
 get_appointments, add_appointment, cancel_appointment, reschedule_appointment,
 block_time, unblock_time,
@@ -406,6 +412,7 @@ cancel_reservation: {"customer_query":"...","date":"YYYY-MM-DD or null"}
 confirm_reservation: {"customer_query":"...","date":"YYYY-MM-DD or null"} — confirm a pending_merchant reservation
 get_stats: {"period":"today|week|month|all","metric":"orders|revenue|customers|all"} — analytics. Use for: "quanti ordini", "fatturato settimana", "clienti nuovi", "report"
 delete_product: {} — delete product entirely (product_query identifies it). Use: "elimina prodotto X", "cancella X dal catalogo"
+photo_update: {} — merchant wants to add or update product photos. product_query identifies the product. Use: "foto per X", "aggiungi foto a X", "cambia immagine di X", "photo for X", "foto de X", "imagen de X", "actualizar foto", "photo du produit X", "Bild für X"
 delete_service: {} — delete service entirely (service_query identifies it). Use: "elimina servizio X"
 broadcast: {"message":"...","days_active":30} — send message to all active customers. message required, days_active optional (default 30 = customers active in last 30 days). Use: "manda messaggio a tutti", "broadcast", "invia a tutti i clienti"
 update_customer: {"customer_query":"...","email":null,"address":null,"name":null} — update customer info. customer_query required (name or phone). At least one of email/address/name required.
@@ -425,7 +432,7 @@ Resolve relative dates using today's ISO above. "domani alle 15" → correct ISO
 
 // Feature gate — returns localised error string if action not allowed, null if OK
 function featureGate(tenant, action, lang) {
-  const productActions  = new Set(['update_stock','set_stock','set_price','mark_unavailable','mark_available','add_product','get_catalog']);
+  const productActions  = new Set(['update_stock','set_stock','set_price','mark_unavailable','mark_available','add_product','get_catalog','photo_update']);
   const serviceActions  = new Set(['get_services','add_service','update_service']);
   const apptActions     = new Set(['get_appointments','add_appointment','cancel_appointment','reschedule_appointment','block_time','unblock_time']);
   const restaurantActions = new Set(['get_reservations','block_tables','book_table','cancel_reservation','confirm_reservation']);
@@ -710,6 +717,9 @@ async function handleMerchantMessage(tenant, messageText, phoneNumberId, token) 
             await supabase.from('services').update(pending.params.updates).eq('id', chosen.id);
             invalidateServices(tenant.id);
             await sendMessage(tenant.merchant_phone, mt(pending.lang, 'svc_updated', chosen.name), phoneNumberId, token);
+          } else if (pending.action === 'photo_update') {
+            await askPhotoMode(tenant, chosen, pending.lang, phoneNumberId, token);
+            return;
           } else if (pending.action === 'delete_product') {
             await supabase.from('products').delete().eq('id', chosen.id).eq('tenant_id', tenant.id);
             invalidateStock(tenant.id);
@@ -741,7 +751,15 @@ async function handleMerchantMessage(tenant, messageText, phoneNumberId, token) 
           if (byName.length === 1) { merchantPending.delete(tenant.id); await activateTakeover(tenant, byName[0], pending.lang, phoneNumberId, token); return; }
         } else {
           const byName = findProductsFuzzy(pending.candidates, txt);
-          if (byName.length === 1) { merchantPending.delete(tenant.id); await executeMerchantAction(tenant, pending.action, byName[0], pending.params, pending.lang, phoneNumberId, token); return; }
+          if (byName.length === 1) {
+            merchantPending.delete(tenant.id);
+            if (pending.action === 'photo_update') {
+              await askPhotoMode(tenant, byName[0], pending.lang, phoneNumberId, token);
+            } else {
+              await executeMerchantAction(tenant, pending.action, byName[0], pending.params, pending.lang, phoneNumberId, token);
+            }
+            return;
+          }
         }
       }
 
@@ -841,6 +859,36 @@ async function handleMerchantMessage(tenant, messageText, phoneNumberId, token) 
         }
       }
 
+      // Photo mode choice
+      if (pending.action === 'photo_mode_choose') {
+        const lower = txt.toLowerCase();
+        const isReplace = /^(1|replace|sostituisci|remplacer|ersetzen|substituir|foto principal|principal|main|principale|hauptfoto|hauptbild)/.test(lower);
+        const isAdd     = /^(2|add|aggiungi|ajouter|hinzufügen|adicionar|extra|agrega|extra foto|foto extra|additional)/.test(lower);
+        if (isReplace || isAdd) {
+          const mode = isReplace ? 'replace_main' : 'add_extra';
+          if (mode === 'add_extra' && pending.extraCount >= 9) {
+            const limit = { es:`⚠️ *${pending.productName}* ya tiene 9 fotos extra (máximo). Eliminá alguna desde el panel primero.`, it:`⚠️ *${pending.productName}* ha già 9 foto extra (massimo). Rimuovine una dal pannello prima.`, en:`⚠️ *${pending.productName}* already has 9 extra photos (max). Remove one from the panel first.`, fr:`⚠️ *${pending.productName}* a déjà 9 photos extra (max). Supprimez-en une depuis le panneau.`, de:`⚠️ *${pending.productName}* hat bereits 9 Zusatzfotos (Max). Entferne eines im Panel zuerst.`, pt:`⚠️ *${pending.productName}* já tem 9 fotos extras (máx). Remova uma no painel antes.` };
+            merchantPending.delete(tenant.id);
+            await sendMessage(tenant.merchant_phone, limit[pending.lang] || limit.es, phoneNumberId, token);
+            return;
+          }
+          merchantPending.set(tenant.id, { action: 'photo_await_image', productId: pending.productId, productName: pending.productName, mode, extraCount: pending.extraCount, lang: pending.lang, expiresAt: Date.now() + 10 * 60 * 1000 });
+          const send = { es:`📸 Perfecto. Ahora enviá la foto para *${pending.productName}*.`, it:`📸 Perfetto. Adesso inviami la foto per *${pending.productName}*.`, en:`📸 Perfect. Now send the photo for *${pending.productName}*.`, fr:`📸 Parfait. Envoyez maintenant la photo pour *${pending.productName}*.`, de:`📸 Perfekt. Schick jetzt das Foto für *${pending.productName}*.`, pt:`📸 Perfeito. Agora envie a foto para *${pending.productName}*.` };
+          await sendMessage(tenant.merchant_phone, send[pending.lang] || send.es, phoneNumberId, token);
+          return;
+        }
+        // Unrecognised reply — resend the options
+        await askPhotoModeFromPending(tenant, pending, phoneNumberId, token);
+        return;
+      }
+
+      // photo_await_image but merchant sent text instead of photo
+      if (pending.action === 'photo_await_image') {
+        const nudge = { es:`📸 Esperando la foto para *${pending.productName}*. Por favor, enviá una imagen.`, it:`📸 Aspetto la foto per *${pending.productName}*. Per favore invia un'immagine.`, en:`📸 Waiting for the photo for *${pending.productName}*. Please send an image.`, fr:`📸 J'attends la photo pour *${pending.productName}*. Veuillez envoyer une image.`, de:`📸 Warte auf das Foto für *${pending.productName}*. Bitte sende ein Bild.`, pt:`📸 Aguardando a foto para *${pending.productName}*. Por favor, envie uma imagem.` };
+        await sendMessage(tenant.merchant_phone, nudge[pending.lang] || nudge.es, phoneNumberId, token);
+        return;
+      }
+
       // Not a recognizable confirmation — clear pending and treat as new command
       merchantPending.delete(tenant.id);
     }
@@ -875,6 +923,32 @@ async function handleMerchantMessage(tenant, messageText, phoneNumberId, token) 
       return `• *${p.name}* — ${formatPrice(p.price_guarani, currency)} — ${estado}`;
     });
     await sendMessage(tenant.merchant_phone, `📦 *${allProducts.length} productos:*\n\n${lines.join('\n')}`, phoneNumberId, token);
+    return;
+  }
+
+  // ── Photo update intent ───────────────────────────────────────────────────
+  if (intent.action === 'photo_update') {
+    const q = intent.product_query;
+    if (!q) {
+      const ask = { es:'¿Para qué producto querés actualizar la foto? Indicá el nombre.', it:'Per quale prodotto vuoi aggiornare la foto? Indica il nome.', en:'Which product do you want to update the photo for? Please specify the name.', fr:'Pour quel produit souhaitez-vous mettre à jour la photo? Indiquez le nom.', de:'Für welches Produkt möchtest du das Foto aktualisieren? Bitte den Namen angeben.', pt:'Para qual produto você quer atualizar a foto? Indique o nome.' };
+      await sendMessage(tenant.merchant_phone, ask[lang] || ask.es, phoneNumberId, token);
+      return;
+    }
+    const matches = findProductsFuzzy(allProducts, q);
+    if (!matches.length) {
+      const nf = { es:`⚠️ No encontré ningún producto para "${q}".`, it:`⚠️ Nessun prodotto trovato per "${q}".`, en:`⚠️ No product found for "${q}".`, fr:`⚠️ Aucun produit trouvé pour "${q}".`, de:`⚠️ Kein Produkt gefunden für "${q}".`, pt:`⚠️ Nenhum produto encontrado para "${q}".` };
+      await sendMessage(tenant.merchant_phone, nf[lang] || nf.es, phoneNumberId, token);
+      return;
+    }
+    if (matches.length === 1) {
+      await askPhotoMode(tenant, matches[0], lang, phoneNumberId, token);
+      return;
+    }
+    // Multiple matches — ask which one
+    const list = matches.slice(0, 5).map((p, i) => `${i + 1}. ${p.name}`).join('\n');
+    const which = { es:`Encontré varios productos:\n${list}\n¿Para cuál? Respondé con el número.`, it:`Ho trovato più prodotti:\n${list}\nPer quale? Rispondi con il numero.`, en:`Found several products:\n${list}\nWhich one? Reply with the number.`, fr:`J'ai trouvé plusieurs produits:\n${list}\nLequel? Répondez avec le numéro.`, de:`Mehrere Produkte gefunden:\n${list}\nWelches? Antworte mit der Nummer.`, pt:`Encontrei vários produtos:\n${list}\nQual deles? Responda com o número.` };
+    merchantPending.set(tenant.id, { action: 'photo_update', candidates: matches.slice(0, 5), lang, expiresAt: Date.now() + 5 * 60 * 1000 });
+    await sendMessage(tenant.merchant_phone, which[lang] || which.es, phoneNumberId, token);
     return;
   }
 
@@ -1668,6 +1742,84 @@ async function handlePaymentProof(tenant, customerPhone, buffer, mimeType, phone
   console.log(`[payment-proof] Processed for tenant ${tenant.id}, customer ${customerPhone}, url: ${publicUrl}`);
 }
 
+// ─── Merchant photo flow helpers ─────────────────────────────────────────────
+
+async function askPhotoMode(tenant, product, lang, phoneNumberId, token) {
+  const { data: full } = await supabase.from('products')
+    .select('additional_images, image_url')
+    .eq('id', product.id).single();
+  const hasMain    = !!(full?.image_url);
+  const extraCount = full?.additional_images?.length || 0;
+
+  await askPhotoModeFromPending(
+    tenant,
+    { action: 'photo_mode_choose', productId: product.id, productName: product.name, hasMain, extraCount, lang, expiresAt: Date.now() + 5 * 60 * 1000 },
+    phoneNumberId, token,
+  );
+}
+
+async function askPhotoModeFromPending(tenant, pending, phoneNumberId, token) {
+  const { productName, hasMain, extraCount, lang } = pending;
+  merchantPending.set(tenant.id, { ...pending, expiresAt: Date.now() + 5 * 60 * 1000 });
+
+  // Build status summary line
+  const statusParts = {
+    es: `${hasMain ? '1 foto principal' : 'sin foto principal'}, ${extraCount} foto(s) extra`,
+    it: `${hasMain ? '1 foto principale' : 'nessuna foto principale'}, ${extraCount} foto extra`,
+    en: `${hasMain ? '1 main photo' : 'no main photo'}, ${extraCount} extra photo(s)`,
+    fr: `${hasMain ? '1 photo principale' : 'pas de photo principale'}, ${extraCount} photo(s) extra`,
+    de: `${hasMain ? '1 Hauptfoto' : 'kein Hauptfoto'}, ${extraCount} Zusatzfoto(s)`,
+    pt: `${hasMain ? '1 foto principal' : 'sem foto principal'}, ${extraCount} foto(s) extra`,
+  };
+  const status = statusParts[lang] || statusParts.es;
+  const msgs = {
+    es: `📸 *${productName}* — actualmente: ${status}\n\n¿Qué hacemos?\n1️⃣ ${hasMain ? 'Reemplazar foto principal' : 'Agregar foto principal'}\n2️⃣ Agregar foto extra (${extraCount}/9)\n\nRespondé *1* o *2*.`,
+    it: `📸 *${productName}* — attualmente: ${status}\n\nCosa facciamo?\n1️⃣ ${hasMain ? 'Sostituire la foto principale' : 'Aggiungere la foto principale'}\n2️⃣ Aggiungere foto extra (${extraCount}/9)\n\nRispondi *1* o *2*.`,
+    en: `📸 *${productName}* — currently: ${status}\n\nWhat should we do?\n1️⃣ ${hasMain ? 'Replace main photo' : 'Add main photo'}\n2️⃣ Add extra photo (${extraCount}/9)\n\nReply *1* or *2*.`,
+    fr: `📸 *${productName}* — actuellement: ${status}\n\nQue faire?\n1️⃣ ${hasMain ? 'Remplacer la photo principale' : 'Ajouter la photo principale'}\n2️⃣ Ajouter photo supplémentaire (${extraCount}/9)\n\nRépondez *1* ou *2*.`,
+    de: `📸 *${productName}* — aktuell: ${status}\n\nWas tun?\n1️⃣ ${hasMain ? 'Hauptfoto ersetzen' : 'Hauptfoto hinzufügen'}\n2️⃣ Zusatzfoto hinzufügen (${extraCount}/9)\n\nAntworte *1* oder *2*.`,
+    pt: `📸 *${productName}* — atualmente: ${status}\n\nO que fazer?\n1️⃣ ${hasMain ? 'Substituir foto principal' : 'Adicionar foto principal'}\n2️⃣ Adicionar foto extra (${extraCount}/9)\n\nResponda *1* ou *2*.`,
+  };
+  await sendMessage(tenant.merchant_phone, msgs[lang] || msgs.es, phoneNumberId, token);
+}
+
+async function executePendingPhoto(tenant, message, pending, phoneNumberId, token) {
+  merchantPending.delete(tenant.id);
+  const lang   = pending.lang || 'es';
+  const mediaId = message.image?.id;
+  if (!mediaId) {
+    const err = { es:'❌ No se recibió imagen. Intentá de nuevo.', it:"❌ Nessuna immagine ricevuta. Riprova.", en:'❌ No image received. Please try again.', fr:"❌ Aucune image reçue. Réessayez.", de:'❌ Kein Bild erhalten. Bitte erneut versuchen.', pt:'❌ Nenhuma imagem recebida. Tente novamente.' };
+    await sendMessage(tenant.merchant_phone, err[lang] || err.es, phoneNumberId, token);
+    return;
+  }
+  const uploading = { es:`⏳ Subiendo foto para *${pending.productName}*...`, it:`⏳ Caricamento foto per *${pending.productName}*...`, en:`⏳ Uploading photo for *${pending.productName}*...`, fr:`⏳ Téléchargement de la photo pour *${pending.productName}*...`, de:`⏳ Foto wird hochgeladen für *${pending.productName}*...`, pt:`⏳ Enviando foto para *${pending.productName}*...` };
+  await sendMessage(tenant.merchant_phone, uploading[lang] || uploading.es, phoneNumberId, token);
+  try {
+    const whatsappToken = tenant.whatsapp_token || process.env.WHATSAPP_TOKEN;
+    const publicUrl = await downloadAndStore(mediaId, whatsappToken, pending.productName, tenant.id);
+    if (pending.mode === 'add_extra') {
+      const { data: full } = await supabase.from('products')
+        .select('additional_images, name, description, price_guarani, image_url, is_available')
+        .eq('id', pending.productId).single();
+      const existing = full?.additional_images || [];
+      const updated  = [...existing, publicUrl].slice(0, 9);
+      await supabase.from('products').update({ additional_images: updated }).eq('id', pending.productId);
+      catalog.pushProduct(tenant, { ...full, id: pending.productId, additional_images: updated }).catch(() => {});
+      const ok = { es:`✅ Foto extra ${updated.length}/9 guardada para *${pending.productName}*!`, it:`✅ Foto extra ${updated.length}/9 salvata per *${pending.productName}*!`, en:`✅ Extra photo ${updated.length}/9 saved for *${pending.productName}*!`, fr:`✅ Photo extra ${updated.length}/9 enregistrée pour *${pending.productName}*!`, de:`✅ Zusatzfoto ${updated.length}/9 gespeichert für *${pending.productName}*!`, pt:`✅ Foto extra ${updated.length}/9 salva para *${pending.productName}*!` };
+      await sendMessage(tenant.merchant_phone, ok[lang] || ok.es, phoneNumberId, token);
+    } else {
+      await supabase.from('products').update({ image_url: publicUrl }).eq('id', pending.productId);
+      const ok = { es:`✅ Foto principal guardada para *${pending.productName}*! Sara la enviará automáticamente a los clientes.`, it:`✅ Foto principale salvata per *${pending.productName}*! Sara la invierà automaticamente ai clienti.`, en:`✅ Main photo saved for *${pending.productName}*! Sara will send it automatically to customers.`, fr:`✅ Photo principale enregistrée pour *${pending.productName}*! Sara l'enverra automatiquement.`, de:`✅ Hauptfoto gespeichert für *${pending.productName}*! Sara sendet es automatisch an Kunden.`, pt:`✅ Foto principal salva para *${pending.productName}*! Sara a enviará automaticamente.` };
+      await sendMessage(tenant.merchant_phone, ok[lang] || ok.es, phoneNumberId, token);
+    }
+    console.log(`[storage] executePendingPhoto mode=${pending.mode} product="${pending.productName}" url=${publicUrl}`);
+  } catch (err) {
+    console.error('[storage] executePendingPhoto error:', err.message);
+    const errMsg = { es:'❌ Error al subir la foto. Intentá de nuevo.', it:'❌ Errore nel caricamento. Riprova.', en:'❌ Error uploading photo. Please try again.', fr:'❌ Erreur lors du téléchargement. Réessayez.', de:'❌ Fehler beim Hochladen. Bitte erneut versuchen.', pt:'❌ Erro ao enviar foto. Tente novamente.' };
+    await sendMessage(tenant.merchant_phone, errMsg[lang] || errMsg.es, phoneNumberId, token);
+  }
+}
+
 // ─── Merchant image handler ───────────────────────────────────────────────────
 
 async function handleMerchantImage(tenant, message, phoneNumberId, token) {
@@ -2365,7 +2517,7 @@ async function handleCustomerMessage(tenant, customerPhone, messageText, locatio
   if (extraImagesProductName) {
     const ep = stock.find(p => p.name.toLowerCase() === extraImagesProductName.toLowerCase());
     if (ep?.additional_images?.length) {
-      const toSend = ep.additional_images.slice(0, 3);
+      const toSend = ep.additional_images.slice(0, 2);
       for (let i = 0; i < toSend.length; i++) {
         await sendImage(customerPhone, toSend[i], `${ep.name} (${i + 1}/${ep.additional_images.length})`, phoneNumberId, token);
       }
