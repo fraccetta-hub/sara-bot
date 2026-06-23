@@ -2517,9 +2517,8 @@ async function handleCustomerMessage(tenant, customerPhone, messageText, locatio
   if (extraImagesProductName) {
     const ep = stock.find(p => p.name.toLowerCase() === extraImagesProductName.toLowerCase());
     if (ep?.additional_images?.length) {
-      const toSend = ep.additional_images.slice(0, 2);
-      for (let i = 0; i < toSend.length; i++) {
-        await sendImage(customerPhone, toSend[i], `${ep.name} (${i + 1}/${ep.additional_images.length})`, phoneNumberId, token);
+      for (let i = 0; i < ep.additional_images.length; i++) {
+        await sendImage(customerPhone, ep.additional_images[i], `${ep.name} (${i + 1}/${ep.additional_images.length})`, phoneNumberId, token);
       }
     }
   }
